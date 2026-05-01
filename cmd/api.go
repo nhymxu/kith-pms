@@ -15,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
+	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -97,6 +98,17 @@ Can scale later.`,
 			// Wire people service.
 			peopleSvc := people.NewService(db)
 
+			// Wire file service for avatars.
+			avatarPath := config.ENV.AvatarStoragePath
+			if avatarPath == "" {
+				avatarPath = "data/avatars"
+			}
+			if err := os.MkdirAll(avatarPath, 0o700); err != nil {
+				return fmt.Errorf("api: create avatar dir: %w", err)
+			}
+			fileSvc := files.NewLocalFileService(avatarPath)
+			peopleSvc.FileService = fileSvc
+
 			// Wire labels service.
 			labelsSvc := labels.NewService(db)
 
@@ -118,6 +130,7 @@ Can scale later.`,
 				JournalService:   journalSvc,
 				DatesService:     datesSvc,
 				RemindersService: remindersSvc,
+				AvatarBasePath:   avatarPath,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

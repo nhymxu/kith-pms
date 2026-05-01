@@ -188,6 +188,41 @@ Examples:
 
 No AI references in commit messages.
 
+## File Upload Patterns
+
+### Avatar Upload Flow
+1. **Handler** (`internal/web/handlers/people.go`):
+   - Limit request body: `http.MaxBytesReader(w, r.Body, 6*1024*1024)` (5MB file + 1MB overhead)
+   - Extract multipart file: `c.FormFile("avatar")`
+   - Delegate to service: `h.Svc.UploadAvatar(ctx, personID, file, header)`
+
+2. **Service** (`internal/people/service.go`):
+   - Call FileService to save file (returns relative path)
+   - Begin transaction; update person avatar metadata in DB
+   - On success: commit, then delete old avatar file (best-effort)
+   - On error: rollback transaction, delete new file
+
+3. **FileService** (`internal/files/service.go`):
+   - Validate file size against limit (5MB)
+   - Read file header (512 bytes) for magic number check via `http.DetectContentType`
+   - Validate MIME type (header + detected) against allowlist
+   - Sanitize filename: alphanumeric + dash/underscore; max 50 chars
+   - Generate random 8-byte hex prefix to prevent collisions
+   - Write to temp file, sync, rename (atomic write)
+   - Return relative path: `{personID}/{randomStr}-{sanitized-name}.{ext}`
+
+### Security Controls
+- **MIME validation**: Dual-check (HTTP header + magic number) prevents spoofed uploads
+- **Size limit**: 5MB enforced at handler + service layer
+- **Path traversal prevention**: `filepath.Clean()` + prefix check ensures file stays in base directory
+- **Filename sanitization**: Removes special chars; limits length to prevent filesystem issues
+- **Atomic writes**: Temp file + sync + rename prevents partial/corrupted uploads
+- **Metadata storage**: MIME type, size, upload timestamp stored in DB for audit trail
+
+### Avatar Retrieval & Deletion
+- **GET /people/:id/avatar**: Validates path, sets Content-Type from DB, caches 24 hours
+- **POST /people/:id/avatar/delete**: Clears DB metadata, removes file (best-effort)
+
 ## Performance & Security Considerations
 
 ### Database
@@ -202,9 +237,11 @@ No AI references in commit messages.
 - **CSRF tokens**: Per-request tokens validated via middleware
 - **Cookies**: Secure, httpOnly, SameSite=Strict
 - **No secrets in logs**: Use structured logging with care for sensitive fields
+- **File uploads**: MIME validation (header + magic number), size limits, path traversal prevention
 
 ### Deployment
 - **Single binary**: All assets embedded; no external file dependencies
 - **CGO_ENABLED=0**: Static binary; runs on any Linux/macOS/Windows (no libc dependency)
 - **Backup safety**: VACUUM INTO is safe while server running
 - **Migration safety**: Auto-applied on startup with version tracking
+- **Avatar storage**: Configurable via AVATAR_STORAGE_PATH; ensure directory is writable and has sufficient disk space

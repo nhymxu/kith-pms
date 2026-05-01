@@ -2,6 +2,8 @@ package templates
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -22,19 +24,36 @@ type PeopleDetailParams struct {
 templ PeopleDetail(params PeopleDetailParams) {
 	@Layout(params.Person.Name + " — kith") {
 		<div class="max-w-2xl">
-			<!-- Header -->
+			<!-- Header with Avatar -->
 			<div class="flex items-start justify-between mb-6">
-				<div>
-					<h1 class="text-2xl font-bold text-deep-olive">
-						if params.Person.Prefix != "" {
-							{ params.Person.Prefix } { params.Person.Name }
+				<div class="flex items-start gap-6">
+					<!-- Avatar -->
+					<div class="shrink-0">
+						if params.Person.AvatarPath != "" {
+							<img
+								src={ templ.SafeURL(fmt.Sprintf("/people/%d/avatar", params.Person.ID)) }
+								alt={ params.Person.Name }
+								class="w-24 h-24 rounded-full object-cover border-2 border-sage-border"
+							/>
 						} else {
-							{ params.Person.Name }
+							<div class="w-24 h-24 rounded-full bg-sage-border/20 flex items-center justify-center text-3xl text-olive-ink/40">
+								{ avatarInitials(params.Person.Name) }
+							</div>
 						}
-					</h1>
-					if params.Person.Nickname != "" {
-						<p class="text-olive-ink/60 text-sm mt-1">&ldquo;{ params.Person.Nickname }&rdquo;</p>
-					}
+					</div>
+					<!-- Name and Nickname -->
+					<div>
+						<h1 class="text-2xl font-bold text-deep-olive">
+							if params.Person.Prefix != "" {
+								{ params.Person.Prefix } { params.Person.Name }
+							} else {
+								{ params.Person.Name }
+							}
+						</h1>
+						if params.Person.Nickname != "" {
+							<p class="text-olive-ink/60 text-sm mt-1">&ldquo;{ params.Person.Nickname }&rdquo;</p>
+						}
+					</div>
 				</div>
 				<div class="flex gap-2">
 					<a
@@ -225,4 +244,29 @@ templ locationLine(l people.Location) {
 	} else if l.Country != "" {
 		{ l.Country }
 	}
+}
+
+func avatarInitials(name string) string {
+	parts := strings.Fields(name)
+	if len(parts) == 0 {
+		return "?"
+	}
+
+	var initials []rune
+	for _, part := range parts {
+		for _, r := range part {
+			if unicode.IsLetter(r) || unicode.IsDigit(r) {
+				initials = append(initials, unicode.ToUpper(r))
+				break
+			}
+		}
+		if len(initials) == 2 {
+			break
+		}
+	}
+
+	if len(initials) == 0 {
+		return "?"
+	}
+	return string(initials)
 }

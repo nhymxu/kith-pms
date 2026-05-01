@@ -2,7 +2,9 @@ package templates
 
 import (
 	"fmt"
+	"strings"
 	"time"
+	"unicode"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
 )
@@ -46,6 +48,54 @@ templ peopleFormBody(params PeopleFormParams) {
 		if params.IsEdit {
 			<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/people/%d", params.Person.ID)) } class="space-y-6">
 				@peopleFormFields(params)
+			</form>
+			<!-- Avatar upload form (separate for multipart) -->
+			<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/people/%d/avatar", params.Person.ID)) } enctype="multipart/form-data" class="mt-6">
+				<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+				<fieldset class="space-y-4 border border-sage-border rounded p-4">
+					<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide px-2">Profile Photo</legend>
+					<div class="flex items-center gap-4">
+						if params.Person.AvatarPath != "" {
+							<img
+								src={ templ.SafeURL(fmt.Sprintf("/people/%d/avatar", params.Person.ID)) }
+								alt="Current avatar"
+								class="w-16 h-16 rounded-full object-cover border border-sage-border"
+							/>
+						} else {
+							<div class="w-16 h-16 rounded-full bg-sage-border/20 flex items-center justify-center text-xl text-olive-ink/40">
+								{ avatarInitials(params.Person.Name) }
+							</div>
+						}
+						<div class="flex-1">
+							<input
+								type="file"
+								name="avatar"
+								accept="image/jpeg,image/png,image/gif,image/webp"
+								class="block w-full text-sm text-olive-ink file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-deep-olive file:text-parchment hover:file:opacity-90"
+							/>
+							<p class="text-xs text-olive-ink/60 mt-1">JPEG, PNG, GIF, or WebP. Max 5MB.</p>
+						</div>
+						<button
+							type="submit"
+							class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+						>
+							Upload
+						</button>
+					</div>
+					if params.Person.AvatarPath != "" {
+						<div>
+							<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/people/%d/avatar/delete", params.Person.ID)) } onsubmit="return confirm('Remove avatar?')">
+								<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+								<button
+									type="submit"
+									class="text-xs text-red-600 hover:underline"
+								>
+									Remove avatar
+								</button>
+							</form>
+						</div>
+					}
+				</fieldset>
 			</form>
 		} else {
 			<form method="POST" action="/people" class="space-y-6">
@@ -261,4 +311,29 @@ func dobValue(t *time.Time) string {
 		return ""
 	}
 	return t.Format("2006-01-02")
+}
+
+func avatarInitials(name string) string {
+	parts := strings.Fields(name)
+	if len(parts) == 0 {
+		return "?"
+	}
+
+	var initials []rune
+	for _, part := range parts {
+		for _, r := range part {
+			if unicode.IsLetter(r) || unicode.IsDigit(r) {
+				initials = append(initials, unicode.ToUpper(r))
+				break
+			}
+		}
+		if len(initials) == 2 {
+			break
+		}
+	}
+
+	if len(initials) == 0 {
+		return "?"
+	}
+	return string(initials)
 }

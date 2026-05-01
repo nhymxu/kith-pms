@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"mime/multipart"
+	"time"
 )
 
 const defaultPageSize = 50
@@ -18,10 +20,16 @@ type ListParams struct {
 
 // Service provides business logic for managing people.
 type Service struct {
-	DB       *sql.DB
-	People   PersonRepo
-	Contacts ContactRepo
-	Locations LocationRepo
+	DB          *sql.DB
+	People      PersonRepo
+	Contacts    ContactRepo
+	Locations   LocationRepo
+	FileService FileService
+}
+
+type FileService interface {
+	SaveAvatar(personID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
+	DeleteAvatar(personID int64, path string) error
 }
 
 // NewService constructs a Service wired to db.
@@ -131,4 +139,91 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 // Delete removes a person and cascades to their contacts and locations.
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	return s.People.Delete(ctx, id)
+}
+
+// UploadAvatar saves a new avatar file and updates the person's avatar metadata.
+// If the person already has an avatar, the old file is deleted after the transaction commits.
+func (s *Service) UploadAvatar(ctx context.Context, personID int64, file multipart.File, header *multipart.FileHeader) error {
+	if s.FileService == nil {
+		return fmt.Errorf("file service not configured")
+	}
+
+	person, err := s.People.Get(ctx, personID)
+	if err != nil {
+		return fmt.Errorf("get person: %w", err)
+	}
+	if person == nil {
+		return fmt.Errorf("person not found")
+	}
+
+	oldAvatarPath := person.AvatarPath
+
+	path, err := s.FileService.SaveAvatar(personID, file, header)
+	if err != nil {
+		return fmt.Errorf("save avatar file: %w", err)
+	}
+
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		s.FileService.DeleteAvatar(personID, path)
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	mimeType := header.Header.Get("Content-Type")
+	size := header.Size
+	uploadedAt := time.Now().UTC()
+
+	if err := s.People.UpdateAvatar(ctx, tx, personID, path, mimeType, size, uploadedAt); err != nil {
+		s.FileService.DeleteAvatar(personID, path)
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		s.FileService.DeleteAvatar(personID, path)
+		return fmt.Errorf("commit: %w", err)
+	}
+
+	if oldAvatarPath != "" {
+		_ = s.FileService.DeleteAvatar(personID, oldAvatarPath)
+	}
+
+	return nil
+}
+
+// DeleteAvatar removes the avatar file and clears the person's avatar metadata.
+func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
+	if s.FileService == nil {
+		return fmt.Errorf("file service not configured")
+	}
+
+	person, err := s.People.Get(ctx, personID)
+	if err != nil {
+		return fmt.Errorf("get person: %w", err)
+	}
+	if person == nil {
+		return fmt.Errorf("person not found")
+	}
+
+	avatarPath := person.AvatarPath
+
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := s.People.ClearAvatar(ctx, tx, personID); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+
+	if avatarPath != "" {
+		_ = s.FileService.DeleteAvatar(personID, avatarPath)
+	}
+
+	return nil
 }

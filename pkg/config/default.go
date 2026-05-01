@@ -14,6 +14,9 @@ var configDefaults = map[string]any{
 	"DB_PATH":         "data/kith.db",
 	"DB_AUTO_MIGRATE": true,
 
+	// File Storage
+	"AVATAR_STORAGE_PATH": "data/avatars",
+
 	// Auth — SESSION_SECRET must be set in production via environment (≥32 bytes)
 	"SESSION_SECRET":    "",
 	"APP_PASSWORD_HASH": "",

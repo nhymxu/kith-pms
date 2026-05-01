@@ -11,6 +11,10 @@ type Person struct {
 	DateOfBirth      *time.Time // nullable
 	RelationshipType string
 	OtherNotes       string
+	AvatarPath       string
+	AvatarMimeType   string
+	AvatarSize       int64
+	AvatarUploadedAt *time.Time
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	Contacts         []ContactInfo // populated by service.Get

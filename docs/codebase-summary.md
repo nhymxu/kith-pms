@@ -45,6 +45,9 @@ kith-pms/
 │   │   ├── service.go            # CRUD and date query business logic
 │   │   ├── repo.go               # Database queries for dates
 │   │   └── service_test.go       # Service unit tests
+│   ├── files/                    # File storage service
+│   │   ├── service.go            # LocalFileService for avatar uploads
+│   │   └── service_test.go       # File service unit tests
 │   └── web/                      # HTTP handler layer
 │       ├── server.go             # Echo setup, dependency injection, route mounting
 │       ├── handlers/             # HTTP handlers for each domain
@@ -143,6 +146,10 @@ kith-pms/
 - **service.go**: CRUD for dates; OnThisDay queries; Upcoming dates calculation
 - **repo.go**: Queries for dates by person; OnThisDay matches; virtual month_day column queries
 - **service_test.go**: Integration tests for date parsing, recurring logic, and queries
+
+### `internal/files` — File storage service
+- **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
+- **service_test.go**: File service unit tests
 
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance, mounts static file server, registers route groups, injects service dependencies into handlers

@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -19,10 +22,11 @@ import (
 
 // PeopleHandlers groups all /people/* HTTP handlers.
 type PeopleHandlers struct {
-	Svc        *people.Service
-	LabelsSvc  *labels.Service
-	JournalSvc *journal.Service
-	DatesSvc   *dates.Service
+	Svc            *people.Service
+	LabelsSvc      *labels.Service
+	JournalSvc     *journal.Service
+	DatesSvc       *dates.Service
+	AvatarBasePath string
 }
 
 // GetList handles GET /people
@@ -419,4 +423,82 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 	}
 
 	return p, contacts, locations, importantDates, ""
+}
+
+// PostUploadAvatar handles POST /people/:id/avatar
+func (h *PeopleHandlers) PostUploadAvatar(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	// Limit request body size (5MB + 1MB overhead for multipart)
+	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, 6*1024*1024)
+
+	file, err := c.FormFile("avatar")
+	if err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			return c.String(http.StatusBadRequest, "File too large (max 5MB)")
+		}
+		return c.String(http.StatusBadRequest, "No file uploaded")
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to open file")
+	}
+	defer src.Close()
+
+	if err := h.Svc.UploadAvatar(c.Request().Context(), personID, src, file); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(personID, 10))
+}
+
+// GetAvatar handles GET /people/:id/avatar
+func (h *PeopleHandlers) GetAvatar(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), personID)
+	if err != nil {
+		return err
+	}
+	if p == nil || p.AvatarPath == "" {
+		return echo.ErrNotFound
+	}
+
+	fullPath := filepath.Join(h.AvatarBasePath, p.AvatarPath)
+	cleanPath := filepath.Clean(fullPath)
+	if !strings.HasPrefix(cleanPath, filepath.Clean(h.AvatarBasePath)) {
+		return echo.ErrNotFound
+	}
+
+	f, err := os.Open(cleanPath)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+	defer f.Close()
+
+	c.Response().Header().Set("Content-Type", p.AvatarMimeType)
+	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
+	_, err = io.Copy(c.Response(), f)
+	return err
+}
+
+// PostDeleteAvatar handles POST /people/:id/avatar/delete
+func (h *PeopleHandlers) PostDeleteAvatar(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	if err := h.Svc.DeleteAvatar(c.Request().Context(), personID); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(personID, 10))
 }

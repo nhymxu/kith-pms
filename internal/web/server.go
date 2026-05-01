@@ -31,6 +31,7 @@ type Deps struct {
 	JournalService   *journal.Service
 	DatesService     *dates.Service
 	RemindersService *reminders.Service
+	AvatarBasePath   string
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -89,10 +90,11 @@ func Mount(e *echo.Echo, deps Deps) {
 
 		// People routes
 		peopleH := &handlers.PeopleHandlers{
-			Svc:        deps.PeopleService,
-			LabelsSvc:  deps.LabelsService,
-			JournalSvc: deps.JournalService,
-			DatesSvc:   deps.DatesService,
+			Svc:            deps.PeopleService,
+			LabelsSvc:      deps.LabelsService,
+			JournalSvc:     deps.JournalService,
+			DatesSvc:       deps.DatesService,
+			AvatarBasePath: deps.AvatarBasePath,
 		}
 		protected.GET("/people", peopleH.GetList)
 		protected.GET("/people/new", peopleH.GetNew)
@@ -105,6 +107,10 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people/:id", peopleH.PostUpdate)
 		protected.GET("/people/:id/delete-confirm", peopleH.GetDeleteConfirm)
 		protected.POST("/people/:id/delete", peopleH.PostDelete)
+		// Avatar routes
+		protected.POST("/people/:id/avatar", peopleH.PostUploadAvatar)
+		protected.GET("/people/:id/avatar", peopleH.GetAvatar)
+		protected.POST("/people/:id/avatar/delete", peopleH.PostDeleteAvatar)
 		// Label attach/detach routes (htmx fragments)
 		protected.POST("/people/:id/labels/attach", peopleH.PostAttachLabel)
 		protected.POST("/people/:id/labels/:labelID/delete", peopleH.PostDetachLabel)

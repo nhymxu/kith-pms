@@ -16,6 +16,8 @@ type PersonRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error)
 	Update(ctx context.Context, tx *sql.Tx, p Person) error
 	Delete(ctx context.Context, id int64) error
+	UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error
+	ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error
 }
 
 // ContactRepo defines persistence operations for ContactInfo records.
@@ -60,7 +62,8 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 	}
 
 	query := `SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
-	                 other_notes, created_at, updated_at
+	                 other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
+	                 created_at, updated_at
 	          FROM person`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
@@ -99,7 +102,8 @@ func buildLabelIntersect(labelIDs []int64) string {
 func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
-		        other_notes, created_at, updated_at
+		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
+		        created_at, updated_at
 		 FROM person WHERE id = ?`,
 		id,
 	)
@@ -152,6 +156,37 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM person WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("people: delete person: %w", err)
+	}
+	return nil
+}
+
+func (r *sqlPersonRepo) UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error {
+	uploadedAtStr := uploadedAt.UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+
+	_, err := tx.ExecContext(ctx,
+		`UPDATE person
+		 SET avatar_path=?, avatar_mime_type=?, avatar_size=?, avatar_uploaded_at=?, updated_at=?
+		 WHERE id=?`,
+		path, mimeType, size, uploadedAtStr, now, personID,
+	)
+	if err != nil {
+		return fmt.Errorf("people: update avatar: %w", err)
+	}
+	return nil
+}
+
+func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+
+	_, err := tx.ExecContext(ctx,
+		`UPDATE person
+		 SET avatar_path='', avatar_mime_type='', avatar_size=0, avatar_uploaded_at=NULL, updated_at=?
+		 WHERE id=?`,
+		now, personID,
+	)
+	if err != nil {
+		return fmt.Errorf("people: clear avatar: %w", err)
 	}
 	return nil
 }
@@ -255,11 +290,13 @@ type rowScanner interface {
 func scanPerson(row rowScanner) (Person, error) {
 	var p Person
 	var dobStr sql.NullString
+	var avatarUploadedAtStr sql.NullString
 	var createdAt, updatedAt string
 
 	err := row.Scan(
 		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
 		&dobStr, &p.RelationshipType, &p.OtherNotes,
+		&p.AvatarPath, &p.AvatarMimeType, &p.AvatarSize, &avatarUploadedAtStr,
 		&createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -269,6 +306,11 @@ func scanPerson(row rowScanner) (Person, error) {
 	if dobStr.Valid && dobStr.String != "" {
 		if t, err := parseDate(dobStr.String); err == nil {
 			p.DateOfBirth = &t
+		}
+	}
+	if avatarUploadedAtStr.Valid && avatarUploadedAtStr.String != "" {
+		if t, err := parseTime(avatarUploadedAtStr.String); err == nil {
+			p.AvatarUploadedAt = &t
 		}
 	}
 	p.CreatedAt, _ = parseTime(createdAt)

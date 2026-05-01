@@ -27,6 +27,9 @@ type EnvConfigMap struct {
 	DBPath        string `koanf:"DB_PATH"`
 	DBAutoMigrate bool   `koanf:"DB_AUTO_MIGRATE"`
 
+	// File Storage
+	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
+
 	// Auth
 	SessionSecret   string        `koanf:"SESSION_SECRET"`
 	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH"`

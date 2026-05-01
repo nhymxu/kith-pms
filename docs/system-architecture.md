@@ -84,6 +84,7 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 | `BEHIND_TLS` | bool | `false` | Set `true` when behind TLS proxy (marks cookies Secure) |
 | `DEBUG` | bool | `false` | `true` → text logs + debug level |
 | `SENTRY_DSN` | string | *(empty)* | Sentry DSN; omit to disable error reporting |
+| `AVATAR_STORAGE_PATH` | string | `data/avatars` | Directory for storing avatar files |
 
 ## Logging
 
@@ -116,6 +117,8 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people/:id            → GET (detail), PUT (update), DELETE
 /people/:id/edit       → GET (edit form)
 /people/:id/date-row   → POST (add/update important date)
+/people/:id/avatar     → POST (upload), GET (retrieve)
+/people/:id/avatar/delete → POST (delete)
 /labels                → GET (list), POST (create)
 /labels/:id            → GET (detail), PUT (update), DELETE
 /journal               → GET (list + FTS5 search), POST (create)
@@ -152,6 +155,38 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
    - Clear session cookie
 ```
 
+## File Storage Layer
+
+### Avatar Storage Architecture
+
+**Location**: `internal/files/service.go`
+
+The file storage layer handles avatar uploads with security and durability guarantees:
+
+**FileService Interface**:
+- `SaveAvatar(personID, file, header)` → saves file, returns relative path
+- `DeleteAvatar(personID, path)` → removes file and cleans up empty directories
+- `GetAvatarPath(personID)` → returns base directory for person's avatars
+
+**LocalFileService Implementation**:
+- **Base directory**: Configured via `AVATAR_STORAGE_PATH` (default: `data/avatars`)
+- **Directory structure**: `data/avatars/{personID}/{randomStr}-{sanitized-name}.{ext}`
+- **Atomic writes**: Temp file → sync → rename (prevents partial uploads)
+- **Path traversal prevention**: Validates clean path stays within base directory
+
+**Security Controls**:
+- **MIME validation**: Dual-check (HTTP header + magic number via `http.DetectContentType`)
+- **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+- **Size limit**: 5MB per file (enforced at handler + service layer)
+- **Filename sanitization**: Alphanumeric + dash/underscore only; max 50 chars
+- **Random prefix**: 8-byte hex prefix prevents filename collisions and guessing
+
+**Integration with People Service**:
+- Service stores avatar metadata in database: `avatar_path`, `avatar_mime_type`, `avatar_size`, `avatar_uploaded_at`
+- On upload: saves file first, then updates DB in transaction; rolls back file on DB error
+- On delete: clears DB metadata, then removes file (best-effort cleanup)
+- On replace: saves new file, updates DB, then deletes old file (old file survives DB errors)
+
 ## Database Layer
 
 ### SQLite Configuration
@@ -178,6 +213,7 @@ Connection settings:
 | `0005_activity.sql` | journal entries (activities) + links to people |
 | `0006_activity_fts.sql` | FTS5 virtual table + triggers for full-text search |
 | `0007_important_date.sql` | important_date table with virtual month_day column for date queries |
+| `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

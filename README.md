@@ -4,9 +4,11 @@
 
 ## Features
 
-- **People** — store contacts with relationship type, date of birth, contact methods, and addresses
+- **People** — store contacts with relationship type, date of birth, contact methods, addresses, and avatars
 - **Labels** — colour-tagged categories; attach multiple labels to each person
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
+- **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
+- **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
 - **Dashboard** — at-a-glance counts and recent activity on the homepage
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
@@ -60,6 +62,7 @@ All configuration is via environment variables or a `.env` file in the working d
 | `SESSION_SECRET` | — | **Yes** | Cookie signing secret, min 32 bytes |
 | `DB_PATH` | `data/kith.db` | No | Path to the SQLite database file |
 | `DB_AUTO_MIGRATE` | `true` | No | Run migrations automatically on startup |
+| `AVATAR_STORAGE_PATH` | `data/avatars` | No | Directory for storing avatar files |
 | `BEHIND_TLS` | `false` | No | Set `true` when serving behind TLS (marks cookies Secure) |
 | `SESSION_LIFETIME` | `720h` (30 days) | No | How long a login session stays valid |
 | `TOKEN_AUTH` | — | No | Bearer token for any future JSON API endpoints |
@@ -137,6 +140,8 @@ internal/
   journal/          Activity journal domain, repo, service
   labels/           Labels domain, repo, service
   people/           People domain, repo, service
+  dates/            Important dates & milestones
+  files/            File storage service (avatar uploads)
   web/
     handlers/       HTTP handlers (auth, people, labels, journal, home, errors)
     templates/      templ components + CSS

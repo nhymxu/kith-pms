@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -14,6 +15,7 @@ type PeopleDetailParams struct {
 	AllLabels         []labels.Label   // all labels (for dropdown)
 	CSRFToken         string
 	RecentActivities  []journal.Activity // latest 10 activities (Phase 5)
+	Dates             []dates.ImportantDate // important dates
 }
 
 // PeopleDetail renders the detail view for a single person.
@@ -109,6 +111,29 @@ templ PeopleDetail(params PeopleDetailParams) {
 							<li class="text-sm">
 								<span class="text-olive-ink/50 capitalize">{ l.Type }: </span>
 								@locationLine(l)
+							</li>
+						}
+					</ul>
+				</section>
+			}
+			<!-- Important Dates -->
+			if len(params.Dates) > 0 {
+				<section class="mb-6 border border-sage-border rounded p-4">
+					<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-3">Important Dates</h2>
+					<ul class="space-y-2">
+						for _, d := range params.Dates {
+							<li class="flex gap-3 text-sm">
+								<span class="text-olive-ink/50 w-24 shrink-0 capitalize">{ d.Kind }</span>
+								<span class="font-medium w-32">{ d.DateValue }</span>
+								if d.Label != "" {
+									<span class="text-olive-ink/70">{ d.Label }</span>
+								}
+								if d.Recurring {
+									<span class="text-xs text-olive-ink/40">(recurring)</span>
+								}
+								if d.Notes != "" {
+									<span class="text-olive-ink/50 text-xs">— { d.Notes }</span>
+								}
 							</li>
 						}
 					</ul>

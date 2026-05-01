@@ -40,20 +40,27 @@ kith-pms/
 │   │   ├── service.go            # CRUD and search business logic
 │   │   ├── repo.go               # Database queries + FTS5 search
 │   │   └── service_test.go       # Service unit tests
+│   ├── dates/                    # Important dates & milestones
+│   │   ├── domain.go             # ImportantDate, OnThisDayItem structures
+│   │   ├── service.go            # CRUD and date query business logic
+│   │   ├── repo.go               # Database queries for dates
+│   │   └── service_test.go       # Service unit tests
 │   └── web/                      # HTTP handler layer
 │       ├── server.go             # Echo setup, dependency injection, route mounting
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
-│       │   ├── home.go           # Dashboard / home page
-│       │   ├── people.go         # CRUD handlers for People
+│       │   ├── home.go           # Dashboard / home page (includes OnThisDay widget)
+│       │   ├── people.go         # CRUD handlers for People (dates integration)
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
+│       │   ├── dates.go          # Handlers for Important Dates
 │       │   └── errors.go         # Error page handlers
 │       ├── templates/            # Templ HTML components (.templ files)
 │       │   ├── layout.templ      # Base layout with navbar, footer
 │       │   ├── login.templ       # Login form
-│       │   ├── home.templ        # Dashboard
+│       │   ├── home.templ        # Dashboard (includes OnThisDay widget)
 │       │   ├── people_list.templ, people_detail.templ, people_form.templ
+│       │   ├── dates_list.templ  # Upcoming dates list
 │       │   ├── labels_list.templ, labels_partials.templ
 │       │   ├── journal_list.templ, journal_detail.templ, journal_form.templ
 │       │   ├── journal_partials.templ
@@ -76,7 +83,8 @@ kith-pms/
 │   ├── 0003_person.sql           # Person table refine (contacts, locations)
 │   ├── 0004_label.sql            # Label-person association table
 │   ├── 0005_activity.sql         # Journal entries & person linking
-│   └── 0006_activity_fts.sql     # FTS5 virtual table + triggers
+│   ├── 0006_activity_fts.sql     # FTS5 virtual table + triggers
+│   └── 0007_important_date.sql   # Important dates table with virtual month_day column
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -129,6 +137,12 @@ kith-pms/
 - **service.go**: CRUD; full-text search via FTS5; link entries to multiple people
 - **repo.go**: Queries including FTS5 search; maintains FTS5 trigger-based index
 - **service_test.go**: Integration tests for FTS5 search
+
+### `internal/dates` — Important dates & milestones
+- **domain.go**: ImportantDate (kind, label, date_value, recurring), OnThisDayItem (date + person info)
+- **service.go**: CRUD for dates; OnThisDay queries; Upcoming dates calculation
+- **repo.go**: Queries for dates by person; OnThisDay matches; virtual month_day column queries
+- **service_test.go**: Integration tests for date parsing, recurring logic, and queries
 
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance, mounts static file server, registers route groups, injects service dependencies into handlers

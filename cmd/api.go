@@ -13,6 +13,7 @@ import (
 
 	"github.com/nhymxu/kith-pms/app/api"
 	"github.com/nhymxu/kith-pms/internal/auth"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -101,6 +102,9 @@ Can scale later.`,
 			// Wire journal service.
 			journalSvc := journal.NewService(db)
 
+			// Wire dates service.
+			datesSvc := dates.NewService(db)
+
 			// Mount HTML UI routes on the same Echo instance.
 			web.Mount(e, web.Deps{
 				DB:             db,
@@ -108,6 +112,7 @@ Can scale later.`,
 				PeopleService:  peopleSvc,
 				LabelsService:  labelsSvc,
 				JournalService: journalSvc,
+				DatesService:   datesSvc,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

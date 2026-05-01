@@ -23,7 +23,7 @@
 │  │  └─ /journal/*     → Journal CRUD + FTS5 search          │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Service Layer (auth, people, labels, journal)            │   │
+│  │ Service Layer (auth, people, labels, journal, dates)      │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -115,10 +115,12 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people                → GET (list), POST (create)
 /people/:id            → GET (detail), PUT (update), DELETE
 /people/:id/edit       → GET (edit form)
+/people/:id/date-row   → POST (add/update important date)
 /labels                → GET (list), POST (create)
 /labels/:id            → GET (detail), PUT (update), DELETE
 /journal               → GET (list + FTS5 search), POST (create)
 /journal/:id           → GET (detail), PUT (update), DELETE
+/dates                 → GET (upcoming dates, ?days=N query param)
 ```
 
 ### Session & Auth Flow
@@ -175,6 +177,7 @@ Connection settings:
 | `0004_label.sql` | refine label-person association |
 | `0005_activity.sql` | journal entries (activities) + links to people |
 | `0006_activity_fts.sql` | FTS5 virtual table + triggers for full-text search |
+| `0007_important_date.sql` | important_date table with virtual month_day column for date queries |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
@@ -201,6 +204,7 @@ users (1)
 people (1)
   ├─ (1:N) contacts (phone, email)
   ├─ (1:N) locations (address)
+  ├─ (1:N) important_date (birthdays, anniversaries, milestones)
   ├─ (N:M) labels (via label_assignments)
   └─ (N:M) activities (via activity_links)
 

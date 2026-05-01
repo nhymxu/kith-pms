@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/auth"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -21,6 +22,7 @@ type PeopleHandlers struct {
 	Svc        *people.Service
 	LabelsSvc  *labels.Service
 	JournalSvc *journal.Service
+	DatesSvc   *dates.Service
 }
 
 // GetList handles GET /people
@@ -67,18 +69,20 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 func (h *PeopleHandlers) GetNew(c *echo.Context) error {
 	component := templates.PeopleForm(templates.PeopleFormParams{
 		CSRFToken: auth.CSRFToken(c),
+		Dates:     []dates.ImportantDate{},
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
 
 // PostCreate handles POST /people
 func (h *PeopleHandlers) PostCreate(c *echo.Context) error {
-	p, contacts, locations, formErr := parsePersonForm(c)
+	p, contacts, locations, importantDates, formErr := parsePersonForm(c)
 	if formErr != "" {
 		component := templates.PeopleForm(templates.PeopleFormParams{
 			Person:    p,
 			Contacts:  contacts,
 			Locations: locations,
+			Dates:     importantDates,
 			CSRFToken: auth.CSRFToken(c),
 			Error:     formErr,
 		})
@@ -89,6 +93,12 @@ func (h *PeopleHandlers) PostCreate(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Save dates in separate transaction
+	if h.DatesSvc != nil && len(importantDates) > 0 {
+		_ = h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates)
+	}
+
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(id, 10))
 }
 
@@ -122,12 +132,19 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		})
 	}
 
+	// Fetch important dates
+	var importantDates []dates.ImportantDate
+	if h.DatesSvc != nil {
+		importantDates, _ = h.DatesSvc.ListByPerson(c.Request().Context(), id)
+	}
+
 	component := templates.PeopleDetail(templates.PeopleDetailParams{
 		Person:           *p,
 		Labels:           attached,
 		AllLabels:        allLabels,
 		CSRFToken:        auth.CSRFToken(c),
 		RecentActivities: recentActivities,
+		Dates:            importantDates,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
@@ -147,10 +164,16 @@ func (h *PeopleHandlers) GetEdit(c *echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	var importantDates []dates.ImportantDate
+	if h.DatesSvc != nil {
+		importantDates, _ = h.DatesSvc.ListByPerson(c.Request().Context(), id)
+	}
+
 	component := templates.PeopleForm(templates.PeopleFormParams{
 		Person:    *p,
 		Contacts:  p.Contacts,
 		Locations: p.Locations,
+		Dates:     importantDates,
 		CSRFToken: auth.CSRFToken(c),
 		IsEdit:    true,
 	})
@@ -164,7 +187,7 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	p, contacts, locations, formErr := parsePersonForm(c)
+	p, contacts, locations, importantDates, formErr := parsePersonForm(c)
 	p.ID = id
 
 	if formErr != "" {
@@ -172,6 +195,7 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 			Person:    p,
 			Contacts:  contacts,
 			Locations: locations,
+			Dates:     importantDates,
 			CSRFToken: auth.CSRFToken(c),
 			IsEdit:    true,
 			Error:     formErr,
@@ -182,6 +206,12 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 	if err := h.Svc.Update(c.Request().Context(), p, contacts, locations); err != nil {
 		return err
 	}
+
+	// Save dates in separate transaction
+	if h.DatesSvc != nil {
+		_ = h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates)
+	}
+
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(id, 10))
 }
 
@@ -228,6 +258,13 @@ func (h *PeopleHandlers) PostContactRow(c *echo.Context) error {
 func (h *PeopleHandlers) PostLocationRow(c *echo.Context) error {
 	count, _ := strconv.Atoi(c.FormValue("count"))
 	component := templates.LocationRow(count)
+	return component.Render(c.Request().Context(), c.Response())
+}
+
+// PostDateRow handles POST /people/:id/date-row (htmx fragment)
+func (h *PeopleHandlers) PostDateRow(c *echo.Context) error {
+	index, _ := strconv.Atoi(c.QueryParam("index"))
+	component := templates.DateRow(index)
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -300,10 +337,10 @@ func parseLabelIDs(s string) []int64 {
 
 // parsePersonForm reads form values and returns domain structs plus an error message.
 // Returns a non-empty error string when validation fails.
-func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []people.Location, string) {
+func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []people.Location, []dates.ImportantDate, string) {
 	name := strings.TrimSpace(c.FormValue("name"))
 	if name == "" {
-		return people.Person{}, nil, nil, "Name is required."
+		return people.Person{}, nil, nil, nil, "Name is required."
 	}
 
 	p := people.Person{
@@ -355,5 +392,31 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 		})
 	}
 
-	return p, contacts, locations, ""
+	// Parse indexed date rows.
+	dateRows := forms.ParseIndexed(c.Request().Form, "date")
+	var importantDates []dates.ImportantDate
+	for i, row := range dateRows {
+		dateValue := strings.TrimSpace(forms.GetField(row, "date_value"))
+		if dateValue == "" {
+			continue // skip empty rows
+		}
+
+		// Validate date format
+		canonical, _, err := dates.ParseFlexible(dateValue)
+		if err != nil {
+			return p, contacts, locations, nil, "Invalid date format: " + dateValue + " (use YYYY-MM-DD or --MM-DD)"
+		}
+
+		recurring := forms.GetField(row, "recurring") == "1"
+		importantDates = append(importantDates, dates.ImportantDate{
+			Kind:      strings.TrimSpace(forms.GetField(row, "kind")),
+			Label:     strings.TrimSpace(forms.GetField(row, "label")),
+			DateValue: canonical,
+			Recurring: recurring,
+			Notes:     strings.TrimSpace(forms.GetField(row, "notes")),
+			Position:  i,
+		})
+	}
+
+	return p, contacts, locations, importantDates, ""
 }

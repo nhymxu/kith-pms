@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
 )
@@ -170,6 +171,109 @@ templ LocationRowFilled(index int, l people.Location) {
 				name={ forms.IndexedName("location", index, "postal_code") }
 				value={ l.PostalCode }
 				placeholder="Postal"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// DateRow renders a blank date input row for htmx "Add date" insertion.
+templ DateRow(index int) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("date", index, "kind") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="birthday">Birthday</option>
+				<option value="anniversary">Anniversary</option>
+				<option value="met">Met</option>
+				<option value="other">Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "label") }
+				placeholder="Label"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "date_value") }
+				placeholder="YYYY-MM-DD or --MM-DD"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="checkbox"
+				name={ forms.IndexedName("date", index, "recurring") }
+				value="1"
+				checked
+				class="border border-sage-border rounded focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "notes") }
+				placeholder="Notes (optional)"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// DateRowFilled renders a pre-filled date input row for the edit form.
+templ DateRowFilled(index int, d dates.ImportantDate) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("date", index, "kind") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="birthday" selected?={ d.Kind == "birthday" }>Birthday</option>
+				<option value="anniversary" selected?={ d.Kind == "anniversary" }>Anniversary</option>
+				<option value="met" selected?={ d.Kind == "met" }>Met</option>
+				<option value="other" selected?={ d.Kind == "other" }>Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "label") }
+				value={ d.Label }
+				placeholder="Label"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "date_value") }
+				value={ d.DateValue }
+				placeholder="YYYY-MM-DD or --MM-DD"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="checkbox"
+				name={ forms.IndexedName("date", index, "recurring") }
+				value="1"
+				checked?={ d.Recurring }
+				class="border border-sage-border rounded focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("date", index, "notes") }
+				value={ d.Notes }
+				placeholder="Notes (optional)"
 				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
 			/>
 		</td>

@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -21,6 +23,7 @@ type HomeHandler struct {
 	PeopleSvc  *people.Service
 	LabelsSvc  *labels.Service
 	JournalSvc *journal.Service
+	DatesSvc   *dates.Service
 }
 
 // Get handles GET / and renders the dashboard.
@@ -79,6 +82,17 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 		slog.Warn("dashboard: list people", "error", err)
 	} else {
 		data.RecentPeople = recentPeople
+	}
+
+	// On this day dates
+	if h.DatesSvc != nil {
+		today := time.Now()
+		onThisDay, err := h.DatesSvc.OnThisDay(ctx, today)
+		if err != nil {
+			slog.Warn("dashboard: on this day", "error", err)
+		} else {
+			data.OnThisDay = onThisDay
+		}
 	}
 
 	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")

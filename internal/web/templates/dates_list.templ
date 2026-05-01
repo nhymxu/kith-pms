@@ -1,0 +1,64 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/dates"
+)
+
+// DatesListParams holds data for the upcoming dates page.
+type DatesListParams struct {
+	Items []dates.OnThisDayItem
+	Days  int
+}
+
+// DatesList renders the /dates upcoming dates page.
+templ DatesList(params DatesListParams) {
+	@Layout(fmt.Sprintf("Upcoming Dates (%d days) — kith", params.Days)) {
+		<div class="max-w-3xl">
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">
+				Upcoming Dates ({ fmt.Sprintf("%d", params.Days) } days)
+			</h1>
+			if len(params.Items) == 0 {
+				<p class="text-olive-ink/60 text-sm">No upcoming dates in the next { fmt.Sprintf("%d", params.Days) } days.</p>
+			} else {
+				<div class="space-y-4">
+					for _, item := range params.Items {
+						<div class="border border-sage-border rounded p-4">
+							<div class="flex items-start justify-between">
+								<div class="flex-1">
+									<a
+										href={ templ.SafeURL(fmt.Sprintf("/people/%d", item.Person.ID)) }
+										class="text-deep-olive hover:underline font-medium"
+									>
+										{ item.Person.Name }
+									</a>
+									if item.Person.Nickname != "" {
+										<span class="text-olive-ink/50 text-sm ml-2">&ldquo;{ item.Person.Nickname }&rdquo;</span>
+									}
+								</div>
+								<span class="text-xs px-2 py-1 rounded bg-sage-border/30 text-olive-ink/70 capitalize">
+									{ item.Date.Kind }
+								</span>
+							</div>
+							<div class="mt-2 text-sm">
+								<span class="text-olive-ink/70">{ item.Date.DateValue }</span>
+								if item.Date.Label != "" {
+									<span class="ml-2 text-olive-ink/90 font-medium">{ item.Date.Label }</span>
+								}
+								if item.YearsSince > 0 {
+									<span class="ml-2 text-olive-ink/50">({ fmt.Sprintf("%d", item.YearsSince) } years)</span>
+								}
+							</div>
+							if item.Date.Notes != "" {
+								<p class="mt-2 text-sm text-olive-ink/60">{ item.Date.Notes }</p>
+							}
+						</div>
+					}
+				</div>
+			}
+			<div class="mt-6">
+				<a href="/" class="text-sm text-deep-olive hover:underline">← Back to Dashboard</a>
+			</div>
+		</div>
+	}
+}

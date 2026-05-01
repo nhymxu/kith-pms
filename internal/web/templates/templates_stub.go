@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -52,6 +53,7 @@ type DashboardData struct {
 	ActivitiesCount int
 	RecentActivities []journal.Activity
 	RecentPeople     []people.Person
+	OnThisDay        []dates.OnThisDayItem
 }
 
 // Home renders the dashboard homepage component.
@@ -94,6 +96,7 @@ type PeopleFormParams struct {
 	Person    people.Person
 	Contacts  []people.ContactInfo
 	Locations []people.Location
+	Dates     []dates.ImportantDate
 	CSRFToken string
 	IsEdit    bool
 	Error     string
@@ -118,6 +121,7 @@ type PeopleDetailParams struct {
 	AllLabels        []labels.Label
 	CSRFToken        string
 	RecentActivities []journal.Activity // latest 10 activities (Phase 5)
+	Dates            []dates.ImportantDate // important dates
 }
 
 // PeopleDetail renders the detail view for a single person.
@@ -154,6 +158,18 @@ func LocationRow(index int) templ.Component {
 func LocationRowFilled(index int, l people.Location) templ.Component {
 	_, _ = index, l
 	return stub("location_row_filled stub")
+}
+
+// DateRow renders a blank date input row for htmx insertion.
+func DateRow(index int) templ.Component {
+	_ = index
+	return stub("date_row stub")
+}
+
+// DateRowFilled renders a pre-filled date input row for the edit form.
+func DateRowFilled(index int, d dates.ImportantDate) templ.Component {
+	_, _ = index, d
+	return stub("date_row_filled stub")
 }
 
 // dobValue formats a nullable *time.Time as YYYY-MM-DD for <input type="date">.
@@ -291,4 +307,18 @@ func PersonPickerResults(ps []people.Person) templ.Component {
 func PersonChip(personID int64, name string) templ.Component {
 	_, _ = personID, name
 	return stub("person_chip stub")
+}
+
+// ---- dates ------------------------------------------------------------------
+
+// DatesListParams holds data for the upcoming dates page.
+type DatesListParams struct {
+	Items []dates.OnThisDayItem
+	Days  int
+}
+
+// DatesList renders the /dates upcoming dates page.
+func DatesList(params DatesListParams) templ.Component {
+	_ = params
+	return stub("dates_list stub")
 }

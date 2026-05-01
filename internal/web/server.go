@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v5/middleware"
 
 	"github.com/nhymxu/kith-pms/internal/auth"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -27,6 +28,7 @@ type Deps struct {
 	PeopleService  *people.Service
 	LabelsService  *labels.Service
 	JournalService *journal.Service
+	DatesService   *dates.Service
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -78,16 +80,23 @@ func Mount(e *echo.Echo, deps Deps) {
 			PeopleSvc:  deps.PeopleService,
 			LabelsSvc:  deps.LabelsService,
 			JournalSvc: deps.JournalService,
+			DatesSvc:   deps.DatesService,
 		}
 		protected.GET("/", homeH.Get)
 
 		// People routes
-		peopleH := &handlers.PeopleHandlers{Svc: deps.PeopleService, LabelsSvc: deps.LabelsService, JournalSvc: deps.JournalService}
+		peopleH := &handlers.PeopleHandlers{
+			Svc:        deps.PeopleService,
+			LabelsSvc:  deps.LabelsService,
+			JournalSvc: deps.JournalService,
+			DatesSvc:   deps.DatesService,
+		}
 		protected.GET("/people", peopleH.GetList)
 		protected.GET("/people/new", peopleH.GetNew)
 		protected.POST("/people", peopleH.PostCreate)
 		protected.POST("/people/contact-row", peopleH.PostContactRow)
 		protected.POST("/people/location-row", peopleH.PostLocationRow)
+		protected.POST("/people/:id/date-row", peopleH.PostDateRow)
 		protected.GET("/people/:id", peopleH.GetDetail)
 		protected.GET("/people/:id/edit", peopleH.GetEdit)
 		protected.POST("/people/:id", peopleH.PostUpdate)
@@ -117,5 +126,9 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.GET("/journal/:id/delete-confirm", journalH.GetDeleteConfirm)
 		protected.POST("/journal/:id", journalH.PostUpdate)
 		protected.POST("/journal/:id/delete", journalH.PostDelete)
+
+		// Dates routes
+		datesH := &handlers.DatesHandlers{Svc: deps.DatesService}
+		protected.GET("/dates", datesH.GetUpcoming)
 	}
 }

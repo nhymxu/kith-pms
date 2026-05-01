@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"time"
+	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
 )
 
@@ -11,6 +12,7 @@ type PeopleFormParams struct {
 	Person    people.Person
 	Contacts  []people.ContactInfo
 	Locations []people.Location
+	Dates     []dates.ImportantDate
 	CSRFToken string
 	IsEdit    bool
 	Error     string
@@ -192,6 +194,35 @@ templ peopleFormFields(params PeopleFormParams) {
 			class="text-sm text-deep-olive hover:underline"
 		>
 			+ Add location
+		</button>
+	</fieldset>
+	<!-- Important Dates -->
+	<fieldset class="space-y-3">
+		<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-2">Important Dates</legend>
+		<table class="w-full text-sm" id="dates-table">
+			<thead>
+				<tr class="text-left text-olive-ink/60">
+					<th class="pb-1 pr-2 font-medium w-28">Kind</th>
+					<th class="pb-1 pr-2 font-medium w-32">Label</th>
+					<th class="pb-1 pr-2 font-medium w-32">Date</th>
+					<th class="pb-1 pr-2 font-medium w-24">Recurring</th>
+					<th class="pb-1 font-medium">Notes</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, d := range params.Dates {
+					@DateRowFilled(i, d)
+				}
+			</tbody>
+		</table>
+		<button
+			type="button"
+			hx-post={ fmt.Sprintf("/people/%d/date-row?index=%d", params.Person.ID, len(params.Dates)) }
+			hx-target="#dates-table tbody"
+			hx-swap="beforeend"
+			class="text-sm text-deep-olive hover:underline"
+		>
+			+ Add date
 		</button>
 	</fieldset>
 	<!-- Actions -->

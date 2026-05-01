@@ -132,14 +132,22 @@ templ PeopleList(params PeopleListParams) {
 templ labelFilterPill(l labels.Label, q string, activeIDs []int64) {
 	<a
 		href={ templ.SafeURL(toggleLabelURL(l.ID, q, activeIDs)) }
-		style={ fmt.Sprintf("background-color:%s;color:%s", labelPillBg(l, activeIDs), contrastColor(labelPillBg(l, activeIDs))) }
 		class={ "rounded-full px-3 py-1 text-xs font-medium border transition " + labelPillBorder(l, activeIDs) }
+		{ buildPillStyleAttr(l, activeIDs)... }
 	>
 		{ l.Name }
 	</a>
 }
 
 // ---- URL helpers ------------------------------------------------------------
+
+// buildPillStyleAttr returns a templ.Attributes value for dynamic pill style.
+func buildPillStyleAttr(l labels.Label, activeIDs []int64) templ.Attributes {
+	bg := labelPillBg(l, activeIDs)
+	return templ.Attributes{
+		"style": "background-color:" + bg + ";color:" + contrastColor(bg),
+	}
+}
 
 // toggleLabelURL builds the /people URL toggling label id in/out of active set.
 func toggleLabelURL(id int64, q string, activeIDs []int64) string {

@@ -55,7 +55,7 @@ templ PersonPickerResults(ps []people.Person) {
 			<button
 				type="button"
 				class="w-full text-left px-3 py-2 text-sm hover:bg-sage-border/20 transition"
-				hx-on:click={ fmt.Sprintf("addPersonChip(%d, %q)", p.ID, p.Name) }
+				hx-on:click={ buildAddPersonChipScript(p.ID, p.Name) }
 			>
 				{ p.Name }
 			</button>
@@ -73,11 +73,21 @@ templ PersonChip(personID int64, name string) {
 		{ name }
 		<button
 			type="button"
-			onclick={ templ.ComponentScript{Call: fmt.Sprintf("removePersonChip(%d)", personID)} }
+			onclick={ buildRemovePersonChipScript(personID) }
 			class="text-olive-ink/50 hover:text-olive-ink ml-1 font-bold leading-none"
 			aria-label={ "Remove " + name }
 		>
 			×
 		</button>
 	</span>
+}
+
+// buildAddPersonChipScript returns a JavaScript call for adding a person chip.
+func buildAddPersonChipScript(personID int64, name string) templ.ComponentScript {
+	return templ.ComponentScript{Call: fmt.Sprintf("addPersonChip(%d, %q)", personID, name)}
+}
+
+// buildRemovePersonChipScript returns a JavaScript call string for removing a person chip.
+func buildRemovePersonChipScript(personID int64) templ.ComponentScript {
+	return templ.ComponentScript{Call: fmt.Sprintf("removePersonChip(%d)", personID)}
 }

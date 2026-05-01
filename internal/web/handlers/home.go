@@ -13,17 +13,19 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/templates"
 )
 
 // HomeHandler handles the dashboard homepage (GET /).
 // It pulls summary counts and recent records from the database.
 type HomeHandler struct {
-	DB         *sql.DB
-	PeopleSvc  *people.Service
-	LabelsSvc  *labels.Service
-	JournalSvc *journal.Service
-	DatesSvc   *dates.Service
+	DB           *sql.DB
+	PeopleSvc    *people.Service
+	LabelsSvc    *labels.Service
+	JournalSvc   *journal.Service
+	DatesSvc     *dates.Service
+	RemindersSvc *reminders.Service
 }
 
 // Get handles GET / and renders the dashboard.
@@ -92,6 +94,26 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 			slog.Warn("dashboard: on this day", "error", err)
 		} else {
 			data.OnThisDay = onThisDay
+		}
+	}
+
+	// Overdue reminders
+	if h.RemindersSvc != nil {
+		overdue, err := h.RemindersSvc.GetOverdue(ctx)
+		if err != nil {
+			slog.Warn("dashboard: overdue reminders", "error", err)
+		} else {
+			data.OverdueReminders = overdue
+		}
+	}
+
+	// Upcoming reminders (next 7 days)
+	if h.RemindersSvc != nil {
+		upcoming, err := h.RemindersSvc.GetUpcoming(ctx, 7)
+		if err != nil {
+			slog.Warn("dashboard: upcoming reminders", "error", err)
+		} else {
+			data.UpcomingReminders = upcoming
 		}
 	}
 

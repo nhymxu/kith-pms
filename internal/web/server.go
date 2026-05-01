@@ -15,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
 )
 
@@ -23,12 +24,13 @@ var staticFS embed.FS
 
 // Deps holds application-level dependencies passed into the web layer.
 type Deps struct {
-	DB             *sql.DB
-	AuthService    *auth.Service
-	PeopleService  *people.Service
-	LabelsService  *labels.Service
-	JournalService *journal.Service
-	DatesService   *dates.Service
+	DB               *sql.DB
+	AuthService      *auth.Service
+	PeopleService    *people.Service
+	LabelsService    *labels.Service
+	JournalService   *journal.Service
+	DatesService     *dates.Service
+	RemindersService *reminders.Service
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -76,11 +78,12 @@ func Mount(e *echo.Echo, deps Deps) {
 
 		// Page routes
 		homeH := &handlers.HomeHandler{
-			DB:         deps.DB,
-			PeopleSvc:  deps.PeopleService,
-			LabelsSvc:  deps.LabelsService,
-			JournalSvc: deps.JournalService,
-			DatesSvc:   deps.DatesService,
+			DB:           deps.DB,
+			PeopleSvc:    deps.PeopleService,
+			LabelsSvc:    deps.LabelsService,
+			JournalSvc:   deps.JournalService,
+			DatesSvc:     deps.DatesService,
+			RemindersSvc: deps.RemindersService,
 		}
 		protected.GET("/", homeH.Get)
 
@@ -130,5 +133,19 @@ func Mount(e *echo.Echo, deps Deps) {
 		// Dates routes
 		datesH := &handlers.DatesHandlers{Svc: deps.DatesService}
 		protected.GET("/dates", datesH.GetUpcoming)
+
+		// Reminders routes
+		remindersH := &handlers.RemindersHandlers{
+			Svc:       deps.RemindersService,
+			PeopleSvc: deps.PeopleService,
+		}
+		protected.GET("/reminders", remindersH.GetList)
+		protected.GET("/reminders/new", remindersH.GetNew)
+		protected.POST("/reminders", remindersH.PostCreate)
+		protected.GET("/reminders/:id", remindersH.GetDetail)
+		protected.GET("/reminders/:id/edit", remindersH.GetEdit)
+		protected.POST("/reminders/:id", remindersH.PutUpdate)
+		protected.POST("/reminders/:id/delete", remindersH.Delete)
+		protected.POST("/reminders/:id/complete", remindersH.PostToggleComplete)
 	}
 }

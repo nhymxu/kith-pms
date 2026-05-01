@@ -1,0 +1,155 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/reminders"
+)
+
+type RemindersFormParams struct {
+	Reminder  reminders.Reminder
+	CSRFToken string
+	IsEdit    bool
+	Error     string
+	AllPeople []people.Person
+}
+
+templ RemindersForm(params RemindersFormParams) {
+	@Layout(buildReminderFormTitle(params.IsEdit)) {
+		<div class="max-w-2xl">
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">
+				if params.IsEdit {
+					Edit Reminder
+				} else {
+					New Reminder
+				}
+			</h1>
+			if params.Error != "" {
+				<div class="bg-red-50 border border-red-200 text-red-800 rounded px-4 py-3 mb-6">
+					{ params.Error }
+				</div>
+			}
+			<form
+				method="POST"
+				action={ templ.SafeURL(buildReminderFormAction(params.IsEdit, params.Reminder.ID)) }
+				class="space-y-6"
+			>
+				<input type="hidden" name="csrf_token" value={ params.CSRFToken }/>
+				if params.IsEdit {
+					<input type="hidden" name="_method" value="PUT"/>
+				}
+				<!-- Title -->
+				<div>
+					<label for="title" class="block text-sm font-medium text-olive-ink mb-1">
+						Title <span class="text-red-600">*</span>
+					</label>
+					<input
+						type="text"
+						id="title"
+						name="title"
+						value={ params.Reminder.Title }
+						required
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<!-- Notes -->
+				<div>
+					<label for="notes" class="block text-sm font-medium text-olive-ink mb-1">
+						Notes
+					</label>
+					<textarea
+						id="notes"
+						name="notes"
+						rows="4"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					>{ params.Reminder.Notes }</textarea>
+				</div>
+				<!-- Due Date -->
+				<div>
+					<label for="due_date" class="block text-sm font-medium text-olive-ink mb-1">
+						Due Date <span class="text-red-600">*</span>
+					</label>
+					<input
+						type="date"
+						id="due_date"
+						name="due_date"
+						value={ params.Reminder.DueDate.Format("2006-01-02") }
+						required
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<!-- Person -->
+				<div>
+					<label for="person_id" class="block text-sm font-medium text-olive-ink mb-1">
+						Link to Person (optional)
+					</label>
+					<select
+						id="person_id"
+						name="person_id"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					>
+						<option value="">— None —</option>
+						for _, p := range params.AllPeople {
+							<option
+								value={ fmt.Sprintf("%d", p.ID) }
+								selected?={ params.Reminder.PersonID != nil && *params.Reminder.PersonID == p.ID }
+							>
+								{ p.Name }
+							</option>
+						}
+					</select>
+				</div>
+				<!-- Completed (edit mode only) -->
+				if params.IsEdit {
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="completed"
+							name="completed"
+							checked?={ params.Reminder.Completed }
+							class="w-4 h-4 text-deep-olive border-sage-border rounded focus:ring-2 focus:ring-deep-olive"
+						/>
+						<label for="completed" class="text-sm text-olive-ink">
+							Mark as completed
+						</label>
+					</div>
+				}
+				<!-- Actions -->
+				<div class="flex gap-3">
+					<button
+						type="submit"
+						class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+					>
+						if params.IsEdit {
+							Update
+						} else {
+							Create
+						}
+					</button>
+					<a
+						href={ templ.SafeURL(buildReminderFormAction(params.IsEdit, params.Reminder.ID)) }
+						class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+					>
+						Cancel
+					</a>
+				</div>
+			</form>
+		</div>
+	}
+}
+
+// buildReminderFormAction returns the form action URL based on edit mode.
+func buildReminderFormAction(isEdit bool, reminderID int64) string {
+	if isEdit {
+		return fmt.Sprintf("/reminders/%d", reminderID)
+	}
+	return "/reminders"
+}
+
+// buildReminderFormTitle returns the page title based on edit mode.
+func buildReminderFormTitle(isEdit bool) string {
+	if isEdit {
+		return "Edit Reminder — kith"
+	}
+	return "New Reminder — kith"
+}

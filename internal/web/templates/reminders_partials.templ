@@ -1,0 +1,73 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/reminders"
+	"time"
+)
+
+templ ReminderRow(r reminders.ReminderWithPerson, csrfToken string) {
+	<tr id={ fmt.Sprintf("reminder-%d", r.ID) } class="border-b border-sage-border hover:bg-sage-border/10 transition">
+		<td class="py-3 px-4">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/reminders/%d", r.ID)) }
+				class="text-deep-olive hover:underline font-medium"
+			>
+				{ r.Title }
+			</a>
+		</td>
+		<td class="py-3 px-4 text-sm text-olive-ink">
+			{ r.DueDate.Format("Jan 2, 2006") }
+		</td>
+		<td class="py-3 px-4 text-sm text-olive-ink">
+			if r.PersonName != "" {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/people/%d", *r.PersonID)) }
+					class="text-deep-olive hover:underline"
+				>
+					{ r.PersonName }
+				</a>
+			} else {
+				<span class="text-olive-ink/40">—</span>
+			}
+		</td>
+		<td class="py-3 px-4">
+			if r.Completed {
+				<span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+					Completed
+				</span>
+			} else {
+				if r.DueDate.Before(time.Now()) {
+					<span class="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
+						Overdue
+					</span>
+				} else {
+					<span class="inline-block bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+						Pending
+					</span>
+				}
+			}
+		</td>
+		<td class="py-3 px-4 text-right">
+			<div class="flex gap-2 justify-end">
+				if !r.Completed {
+					<button
+						hx-post={ fmt.Sprintf("/reminders/%d/complete", r.ID) }
+						hx-target={ fmt.Sprintf("#reminder-%d", r.ID) }
+						hx-swap="outerHTML"
+						hx-headers={ fmt.Sprintf(`{"X-CSRF-Token": "%s"}`, csrfToken) }
+						class="text-xs text-deep-olive hover:underline"
+					>
+						Mark complete
+					</button>
+				}
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/reminders/%d/edit", r.ID)) }
+					class="text-xs text-deep-olive hover:underline"
+				>
+					Edit
+				</a>
+			</div>
+		</td>
+	</tr>
+}

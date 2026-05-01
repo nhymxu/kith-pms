@@ -9,8 +9,8 @@ import (
 // Text color (black or white) is chosen based on perceived luminance of the background.
 templ LabelChip(l labels.Label) {
 	<span
-		style={ fmt.Sprintf("background-color:%s;color:%s", l.Color, contrastColor(l.Color)) }
 		class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+		{ buildStyleAttr(l.Color)... }
 	>
 		{ l.Name }
 	</span>
@@ -19,8 +19,8 @@ templ LabelChip(l labels.Label) {
 // LabelChipDetach renders a label chip with an [x] detach button (htmx).
 templ LabelChipDetach(l labels.Label, personID int64, csrfToken string) {
 	<span
-		style={ fmt.Sprintf("background-color:%s;color:%s", l.Color, contrastColor(l.Color)) }
 		class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+		{ buildStyleAttr(l.Color)... }
 	>
 		{ l.Name }
 		<button
@@ -77,6 +77,13 @@ templ LabelDropdown(available []labels.Label, personID int64, csrfToken string) 
 }
 
 // ---- helpers ----------------------------------------------------------------
+
+// buildStyleAttr returns a templ.Attributes value for dynamic style.
+func buildStyleAttr(color string) templ.Attributes {
+	return templ.Attributes{
+		"style": "background-color:" + color + ";color:" + contrastColor(color),
+	}
+}
 
 // contrastColor returns "#000000" or "#ffffff" based on perceived luminance of a hex color.
 // Implements the W3C relative luminance formula (simplified integer path).

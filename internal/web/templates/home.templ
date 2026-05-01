@@ -5,16 +5,19 @@ import (
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/reminders"
 )
 
 // DashboardData holds all data needed to render the dashboard homepage.
 type DashboardData struct {
-	PeopleCount      int
-	LabelsCount      int
-	ActivitiesCount  int
-	RecentActivities []journal.Activity
-	RecentPeople     []people.Person
-	OnThisDay        []dates.OnThisDayItem
+	PeopleCount       int
+	LabelsCount       int
+	ActivitiesCount   int
+	RecentActivities  []journal.Activity
+	RecentPeople      []people.Person
+	OnThisDay         []dates.OnThisDayItem
+	OverdueReminders  []reminders.ReminderWithPerson
+	UpcomingReminders []reminders.ReminderWithPerson
 }
 
 // Home renders the dashboard homepage.
@@ -54,6 +57,70 @@ templ Home(data DashboardData) {
 						</li>
 					}
 				</ul>
+			</section>
+		}
+		<!-- Reminders Widget -->
+		if len(data.OverdueReminders) > 0 || len(data.UpcomingReminders) > 0 {
+			<section class="mb-8 border border-sage-border rounded-lg p-5 bg-white">
+				<div class="flex items-center justify-between mb-3">
+					<h2 class="font-semibold text-deep-olive">Reminders</h2>
+					<a href="/reminders" class="text-xs text-olive-ink/60 hover:text-deep-olive transition">View all →</a>
+				</div>
+				if len(data.OverdueReminders) > 0 {
+					<div class="mb-4">
+						<div class="flex items-center gap-2 mb-2">
+							<h3 class="text-sm font-medium text-red-700">Overdue</h3>
+							<span class="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5 rounded">
+								{ fmt.Sprintf("%d", len(data.OverdueReminders)) }
+							</span>
+						</div>
+						<ul class="space-y-2">
+							for i, r := range data.OverdueReminders {
+								if i < 5 {
+									<li class="flex items-start gap-2 text-sm">
+										<span class="text-red-600 mt-0.5">•</span>
+										<div class="flex-1 min-w-0">
+											<a
+												href={ templ.SafeURL(fmt.Sprintf("/reminders/%d", r.ID)) }
+												class="text-deep-olive hover:underline font-medium"
+											>
+												{ r.Title }
+											</a>
+											<span class="text-olive-ink/50 text-xs ml-1">
+												(due { r.DueDate.Format("Jan 2") })
+											</span>
+										</div>
+									</li>
+								}
+							}
+						</ul>
+					</div>
+				}
+				if len(data.UpcomingReminders) > 0 {
+					<div>
+						<h3 class="text-sm font-medium text-olive-ink mb-2">Upcoming (next 7 days)</h3>
+						<ul class="space-y-2">
+							for i, r := range data.UpcomingReminders {
+								if i < 5 {
+									<li class="flex items-start gap-2 text-sm">
+										<span class="text-olive-ink/40 mt-0.5">•</span>
+										<div class="flex-1 min-w-0">
+											<a
+												href={ templ.SafeURL(fmt.Sprintf("/reminders/%d", r.ID)) }
+												class="text-deep-olive hover:underline font-medium"
+											>
+												{ r.Title }
+											</a>
+											<span class="text-olive-ink/50 text-xs ml-1">
+												(due { r.DueDate.Format("Jan 2") })
+											</span>
+										</div>
+									</li>
+								}
+							}
+						</ul>
+					</div>
+				}
 			</section>
 		}
 		<!-- Stats row -->

@@ -1,0 +1,182 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/web/forms"
+)
+
+// ContactRow renders a blank contact input row for htmx "Add contact" insertion.
+templ ContactRow(index int) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("contact", index, "type") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="phone">Phone</option>
+				<option value="email">Email</option>
+				<option value="social">Social</option>
+				<option value="website">Website</option>
+				<option value="other">Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("contact", index, "value") }
+				placeholder="Value"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("contact", index, "label") }
+				placeholder="Label (optional)"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// ContactRowFilled renders a pre-filled contact input row for the edit form.
+templ ContactRowFilled(index int, c people.ContactInfo) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("contact", index, "type") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="phone" selected?={ c.Type == "phone" }>Phone</option>
+				<option value="email" selected?={ c.Type == "email" }>Email</option>
+				<option value="social" selected?={ c.Type == "social" }>Social</option>
+				<option value="website" selected?={ c.Type == "website" }>Website</option>
+				<option value="other" selected?={ c.Type == "other" }>Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("contact", index, "value") }
+				value={ c.Value }
+				placeholder="Value"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("contact", index, "label") }
+				value={ c.Label }
+				placeholder="Label (optional)"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// LocationRow renders a blank location input row for htmx "Add location" insertion.
+templ LocationRow(index int) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("location", index, "type") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="home">Home</option>
+				<option value="work">Work</option>
+				<option value="other">Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "address") }
+				placeholder="Address"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "city") }
+				placeholder="City"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "country") }
+				placeholder="Country"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "postal_code") }
+				placeholder="Postal"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// LocationRowFilled renders a pre-filled location input row for the edit form.
+templ LocationRowFilled(index int, l people.Location) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<select
+				name={ forms.IndexedName("location", index, "type") }
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			>
+				<option value="home" selected?={ l.Type == "home" }>Home</option>
+				<option value="work" selected?={ l.Type == "work" }>Work</option>
+				<option value="other" selected?={ l.Type == "other" }>Other</option>
+			</select>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "address") }
+				value={ l.Address }
+				placeholder="Address"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "city") }
+				value={ l.City }
+				placeholder="City"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "country") }
+				value={ l.Country }
+				placeholder="Country"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("location", index, "postal_code") }
+				value={ l.PostalCode }
+				placeholder="Postal"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+	</tr>
+}
+
+// formatIndexStr formats an integer as a string for use in form field names.
+func formatIndexStr(i int) string {
+	return fmt.Sprintf("%d", i)
+}

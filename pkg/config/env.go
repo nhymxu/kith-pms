@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"time"
 
 	"github.com/knadh/koanf/parsers/dotenv"
 	"github.com/knadh/koanf/providers/confmap"
@@ -21,6 +22,16 @@ type EnvConfigMap struct {
 	} `koanf:"SENTRY"`
 
 	TokenAuth string `koanf:"TOKEN_AUTH"`
+
+	// Database
+	DBPath        string `koanf:"DB_PATH"`
+	DBAutoMigrate bool   `koanf:"DB_AUTO_MIGRATE"`
+
+	// Auth
+	SessionSecret   string        `koanf:"SESSION_SECRET"`
+	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH"`
+	BehindTLS       bool          `koanf:"BEHIND_TLS"`
+	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
 }
 
 // ENV is global variable for using config in other place

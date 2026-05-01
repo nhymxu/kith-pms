@@ -1,0 +1,83 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/journal"
+	"github.com/nhymxu/kith-pms/internal/people"
+)
+
+// PersonSummary is a lightweight person record used in picker results.
+type PersonSummary struct {
+	ID   int64
+	Name string
+}
+
+// JournalRow renders a single activity list item.
+templ JournalRow(a journal.Activity) {
+	<div class="border border-sage-border rounded p-4 hover:bg-sage-border/10 transition">
+		<div class="flex items-start justify-between gap-4">
+			<div class="flex-1">
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/journal/%d", a.ID)) }
+					class="font-medium text-deep-olive hover:underline"
+				>
+					{ a.Title }
+				</a>
+				if len(a.People) > 0 {
+					<div class="flex flex-wrap gap-1 mt-1">
+						for _, p := range a.People {
+							<a
+								href={ templ.SafeURL(fmt.Sprintf("/people/%d", p.PersonID)) }
+								class="text-xs bg-sage-border/30 rounded-full px-2 py-0.5 text-olive-ink/70 hover:underline"
+							>
+								{ p.Name }
+							</a>
+						}
+					</div>
+				}
+			</div>
+			<div class="text-xs text-olive-ink/50 shrink-0 text-right">
+				<div>{ a.OccurredAtDate }</div>
+				if a.OccurredAtTime != "" {
+					<div>{ a.OccurredAtTime }</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// PersonPickerResults renders an htmx dropdown of matching people.
+templ PersonPickerResults(ps []people.Person) {
+	if len(ps) == 0 {
+		<div class="px-3 py-2 text-sm text-olive-ink/50">No people found</div>
+	} else {
+		for _, p := range ps {
+			<button
+				type="button"
+				class="w-full text-left px-3 py-2 text-sm hover:bg-sage-border/20 transition"
+				hx-on:click={ fmt.Sprintf("addPersonChip(%d, %q)", p.ID, p.Name) }
+			>
+				{ p.Name }
+			</button>
+		}
+	}
+}
+
+// PersonChip renders a selected-person chip with a hidden input and remove button.
+templ PersonChip(personID int64, name string) {
+	<span
+		id={ fmt.Sprintf("chip-%d", personID) }
+		class="inline-flex items-center gap-1 bg-sage-border/30 rounded-full px-3 py-1 text-sm"
+	>
+		<input type="hidden" name="person_id[]" value={ fmt.Sprintf("%d", personID) }/>
+		{ name }
+		<button
+			type="button"
+			onclick={ templ.ComponentScript{Call: fmt.Sprintf("removePersonChip(%d)", personID)} }
+			class="text-olive-ink/50 hover:text-olive-ink ml-1 font-bold leading-none"
+			aria-label={ "Remove " + name }
+		>
+			×
+		</button>
+	</span>
+}

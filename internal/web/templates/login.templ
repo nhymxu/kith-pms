@@ -1,0 +1,41 @@
+package templates
+
+// Login renders the login page with password form and CSRF protection.
+// csrfToken — value from auth.CSRFToken(c), embedded as hidden input.
+// next      — redirect destination after successful login (may be empty).
+// showError — true when ?error=invalid is present (wrong password).
+templ Login(csrfToken, next string, showError bool) {
+	@Layout("Login — kith") {
+		<div class="max-w-sm mx-auto mt-16">
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">Sign in</h1>
+			if showError {
+				<p class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+					Invalid password. Please try again.
+				</p>
+			}
+			<form method="POST" action="/login" class="space-y-4">
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				if next != "" {
+					<input type="hidden" name="next" value={ next }/>
+				}
+				<div>
+					<label for="password" class="block text-sm font-medium text-olive-ink mb-1">Password</label>
+					<input
+						id="password"
+						type="password"
+						name="password"
+						required
+						autofocus
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<button
+					type="submit"
+					class="w-full bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+				>
+					Sign in
+				</button>
+			</form>
+		</div>
+	}
+}

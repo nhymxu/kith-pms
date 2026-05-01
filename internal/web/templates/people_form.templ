@@ -1,0 +1,233 @@
+package templates
+
+import (
+	"fmt"
+	"time"
+	"github.com/nhymxu/kith-pms/internal/people"
+)
+
+// PeopleFormParams holds data for the person create/edit form page.
+type PeopleFormParams struct {
+	Person    people.Person
+	Contacts  []people.ContactInfo
+	Locations []people.Location
+	CSRFToken string
+	IsEdit    bool
+	Error     string
+}
+
+// PeopleForm renders the create or edit form for a person.
+templ PeopleForm(params PeopleFormParams) {
+	if params.IsEdit {
+		@Layout(fmt.Sprintf("Edit %s — kith", params.Person.Name)) {
+			@peopleFormBody(params)
+		}
+	} else {
+		@Layout("Add Person — kith") {
+			@peopleFormBody(params)
+		}
+	}
+}
+
+templ peopleFormBody(params PeopleFormParams) {
+	<div class="max-w-2xl">
+		if params.IsEdit {
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">Edit { params.Person.Name }</h1>
+		} else {
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">Add Person</h1>
+		}
+		if params.Error != "" {
+			<p class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+				{ params.Error }
+			</p>
+		}
+		if params.IsEdit {
+			<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/people/%d", params.Person.ID)) } class="space-y-6">
+				@peopleFormFields(params)
+			</form>
+		} else {
+			<form method="POST" action="/people" class="space-y-6">
+				@peopleFormFields(params)
+			</form>
+		}
+	</div>
+}
+
+templ peopleFormFields(params PeopleFormParams) {
+	<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+	<!-- Core fields -->
+	<fieldset class="space-y-4">
+		<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-2">Profile</legend>
+		<div class="grid grid-cols-3 gap-4">
+			<div>
+				<label for="prefix" class="block text-sm font-medium text-olive-ink mb-1">Prefix</label>
+				<input
+					id="prefix"
+					type="text"
+					name="prefix"
+					value={ params.Person.Prefix }
+					placeholder="Mr, Dr…"
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+			<div class="col-span-2">
+				<label for="name" class="block text-sm font-medium text-olive-ink mb-1">
+					Name <span class="text-red-500">*</span>
+				</label>
+				<input
+					id="name"
+					type="text"
+					name="name"
+					value={ params.Person.Name }
+					required
+					autofocus
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+		</div>
+		<div class="grid grid-cols-2 gap-4">
+			<div>
+				<label for="nickname" class="block text-sm font-medium text-olive-ink mb-1">Nickname</label>
+				<input
+					id="nickname"
+					type="text"
+					name="nickname"
+					value={ params.Person.Nickname }
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+			<div>
+				<label for="date_of_birth" class="block text-sm font-medium text-olive-ink mb-1">Date of Birth</label>
+				<input
+					id="date_of_birth"
+					type="date"
+					name="date_of_birth"
+					value={ dobValue(params.Person.DateOfBirth) }
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+		</div>
+		<div>
+			<label for="relationship_type" class="block text-sm font-medium text-olive-ink mb-1">Relationship Type</label>
+			<input
+				id="relationship_type"
+				type="text"
+				name="relationship_type"
+				value={ params.Person.RelationshipType }
+				list="relationship-suggestions"
+				placeholder="friend, family, co-worker…"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<datalist id="relationship-suggestions">
+				<option value="friend"></option>
+				<option value="family"></option>
+				<option value="co-worker"></option>
+				<option value="partner"></option>
+				<option value="other"></option>
+			</datalist>
+		</div>
+		<div>
+			<label for="other_notes" class="block text-sm font-medium text-olive-ink mb-1">Notes</label>
+			<textarea
+				id="other_notes"
+				name="other_notes"
+				rows="3"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			>{ params.Person.OtherNotes }</textarea>
+		</div>
+	</fieldset>
+	<!-- Contact info -->
+	<fieldset class="space-y-3">
+		<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-2">Contact Info</legend>
+		<table class="w-full text-sm" id="contacts-table">
+			<thead>
+				<tr class="text-left text-olive-ink/60">
+					<th class="pb-1 pr-2 font-medium w-28">Type</th>
+					<th class="pb-1 pr-2 font-medium">Value</th>
+					<th class="pb-1 pr-2 font-medium w-28">Label</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, c := range params.Contacts {
+					@ContactRowFilled(i, c)
+				}
+			</tbody>
+		</table>
+		<button
+			type="button"
+			hx-post="/people/contact-row"
+			hx-target="#contacts-table tbody"
+			hx-swap="beforeend"
+			hx-vals={ fmt.Sprintf(`{"count":"%d"}`, len(params.Contacts)) }
+			class="text-sm text-deep-olive hover:underline"
+		>
+			+ Add contact
+		</button>
+	</fieldset>
+	<!-- Locations -->
+	<fieldset class="space-y-3">
+		<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-2">Locations</legend>
+		<table class="w-full text-sm" id="locations-table">
+			<thead>
+				<tr class="text-left text-olive-ink/60">
+					<th class="pb-1 pr-2 font-medium w-24">Type</th>
+					<th class="pb-1 pr-2 font-medium">Address</th>
+					<th class="pb-1 pr-2 font-medium">City</th>
+					<th class="pb-1 pr-2 font-medium w-24">Country</th>
+					<th class="pb-1 font-medium w-24">Postal</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, l := range params.Locations {
+					@LocationRowFilled(i, l)
+				}
+			</tbody>
+		</table>
+		<button
+			type="button"
+			hx-post="/people/location-row"
+			hx-target="#locations-table tbody"
+			hx-swap="beforeend"
+			hx-vals={ fmt.Sprintf(`{"count":"%d"}`, len(params.Locations)) }
+			class="text-sm text-deep-olive hover:underline"
+		>
+			+ Add location
+		</button>
+	</fieldset>
+	<!-- Actions -->
+	<div class="flex gap-3 pt-2">
+		<button
+			type="submit"
+			class="bg-deep-olive text-parchment rounded px-5 py-2 text-sm font-semibold hover:opacity-90 transition"
+		>
+			if params.IsEdit {
+				Save changes
+			} else {
+				Add person
+			}
+		</button>
+		if params.IsEdit {
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/people/%d", params.Person.ID)) }
+				class="border border-sage-border rounded px-5 py-2 text-sm hover:bg-sage-border/20 transition"
+			>
+				Cancel
+			</a>
+		} else {
+			<a
+				href="/people"
+				class="border border-sage-border rounded px-5 py-2 text-sm hover:bg-sage-border/20 transition"
+			>
+				Cancel
+			</a>
+		}
+	</div>
+}
+
+// dobValue formats a nullable *time.Time as YYYY-MM-DD for <input type="date">.
+func dobValue(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("2006-01-02")
+}

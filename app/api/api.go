@@ -14,12 +14,7 @@ import (
 )
 
 func New() *echo.Echo {
-	e := newEchoApp()
-
-	v1 := e.Group("/v1")
-	groupV1Routes(v1)
-
-	return e
+	return newEchoApp()
 }
 
 func newEchoApp() *echo.Echo {

@@ -1,0 +1,195 @@
+package templates
+
+import (
+	"fmt"
+	"strings"
+	"github.com/nhymxu/kith-pms/internal/labels"
+	"github.com/nhymxu/kith-pms/internal/people"
+)
+
+// PeopleListParams holds data for the people list page.
+type PeopleListParams struct {
+	People       []people.Person
+	Query        string
+	Page         int
+	HasMore      bool
+	AllLabels    []labels.Label // for filter pills
+	ActiveLabels []int64        // currently-filtered label IDs
+}
+
+// PeopleList renders the /people index page with search, label filter, and pagination.
+templ PeopleList(params PeopleListParams) {
+	@Layout("People — kith") {
+		<div class="flex items-center justify-between mb-6">
+			<h1 class="text-2xl font-bold text-deep-olive">People</h1>
+			<a
+				href="/people/new"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>
+				Add person
+			</a>
+		</div>
+		<form method="GET" action="/people" class="mb-4 flex gap-2">
+			<input
+				type="search"
+				name="q"
+				value={ params.Query }
+				placeholder="Search by name…"
+				class="flex-1 border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<!-- preserve active label filters across search -->
+			for _, lid := range params.ActiveLabels {
+				<input type="hidden" name="labels" value={ fmt.Sprintf("%d", lid) }/>
+			}
+			<button
+				type="submit"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>
+				Search
+			</button>
+			if params.Query != "" || len(params.ActiveLabels) > 0 {
+				<a
+					href="/people"
+					class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-gray-50 transition"
+				>
+					Clear
+				</a>
+			}
+		</form>
+		<!-- Label filter pills -->
+		if len(params.AllLabels) > 0 {
+			<div class="flex flex-wrap gap-2 mb-6">
+				for _, l := range params.AllLabels {
+					@labelFilterPill(l, params.Query, params.ActiveLabels)
+				}
+			</div>
+		}
+		if len(params.People) == 0 {
+			<div class="text-center py-16 text-olive-ink/60">
+				<p class="text-lg mb-4">No people yet</p>
+				<a
+					href="/people/new"
+					class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+				>
+					Add your first person
+				</a>
+			</div>
+		} else {
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm border-collapse">
+					<thead>
+						<tr class="border-b border-sage-border text-left text-olive-ink/70">
+							<th class="pb-2 pr-4 font-medium">Name</th>
+							<th class="pb-2 pr-4 font-medium">Nickname</th>
+							<th class="pb-2 pr-4 font-medium">Relationship</th>
+							<th class="pb-2 font-medium">Added</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, p := range params.People {
+							<tr class="border-b border-sage-border/50 hover:bg-sage-border/10">
+								<td class="py-2 pr-4">
+									<a href={ templ.SafeURL(fmt.Sprintf("/people/%d", p.ID)) } class="font-medium text-deep-olive hover:underline">
+										if p.Prefix != "" {
+											{ p.Prefix } { p.Name }
+										} else {
+											{ p.Name }
+										}
+									</a>
+								</td>
+								<td class="py-2 pr-4 text-olive-ink/70">{ p.Nickname }</td>
+								<td class="py-2 pr-4 text-olive-ink/70">{ p.RelationshipType }</td>
+								<td class="py-2 text-olive-ink/50 text-xs">{ p.CreatedAt.Format("2006-01-02") }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<div class="flex gap-4 mt-6 text-sm">
+				if params.Page > 1 {
+					<a
+						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s", params.Query, params.Page-1, joinInt64s(params.ActiveLabels))) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						← Previous
+					</a>
+				}
+				if params.HasMore {
+					<a
+						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s", params.Query, params.Page+1, joinInt64s(params.ActiveLabels))) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						Next →
+					</a>
+				}
+			</div>
+		}
+	}
+}
+
+// labelFilterPill renders a single label as a clickable filter toggle.
+// Clicking adds or removes the label ID from the ?labels= query param.
+templ labelFilterPill(l labels.Label, q string, activeIDs []int64) {
+	<a
+		href={ templ.SafeURL(toggleLabelURL(l.ID, q, activeIDs)) }
+		style={ fmt.Sprintf("background-color:%s;color:%s", labelPillBg(l, activeIDs), contrastColor(labelPillBg(l, activeIDs))) }
+		class={ "rounded-full px-3 py-1 text-xs font-medium border transition " + labelPillBorder(l, activeIDs) }
+	>
+		{ l.Name }
+	</a>
+}
+
+// ---- URL helpers ------------------------------------------------------------
+
+// toggleLabelURL builds the /people URL toggling label id in/out of active set.
+func toggleLabelURL(id int64, q string, activeIDs []int64) string {
+	var next []int64
+	found := false
+	for _, a := range activeIDs {
+		if a == id {
+			found = true
+		} else {
+			next = append(next, a)
+		}
+	}
+	if !found {
+		next = append(next, id)
+	}
+	labelsParam := joinInt64s(next)
+	if q != "" && labelsParam != "" {
+		return fmt.Sprintf("/people?q=%s&labels=%s", q, labelsParam)
+	}
+	if q != "" {
+		return fmt.Sprintf("/people?q=%s", q)
+	}
+	if labelsParam != "" {
+		return fmt.Sprintf("/people?labels=%s", labelsParam)
+	}
+	return "/people"
+}
+
+func labelPillBg(l labels.Label, activeIDs []int64) string {
+	for _, a := range activeIDs {
+		if a == l.ID {
+			return l.Color
+		}
+	}
+	return "#f3f4f0" // inactive: light neutral
+}
+
+func labelPillBorder(l labels.Label, activeIDs []int64) string {
+	for _, a := range activeIDs {
+		if a == l.ID {
+			return "border-transparent"
+		}
+	}
+	return "border-sage-border"
+}
+
+func joinInt64s(ids []int64) string {
+	parts := make([]string, len(ids))
+	for i, id := range ids {
+		parts[i] = fmt.Sprintf("%d", id)
+	}
+	return strings.Join(parts, ",")
+}

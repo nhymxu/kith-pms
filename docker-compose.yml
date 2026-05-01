@@ -1,0 +1,24 @@
+services:
+  kith:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - kith-data:/data
+    environment:
+      - DB_PATH=/data/kith.db
+      - SESSION_SECRET=${SESSION_SECRET}
+      - TOKEN_AUTH=${TOKEN_AUTH:-}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - DEBUG=${DEBUG:-false}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  kith-data:
+    driver: local

@@ -172,3 +172,15 @@ Temporary Items
 /go-boilerplate
 /test_binary
 /cover.out
+
+# Generated code — regenerate with `make assets`
+*_templ.go
+internal/db/queries/*.go
+internal/web/static/app.css
+
+# Build output
+bin/
+!bin/.gitkeep
+
+# Runtime data
+data/

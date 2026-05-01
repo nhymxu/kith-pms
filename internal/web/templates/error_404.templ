@@ -1,0 +1,20 @@
+package templates
+
+// Error404 renders the 404 Not Found page with the standard layout.
+templ Error404() {
+	@Layout("Not Found — kith") {
+		<div class="flex flex-col items-center justify-center py-24 text-center">
+			<p class="text-7xl font-bold text-deep-olive/20 mb-4 select-none">404</p>
+			<h1 class="text-2xl font-bold text-deep-olive mb-2">Page not found</h1>
+			<p class="text-olive-ink/60 mb-8 max-w-sm">
+				The page you are looking for does not exist or may have been moved.
+			</p>
+			<a
+				href="/"
+				class="bg-deep-olive text-parchment rounded px-5 py-2.5 text-sm font-semibold hover:opacity-90 transition"
+			>
+				Go to dashboard
+			</a>
+		</div>
+	}
+}

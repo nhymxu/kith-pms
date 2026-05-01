@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PostHog-inspired design tokens exposed as CSS custom properties.
+   Values sourced from DESIGN.md §2 Color Palette. */
+:root {
+  /* Primary text */
+  --color-olive-ink:     #4d4f46;
+  --color-deep-olive:    #23251d;
+
+  /* Brand accent — appears on hover only */
+  --color-posthog-orange: #F54E00;
+
+  /* Secondary accents */
+  --color-amber-gold:    #F7A501;
+  --color-gold-border:   #b17816;
+  --color-focus-blue:    #3b82f6;
+
+  /* Surfaces & backgrounds */
+  --color-parchment:     #fdfdf8;
+  --color-sage-cream:    #eeefe9;
+  --color-light-sage:    #e5e7e0;
+  --color-warm-tan:      #d4c9b8;
+  --color-hover-white:   #f4f4f4;
+
+  /* Neutral / text */
+  --color-muted-olive:   #65675e;
+  --color-sage-placeholder: #9ea096;
+  --color-sage-border:   #bfc1b7;
+  --color-light-border:  #b6b7af;
+
+  /* Dark CTA */
+  --color-near-black:    #1e1f23;
+  --color-dark-text:     #111827;
+}

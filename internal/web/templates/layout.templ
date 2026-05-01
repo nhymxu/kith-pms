@@ -1,0 +1,24 @@
+package templates
+
+// Layout renders the base HTML shell used by every page.
+// title — value injected into <title> and shown in the nav bar.
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link rel="stylesheet" href="/static/app.css"/>
+			<script src="/static/htmx.min.js" defer></script>
+		</head>
+		<body class="bg-parchment text-olive-ink min-h-screen">
+			<nav class="border-b border-sage-border px-6 py-3 flex items-center gap-4">
+				<span class="font-bold text-deep-olive text-lg tracking-tight">kith</span>
+			</nav>
+			<main class="mx-auto max-w-6xl px-6 py-8">
+				{ children... }
+			</main>
+		</body>
+	</html>
+}

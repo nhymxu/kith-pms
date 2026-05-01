@@ -1,0 +1,117 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/journal"
+)
+
+// JournalListParams holds data for the journal index page.
+type JournalListParams struct {
+	Activities []journal.Activity
+	Query      string
+	FromDate   string
+	ToDate     string
+	Page       int
+	HasMore    bool
+}
+
+// JournalList renders the /journal index page with search filters and pagination.
+templ JournalList(params JournalListParams) {
+	@Layout("Journal — kith") {
+		<div class="flex items-center justify-between mb-6">
+			<h1 class="text-2xl font-bold text-deep-olive">Journal</h1>
+			<a
+				href="/journal/new"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>
+				New entry
+			</a>
+		</div>
+		<!-- Filter bar -->
+		<form method="GET" action="/journal" class="mb-6 flex flex-wrap gap-2">
+			<input
+				type="search"
+				name="q"
+				value={ params.Query }
+				placeholder="Search entries…"
+				class="flex-1 min-w-48 border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<input
+				type="date"
+				name="from"
+				value={ params.FromDate }
+				class="border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<input
+				type="date"
+				name="to"
+				value={ params.ToDate }
+				class="border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<button
+				type="submit"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>
+				Filter
+			</button>
+			if params.Query != "" || params.FromDate != "" || params.ToDate != "" {
+				<a
+					href="/journal"
+					class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-gray-50 transition"
+				>
+					Clear
+				</a>
+			}
+		</form>
+		if len(params.Activities) == 0 {
+			<div class="text-center py-16 text-olive-ink/60">
+				<p class="text-lg mb-4">No journal entries yet</p>
+				<a
+					href="/journal/new"
+					class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+				>
+					Write your first entry
+				</a>
+			</div>
+		} else {
+			<div class="space-y-3">
+				for _, a := range params.Activities {
+					@JournalRow(a)
+				}
+			</div>
+			<div class="flex gap-4 mt-6 text-sm">
+				if params.Page > 1 {
+					<a
+						href={ templ.SafeURL(journalPageURL(params.Query, params.FromDate, params.ToDate, params.Page-1)) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						← Previous
+					</a>
+				}
+				if params.HasMore {
+					<a
+						href={ templ.SafeURL(journalPageURL(params.Query, params.FromDate, params.ToDate, params.Page+1)) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						Next →
+					</a>
+				}
+			</div>
+		}
+	}
+}
+
+// journalPageURL builds the /journal URL preserving filters.
+func journalPageURL(q, from, to string, page int) string {
+	u := fmt.Sprintf("/journal?page=%d", page)
+	if q != "" {
+		u += "&q=" + q
+	}
+	if from != "" {
+		u += "&from=" + from
+	}
+	if to != "" {
+		u += "&to=" + to
+	}
+	return u
+}

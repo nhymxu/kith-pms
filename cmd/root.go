@@ -31,7 +31,10 @@ func newApp() *cli.Command {
 		},
 		Commands: []*cli.Command{
 			apiCommand(),
-			sampleAliasCommand(),
+			migrateCommand(),
+			setPasswordCommand(),
+			backupCommand(),
+			restoreCommand(),
 		},
 	}
 }

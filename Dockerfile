@@ -46,4 +46,4 @@ USER 65532:65532
 
 EXPOSE 8000
 
-ENTRYPOINT ["/kith-pms", "api"]
+ENTRYPOINT ["/kith-pms", "serve"]

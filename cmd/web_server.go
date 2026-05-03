@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/urfave/cli/v3"
 
-	"github.com/nhymxu/kith-pms/app/api"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
@@ -25,10 +24,10 @@ import (
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
-func apiCommand() *cli.Command {
+func webServerCommand() *cli.Command {
 	return &cli.Command{
-		Name:  "api",
-		Usage: "API server",
+		Name:  "serve",
+		Usage: "Web server",
 		Description: `Serve all service on same pod.
 Can scale later.`,
 		Flags: []cli.Flag{
@@ -90,7 +89,7 @@ Can scale later.`,
 				Lifetime: lifetime,
 			}
 
-			e := api.New()
+			e := web.New()
 
 			// Set custom error handler for styled HTML error pages.
 			e.HTTPErrorHandler = handlers.CustomHTTPErrorHandler
@@ -104,7 +103,7 @@ Can scale later.`,
 				avatarPath = "data/avatars"
 			}
 			if err := os.MkdirAll(avatarPath, 0o700); err != nil {
-				return fmt.Errorf("api: create avatar dir: %w", err)
+				return fmt.Errorf("web-server: create avatar dir: %w", err)
 			}
 			fileSvc := files.NewLocalFileService(avatarPath)
 			peopleSvc.FileService = fileSvc

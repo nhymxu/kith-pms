@@ -6,7 +6,7 @@
 kith-pms/
 ├── cmd/                          # CLI entrypoints (compiled to single binary)
 │   ├── main.go                   # Binary entry, dependency init, subcommand dispatch
-│   ├── api.go                    # `api` subcommand — starts Echo HTTP server
+│   ├── web_server.go             # `serve` subcommand — starts Echo HTTP server
 │   ├── migrate.go                # `migrate` subcommand — runs schema migrations
 │   ├── set_password.go           # `set-password` subcommand — interactive password setter
 │   ├── backup.go                 # `backup` subcommand — database backup CLI
@@ -49,7 +49,8 @@ kith-pms/
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
 │   └── web/                      # HTTP handler layer
-│       ├── server.go             # Echo setup, dependency injection, route mounting
+│       ├── server.go             # Echo setup
+│       ├── route.go              # Echo dependency injection, route mounting
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
 │       │   ├── home.go           # Dashboard / home page (includes OnThisDay widget)
@@ -92,7 +93,6 @@ kith-pms/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
 │   └── find-cgo-pkg.sh           # Identifies CGO dependencies
-├── web/                          # Frontend assets root (empty, for future use)
 ├── docs/                         # Project documentation
 ├── Dockerfile                    # Multi-stage container build
 ├── Makefile                      # Dev workflow targets
@@ -105,7 +105,7 @@ kith-pms/
 
 ### `cmd` (package `main`)
 - **main.go**: Binary entry point; initializes CLI app and dispatches to subcommands
-- **api.go**: `api` subcommand — starts Echo server after dependency init
+- **web_server.go**: `serve` subcommand — starts Echo server after dependency init
 - **migrate.go**: `migrate` subcommand — applies pending SQL migrations
 - **set_password.go**: `set-password` subcommand — interactive password change
 - **backup.go** & **restore.go**: Database backup/restore CLI with safety checks
@@ -152,7 +152,8 @@ kith-pms/
 - **service_test.go**: File service unit tests
 
 ### `internal/web` — HTTP & template layer
-- **server.go**: Creates Echo instance, mounts static file server, registers route groups, injects service dependencies into handlers
+- **server.go**: Creates Echo instance
+- **route.go**: Echo mounts static file server, registers route groups, injects service dependencies into handlers
 - **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home)
 - **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps
 - **forms/**: Form struct definitions for validation & binding

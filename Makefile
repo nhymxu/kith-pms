@@ -41,7 +41,7 @@ migrate: ## Apply database migrations
 dev: ## Run development servers (templ watch + tailwind watch + go run)
 	templ generate --watch ./internal/web/... & \
 	bin/tailwindcss -i internal/web/templates/styles.css -o internal/web/static/app.css --watch & \
-	CGO_ENABLED=0 go run ./cmd api
+	CGO_ENABLED=0 go run ./cmd serve
 
 .PHONY: deps
 deps: ## Install Go dependencies

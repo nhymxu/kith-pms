@@ -15,8 +15,8 @@ import (
 
 func newApp() *cli.Command {
 	return &cli.Command{
-		Name:  "kith-pms",
-		Usage: "Kith - Personal Management System",
+		Name:        "kith-pms",
+		Usage:       "Kith - Personal Management System",
 		Description: `kith (kith and kin) is a dead simple Personal Management System with relationship, life log, memory, ...`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -30,7 +30,7 @@ func newApp() *cli.Command {
 			return ctx, nil
 		},
 		Commands: []*cli.Command{
-			apiCommand(),
+			webServerCommand(),
 			migrateCommand(),
 			setPasswordCommand(),
 			backupCommand(),

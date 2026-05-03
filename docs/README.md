@@ -1,3 +1,0 @@
-# docs
-
-Other docs here

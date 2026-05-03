@@ -48,7 +48,7 @@ make build                    # CGO_ENABLED=0 go build -o bin/kith-pms ./cmd
 
 ./bin/kith-pms migrate up     # create DB schema (data/kith.db by default)
 ./bin/kith-pms set-password   # set the login password interactively
-./bin/kith-pms api            # start the server on :8000
+./bin/kith-pms serve          # start the server on :8000
 ```
 
 Open [http://localhost:8000](http://localhost:8000) and log in with the password you just set.
@@ -133,7 +133,6 @@ make gosec         # security static analysis
 
 ```
 cmd/                CLI entrypoints (api, migrate, set-password, backup, restore)
-app/api/            Echo HTTP setup and middleware
 internal/
   auth/             Session auth: users, sessions, middleware
   db/               SQLite open helper + embed migrations
@@ -142,7 +141,7 @@ internal/
   people/           People domain, repo, service
   dates/            Important dates & milestones
   files/            File storage service (avatar uploads)
-  web/
+  web/              Echo HTTP server
     handlers/       HTTP handlers (auth, people, labels, journal, home, errors)
     templates/      templ components + CSS
     static/         Embedded static assets (htmx, compiled CSS)

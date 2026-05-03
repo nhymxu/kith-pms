@@ -8,7 +8,7 @@
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ CLI Layer (urfave/cli v3)                                │   │
-│  │  ├─ api              → starts HTTP server                │   │
+│  │  ├─ serve            → starts HTTP server                │   │
 │  │  ├─ migrate [up|down] → applies/rolls back migrations    │   │
 │  │  ├─ set-password     → interactive password setup        │   │
 │  │  ├─ backup --to      → SQLite VACUUM INTO               │   │
@@ -53,7 +53,7 @@ All subcommands inherit from root command's `Before` hook:
 Subcommands after dependency init:
 | Command | Purpose |
 |---------|---------|
-| `api` | Start HTTP server on port from `HOST:PORT` (default :8000) |
+| `serve` | Start HTTP server on port from `HOST:PORT` (default :8000) |
 | `migrate` | Schema management: `migrate up` (apply pending), `migrate down` (rollback latest) |
 | `set-password` | Interactive password setup/change (stores Argon2id hash in users table) |
 | `backup --to PATH` | SQLite VACUUM INTO PATH; safe to run while server is running |

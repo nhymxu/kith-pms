@@ -73,7 +73,7 @@ templ JournalDetail(params JournalDetailParams) {
 			<div class="text-xs text-olive-ink/40 mb-6">
 				<span>Created { params.Activity.CreatedAt.Format("2006-01-02") }</span>
 				if !params.Activity.UpdatedAt.Equal(params.Activity.CreatedAt) {
-					<span> · Updated { params.Activity.UpdatedAt.Format("2006-01-02") }</span>
+					<span>· Updated { params.Activity.UpdatedAt.Format("2006-01-02") }</span>
 				}
 			</div>
 			<!-- Back link -->

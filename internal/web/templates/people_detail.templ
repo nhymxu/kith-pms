@@ -2,24 +2,24 @@ package templates
 
 import (
 	"fmt"
-	"strings"
-	"unicode"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/work_history"
+	"strings"
+	"unicode"
 )
 
 // PeopleDetailParams holds data for the person detail page.
 type PeopleDetailParams struct {
-	Person            people.Person
-	Labels            []labels.Label        // attached labels
-	AllLabels         []labels.Label        // all labels (for dropdown)
-	CSRFToken         string
-	RecentActivities  []journal.Activity    // latest 10 activities (Phase 5)
-	Dates             []dates.ImportantDate // important dates
-	WorkHistory       []work_history.WorkEntry // work history entries
+	Person           people.Person
+	Labels           []labels.Label // attached labels
+	AllLabels        []labels.Label // all labels (for dropdown)
+	CSRFToken        string
+	RecentActivities []journal.Activity       // latest 10 activities (Phase 5)
+	Dates            []dates.ImportantDate    // important dates
+	WorkHistory      []work_history.WorkEntry // work history entries
 }
 
 // PeopleDetail renders the detail view for a single person.

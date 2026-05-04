@@ -3,8 +3,8 @@
 #
 # Tools installed:
 #   sqlc   v1.27.0   (via go install)
-#   templ  v0.2.778  (via go install)
-#   tailwindcss v3.4.17  standalone CLI → bin/tailwindcss
+#   templ  v0.3.1001 (via go install)
+#   tailwindcss v4.2.4  standalone CLI → bin/tailwindcss
 #
 # Usage: bash scripts/install-tools.sh
 set -euo pipefail
@@ -14,18 +14,25 @@ BIN_DIR="${REPO_ROOT}/bin"
 
 mkdir -p "${BIN_DIR}"
 
+if command -v brew >/dev/null 2>&1; then
+  echo "Homebrew detected. You can install these tools with brew if you prefer:"
+  echo "  brew install sqlc templ tailwindcss"
+  echo "Continuing with pinned project-local installs..."
+  echo ""
+fi
+
 # ── sqlc ──────────────────────────────────────────────────────────────────────
 echo "→ Installing sqlc v1.27.0 ..."
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
+CGO_ENABLED=0 go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
 echo "  sqlc: $(sqlc version 2>/dev/null || echo 'installed')"
 
 # ── templ ─────────────────────────────────────────────────────────────────────
-echo "→ Installing templ v0.2.778 ..."
-go install github.com/a-h/templ/cmd/templ@v0.2.778
+echo "→ Installing templ v0.3.1001 ..."
+go install github.com/a-h/templ/cmd/templ@v0.3.1001
 echo "  templ: $(templ version 2>/dev/null || echo 'installed')"
 
-# ── Tailwind CSS standalone CLI v3.4.17 ───────────────────────────────────────
-TAILWIND_VERSION="3.4.17"
+# ── Tailwind CSS standalone CLI v4.2.4 ────────────────────────────────────────
+TAILWIND_VERSION="4.2.4"
 TAILWIND_BIN="${BIN_DIR}/tailwindcss"
 
 # Detect OS and architecture to pick the correct release asset.

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,15 +19,17 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
 	"github.com/nhymxu/kith-pms/internal/web/templates"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
 // PeopleHandlers groups all /people/* HTTP handlers.
 type PeopleHandlers struct {
-	Svc            *people.Service
-	LabelsSvc      *labels.Service
-	JournalSvc     *journal.Service
-	DatesSvc       *dates.Service
-	AvatarBasePath string
+	Svc             *people.Service
+	LabelsSvc       *labels.Service
+	JournalSvc      *journal.Service
+	DatesSvc        *dates.Service
+	WorkHistorySvc  *work_history.Service
+	AvatarBasePath  string
 }
 
 // GetList handles GET /people
@@ -72,23 +75,25 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 // GetNew handles GET /people/new
 func (h *PeopleHandlers) GetNew(c *echo.Context) error {
 	component := templates.PeopleForm(templates.PeopleFormParams{
-		CSRFToken: auth.CSRFToken(c),
-		Dates:     []dates.ImportantDate{},
+		CSRFToken:   auth.CSRFToken(c),
+		Dates:       []dates.ImportantDate{},
+		WorkHistory: []work_history.WorkEntry{},
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
 
 // PostCreate handles POST /people
 func (h *PeopleHandlers) PostCreate(c *echo.Context) error {
-	p, contacts, locations, importantDates, formErr := parsePersonForm(c)
+	p, contacts, locations, importantDates, workEntries, formErr := parsePersonForm(c)
 	if formErr != "" {
 		component := templates.PeopleForm(templates.PeopleFormParams{
-			Person:    p,
-			Contacts:  contacts,
-			Locations: locations,
-			Dates:     importantDates,
-			CSRFToken: auth.CSRFToken(c),
-			Error:     formErr,
+			Person:      p,
+			Contacts:    contacts,
+			Locations:   locations,
+			Dates:       importantDates,
+			WorkHistory: workEntries,
+			CSRFToken:   auth.CSRFToken(c),
+			Error:       formErr,
 		})
 		return component.Render(c.Request().Context(), c.Response())
 	}
@@ -98,9 +103,18 @@ func (h *PeopleHandlers) PostCreate(c *echo.Context) error {
 		return err
 	}
 
-	// Save dates in separate transaction
+	// Save dates in separate transaction.
 	if h.DatesSvc != nil && len(importantDates) > 0 {
-		_ = h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates)
+		if err := h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates); err != nil {
+			slog.Error("failed to save important dates", "person_id", id, "err", err)
+		}
+	}
+
+	// Save work history in separate transaction.
+	if h.WorkHistorySvc != nil {
+		if err := h.WorkHistorySvc.ReplaceForPerson(c.Request().Context(), id, workEntries); err != nil {
+			slog.Error("failed to save work history", "person_id", id, "err", err)
+		}
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(id, 10))
@@ -142,6 +156,12 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		importantDates, _ = h.DatesSvc.ListByPerson(c.Request().Context(), id)
 	}
 
+	// Fetch work history
+	var workHistory []work_history.WorkEntry
+	if h.WorkHistorySvc != nil {
+		workHistory, _ = h.WorkHistorySvc.ListByPerson(c.Request().Context(), id)
+	}
+
 	component := templates.PeopleDetail(templates.PeopleDetailParams{
 		Person:           *p,
 		Labels:           attached,
@@ -149,6 +169,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		CSRFToken:        auth.CSRFToken(c),
 		RecentActivities: recentActivities,
 		Dates:            importantDates,
+		WorkHistory:      workHistory,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
@@ -173,13 +194,19 @@ func (h *PeopleHandlers) GetEdit(c *echo.Context) error {
 		importantDates, _ = h.DatesSvc.ListByPerson(c.Request().Context(), id)
 	}
 
+	var workEntries []work_history.WorkEntry
+	if h.WorkHistorySvc != nil {
+		workEntries, _ = h.WorkHistorySvc.ListByPerson(c.Request().Context(), id)
+	}
+
 	component := templates.PeopleForm(templates.PeopleFormParams{
-		Person:    *p,
-		Contacts:  p.Contacts,
-		Locations: p.Locations,
-		Dates:     importantDates,
-		CSRFToken: auth.CSRFToken(c),
-		IsEdit:    true,
+		Person:      *p,
+		Contacts:    p.Contacts,
+		Locations:   p.Locations,
+		Dates:       importantDates,
+		WorkHistory: workEntries,
+		CSRFToken:   auth.CSRFToken(c),
+		IsEdit:      true,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
@@ -191,18 +218,19 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	p, contacts, locations, importantDates, formErr := parsePersonForm(c)
+	p, contacts, locations, importantDates, workEntries, formErr := parsePersonForm(c)
 	p.ID = id
 
 	if formErr != "" {
 		component := templates.PeopleForm(templates.PeopleFormParams{
-			Person:    p,
-			Contacts:  contacts,
-			Locations: locations,
-			Dates:     importantDates,
-			CSRFToken: auth.CSRFToken(c),
-			IsEdit:    true,
-			Error:     formErr,
+			Person:      p,
+			Contacts:    contacts,
+			Locations:   locations,
+			Dates:       importantDates,
+			WorkHistory: workEntries,
+			CSRFToken:   auth.CSRFToken(c),
+			IsEdit:      true,
+			Error:       formErr,
 		})
 		return component.Render(c.Request().Context(), c.Response())
 	}
@@ -211,9 +239,18 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 		return err
 	}
 
-	// Save dates in separate transaction
+	// Save dates in separate transaction.
 	if h.DatesSvc != nil {
-		_ = h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates)
+		if err := h.DatesSvc.ReplaceForPerson(c.Request().Context(), id, importantDates); err != nil {
+			slog.Error("failed to save important dates", "person_id", id, "err", err)
+		}
+	}
+
+	// Save work history in separate transaction.
+	if h.WorkHistorySvc != nil {
+		if err := h.WorkHistorySvc.ReplaceForPerson(c.Request().Context(), id, workEntries); err != nil {
+			slog.Error("failed to save work history", "person_id", id, "err", err)
+		}
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(id, 10))
@@ -269,6 +306,13 @@ func (h *PeopleHandlers) PostLocationRow(c *echo.Context) error {
 func (h *PeopleHandlers) PostDateRow(c *echo.Context) error {
 	index, _ := strconv.Atoi(c.QueryParam("index"))
 	component := templates.DateRow(index)
+	return component.Render(c.Request().Context(), c.Response())
+}
+
+// PostWorkRow handles POST /people/work-row (htmx fragment)
+func (h *PeopleHandlers) PostWorkRow(c *echo.Context) error {
+	index, _ := strconv.Atoi(c.QueryParam("index"))
+	component := templates.WorkRow(index)
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -341,10 +385,10 @@ func parseLabelIDs(s string) []int64 {
 
 // parsePersonForm reads form values and returns domain structs plus an error message.
 // Returns a non-empty error string when validation fails.
-func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []people.Location, []dates.ImportantDate, string) {
+func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []people.Location, []dates.ImportantDate, []work_history.WorkEntry, string) {
 	name := strings.TrimSpace(c.FormValue("name"))
 	if name == "" {
-		return people.Person{}, nil, nil, nil, "Name is required."
+		return people.Person{}, nil, nil, nil, nil, "Name is required."
 	}
 
 	p := people.Person{
@@ -405,10 +449,10 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 			continue // skip empty rows
 		}
 
-		// Validate date format
+		// Validate date format.
 		canonical, _, err := dates.ParseFlexible(dateValue)
 		if err != nil {
-			return p, contacts, locations, nil, "Invalid date format: " + dateValue + " (use YYYY-MM-DD or --MM-DD)"
+			return p, contacts, locations, nil, nil, "Invalid date format: " + dateValue + " (use YYYY-MM-DD or --MM-DD)"
 		}
 
 		recurring := forms.GetField(row, "recurring") == "1"
@@ -422,7 +466,45 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 		})
 	}
 
-	return p, contacts, locations, importantDates, ""
+	// Parse indexed work history rows.
+	workRows := forms.ParseIndexed(c.Request().Form, "work")
+	var workEntries []work_history.WorkEntry
+	for i, row := range workRows {
+		company := strings.TrimSpace(forms.GetField(row, "company"))
+		if company == "" {
+			continue // skip empty rows
+		}
+
+		startDate := strings.TrimSpace(forms.GetField(row, "start_date"))
+		if startDate == "" {
+			return p, contacts, locations, importantDates, nil, "Work history entry is missing a start date."
+		}
+		canonicalStart, err := work_history.ParseWorkDate(startDate)
+		if err != nil {
+			return p, contacts, locations, importantDates, nil, "Invalid work history start date: " + startDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+		}
+
+		endDate := strings.TrimSpace(forms.GetField(row, "end_date"))
+		canonicalEnd := ""
+		if endDate != "" {
+			canonicalEnd, err = work_history.ParseWorkDate(endDate)
+			if err != nil {
+				return p, contacts, locations, importantDates, nil, "Invalid work history end date: " + endDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+			}
+		}
+
+		workEntries = append(workEntries, work_history.WorkEntry{
+			Company:     company,
+			Title:       strings.TrimSpace(forms.GetField(row, "title")),
+			StartDate:   canonicalStart,
+			EndDate:     canonicalEnd,
+			Location:    strings.TrimSpace(forms.GetField(row, "location")),
+			Description: strings.TrimSpace(forms.GetField(row, "description")),
+			Position:    i,
+		})
+	}
+
+	return p, contacts, locations, importantDates, workEntries, ""
 }
 
 // PostUploadAvatar handles POST /people/:id/avatar

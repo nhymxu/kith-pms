@@ -5,17 +5,19 @@ import (
 	"time"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
 // PeopleFormParams holds data for the person create/edit form page.
 type PeopleFormParams struct {
-	Person    people.Person
-	Contacts  []people.ContactInfo
-	Locations []people.Location
-	Dates     []dates.ImportantDate
-	CSRFToken string
-	IsEdit    bool
-	Error     string
+	Person      people.Person
+	Contacts    []people.ContactInfo
+	Locations   []people.Location
+	Dates       []dates.ImportantDate
+	WorkHistory []work_history.WorkEntry
+	CSRFToken   string
+	IsEdit      bool
+	Error       string
 }
 
 // PeopleForm renders the create or edit form for a person.
@@ -273,6 +275,38 @@ templ peopleFormFields(params PeopleFormParams) {
 			class="text-sm text-deep-olive hover:underline"
 		>
 			+ Add date
+		</button>
+	</fieldset>
+	<!-- Work History -->
+	<fieldset class="space-y-3">
+		<legend class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-2">Work History</legend>
+		<table class="w-full text-sm" id="work-table">
+			<thead>
+				<tr class="text-left text-olive-ink/60">
+					<th class="pb-1 pr-2 font-medium">Company</th>
+					<th class="pb-1 pr-2 font-medium">Title</th>
+					<th class="pb-1 pr-2 font-medium w-28">Start</th>
+					<th class="pb-1 pr-2 font-medium w-28">End</th>
+					<th class="pb-1 pr-2 font-medium">Location</th>
+					<th class="pb-1 pr-2 font-medium">Description</th>
+					<th class="pb-1 font-medium w-16">Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, w := range params.WorkHistory {
+					@WorkRowFilled(i, w)
+				}
+			</tbody>
+		</table>
+		<button
+			type="button"
+			hx-post="/people/work-row"
+			hx-vals="js:{index: document.querySelectorAll('#work-table tbody tr').length}"
+			hx-target="#work-table tbody"
+			hx-swap="beforeend"
+			class="text-sm text-deep-olive hover:underline"
+		>
+			+ Add work history
 		</button>
 	</fieldset>
 	<!-- Actions -->

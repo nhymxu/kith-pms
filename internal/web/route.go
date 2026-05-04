@@ -17,6 +17,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
 //go:embed static
@@ -24,14 +25,15 @@ var staticFS embed.FS
 
 // Deps holds application-level dependencies passed into the web layer.
 type Deps struct {
-	DB               *sql.DB
-	AuthService      *auth.Service
-	PeopleService    *people.Service
-	LabelsService    *labels.Service
-	JournalService   *journal.Service
-	DatesService     *dates.Service
-	RemindersService *reminders.Service
-	AvatarBasePath   string
+	DB                  *sql.DB
+	AuthService         *auth.Service
+	PeopleService       *people.Service
+	LabelsService       *labels.Service
+	JournalService      *journal.Service
+	DatesService        *dates.Service
+	RemindersService    *reminders.Service
+	WorkHistoryService  *work_history.Service
+	AvatarBasePath      string
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -94,6 +96,7 @@ func Mount(e *echo.Echo, deps Deps) {
 			LabelsSvc:      deps.LabelsService,
 			JournalSvc:     deps.JournalService,
 			DatesSvc:       deps.DatesService,
+			WorkHistorySvc: deps.WorkHistoryService,
 			AvatarBasePath: deps.AvatarBasePath,
 		}
 		protected.GET("/people", peopleH.GetList)
@@ -101,6 +104,7 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people", peopleH.PostCreate)
 		protected.POST("/people/contact-row", peopleH.PostContactRow)
 		protected.POST("/people/location-row", peopleH.PostLocationRow)
+		protected.POST("/people/work-row", peopleH.PostWorkRow)
 		protected.POST("/people/:id/date-row", peopleH.PostDateRow)
 		protected.GET("/people/:id", peopleH.GetDetail)
 		protected.GET("/people/:id/edit", peopleH.GetEdit)

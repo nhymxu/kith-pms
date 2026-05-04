@@ -21,6 +21,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
@@ -120,16 +121,20 @@ Can scale later.`,
 			// Wire reminders service.
 			remindersSvc := reminders.NewService(db)
 
+			// Wire work history service.
+			workHistorySvc := work_history.NewService(db)
+
 			// Mount HTML UI routes on the same Echo instance.
 			web.Mount(e, web.Deps{
-				DB:               db,
-				AuthService:      authSvc,
-				PeopleService:    peopleSvc,
-				LabelsService:    labelsSvc,
-				JournalService:   journalSvc,
-				DatesService:     datesSvc,
-				RemindersService: remindersSvc,
-				AvatarBasePath:   avatarPath,
+				DB:                 db,
+				AuthService:        authSvc,
+				PeopleService:      peopleSvc,
+				LabelsService:      labelsSvc,
+				JournalService:     journalSvc,
+				DatesService:       datesSvc,
+				RemindersService:   remindersSvc,
+				WorkHistoryService: workHistorySvc,
+				AvatarBasePath:     avatarPath,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

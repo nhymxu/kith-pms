@@ -5,6 +5,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
 // ContactRow renders a blank contact input row for htmx "Add contact" insertion.
@@ -303,4 +304,142 @@ templ DateRowFilled(index int, d dates.ImportantDate) {
 // formatIndexStr formats an integer as a string for use in form field names.
 func formatIndexStr(i int) string {
 	return fmt.Sprintf("%d", i)
+}
+
+// WorkRow renders a blank work history input row for htmx "Add entry" insertion.
+templ WorkRow(index int) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "company") }
+				placeholder="Company *"
+				required
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "title") }
+				placeholder="Title"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "start_date") }
+				placeholder="YYYY or YYYY-MM *"
+				required
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "end_date") }
+				placeholder="YYYY-MM (blank = Present)"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "location") }
+				placeholder="Location"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "description") }
+				placeholder="Description"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<button
+				type="button"
+				onclick="this.closest('tr').remove()"
+				aria-label="Remove work history row"
+				class="text-xs text-red-600 hover:underline"
+			>
+				Remove
+			</button>
+		</td>
+	</tr>
+}
+
+// WorkRowFilled renders a pre-filled work history input row for the edit form.
+templ WorkRowFilled(index int, w work_history.WorkEntry) {
+	<tr>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "company") }
+				value={ w.Company }
+				placeholder="Company *"
+				required
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "title") }
+				value={ w.Title }
+				placeholder="Title"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "start_date") }
+				value={ w.StartDate }
+				placeholder="YYYY or YYYY-MM *"
+				required
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "end_date") }
+				value={ w.EndDate }
+				placeholder="YYYY-MM (blank = Present)"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "location") }
+				value={ w.Location }
+				placeholder="Location"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pr-2 pb-1">
+			<input
+				type="text"
+				name={ forms.IndexedName("work", index, "description") }
+				value={ w.Description }
+				placeholder="Description"
+				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
+			/>
+		</td>
+		<td class="pb-1">
+			<button
+				type="button"
+				onclick="this.closest('tr').remove()"
+				aria-label="Remove work history row"
+				class="text-xs text-red-600 hover:underline"
+			>
+				Remove
+			</button>
+		</td>
+	</tr>
 }

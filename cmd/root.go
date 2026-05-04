@@ -35,6 +35,7 @@ func newApp() *cli.Command {
 			setPasswordCommand(),
 			backupCommand(),
 			restoreCommand(),
+			monicaImportCommand(),
 		},
 	}
 }

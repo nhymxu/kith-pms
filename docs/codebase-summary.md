@@ -10,7 +10,8 @@ kith-pms/
 │   ├── migrate.go                # `migrate` subcommand — runs schema migrations
 │   ├── set_password.go           # `set-password` subcommand — interactive password setter
 │   ├── backup.go                 # `backup` subcommand — database backup CLI
-│   └── restore.go                # `restore` subcommand — database restore CLI
+│   ├── restore.go                # `restore` subcommand — database restore CLI
+│   └── monica_import.go          # `monica-import` subcommand — imports Monica PRM JSON exports
 ├── internal/                     # Private application code
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite connection with WAL + ForeignKeys PRAGMAs
@@ -53,6 +54,10 @@ kith-pms/
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
+│   ├── monica/                   # Monica PRM import package
+│   │   ├── parser.go             # Monica JSON export format unmarshaling
+│   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
+│   │   └── mapper_test.go        # Unit tests for Monica-to-domain mapping
 │   └── web/                      # HTTP handler layer
 │       ├── server.go             # Echo setup
 │       ├── route.go              # Echo dependency injection, route mounting
@@ -118,6 +123,7 @@ kith-pms/
 - **migrate.go**: `migrate` subcommand — applies pending SQL migrations
 - **set_password.go**: `set-password` subcommand — interactive password change
 - **backup.go** & **restore.go**: Database backup/restore CLI with safety checks
+- **monica_import.go**: `monica-import` subcommand — imports contacts, labels, activities, reminders, and dates from a Monica PRM JSON export
 
 ### `internal/db` — Database layer
 - **sqlite.go**: Opens SQLite with modernc.org/sqlite (no CGO); applies PRAGMAs for WAL, foreign keys, safe sync
@@ -165,6 +171,11 @@ kith-pms/
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
+
+### `internal/monica` — Monica PRM data import
+- **parser.go**: Unmarshals Monica JSON export format (contacts, activities, reminders, tags, etc.) into typed structs
+- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate)
+- **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance

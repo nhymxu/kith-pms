@@ -55,7 +55,7 @@ templ PersonPickerResults(ps []people.Person) {
 			<button
 				type="button"
 				class="w-full text-left px-3 py-2 text-sm hover:bg-sage-border/20 transition"
-				hx-on:click={ buildAddPersonChipScript(p.ID, p.Name) }
+				onclick={ buildAddPersonChipScript(p.ID, p.Name) }
 			>
 				{ p.Name }
 			</button>

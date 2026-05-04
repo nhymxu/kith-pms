@@ -13,7 +13,10 @@ func TestLocalFileService_SaveAvatar(t *testing.T) {
 	tempDir := t.TempDir()
 	svc := NewLocalFileService(tempDir)
 
-	content := []byte("fake image content")
+	content := []byte{
+		0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01,
+		0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xd9,
+	}
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
 	part, err := writer.CreateFormFile("avatar", "test-photo.jpg")
@@ -114,7 +117,10 @@ func TestLocalFileService_SaveAvatar_InvalidMimeType(t *testing.T) {
 	tempDir := t.TempDir()
 	svc := NewLocalFileService(tempDir)
 
-	content := []byte("fake content")
+	content := []byte{
+		0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01,
+		0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xd9,
+	}
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
 	part, err := writer.CreateFormFile("avatar", "test.txt")

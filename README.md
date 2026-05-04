@@ -9,6 +9,7 @@
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
 - **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
+- **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking
 - **Dashboard** — at-a-glance counts and recent activity on the homepage
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
@@ -140,6 +141,7 @@ internal/
   labels/           Labels domain, repo, service
   people/           People domain, repo, service
   dates/            Important dates & milestones
+  reminders/        Reminders & notifications
   files/            File storage service (avatar uploads)
   web/              Echo HTTP server
     handlers/       HTTP handlers (auth, people, labels, journal, home, errors)

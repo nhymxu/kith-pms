@@ -20,10 +20,13 @@
 │  │  ├─ /auth/login    → Login form + session creation       │   │
 │  │  ├─ /people/*      → People CRUD                         │   │
 │  │  ├─ /labels/*      → Labels CRUD                         │   │
-│  │  └─ /journal/*     → Journal CRUD + FTS5 search          │   │
+│  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
+│  │  ├─ /dates         → Important dates & milestones        │   │
+│  │  └─ /reminders/*   → Reminders & notifications           │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Service Layer (auth, people, labels, journal, dates)      │   │
+│  │ Service Layer (auth, people, labels, journal, dates,     │   │
+│  │                reminders, files)                          │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -75,8 +78,6 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 
 | Variable | Type | Default | Purpose |
 |----------|------|---------|---------|
-| `HOST` | string | `0.0.0.0` | Server bind address |
-| `PORT` | int | `8000` | Server bind port |
 | `DB_PATH` | string | `data/kith.db` | SQLite database file path |
 | `DB_AUTO_MIGRATE` | bool | `true` | Apply pending migrations on server startup |
 | `SESSION_SECRET` | string | *(required)* | Cookie signing secret (min 32 bytes) |
@@ -124,6 +125,9 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /journal               → GET (list + FTS5 search), POST (create)
 /journal/:id           → GET (detail), PUT (update), DELETE
 /dates                 → GET (upcoming dates, ?days=N query param)
+/reminders             → GET (list), POST (create)
+/reminders/:id         → GET (detail), PUT (update), DELETE
+/reminders/:id/complete → POST (mark as completed)
 ```
 
 ### Session & Auth Flow
@@ -213,6 +217,7 @@ Connection settings:
 | `0005_activity.sql` | journal entries (activities) + links to people |
 | `0006_activity_fts.sql` | FTS5 virtual table + triggers for full-text search |
 | `0007_important_date.sql` | important_date table with virtual month_day column for date queries |
+| `0008_reminder.sql` | reminders table with person/date associations and completion tracking |
 | `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
@@ -241,6 +246,7 @@ people (1)
   ├─ (1:N) contacts (phone, email)
   ├─ (1:N) locations (address)
   ├─ (1:N) important_date (birthdays, anniversaries, milestones)
+  ├─ (1:N) reminders (optional person association)
   ├─ (N:M) labels (via label_assignments)
   └─ (N:M) activities (via activity_links)
 
@@ -250,6 +256,10 @@ labels (1)
 activities (1)  [Journal entries]
   ├─ (N:M) people (via activity_links)
   └─ (1:1 virtual) activities_fts [FTS5 index]
+
+reminders (1)
+  ├─ (N:1) people (optional FK)
+  └─ (N:1) important_date (optional FK)
 ```
 
 ## Deployment

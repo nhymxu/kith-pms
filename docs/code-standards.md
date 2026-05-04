@@ -16,9 +16,9 @@
 - Templ files: `<domain>.templ` (e.g., `people_list.templ`, `people_form.templ`)
 
 ### Database & SQL
-- Use raw `database/sql` (no ORM, no sqlc code generation)
+- Use raw `database/sql` (no ORM)
 - Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/`
+- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0009)
 - Load migrations programmatically in `internal/db/migrations.go`
 
 ### Struct Organization (Domain Models)
@@ -46,7 +46,6 @@ type Repo struct {
 ```
 
 ### Error Handling
-- Use `pkg/errors` for custom error types
 - Wrap errors with context: `fmt.Errorf("operation failed: %w", err)`
 - Never silently discard errors; log or propagate
 - Panic only at startup for unrecoverable config failures
@@ -95,8 +94,8 @@ type Repo struct {
 ### Test Organization
 - **Integration tests**: Use real SQLite database (e.g., `:memory:` or temp file)
 - **Service tests**: `internal/{domain}/service_test.go` — test business logic with real repo
-- **Handler tests**: Future — test HTTP layer with mocked services
 - **No mocks**: Prefer real dependencies over mocks for confidence in actual behavior
+- **Test files**: 9 test files across auth, people, labels, journal, dates, files, reminders
 
 ### Test Structure
 ```go
@@ -158,14 +157,14 @@ make test-coverage     # generate coverage report
 | `lint` | `golangci-lint run ./...` | Run linter |
 | `tests` | `go test -race ./...` | Run tests with race detector |
 | `test-coverage` | `go test -race -cover ./...` | Coverage summary |
-| `vuln-check` | `go list -json -m all \| nancy sleuth` | Scan dependencies |
+| `vuln-check` | `govulncheck ./...` | Scan for known vulnerabilities |
 | `gosec` | `gosec ./...` | Security analysis |
 
 ## Pre-commit Checklist
 
 1. `make fmt` — format code
 2. `make lint` — no lint errors
-3. `make tests` — all tests pass (33 green)
+3. `make tests` — all tests pass
 4. No `.env` or secrets committed
 5. Database migrations properly numbered and tested
 
@@ -184,7 +183,7 @@ Examples:
 - `fix: validate HMAC token before session lookup`
 - `refactor: extract person repository from service`
 - `test: add password hashing test vectors`
-- `chore: update dependencies, add templ v0.2.778`
+- `chore: update dependencies, add templ v0.3.1001`
 
 No AI references in commit messages.
 

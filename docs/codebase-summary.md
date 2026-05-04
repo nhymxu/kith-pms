@@ -45,6 +45,11 @@ kith-pms/
 │   │   ├── service.go            # CRUD and date query business logic
 │   │   ├── repo.go               # Database queries for dates
 │   │   └── service_test.go       # Service unit tests
+│   ├── reminders/                # Reminders & notifications
+│   │   ├── domain.go             # Reminder, ReminderWithPerson structures
+│   │   ├── service.go            # CRUD and completion tracking business logic
+│   │   ├── repo.go               # Database queries for reminders
+│   │   └── service_test.go       # Service unit tests
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
@@ -53,11 +58,12 @@ kith-pms/
 │       ├── route.go              # Echo dependency injection, route mounting
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
-│       │   ├── home.go           # Dashboard / home page (includes OnThisDay widget)
+│       │   ├── home.go           # Dashboard (includes OnThisDay widget)
 │       │   ├── people.go         # CRUD handlers for People (dates integration)
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
 │       │   ├── dates.go          # Handlers for Important Dates
+│       │   ├── reminders.go      # Handlers for Reminders
 │       │   └── errors.go         # Error page handlers
 │       ├── templates/            # Templ HTML components (.templ files)
 │       │   ├── layout.templ      # Base layout with navbar, footer
@@ -65,6 +71,7 @@ kith-pms/
 │       │   ├── home.templ        # Dashboard (includes OnThisDay widget)
 │       │   ├── people_list.templ, people_detail.templ, people_form.templ
 │       │   ├── dates_list.templ  # Upcoming dates list
+│       │   ├── reminders_list.templ, reminders_form.templ
 │       │   ├── labels_list.templ, labels_partials.templ
 │       │   ├── journal_list.templ, journal_detail.templ, journal_form.templ
 │       │   ├── journal_partials.templ
@@ -88,7 +95,9 @@ kith-pms/
 │   ├── 0004_label.sql            # Label-person association table
 │   ├── 0005_activity.sql         # Journal entries & person linking
 │   ├── 0006_activity_fts.sql     # FTS5 virtual table + triggers
-│   └── 0007_important_date.sql   # Important dates table with virtual month_day column
+│   ├── 0007_important_date.sql   # Important dates table with virtual month_day column
+│   ├── 0008_reminder.sql         # Reminders table with person/date associations
+│   └── 0009_person_avatar.sql    # Avatar metadata columns on person table
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -147,6 +156,12 @@ kith-pms/
 - **repo.go**: Queries for dates by person; OnThisDay matches; virtual month_day column queries
 - **service_test.go**: Integration tests for date parsing, recurring logic, and queries
 
+### `internal/reminders` — Reminders & notifications
+- **domain.go**: Reminder (title, notes, due_date, person_id, important_date_id, completed), ReminderWithPerson
+- **service.go**: CRUD for reminders; completion tracking; filter by status and person
+- **repo.go**: Queries for reminders with person joins; status filtering
+- **service_test.go**: Integration tests for reminder CRUD and completion
+
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
@@ -171,7 +186,7 @@ kith-pms/
 | `labstack/echo/v5` | v5.1.0+ | HTTP framework |
 | `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
 | `modernc.org/sqlite` | latest | Pure Go SQLite (no CGO) |
-| `a-h/templ` | v0.2.778+ | HTML component codegen |
+| `a-h/templ` | v0.3.1001+ | HTML component codegen |
 | `golang.org/x/crypto` | latest | Argon2id password hashing |
 | `golang.org/x/text` | latest | Text encoding utilities |
 | `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
@@ -189,10 +204,13 @@ kith-pms/
 
 ## Test Coverage
 
-33 tests across:
+9 test files across:
 - `auth`: password hashing, session tokens, CSRF token generation
 - `people`: CRUD, search, label associations
 - `labels`: CRUD, many-to-many associations
 - `journal`: CRUD, FTS5 full-text search
+- `dates`: important dates, OnThisDay queries, recurring logic
+- `files`: avatar upload, MIME validation, path traversal prevention
+- `reminders`: CRUD, completion tracking, status filtering
 
 Run all: `make tests` (includes race detector)

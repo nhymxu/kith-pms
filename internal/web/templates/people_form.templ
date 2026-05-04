@@ -2,9 +2,7 @@ package templates
 
 import (
 	"fmt"
-	"strings"
 	"time"
-	"unicode"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/people"
 )
@@ -311,29 +309,4 @@ func dobValue(t *time.Time) string {
 		return ""
 	}
 	return t.Format("2006-01-02")
-}
-
-func avatarInitials(name string) string {
-	parts := strings.Fields(name)
-	if len(parts) == 0 {
-		return "?"
-	}
-
-	var initials []rune
-	for _, part := range parts {
-		for _, r := range part {
-			if unicode.IsLetter(r) || unicode.IsDigit(r) {
-				initials = append(initials, unicode.ToUpper(r))
-				break
-			}
-		}
-		if len(initials) == 2 {
-			break
-		}
-	}
-
-	if len(initials) == 0 {
-		return "?"
-	}
-	return string(initials)
 }

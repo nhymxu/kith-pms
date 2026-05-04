@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../../tailwind.config.js";
 
 /* PostHog-inspired design tokens exposed as CSS custom properties.
    Values sourced from DESIGN.md §2 Color Palette. */

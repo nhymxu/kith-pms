@@ -21,17 +21,17 @@
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Go | 1.26+ | build |
-| [templ](https://templ.guide) | v0.2.778 | HTML component codegen |
-| [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) | v3.4+ | CSS build |
+| [templ](https://templ.guide) | v0.3.1001 | HTML component codegen |
+| [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) | v4.2+ | CSS build |
 | make | any | convenience targets |
 
 ```bash
 # Install templ
-go install github.com/a-h/templ/cmd/templ@v0.2.778
+go install github.com/a-h/templ/cmd/templ@v0.3.1001
 
 # Download Tailwind standalone CLI (macOS/Linux x64 — adjust for your platform)
 curl -fsSLo tailwindcss \
-  https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-macos-x64
+  https://github.com/tailwindlabs/tailwindcss/releases/download/v4.2.4/tailwindcss-macos-x64
 chmod +x tailwindcss && sudo mv tailwindcss /usr/local/bin/
 ```
 
@@ -160,7 +160,7 @@ plans/              Implementation plans
 | Database | SQLite (modernc.org/sqlite — pure Go) |
 | Templates | [templ](https://templ.guide) |
 | Interactivity | [htmx](https://htmx.org) |
-| Styling | Tailwind CSS v3 |
+| Styling | Tailwind CSS v4 |
 | Auth | Argon2id password hash, signed cookie sessions |
 | Search | SQLite FTS5 |
 

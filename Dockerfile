@@ -6,7 +6,7 @@ FROM golang:1.26.2 AS builder
 WORKDIR /app
 
 # Install templ and sqlc code generators.
-RUN go install github.com/a-h/templ/cmd/templ@v0.2.778 && \
+RUN go install github.com/a-h/templ/cmd/templ@v0.3.1001 && \
     go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
 
 # Download Tailwind CSS standalone CLI (linux/amd64).

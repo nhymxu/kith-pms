@@ -38,6 +38,16 @@ templ ContactRow(index int) {
 				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
 			/>
 		</td>
+		<td class="pb-1">
+			<button
+				type="button"
+				onclick="this.closest('tr').remove()"
+				aria-label="Remove contact row"
+				class="text-xs text-red-600 hover:underline"
+			>
+				Remove
+			</button>
+		</td>
 	</tr>
 }
 
@@ -73,6 +83,16 @@ templ ContactRowFilled(index int, c people.ContactInfo) {
 				placeholder="Label (optional)"
 				class="w-full border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive"
 			/>
+		</td>
+		<td class="pb-1">
+			<button
+				type="button"
+				onclick="this.closest('tr').remove()"
+				aria-label="Remove contact row"
+				class="text-xs text-red-600 hover:underline"
+			>
+				Remove
+			</button>
 		</td>
 	</tr>
 }

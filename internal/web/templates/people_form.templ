@@ -195,6 +195,7 @@ templ peopleFormFields(params PeopleFormParams) {
 					<th class="pb-1 pr-2 font-medium w-28">Type</th>
 					<th class="pb-1 pr-2 font-medium">Value</th>
 					<th class="pb-1 pr-2 font-medium w-28">Label</th>
+						<th class="pb-1 font-medium w-20">Action</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -208,7 +209,7 @@ templ peopleFormFields(params PeopleFormParams) {
 			hx-post="/people/contact-row"
 			hx-target="#contacts-table tbody"
 			hx-swap="beforeend"
-			hx-vals={ fmt.Sprintf(`{"count":"%d"}`, len(params.Contacts)) }
+			hx-vals="js:{count: document.querySelectorAll('#contacts-table tbody tr').length}"
 			class="text-sm text-deep-olive hover:underline"
 		>
 			+ Add contact
@@ -238,7 +239,7 @@ templ peopleFormFields(params PeopleFormParams) {
 			hx-post="/people/location-row"
 			hx-target="#locations-table tbody"
 			hx-swap="beforeend"
-			hx-vals={ fmt.Sprintf(`{"count":"%d"}`, len(params.Locations)) }
+			hx-vals="js:{count: document.querySelectorAll('#locations-table tbody tr').length}"
 			class="text-sm text-deep-olive hover:underline"
 		>
 			+ Add location
@@ -265,7 +266,8 @@ templ peopleFormFields(params PeopleFormParams) {
 		</table>
 		<button
 			type="button"
-			hx-post={ fmt.Sprintf("/people/%d/date-row?index=%d", params.Person.ID, len(params.Dates)) }
+			hx-post={ fmt.Sprintf("/people/%d/date-row", params.Person.ID) }
+			hx-vals="js:{index: document.querySelectorAll('#dates-table tbody tr').length}"
 			hx-target="#dates-table tbody"
 			hx-swap="beforeend"
 			class="text-sm text-deep-olive hover:underline"

@@ -124,6 +124,9 @@ Can scale later.`,
 			// Wire work history service.
 			workHistorySvc := work_history.NewService(db)
 
+			// Read API token for the JSON REST API.
+			apiToken := os.Getenv("API_TOKEN")
+
 			// Mount HTML UI routes on the same Echo instance.
 			web.Mount(e, web.Deps{
 				DB:                 db,
@@ -135,6 +138,7 @@ Can scale later.`,
 				RemindersService:   remindersSvc,
 				WorkHistoryService: workHistorySvc,
 				AvatarBasePath:     avatarPath,
+				APIToken:           apiToken,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

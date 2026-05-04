@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 
+	"github.com/nhymxu/kith-pms/internal/api"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
@@ -34,6 +35,7 @@ type Deps struct {
 	RemindersService    *reminders.Service
 	WorkHistoryService  *work_history.Service
 	AvatarBasePath      string
+	APIToken            string
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -158,4 +160,15 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/reminders/:id/delete", remindersH.Delete)
 		protected.POST("/reminders/:id/complete", remindersH.PostToggleComplete)
 	}
+
+	// Mount JSON REST API routes under /v1/.
+	api.Mount(e, api.Deps{
+		PeopleService:      deps.PeopleService,
+		LabelsService:      deps.LabelsService,
+		JournalService:     deps.JournalService,
+		RemindersService:   deps.RemindersService,
+		WorkHistoryService: deps.WorkHistoryService,
+		DatesService:       deps.DatesService,
+		APIToken:           deps.APIToken,
+	})
 }

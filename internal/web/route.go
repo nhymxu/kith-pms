@@ -100,6 +100,12 @@ func Mount(e *echo.Echo, deps Deps) {
 		auditH := &handlers.AuditHandlers{Svc: deps.AuditService}
 		protected.GET("/audit", auditH.GetList)
 
+		// Me routes
+		meH := &handlers.MeHandlers{PeopleSvc: deps.PeopleService}
+		protected.GET("/me", meH.GetMe)
+		protected.GET("/me/setup", meH.GetSetup)
+		protected.POST("/me/setup", meH.PostSetup)
+
 		// People routes
 		peopleH := &handlers.PeopleHandlers{
 			Svc:            deps.PeopleService,

@@ -46,13 +46,22 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 
 	hasMore := len(list) == 30
 
+	var selfPersonID int64
+	if h.PeopleSvc != nil {
+		if selfPerson, err := h.PeopleSvc.GetSelf(c.Request().Context()); err == nil && selfPerson != nil {
+			selfPersonID = selfPerson.ID
+		}
+	}
+
 	component := templates.JournalList(templates.JournalListParams{
-		Activities: list,
-		Query:      q,
-		FromDate:   from,
-		ToDate:     to,
-		Page:       page,
-		HasMore:    hasMore,
+		Activities:   list,
+		Query:        q,
+		FromDate:     from,
+		ToDate:       to,
+		Page:         page,
+		HasMore:      hasMore,
+		PersonIDs:    personIDs,
+		SelfPersonID: selfPersonID,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }

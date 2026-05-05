@@ -7,12 +7,14 @@ import (
 
 // JournalListParams holds data for the journal index page.
 type JournalListParams struct {
-	Activities []journal.Activity
-	Query      string
-	FromDate   string
-	ToDate     string
-	Page       int
-	HasMore    bool
+	Activities   []journal.Activity
+	Query        string
+	FromDate     string
+	ToDate       string
+	Page         int
+	HasMore      bool
+	PersonIDs    []int64
+	SelfPersonID int64
 }
 
 // JournalList renders the /journal index page with search filters and pagination.
@@ -48,13 +50,20 @@ templ JournalList(params JournalListParams) {
 				value={ params.ToDate }
 				class="border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
 			/>
+			if params.SelfPersonID > 0 {
+				if len(params.PersonIDs) == 1 && params.PersonIDs[0] == params.SelfPersonID {
+					<a href="/journal" class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition">My entries ×</a>
+				} else {
+					<a href={ templ.SafeURL(fmt.Sprintf("/journal?people=%d", params.SelfPersonID)) } class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition">My entries</a>
+				}
+			}
 			<button
 				type="submit"
 				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
 			>
 				Filter
 			</button>
-			if params.Query != "" || params.FromDate != "" || params.ToDate != "" {
+			if params.Query != "" || params.FromDate != "" || params.ToDate != "" || len(params.PersonIDs) > 0 {
 				<a
 					href="/journal"
 					class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-gray-50 transition"

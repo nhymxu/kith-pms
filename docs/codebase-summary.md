@@ -34,8 +34,8 @@ kith-pms/
 │   │   └── service_test.go       # Service unit tests
 │   ├── people/                   # Contacts & relationships
 │   │   ├── domain.go             # Person, Contact, Location structures
-│   │   ├── service.go            # CRUD and query business logic
-│   │   ├── repo.go               # Database queries
+│   │   ├── service.go            # CRUD and query business logic; self-profile management
+│   │   ├── repo.go               # Database queries; GetSelfPerson, SetSelfPerson
 │   │   └── service_test.go       # Service unit tests
 │   ├── labels/                   # Tags & categorization
 │   │   ├── domain.go             # Label structure
@@ -76,6 +76,7 @@ kith-pms/
 │       │   ├── auth.go           # Login, logout, password change
 │       │   ├── home.go           # Dashboard (includes OnThisDay widget)
 │       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal, PostQuickGift for inline forms
+│       │   ├── me.go             # Self-profile handlers (GetMe, GetSetup, PostSetup)
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
 │       │   ├── dates.go          # Handlers for Important Dates
@@ -88,6 +89,7 @@ kith-pms/
 │       │   ├── home.templ        # Dashboard (includes OnThisDay widget)
 │       │   ├── people_list.templ, people_detail.templ, people_form.templ
 │       │   ├── people_partials.templ  # PersonRecentActivities, PersonQuickJournalForm, PersonQuickGiftForm
+│       │   ├── me_setup.templ    # Self-profile setup form
 │       │   ├── dates_list.templ  # Upcoming dates list
 │       │   ├── reminders_list.templ, reminders_form.templ
 │       │   ├── gifts_list.templ, gifts_detail.templ, gifts_form.templ, gifts_partials.templ
@@ -117,8 +119,10 @@ kith-pms/
 │   ├── 0007_important_date.sql   # Important dates table with virtual month_day column
 │   ├── 0008_reminder.sql         # Reminders table with person/date associations
 │   ├── 0009_person_avatar.sql    # Avatar metadata columns on person table
+│   ├── 0010_work_history.sql     # Work history table
 │   ├── 0011_audit_log.sql        # Audit log table for entity change tracking
-│   └── 0012_gift.sql             # Gift table with direction, debt type, and image columns
+│   ├── 0012_gift.sql             # Gift table with direction, debt type, and image columns
+│   └── 0013_person_self.sql      # is_self column with unique index for self-profile
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -162,10 +166,10 @@ kith-pms/
 - **service_test.go**: Tests for logging behavior and list queries
 
 ### `internal/people` — Contacts management
-- **domain.go**: Person (name, DOB, type), Contact (email, phone), Location (street, city, country)
-- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search
-- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations
-- **service_test.go**: Integration tests for CRUD and complex queries
+- **domain.go**: Person (name, DOB, type, is_self), Contact (email, phone), Location (street, city, country)
+- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search; self-profile management (GetSelfPerson, SetSelfPerson)
+- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations; self-profile queries
+- **service_test.go**: Integration tests for CRUD, complex queries, and self-profile operations
 
 ### `internal/labels` — Tag system
 - **domain.go**: Label (name, color hex)
@@ -209,8 +213,8 @@ kith-pms/
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance
 - **route.go**: Echo mounts static file server, registers route groups, injects service dependencies into handlers
-- **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home); includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift)
-- **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; includes inline forms (PersonQuickJournalForm, PersonQuickGiftForm)
+- **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home, me); includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift); me.go handles self-profile setup and display
+- **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; includes inline forms (PersonQuickJournalForm, PersonQuickGiftForm) and me_setup.templ for self-profile
 - **forms/**: Form struct definitions for validation & binding
 - **static/**: Embedded htmx library and generated Tailwind CSS
 

@@ -124,6 +124,8 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people/:id/gifts/quick → POST (quick-add gift, htmx fragment)
 /people/:id/avatar     → POST (upload), GET (retrieve)
 /people/:id/avatar/delete → POST (delete)
+/me                    → GET (self profile or setup redirect)
+/me/setup              → GET (setup form), POST (set person as self)
 /labels                → GET (list), POST (create)
 /labels/:id            → GET (detail), PUT (update), DELETE
 /journal               → GET (list + FTS5 search), POST (create)
@@ -226,6 +228,7 @@ Connection settings:
 | `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
 | `0011_audit_log.sql` | audit_log table for entity change tracking (entity_type, entity_id, entity_name, action, actor_id, created_at) |
 | `0012_gift.sql` | gift table with direction (gave/received), debt_type (owed/owe), person association, and image storage metadata |
+| `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
@@ -270,7 +273,8 @@ people (1)
   ├─ (1:N) reminders (optional person association)
   ├─ (1:N) gifts (gift records with direction + debt tracking)
   ├─ (N:M) labels (via label_assignments)
-  └─ (N:M) activities (via activity_links)
+  ├─ (N:M) activities (via activity_links)
+  └─ (0:1) self profile (is_self flag, unique constraint)
 
 labels (1)
   └─ (N:M) people (via label_assignments)

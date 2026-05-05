@@ -1,0 +1,48 @@
+package templates
+
+import (
+	"strconv"
+
+	"github.com/nhymxu/kith-pms/internal/people"
+)
+
+type MeSetupParams struct {
+	People     []people.Person
+	SelfPerson *people.Person
+	CSRFToken  string
+}
+
+templ MeSetup(params MeSetupParams) {
+	@Layout("Setup Profile — kith") {
+		<div class="max-w-2xl">
+			<div class="mb-6">
+				<h1 class="text-2xl font-bold text-deep-olive">Setup Profile</h1>
+				<p class="text-sm text-olive-ink/60 mt-1">Select which person represents you.</p>
+			</div>
+			if len(params.People) == 0 {
+				<div class="border border-sage-border rounded p-6 text-center text-olive-ink/60">
+					<p class="mb-4">No people yet. Add your own profile first.</p>
+					<a href="/people/new" class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition">Add person</a>
+				</div>
+			} else {
+				<div class="border border-sage-border rounded divide-y divide-sage-border">
+					for _, person := range params.People {
+						<div class="flex items-center justify-between gap-4 p-4">
+							<a href={ templ.SafeURL("/people/" + strconv.FormatInt(person.ID, 10)) } class="font-medium text-deep-olive hover:underline">{ person.Name }</a>
+							if params.SelfPerson != nil && params.SelfPerson.ID == person.ID {
+								<span class="rounded-full bg-deep-olive text-parchment px-3 py-1 text-xs font-semibold">You</span>
+							} else {
+								<form method="POST" action="/me/setup">
+									<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+									<input type="hidden" name="person_id" value={ strconv.FormatInt(person.ID, 10) }/>
+									<button type="submit" class="border border-sage-border rounded px-3 py-1 text-sm hover:bg-sage-border/20 transition">Set as Me</button>
+								</form>
+							}
+						</div>
+					}
+				</div>
+				<a href="/people/new" class="inline-block mt-4 text-sm text-deep-olive hover:underline">Add a new person first</a>
+			}
+		</div>
+	}
+}

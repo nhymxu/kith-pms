@@ -162,6 +162,40 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (s *Service) GetSelf(ctx context.Context) (*Person, error) {
+	return s.People.GetSelf(ctx)
+}
+
+func (s *Service) SetSelf(ctx context.Context, personID int64) error {
+	person, err := s.People.Get(ctx, personID)
+	if err != nil {
+		return err
+	}
+	if person == nil {
+		return fmt.Errorf("person not found")
+	}
+
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("people: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := s.People.ClearSelf(ctx, tx); err != nil {
+		return err
+	}
+	if err := s.People.SetSelf(ctx, tx, personID); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("people: commit set self: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+	}
+	return nil
+}
+
 // UploadAvatar saves a new avatar file and updates the person's avatar metadata.
 // If the person already has an avatar, the old file is deleted after the transaction commits.
 func (s *Service) UploadAvatar(ctx context.Context, personID int64, file multipart.File, header *multipart.FileHeader) error {

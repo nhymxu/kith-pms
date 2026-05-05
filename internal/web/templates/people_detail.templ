@@ -25,6 +25,7 @@ type PeopleDetailParams struct {
 	AuditHistory     []audit.Entry            // latest 10 audit entries for this person
 	Gifts            []gifts.GiftWithPerson   // latest 10 gifts for this person
 	TodayDate        string                   // pre-filled date for quick-add journal form
+	SelfPersonID     int64
 }
 
 // PeopleDetail renders the detail view for a single person.
@@ -62,7 +63,16 @@ templ PeopleDetail(params PeopleDetailParams) {
 						}
 					</div>
 				</div>
-				<div class="flex gap-2">
+				<div class="flex gap-2 items-center">
+					if params.SelfPersonID == params.Person.ID {
+						<span class="rounded-full bg-deep-olive text-parchment px-3 py-1 text-xs font-semibold">You</span>
+					} else {
+						<form method="POST" action="/me/setup">
+							<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+							<input type="hidden" name="person_id" value={ fmt.Sprintf("%d", params.Person.ID) }/>
+							<button type="submit" class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition">Set as Me</button>
+						</form>
+					}
 					<a
 						href={ templ.SafeURL(fmt.Sprintf("/people/%d/edit", params.Person.ID)) }
 						class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"

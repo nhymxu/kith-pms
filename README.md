@@ -5,6 +5,7 @@
 ## Features
 
 - **People** — store contacts with relationship type, date of birth, contact methods, addresses, and avatars
+- **Self Profile** — designate one person as "Me" to filter journal entries and track personal participation
 - **Labels** — colour-tagged categories; attach multiple labels to each person
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget

@@ -167,6 +167,11 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		workHistory, _ = h.WorkHistorySvc.ListByPerson(c.Request().Context(), id)
 	}
 
+	var selfPersonID int64
+	if selfPerson, err := h.Svc.GetSelf(c.Request().Context()); err == nil && selfPerson != nil {
+		selfPersonID = selfPerson.ID
+	}
+
 	// Fetch recent audit history for this person (best-effort).
 	var auditHistory []audit.Entry
 	if h.AuditSvc != nil {
@@ -193,6 +198,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		Labels:           attached,
 		AllLabels:        allLabels,
 		CSRFToken:        auth.CSRFToken(c),
+		SelfPersonID:     selfPersonID,
 		RecentActivities: recentActivities,
 		Dates:            importantDates,
 		WorkHistory:      workHistory,

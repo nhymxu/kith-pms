@@ -273,3 +273,55 @@ func TestList_Pagination(t *testing.T) {
 		t.Errorf("page 2: got %d, want 2", len(page2))
 	}
 }
+
+func TestGetSelf_NoneSet(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	got, err := svc.GetSelf(ctx)
+	if err != nil {
+		t.Fatalf("GetSelf: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("GetSelf: got %#v, want nil", got)
+	}
+}
+
+func TestSetSelf_AndGet(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+	bobID := mustCreate(t, svc, "Bob", nil, nil)
+
+	if err := svc.SetSelf(ctx, aliceID); err != nil {
+		t.Fatalf("SetSelf alice: %v", err)
+	}
+	got, err := svc.GetSelf(ctx)
+	if err != nil {
+		t.Fatalf("GetSelf alice: %v", err)
+	}
+	if got == nil || got.ID != aliceID {
+		t.Fatalf("GetSelf alice: got %#v, want id %d", got, aliceID)
+	}
+
+	if err := svc.SetSelf(ctx, bobID); err != nil {
+		t.Fatalf("SetSelf bob: %v", err)
+	}
+	got, err = svc.GetSelf(ctx)
+	if err != nil {
+		t.Fatalf("GetSelf bob: %v", err)
+	}
+	if got == nil || got.ID != bobID {
+		t.Fatalf("GetSelf bob: got %#v, want id %d", got, bobID)
+	}
+}
+
+func TestSetSelf_UnknownID(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	if err := svc.SetSelf(ctx, 9999); err == nil {
+		t.Fatal("SetSelf unknown ID: got nil error, want error")
+	}
+}

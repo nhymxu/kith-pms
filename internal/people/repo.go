@@ -13,9 +13,12 @@ import (
 type PersonRepo interface {
 	List(ctx context.Context, q string, labelIDs []int64, limit, offset int) ([]Person, error)
 	Get(ctx context.Context, id int64) (*Person, error)
+	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error)
 	Update(ctx context.Context, tx *sql.Tx, p Person) error
 	Delete(ctx context.Context, id int64) error
+	SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error
+	ClearSelf(ctx context.Context, tx *sql.Tx) error
 	UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error
 	ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error
 }
@@ -117,6 +120,23 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 	return &p, nil
 }
 
+func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
+	row := r.db.QueryRowContext(ctx,
+		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
+		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
+		        created_at, updated_at
+		 FROM person WHERE is_self = 1 LIMIT 1`,
+	)
+	p, err := scanPerson(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &p, nil
+}
+
 func (r *sqlPersonRepo) Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	dob := formatNullableDate(p.DateOfBirth)
@@ -156,6 +176,31 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM person WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("people: delete person: %w", err)
+	}
+	return nil
+}
+
+func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	res, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 1, updated_at = ? WHERE id = ?`, now, personID)
+	if err != nil {
+		return fmt.Errorf("people: set self: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("people: set self rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("person not found")
+	}
+	return nil
+}
+
+func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx *sql.Tx) error {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	_, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 0, updated_at = ? WHERE is_self = 1`, now)
+	if err != nil {
+		return fmt.Errorf("people: clear self: %w", err)
 	}
 	return nil
 }

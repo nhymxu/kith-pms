@@ -14,7 +14,13 @@ BIN_DIR="${REPO_ROOT}/bin"
 
 mkdir -p "${BIN_DIR}"
 
+# Detect OS and architecture to pick the correct release asset.
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+BREW_PREFIX=""
 if command -v brew >/dev/null 2>&1; then
+  BREW_PREFIX="${HOMEBREW_PREFIX:-$(brew --prefix)}"
   echo "Homebrew detected. You can install these tools with brew if you prefer:"
   echo "  brew install sqlc templ tailwindcss"
   echo "Continuing with pinned project-local installs..."
@@ -22,22 +28,26 @@ if command -v brew >/dev/null 2>&1; then
 fi
 
 # ── sqlc ──────────────────────────────────────────────────────────────────────
-echo "→ Installing sqlc v1.27.0 ..."
-CGO_ENABLED=0 go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
+if [ "${OS}" = "Darwin" ] && [ -n "${BREW_PREFIX}" ] && [ -x "${BREW_PREFIX}/bin/sqlc" ]; then
+  echo "→ sqlc found in Homebrew (${BREW_PREFIX}/bin/sqlc), skipping go install..."
+else
+  echo "→ Installing sqlc v1.27.0 ..."
+  CGO_ENABLED=0 go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
+fi
 echo "  sqlc: $(sqlc version 2>/dev/null || echo 'installed')"
 
 # ── templ ─────────────────────────────────────────────────────────────────────
-echo "→ Installing templ v0.3.1001 ..."
-go install github.com/a-h/templ/cmd/templ@v0.3.1001
+if [ "${OS}" = "Darwin" ] && [ -n "${BREW_PREFIX}" ] && [ -x "${BREW_PREFIX}/bin/templ" ]; then
+  echo "→ templ found in Homebrew (${BREW_PREFIX}/bin/templ), skipping go install..."
+else
+  echo "→ Installing templ v0.3.1001 ..."
+  go install github.com/a-h/templ/cmd/templ@v0.3.1001
+fi
 echo "  templ: $(templ version 2>/dev/null || echo 'installed')"
 
 # ── Tailwind CSS standalone CLI v4.2.4 ────────────────────────────────────────
 TAILWIND_VERSION="4.2.4"
 TAILWIND_BIN="${BIN_DIR}/tailwindcss"
-
-# Detect OS and architecture to pick the correct release asset.
-OS="$(uname -s)"
-ARCH="$(uname -m)"
 
 case "${OS}" in
   Linux)

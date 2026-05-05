@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
@@ -376,27 +377,35 @@ templ WorkRow(index int) {
 // PersonRecentActivitiesParams holds data for the person's recent activities widget.
 type PersonRecentActivitiesParams struct {
 	PersonID   int64
+	PersonName string
 	Activities []journal.Activity
 	CSRFToken  string
 	TodayDate  string
 	Error      string
 }
 
-// PersonRecentActivities renders the recent activities section with inline quick-add form.
+// PersonRecentActivities renders the recent activities section with a popup quick-add form.
 templ PersonRecentActivities(params PersonRecentActivitiesParams) {
 	<section id="recent-activities" class="mb-6 border border-sage-border rounded p-4">
 		<div class="flex items-center justify-between mb-3">
 			<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide">Recent Activities</h2>
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("/journal?people=%d", params.PersonID)) }
-				class="text-xs text-deep-olive hover:underline"
-			>View all →</a>
+			<div class="flex items-center gap-3">
+				<button
+					type="button"
+					data-dialog={ fmt.Sprintf("journal-modal-%d", params.PersonID) }
+					onclick="document.getElementById(this.dataset.dialog).showModal()"
+					class="text-xs text-deep-olive hover:underline"
+				>+ Add entry</button>
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/journal?people=%d", params.PersonID)) }
+					class="text-xs text-deep-olive hover:underline"
+				>View all →</a>
+			</div>
 		</div>
-		@PersonQuickJournalForm(params.PersonID, params.CSRFToken, params.TodayDate, params.Error)
 		if len(params.Activities) == 0 {
-			<p class="text-sm text-olive-ink/40 mt-3">No activities yet.</p>
+			<p class="text-sm text-olive-ink/40">No activities yet.</p>
 		} else {
-			<ul class="space-y-2 mt-3">
+			<ul class="space-y-2">
 				for _, a := range params.Activities {
 					<li class="flex items-center justify-between text-sm">
 						<a
@@ -408,48 +417,339 @@ templ PersonRecentActivities(params PersonRecentActivitiesParams) {
 				}
 			</ul>
 		}
+		<dialog
+			id={ fmt.Sprintf("journal-modal-%d", params.PersonID) }
+			if params.Error != "" {
+				data-open=""
+			}
+			class="rounded-lg border border-sage-border shadow-lg backdrop:bg-black/30 max-w-lg w-full p-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+		>
+			<div class="p-5 overflow-y-auto max-h-[90vh]">
+				<div class="flex items-center justify-between mb-4">
+					<h3 class="text-base font-semibold text-deep-olive">New Journal Entry</h3>
+					<button type="button" onclick="this.closest('dialog').close()" class="text-olive-ink/50 hover:text-olive-ink text-lg leading-none">&times;</button>
+				</div>
+				@PersonQuickJournalForm(params.PersonID, params.PersonName, params.CSRFToken, params.TodayDate, params.Error)
+			</div>
+		</dialog>
+		<script>
+			(function() {
+				document.querySelectorAll('dialog[data-open]').forEach(function(d) { d.showModal(); });
+			})();
+		</script>
 	</section>
 }
 
-// PersonQuickJournalForm renders a compact inline form to create a journal entry for the person.
-templ PersonQuickJournalForm(personID int64, csrfToken string, todayDate string, formError string) {
+// PersonQuickJournalForm renders a compact form inside the journal modal dialog.
+templ PersonQuickJournalForm(personID int64, personName string, csrfToken string, todayDate string, formError string) {
 	<form
 		hx-post={ fmt.Sprintf("/people/%d/journal/quick", personID) }
 		hx-target="#recent-activities"
 		hx-swap="outerHTML"
-		class="border-t border-sage-border/50 pt-3 mt-1 space-y-2"
+		class="space-y-3"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		if formError != "" {
-			<p class="text-xs text-red-600 mb-1">{ formError }</p>
+			<p class="text-xs text-red-600">{ formError }</p>
 		}
-		<div class="flex gap-2">
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Title <span class="text-red-500">*</span></label>
 			<input
 				type="text"
 				name="title"
-				placeholder="New entry title…"
+				placeholder="What happened?"
 				required
-				class="flex-1 border border-sage-border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
-			/>
-			<input
-				type="date"
-				name="occurred_at_date"
-				value={ todayDate }
-				required
-				class="border border-sage-border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
 			/>
 		</div>
-		<div class="flex gap-2 items-end">
+		<div class="flex gap-3">
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-olive-ink mb-1">Date <span class="text-red-500">*</span></label>
+				<input
+					type="date"
+					name="occurred_at_date"
+					value={ todayDate }
+					required
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-olive-ink mb-1">Time <span class="text-olive-ink/40 font-normal">(optional)</span></label>
+				<input
+					type="time"
+					name="occurred_at_time"
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+			</div>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Notes <span class="text-olive-ink/40 font-normal">(optional)</span></label>
 			<textarea
 				name="content"
-				placeholder="Notes (optional)…"
-				rows="2"
-				class="flex-1 border border-sage-border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive resize-none"
+				placeholder="Write your notes here…"
+				rows="4"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive resize-y"
 			></textarea>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">People</label>
+			<div id="qj-selected-people" class="flex flex-wrap gap-2 mb-2">
+				@PersonChip(personID, personName)
+			</div>
+			<div class="relative">
+				<input
+					type="text"
+					id="qj-person-search"
+					placeholder="Search people to add…"
+					autocomplete="off"
+					hx-get="/journal/people-search"
+					hx-target="#qj-person-results"
+					hx-trigger="input changed delay:300ms"
+					name="q_person"
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				/>
+				<div
+					id="qj-person-results"
+					class="absolute z-10 w-full bg-white border border-sage-border rounded shadow-md mt-1 hidden"
+				></div>
+			</div>
+		</div>
+		<div class="flex gap-2 pt-1">
 			<button
 				type="submit"
-				class="bg-deep-olive text-parchment rounded px-4 py-1.5 text-sm font-semibold hover:opacity-90 transition shrink-0"
-			>Add</button>
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>Add entry</button>
+			<button
+				type="button"
+				onclick="this.closest('dialog').close()"
+				class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+			>Cancel</button>
+		</div>
+	</form>
+	<script>
+		(function() {
+			var addedIDs = new Set();
+			document.querySelectorAll('#qj-selected-people [name="person_id[]"]').forEach(function(inp) {
+				addedIDs.add(Number(inp.value));
+			});
+
+			window.addPersonChip = function(id, name) {
+				if (addedIDs.has(id)) return;
+				addedIDs.add(id);
+				var container = document.getElementById('qj-selected-people');
+				var span = document.createElement('span');
+				span.id = 'chip-' + id;
+				span.className = 'inline-flex items-center gap-1 bg-sage-border/30 rounded-full px-3 py-1 text-sm';
+				span.innerHTML =
+					'<input type="hidden" name="person_id[]" value="' + id + '">' +
+					name +
+					'<button type="button" onclick="removePersonChip(' + id + ')" class="text-olive-ink/50 hover:text-olive-ink ml-1 font-bold leading-none" aria-label="Remove">×</button>';
+				container.appendChild(span);
+				document.getElementById('qj-person-results').classList.add('hidden');
+				document.getElementById('qj-person-search').value = '';
+			};
+
+			window.removePersonChip = function(id) {
+				addedIDs.delete(id);
+				var el = document.getElementById('chip-' + id);
+				if (el) el.remove();
+			};
+
+			var search = document.getElementById('qj-person-search');
+			var results = document.getElementById('qj-person-results');
+			if (search && results) {
+				search.addEventListener('input', function() {
+					results.classList.toggle('hidden', search.value.trim().length === 0);
+				});
+				document.addEventListener('click', function(e) {
+					if (!search.contains(e.target) && !results.contains(e.target)) {
+						results.classList.add('hidden');
+					}
+				});
+				search.addEventListener('htmx:configRequest', function(e) {
+					e.detail.parameters['q'] = search.value;
+					delete e.detail.parameters['q_person'];
+				});
+			}
+		})();
+	</script>
+}
+
+// PeopleGiftsSectionParams holds data for the person's gifts section widget.
+type PeopleGiftsSectionParams struct {
+	PersonID  int64
+	Gifts     []gifts.GiftWithPerson
+	CSRFToken string
+	Error     string
+}
+
+// PeopleGiftsSection renders the gifts section with a popup quick-add form.
+templ PeopleGiftsSection(params PeopleGiftsSectionParams) {
+	<section id="gifts-section" class="mb-6 border border-sage-border rounded p-4">
+		<div class="flex items-center justify-between mb-3">
+			<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide">Gifts</h2>
+			<button
+				type="button"
+				data-dialog={ fmt.Sprintf("gift-modal-%d", params.PersonID) }
+				onclick="document.getElementById(this.dataset.dialog).showModal()"
+				class="text-xs text-deep-olive hover:underline"
+			>+ Add gift</button>
+		</div>
+		if len(params.Gifts) == 0 {
+			<p class="text-sm text-olive-ink/40">No gifts recorded.</p>
+		} else {
+			<ul class="space-y-2">
+				for _, g := range params.Gifts {
+					<li class="flex items-start gap-3 text-sm">
+						@GiftDirectionBadge(g.Direction)
+						<div class="flex-1 min-w-0">
+							<a
+								href={ templ.SafeURL(fmt.Sprintf("/gifts/%d", g.ID)) }
+								class="text-deep-olive hover:underline font-medium truncate block"
+							>{ g.Title }</a>
+							if g.Date != "" || g.IsMoney() {
+								<div class="text-xs text-olive-ink/50 mt-0.5 flex gap-2 flex-wrap">
+									if g.Date != "" {
+										<span>{ g.Date }</span>
+									}
+									if g.DisplayAmount() != "" {
+										<span>{ g.DisplayAmount() }</span>
+									}
+									if g.DebtType != gifts.DebtNone {
+										@GiftDebtBadge(g.DebtType)
+									}
+								</div>
+							}
+						</div>
+					</li>
+				}
+			</ul>
+			<div class="mt-3 text-xs">
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/gifts?person_id=%d", params.PersonID)) }
+					class="text-deep-olive hover:underline"
+				>View all gifts →</a>
+			</div>
+		}
+		<dialog
+			id={ fmt.Sprintf("gift-modal-%d", params.PersonID) }
+			if params.Error != "" {
+				data-open=""
+			}
+			class="rounded-lg border border-sage-border shadow-lg backdrop:bg-black/30 max-w-lg w-full p-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+		>
+			<div class="p-5 overflow-y-auto max-h-[90vh]">
+				<div class="flex items-center justify-between mb-4">
+					<h3 class="text-base font-semibold text-deep-olive">Add Gift</h3>
+					<button type="button" onclick="this.closest('dialog').close()" class="text-olive-ink/50 hover:text-olive-ink text-lg leading-none">&times;</button>
+				</div>
+				@PersonQuickGiftForm(params.PersonID, params.CSRFToken, params.Error)
+			</div>
+		</dialog>
+		<script>
+			(function() {
+				document.querySelectorAll('dialog[data-open]').forEach(function(d) { d.showModal(); });
+			})();
+		</script>
+	</section>
+}
+
+// PersonQuickGiftForm renders a compact form inside the gift modal dialog.
+templ PersonQuickGiftForm(personID int64, csrfToken string, formError string) {
+	<form
+		hx-post={ fmt.Sprintf("/people/%d/gifts/quick", personID) }
+		hx-target="#gifts-section"
+		hx-swap="outerHTML"
+		class="space-y-3"
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		if formError != "" {
+			<p class="text-xs text-red-600">{ formError }</p>
+		}
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Title <span class="text-red-500">*</span></label>
+			<input
+				type="text"
+				name="title"
+				placeholder="What is the gift?"
+				required
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Direction</label>
+			<select
+				name="direction"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			>
+				<option value="planned">Planned</option>
+				<option value="given">Given</option>
+				<option value="received">Received</option>
+			</select>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Date <span class="text-olive-ink/40 font-normal">(optional)</span></label>
+			<input
+				type="date"
+				name="date"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Notes <span class="text-olive-ink/40 font-normal">(optional)</span></label>
+			<textarea
+				name="notes"
+				rows="2"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive resize-none"
+			></textarea>
+		</div>
+		<fieldset class="border border-sage-border rounded p-4 space-y-4">
+			<legend class="text-sm font-medium text-olive-ink px-1">Money (optional)</legend>
+			<div class="grid grid-cols-2 gap-3">
+				<div>
+					<label class="block text-sm font-medium text-olive-ink mb-1">Amount</label>
+					<input
+						type="number"
+						name="amount"
+						min="0"
+						step="0.01"
+						placeholder="0.00"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-olive-ink mb-1">Currency</label>
+					<input
+						type="text"
+						name="currency"
+						maxlength="10"
+						placeholder="USD"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-olive-ink mb-1">Debt direction</label>
+				<select
+					name="debt_type"
+					class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+				>
+					<option value="">— Not a loan —</option>
+					<option value="i_owe">I owe them</option>
+					<option value="they_owe">They owe me</option>
+				</select>
+			</div>
+		</fieldset>
+		<div class="flex gap-2 pt-1">
+			<button
+				type="submit"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>Add gift</button>
+			<button
+				type="button"
+				onclick="this.closest('dialog').close()"
+				class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+			>Cancel</button>
 		</div>
 	</form>
 }

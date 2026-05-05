@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"log/slog"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -420,6 +421,7 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 		})
 		return templates.PersonRecentActivities(templates.PersonRecentActivitiesParams{
 			PersonID:   personID,
+			PersonName: p.Name,
 			Activities: activities,
 			CSRFToken:  csrfToken,
 			TodayDate:  today,
@@ -443,10 +445,105 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 	activity := journal.Activity{
 		Title:          title,
 		OccurredAtDate: date,
+		OccurredAtTime: strings.TrimSpace(c.FormValue("occurred_at_time")),
 		Content:        strings.TrimSpace(c.FormValue("content")),
 	}
-	if _, err := h.JournalSvc.Create(c.Request().Context(), activity, []int64{personID}); err != nil {
+
+	// Collect submitted person IDs and always include the current person.
+	if err := c.Request().ParseForm(); err != nil {
+		return rerender("Failed to parse form.")
+	}
+	personIDs := parsePersonIDSlice(c.Request().Form["person_id[]"])
+	seen := make(map[int64]bool, len(personIDs)+1)
+	for _, id := range personIDs {
+		seen[id] = true
+	}
+	if !seen[personID] {
+		personIDs = append([]int64{personID}, personIDs...)
+	}
+
+	if _, err := h.JournalSvc.Create(c.Request().Context(), activity, personIDs); err != nil {
 		return rerender("Failed to save entry.")
+	}
+
+	return rerender("")
+}
+
+// PostQuickGift handles POST /people/:id/gifts/quick (htmx fragment).
+// Creates a gift linked to the person and returns the updated gifts section.
+func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), personID)
+	if err != nil {
+		return err
+	}
+	if p == nil {
+		return echo.ErrNotFound
+	}
+
+	if h.GiftsSvc == nil {
+		return echo.ErrInternalServerError
+	}
+
+	csrfToken := auth.CSRFToken(c)
+
+	rerender := func(formErr string) error {
+		giftList, _ := h.GiftsSvc.List(c.Request().Context(), gifts.ListParams{
+			PersonID: &personID,
+			Page:     1,
+			PageSize: 10,
+		})
+		return templates.PeopleGiftsSection(templates.PeopleGiftsSectionParams{
+			PersonID:  personID,
+			Gifts:     giftList,
+			CSRFToken: csrfToken,
+			Error:     formErr,
+		}).Render(c.Request().Context(), c.Response())
+	}
+
+	title := strings.TrimSpace(c.FormValue("title"))
+	if title == "" {
+		return rerender("Title is required.")
+	}
+
+	direction := gifts.Direction(strings.TrimSpace(c.FormValue("direction")))
+	if direction == "" {
+		direction = gifts.DirectionPlanned
+	}
+
+	currency := strings.TrimSpace(c.FormValue("currency"))
+	if currency == "" {
+		currency = "USD"
+	}
+	debtType := gifts.DebtType(c.FormValue("debt_type"))
+	if debtType != gifts.DebtIOwe && debtType != gifts.DebtTheyOwe {
+		debtType = gifts.DebtNone
+	}
+	var amountCents *int64
+	if amtStr := strings.TrimSpace(c.FormValue("amount")); amtStr != "" {
+		if f, parseErr := strconv.ParseFloat(amtStr, 64); parseErr == nil && f >= 0 {
+			cents := int64(math.Round(f * 100))
+			amountCents = &cents
+		}
+	}
+
+	g := &gifts.Gift{
+		PersonID:    personID,
+		Title:       title,
+		Direction:   direction,
+		Date:        strings.TrimSpace(c.FormValue("date")),
+		Notes:       strings.TrimSpace(c.FormValue("notes")),
+		AmountCents: amountCents,
+		Currency:    currency,
+		DebtType:    debtType,
+	}
+
+	if _, err := h.GiftsSvc.Create(c.Request().Context(), g); err != nil {
+		return rerender("Failed to save gift.")
 	}
 
 	return rerender("")

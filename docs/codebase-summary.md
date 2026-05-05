@@ -75,7 +75,7 @@ kith-pms/
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
 │       │   ├── home.go           # Dashboard (includes OnThisDay widget)
-│       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal for inline journal creation
+│       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal, PostQuickGift for inline forms
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
 │       │   ├── dates.go          # Handlers for Important Dates
@@ -87,7 +87,7 @@ kith-pms/
 │       │   ├── login.templ       # Login form
 │       │   ├── home.templ        # Dashboard (includes OnThisDay widget)
 │       │   ├── people_list.templ, people_detail.templ, people_form.templ
-│       │   ├── people_partials.templ  # PersonRecentActivities + PersonQuickJournalForm (inline journal creation)
+│       │   ├── people_partials.templ  # PersonRecentActivities, PersonQuickJournalForm, PersonQuickGiftForm
 │       │   ├── dates_list.templ  # Upcoming dates list
 │       │   ├── reminders_list.templ, reminders_form.templ
 │       │   ├── gifts_list.templ, gifts_detail.templ, gifts_form.templ, gifts_partials.templ
@@ -209,8 +209,8 @@ kith-pms/
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance
 - **route.go**: Echo mounts static file server, registers route groups, injects service dependencies into handlers
-- **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home); includes HTMX fragment endpoints like PostQuickJournal
-- **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; patterns for inline creation forms (PersonRecentActivities, PersonQuickJournalForm)
+- **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home); includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift)
+- **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; includes inline forms (PersonQuickJournalForm, PersonQuickGiftForm)
 - **forms/**: Form struct definitions for validation & binding
 - **static/**: Embedded htmx library and generated Tailwind CSS
 

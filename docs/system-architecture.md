@@ -120,6 +120,8 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people/:id            → GET (detail), PUT (update), DELETE
 /people/:id/edit       → GET (edit form)
 /people/:id/date-row   → POST (add/update important date)
+/people/:id/journal/quick → POST (quick-add journal entry, htmx fragment)
+/people/:id/gifts/quick → POST (quick-add gift, htmx fragment)
 /people/:id/avatar     → POST (upload), GET (retrieve)
 /people/:id/avatar/delete → POST (delete)
 /labels                → GET (list), POST (create)

@@ -125,6 +125,8 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people/:id/delete", peopleH.PostDelete)
 		// Quick-add journal entry from person detail (htmx fragment)
 		protected.POST("/people/:id/journal/quick", peopleH.PostQuickJournal)
+		// Quick-add gift from person detail (htmx fragment)
+		protected.POST("/people/:id/gifts/quick", peopleH.PostQuickGift)
 		// Avatar routes
 		protected.POST("/people/:id/avatar", peopleH.PostUploadAvatar)
 		protected.GET("/people/:id/avatar", peopleH.GetAvatar)

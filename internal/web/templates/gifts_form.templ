@@ -1,0 +1,211 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/gifts"
+	"github.com/nhymxu/kith-pms/internal/people"
+)
+
+type GiftsFormParams struct {
+	Gift      gifts.Gift
+	CSRFToken string
+	IsEdit    bool
+	Error     string
+	AllPeople []people.Person
+}
+
+templ GiftsForm(params GiftsFormParams) {
+	@Layout(giftsFormTitle(params.IsEdit)) {
+		<div class="max-w-2xl">
+			<h1 class="text-2xl font-bold text-deep-olive mb-6">
+				if params.IsEdit {
+					Edit Gift
+				} else {
+					New Gift
+				}
+			</h1>
+			if params.Error != "" {
+				<div class="bg-red-50 border border-red-200 text-red-800 rounded px-4 py-3 mb-6">
+					{ params.Error }
+				</div>
+			}
+			<form method="POST" action={ templ.SafeURL(giftsFormAction(params.IsEdit, params.Gift.ID)) } class="space-y-6">
+				<input type="hidden" name="csrf_token" value={ params.CSRFToken }/>
+				<!-- Title -->
+				<div>
+					<label for="title" class="block text-sm font-medium text-olive-ink mb-1">
+						Title <span class="text-red-600">*</span>
+					</label>
+					<input
+						type="text"
+						id="title"
+						name="title"
+						value={ params.Gift.Title }
+						required
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<!-- Person -->
+				<div>
+					<label for="person_id" class="block text-sm font-medium text-olive-ink mb-1">
+						Person <span class="text-red-600">*</span>
+					</label>
+					<select
+						id="person_id"
+						name="person_id"
+						required
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					>
+						<option value="">— Select person —</option>
+						for _, p := range params.AllPeople {
+							<option
+								value={ fmt.Sprintf("%d", p.ID) }
+								selected?={ params.Gift.PersonID == p.ID }
+							>
+								{ p.Name }
+							</option>
+						}
+					</select>
+				</div>
+				<!-- Direction -->
+				<div>
+					<label for="direction" class="block text-sm font-medium text-olive-ink mb-1">
+						Direction <span class="text-red-600">*</span>
+					</label>
+					<select
+						id="direction"
+						name="direction"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					>
+						<option value="planned" selected?={ params.Gift.Direction == gifts.DirectionPlanned || params.Gift.Direction == "" }>Planned</option>
+						<option value="given" selected?={ params.Gift.Direction == gifts.DirectionGiven }>Given</option>
+						<option value="received" selected?={ params.Gift.Direction == gifts.DirectionReceived }>Received</option>
+					</select>
+				</div>
+				<!-- Date -->
+				<div>
+					<label for="date" class="block text-sm font-medium text-olive-ink mb-1">Date (optional)</label>
+					<input
+						type="date"
+						id="date"
+						name="date"
+						value={ params.Gift.Date }
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					/>
+				</div>
+				<!-- Notes -->
+				<div>
+					<label for="notes" class="block text-sm font-medium text-olive-ink mb-1">Notes</label>
+					<textarea
+						id="notes"
+						name="notes"
+						rows="3"
+						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+					>{ params.Gift.Notes }</textarea>
+				</div>
+				<!-- Money section -->
+				<fieldset class="border border-sage-border rounded p-4 space-y-4">
+					<legend class="text-sm font-medium text-olive-ink px-1">Money (optional)</legend>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label for="amount" class="block text-sm font-medium text-olive-ink mb-1">Amount</label>
+							<input
+								type="number"
+								id="amount"
+								name="amount"
+								min="0"
+								step="0.01"
+								value={ giftsDisplayFormAmount(params.Gift.AmountCents) }
+								class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+								placeholder="0.00"
+							/>
+						</div>
+						<div>
+							<label for="currency" class="block text-sm font-medium text-olive-ink mb-1">Currency</label>
+							<input
+								type="text"
+								id="currency"
+								name="currency"
+								value={ giftsFormCurrency(params.Gift.Currency) }
+								maxlength="10"
+								class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+								placeholder="USD"
+							/>
+						</div>
+					</div>
+					<div>
+						<label for="debt_type" class="block text-sm font-medium text-olive-ink mb-1">Debt direction</label>
+						<select
+							id="debt_type"
+							name="debt_type"
+							class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+						>
+							<option value="" selected?={ params.Gift.DebtType == gifts.DebtNone }>— Not a loan —</option>
+							<option value="i_owe" selected?={ params.Gift.DebtType == gifts.DebtIOwe }>I owe them</option>
+							<option value="they_owe" selected?={ params.Gift.DebtType == gifts.DebtTheyOwe }>They owe me</option>
+						</select>
+					</div>
+				</fieldset>
+				<!-- Actions -->
+				<div class="flex gap-3">
+					<button
+						type="submit"
+						class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+					>
+						if params.IsEdit {
+							Update
+						} else {
+							Create
+						}
+					</button>
+					<a
+						href={ templ.SafeURL(giftsFormCancel(params.IsEdit, params.Gift.ID)) }
+						class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+					>
+						Cancel
+					</a>
+				</div>
+			</form>
+		</div>
+	}
+}
+
+func giftsFormTitle(isEdit bool) string {
+	if isEdit {
+		return "Edit Gift — kith"
+	}
+	return "New Gift — kith"
+}
+
+func giftsFormAction(isEdit bool, id int64) string {
+	if isEdit {
+		return fmt.Sprintf("/gifts/%d", id)
+	}
+	return "/gifts"
+}
+
+func giftsFormCancel(isEdit bool, id int64) string {
+	if isEdit {
+		return fmt.Sprintf("/gifts/%d", id)
+	}
+	return "/gifts"
+}
+
+func giftsDisplayFormAmount(cents *int64) string {
+	if cents == nil {
+		return ""
+	}
+	major := *cents / 100
+	minor := *cents % 100
+	if minor == 0 {
+		return fmt.Sprintf("%d", major)
+	}
+	return fmt.Sprintf("%d.%02d", major, minor)
+}
+
+func giftsFormCurrency(c string) string {
+	if c == "" {
+		return "USD"
+	}
+	return c
+}

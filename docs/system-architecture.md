@@ -23,11 +23,12 @@
 │  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
 │  │  ├─ /dates         → Important dates & milestones        │   │
 │  │  ├─ /reminders/*   → Reminders & notifications           │   │
+│  │  ├─ /gifts/*       → Gifts CRUD + image upload/delete    │   │
 │  │  └─ /audit         → Audit log with filter tabs          │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Service Layer (auth, people, labels, journal, dates,     │   │
-│  │                reminders, files, audit)                   │   │
+│  │                reminders, gifts, files, audit)            │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -222,6 +223,7 @@ Connection settings:
 | `0008_reminder.sql` | reminders table with person/date associations and completion tracking |
 | `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
 | `0011_audit_log.sql` | audit_log table for entity change tracking (entity_type, entity_id, entity_name, action, actor_id, created_at) |
+| `0012_gift.sql` | gift table with direction (gave/received), debt_type (owed/owe), person association, and image storage metadata |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
@@ -264,6 +266,7 @@ people (1)
   ├─ (1:N) locations (address)
   ├─ (1:N) important_date (birthdays, anniversaries, milestones)
   ├─ (1:N) reminders (optional person association)
+  ├─ (1:N) gifts (gift records with direction + debt tracking)
   ├─ (N:M) labels (via label_assignments)
   └─ (N:M) activities (via activity_links)
 
@@ -277,6 +280,9 @@ activities (1)  [Journal entries]
 reminders (1)
   ├─ (N:1) people (optional FK)
   └─ (N:1) important_date (optional FK)
+
+gifts (1)
+  └─ (N:1) people (FK to person who gave/received gift)
 ```
 
 ## Deployment

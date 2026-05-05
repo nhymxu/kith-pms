@@ -57,6 +57,11 @@ kith-pms/
 │   │   ├── service.go            # CRUD and completion tracking business logic
 │   │   ├── repo.go               # Database queries for reminders
 │   │   └── service_test.go       # Service unit tests
+│   ├── gifts/                    # Gift management & debt tracking
+│   │   ├── domain.go             # Gift, GiftWithPerson structures; Direction, DebtType constants
+│   │   ├── service.go            # CRUD, image upload/delete business logic
+│   │   ├── repo.go               # Database queries for gifts
+│   │   └── service_test.go       # Service integration tests
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
@@ -75,6 +80,7 @@ kith-pms/
 │       │   ├── journal.go        # CRUD handlers for Journal
 │       │   ├── dates.go          # Handlers for Important Dates
 │       │   ├── reminders.go      # Handlers for Reminders
+│       │   ├── gifts.go          # CRUD & image handlers for Gifts
 │       │   └── errors.go         # Error page handlers
 │       ├── templates/            # Templ HTML components (.templ files)
 │       │   ├── layout.templ      # Base layout with navbar, footer
@@ -83,6 +89,7 @@ kith-pms/
 │       │   ├── people_list.templ, people_detail.templ, people_form.templ
 │       │   ├── dates_list.templ  # Upcoming dates list
 │       │   ├── reminders_list.templ, reminders_form.templ
+│       │   ├── gifts_list.templ, gifts_detail.templ, gifts_form.templ, gifts_partials.templ
 │       │   ├── labels_list.templ, labels_partials.templ
 │       │   ├── journal_list.templ, journal_detail.templ, journal_form.templ
 │       │   ├── journal_partials.templ
@@ -109,7 +116,8 @@ kith-pms/
 │   ├── 0007_important_date.sql   # Important dates table with virtual month_day column
 │   ├── 0008_reminder.sql         # Reminders table with person/date associations
 │   ├── 0009_person_avatar.sql    # Avatar metadata columns on person table
-│   └── 0011_audit_log.sql        # Audit log table for entity change tracking
+│   ├── 0011_audit_log.sql        # Audit log table for entity change tracking
+│   └── 0012_gift.sql             # Gift table with direction, debt type, and image columns
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -181,6 +189,12 @@ kith-pms/
 - **service.go**: CRUD for reminders; completion tracking; filter by status and person
 - **repo.go**: Queries for reminders with person joins; status filtering
 - **service_test.go**: Integration tests for reminder CRUD and completion
+
+### `internal/gifts` — Gift management & debt tracking
+- **domain.go**: Gift (title, description, direction, debt_type, person_id, image_path), GiftWithPerson; Direction and DebtType enums
+- **service.go**: CRUD for gifts; UploadImage/DeleteImage for gift photos; persists metadata (path, MIME type, size, upload timestamp)
+- **repo.go**: Queries for gifts with person joins; UpdateImage metadata updates
+- **service_test.go**: Integration tests for gift CRUD and image operations
 
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention

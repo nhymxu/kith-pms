@@ -17,6 +17,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
 	"github.com/nhymxu/kith-pms/internal/work_history"
@@ -36,6 +37,7 @@ type Deps struct {
 	RemindersService   *reminders.Service
 	WorkHistoryService *work_history.Service
 	AuditService       *audit.Service
+	GiftsService       *gifts.Service
 	AvatarBasePath     string
 	APIToken           string
 }
@@ -166,6 +168,24 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/reminders/:id", remindersH.PutUpdate)
 		protected.POST("/reminders/:id/delete", remindersH.Delete)
 		protected.POST("/reminders/:id/complete", remindersH.PostToggleComplete)
+
+		// Gifts routes
+		giftsH := &handlers.GiftsHandlers{
+			Svc:           deps.GiftsService,
+			PeopleSvc:     deps.PeopleService,
+			ImageBasePath: deps.AvatarBasePath,
+		}
+		protected.GET("/gifts", giftsH.GetList)
+		protected.GET("/gifts/new", giftsH.GetNew)
+		protected.POST("/gifts", giftsH.PostCreate)
+		protected.GET("/gifts/:id", giftsH.GetDetail)
+		protected.GET("/gifts/:id/edit", giftsH.GetEdit)
+		protected.POST("/gifts/:id", giftsH.PostUpdate)
+		protected.GET("/gifts/:id/delete-confirm", giftsH.GetDeleteConfirm)
+		protected.POST("/gifts/:id/delete", giftsH.PostDelete)
+		protected.POST("/gifts/:id/image", giftsH.PostUploadImage)
+		protected.GET("/gifts/:id/image", giftsH.GetImage)
+		protected.POST("/gifts/:id/image/delete", giftsH.PostDeleteImage)
 	}
 
 	// Mount JSON REST API routes under /v1/.
@@ -177,6 +197,7 @@ func Mount(e *echo.Echo, deps Deps) {
 		WorkHistoryService: deps.WorkHistoryService,
 		DatesService:       deps.DatesService,
 		AuditService:       deps.AuditService,
+		GiftsService:       deps.GiftsService,
 		APIToken:           deps.APIToken,
 	})
 }

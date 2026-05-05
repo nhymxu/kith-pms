@@ -1,0 +1,106 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/gifts"
+)
+
+type GiftsListParams struct {
+	Gifts     []gifts.GiftWithPerson
+	Direction string
+	Page      int
+	HasMore   bool
+	CSRFToken string
+}
+
+templ GiftsList(params GiftsListParams) {
+	@Layout("Gifts — kith") {
+		<div class="flex items-center justify-between mb-6">
+			<h1 class="text-2xl font-bold text-deep-olive">Gifts</h1>
+			<a
+				href="/gifts/new"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>
+				New gift
+			</a>
+		</div>
+		<div class="flex gap-2 mb-6 border-b border-sage-border">
+			for _, tab := range []struct{ label, value string }{
+				{"All", ""},
+				{"Given", "given"},
+				{"Received", "received"},
+				{"Planned", "planned"},
+			} {
+				<a
+					href={ templ.SafeURL(giftsTabURL(tab.value)) }
+					class={ "px-4 py-2 text-sm font-medium border-b-2 transition", templ.KV("border-deep-olive text-deep-olive", params.Direction == tab.value), templ.KV("border-transparent text-olive-ink/60 hover:text-olive-ink", params.Direction != tab.value) }
+				>
+					{ tab.label }
+				</a>
+			}
+		</div>
+		if len(params.Gifts) == 0 {
+			<div class="text-center py-16 text-olive-ink/60">
+				<p class="text-lg mb-4">No gifts found</p>
+				<a
+					href="/gifts/new"
+					class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+				>
+					Record your first gift
+				</a>
+			</div>
+		} else {
+			<div class="overflow-x-auto">
+				<table class="w-full border-collapse">
+					<thead>
+						<tr class="border-b border-sage-border">
+							<th class="text-left py-3 px-4 text-sm font-semibold text-olive-ink">Gift</th>
+							<th class="text-left py-3 px-4 text-sm font-semibold text-olive-ink">Person</th>
+							<th class="text-left py-3 px-4 text-sm font-semibold text-olive-ink">Direction</th>
+							<th class="text-left py-3 px-4 text-sm font-semibold text-olive-ink">Amount</th>
+							<th class="text-left py-3 px-4 text-sm font-semibold text-olive-ink">Date</th>
+							<th class="text-right py-3 px-4 text-sm font-semibold text-olive-ink">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, g := range params.Gifts {
+							@GiftRow(g, params.CSRFToken)
+						}
+					</tbody>
+				</table>
+			</div>
+			<div class="flex gap-4 mt-6 text-sm">
+				if params.Page > 1 {
+					<a
+						href={ templ.SafeURL(giftsPageURL(params.Direction, params.Page-1)) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						← Previous
+					</a>
+				}
+				if params.HasMore {
+					<a
+						href={ templ.SafeURL(giftsPageURL(params.Direction, params.Page+1)) }
+						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
+					>
+						Next →
+					</a>
+				}
+			</div>
+		}
+	}
+}
+
+func giftsTabURL(direction string) string {
+	if direction == "" {
+		return "/gifts"
+	}
+	return fmt.Sprintf("/gifts?direction=%s", direction)
+}
+
+func giftsPageURL(direction string, page int) string {
+	if direction == "" {
+		return fmt.Sprintf("/gifts?page=%d", page)
+	}
+	return fmt.Sprintf("/gifts?direction=%s&page=%d", direction, page)
+}

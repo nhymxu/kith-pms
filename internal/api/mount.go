@@ -5,6 +5,7 @@ import (
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -21,6 +22,7 @@ type Deps struct {
 	WorkHistoryService *work_history.Service
 	DatesService       *dates.Service
 	AuditService       *audit.Service
+	GiftsService       *gifts.Service
 	APIToken           string
 }
 
@@ -34,6 +36,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountWorkHistory(v1, deps)
 	mountDates(v1, deps)
 	mountAudit(v1, deps)
+	mountGifts(v1, deps)
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
@@ -89,4 +92,14 @@ func mountDates(g *echo.Group, deps Deps) {
 func mountAudit(g *echo.Group, deps Deps) {
 	h := &AuditAPI{Svc: deps.AuditService}
 	g.GET("/audit", h.List)
+}
+
+func mountGifts(g *echo.Group, deps Deps) {
+	h := &GiftsAPI{Svc: deps.GiftsService}
+	g.GET("/gifts", h.List)
+	g.POST("/gifts", h.Create)
+	g.GET("/gifts/:id", h.GetByID)
+	g.PUT("/gifts/:id", h.Update)
+	g.DELETE("/gifts/:id", h.Delete)
+	g.GET("/people/:id/gifts", h.ListByPerson)
 }

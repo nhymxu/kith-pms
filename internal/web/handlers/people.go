@@ -542,8 +542,14 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 		DebtType:    debtType,
 	}
 
-	if _, err := h.GiftsSvc.Create(c.Request().Context(), g); err != nil {
+	giftID, err := h.GiftsSvc.Create(c.Request().Context(), g)
+	if err != nil {
 		return rerender("Failed to save gift.")
+	}
+
+	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
+		defer src.Close()
+		_ = h.GiftsSvc.UploadImage(c.Request().Context(), giftID, src, file)
 	}
 
 	return rerender("")

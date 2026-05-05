@@ -188,9 +188,7 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/gifts/:id", giftsH.PostUpdate)
 		protected.GET("/gifts/:id/delete-confirm", giftsH.GetDeleteConfirm)
 		protected.POST("/gifts/:id/delete", giftsH.PostDelete)
-		protected.POST("/gifts/:id/image", giftsH.PostUploadImage)
 		protected.GET("/gifts/:id/image", giftsH.GetImage)
-		protected.POST("/gifts/:id/image/delete", giftsH.PostDeleteImage)
 	}
 
 	// Mount JSON REST API routes under /v1/.

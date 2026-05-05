@@ -73,10 +73,10 @@ func (s *Service) Update(ctx context.Context, g *Gift) error {
 
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	var title string
-	if s.Audit != nil {
-		if g, err := s.repo.GetByID(ctx, id); err == nil && g != nil {
-			title = g.Title
-		}
+	var imagePath string
+	if g, err := s.repo.GetByID(ctx, id); err == nil && g != nil {
+		title = g.Title
+		imagePath = g.ImagePath
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -91,6 +91,10 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
+
+	if s.FileSvc != nil && imagePath != "" {
+		_ = s.FileSvc.DeleteGiftImage(id, imagePath)
+	}
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, id, title, audit.ActionDelete)
 	}
@@ -101,6 +105,13 @@ func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.
 	if s.FileSvc == nil {
 		return fmt.Errorf("file service not configured")
 	}
+
+	// Capture old path before overwriting so we can delete the orphaned file.
+	var oldPath string
+	if existing, err := s.repo.GetByID(ctx, giftID); err == nil && existing != nil {
+		oldPath = existing.ImagePath
+	}
+
 	path, err := s.FileSvc.SaveGiftImage(giftID, file, header)
 	if err != nil {
 		return fmt.Errorf("save gift image: %w", err)
@@ -118,6 +129,10 @@ func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
+	}
+
+	if s.FileSvc != nil && oldPath != "" && oldPath != path {
+		_ = s.FileSvc.DeleteGiftImage(giftID, oldPath)
 	}
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, giftID, "", audit.ActionUpdate)

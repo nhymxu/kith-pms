@@ -6,9 +6,8 @@ import (
 )
 
 type GiftsDetailParams struct {
-	Gift      gifts.Gift
+	Gift       gifts.Gift
 	PersonName string
-	CSRFToken string
 }
 
 templ GiftsDetail(params GiftsDetailParams) {
@@ -75,10 +74,16 @@ templ GiftsDetail(params GiftsDetailParams) {
 					</div>
 				}
 				<!-- Photo -->
-				<div>
-					<div class="text-sm font-medium text-olive-ink/60 mb-2">Photo</div>
-					@GiftImageUpload(params.Gift, params.CSRFToken)
-				</div>
+				if params.Gift.HasImage() {
+					<div>
+						<div class="text-sm font-medium text-olive-ink/60 mb-2">Photo</div>
+						<img
+							src={ templ.SafeURL(fmt.Sprintf("/gifts/%d/image", params.Gift.ID)) }
+							alt="Gift photo"
+							class="max-w-xs rounded border border-sage-border"
+						/>
+					</div>
+				}
 				<!-- Timestamps -->
 				<div class="pt-4 border-t border-sage-border text-xs text-olive-ink/60">
 					<div>Created: { params.Gift.CreatedAt.Format("Jan 2, 2006 3:04 PM") }</div>

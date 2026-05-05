@@ -660,6 +660,7 @@ templ PersonQuickGiftForm(personID int64, csrfToken string, formError string) {
 		hx-post={ fmt.Sprintf("/people/%d/gifts/quick", personID) }
 		hx-target="#gifts-section"
 		hx-swap="outerHTML"
+		hx-encoding="multipart/form-data"
 		class="space-y-3"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
@@ -740,6 +741,15 @@ templ PersonQuickGiftForm(personID int64, csrfToken string, formError string) {
 				</select>
 			</div>
 		</fieldset>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Photo <span class="text-olive-ink/40 font-normal">(optional)</span></label>
+			<input
+				type="file"
+				name="image"
+				accept="image/jpeg,image/png,image/gif,image/webp"
+				class="block w-full text-sm text-olive-ink file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-sage-border/30 file:text-olive-ink hover:file:bg-sage-border/50 file:cursor-pointer"
+			/>
+		</div>
 		<div class="flex gap-2 pt-1">
 			<button
 				type="submit"

@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/auth"
-	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/templates"
@@ -21,7 +20,6 @@ import (
 type GiftsHandlers struct {
 	Svc           *gifts.Service
 	PeopleSvc     *people.Service
-	FileSvc       files.FileService
 	ImageBasePath string
 }
 
@@ -32,11 +30,18 @@ func (h *GiftsHandlers) GetList(c *echo.Context) error {
 		page = 1
 	}
 
-	list, err := h.Svc.List(c.Request().Context(), gifts.ListParams{
+	params := gifts.ListParams{
 		Direction: direction,
 		PageSize:  50,
 		Page:      page,
-	})
+	}
+	if pidStr := c.QueryParam("person_id"); pidStr != "" {
+		if pid, err := strconv.ParseInt(pidStr, 10, 64); err == nil && pid > 0 {
+			params.PersonID = &pid
+		}
+	}
+
+	list, err := h.Svc.List(c.Request().Context(), params)
 	if err != nil {
 		return err
 	}
@@ -85,6 +90,12 @@ func (h *GiftsHandlers) PostCreate(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
+		defer src.Close()
+		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
+	}
+
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/gifts/%d", id))
 }
 
@@ -110,7 +121,6 @@ func (h *GiftsHandlers) GetDetail(c *echo.Context) error {
 	return templates.GiftsDetail(templates.GiftsDetailParams{
 		Gift:       *g,
 		PersonName: personName,
-		CSRFToken:  auth.CSRFToken(c),
 	}).Render(c.Request().Context(), c.Response())
 }
 
@@ -160,6 +170,14 @@ func (h *GiftsHandlers) PostUpdate(c *echo.Context) error {
 	if err := h.Svc.Update(c.Request().Context(), g); err != nil {
 		return err
 	}
+
+	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
+		defer src.Close()
+		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
+	} else if c.FormValue("remove_image") == "1" {
+		_ = h.Svc.DeleteImage(c.Request().Context(), id)
+	}
+
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/gifts/%d", id))
 }
 
@@ -192,29 +210,6 @@ func (h *GiftsHandlers) PostDelete(c *echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/gifts")
 }
 
-func (h *GiftsHandlers) PostUploadImage(c *echo.Context) error {
-	id, err := parseID(c)
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	src, file, err := c.Request().FormFile("image")
-	if err != nil {
-		return c.String(http.StatusBadRequest, "No file uploaded")
-	}
-	defer src.Close()
-
-	if err := h.Svc.UploadImage(c.Request().Context(), id, src, file); err != nil {
-		return c.String(http.StatusBadRequest, err.Error())
-	}
-
-	g, err := h.Svc.GetByID(c.Request().Context(), id)
-	if err != nil {
-		return err
-	}
-	return templates.GiftImageUpload(*g, auth.CSRFToken(c)).Render(c.Request().Context(), c.Response())
-}
-
 func (h *GiftsHandlers) GetImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -242,23 +237,6 @@ func (h *GiftsHandlers) GetImage(c *echo.Context) error {
 	c.Response().Header().Set("Content-Type", mimeType)
 	c.Response().Header().Set("Cache-Control", "private, max-age=3600")
 	return c.File(fullPath)
-}
-
-func (h *GiftsHandlers) PostDeleteImage(c *echo.Context) error {
-	id, err := parseID(c)
-	if err != nil {
-		return echo.ErrNotFound
-	}
-
-	if err := h.Svc.DeleteImage(c.Request().Context(), id); err != nil {
-		return err
-	}
-
-	g, err := h.Svc.GetByID(c.Request().Context(), id)
-	if err != nil {
-		return err
-	}
-	return templates.GiftImageUpload(*g, auth.CSRFToken(c)).Render(c.Request().Context(), c.Response())
 }
 
 // parseGiftForm reads and validates the gift HTML form.
@@ -310,4 +288,3 @@ func parseGiftForm(c *echo.Context) (*gifts.Gift, string) {
 		DebtType:    debtType,
 	}, ""
 }
-

@@ -29,7 +29,7 @@ templ GiftsForm(params GiftsFormParams) {
 					{ params.Error }
 				</div>
 			}
-			<form method="POST" action={ templ.SafeURL(giftsFormAction(params.IsEdit, params.Gift.ID)) } class="space-y-6">
+			<form method="POST" action={ templ.SafeURL(giftsFormAction(params.IsEdit, params.Gift.ID)) } enctype="multipart/form-data" class="space-y-6">
 				<input type="hidden" name="csrf_token" value={ params.CSRFToken }/>
 				<!-- Title -->
 				<div>
@@ -146,6 +146,31 @@ templ GiftsForm(params GiftsFormParams) {
 						</select>
 					</div>
 				</fieldset>
+				<!-- Photo -->
+				<div>
+					<label class="block text-sm font-medium text-olive-ink mb-1">Photo <span class="text-olive-ink/40 font-normal">(optional)</span></label>
+					if params.IsEdit && params.Gift.HasImage() {
+						<div class="mb-3">
+							<img
+								src={ templ.SafeURL(fmt.Sprintf("/gifts/%d/image", params.Gift.ID)) }
+								alt="Current photo"
+								class="max-w-xs rounded border border-sage-border mb-2"
+							/>
+							<label class="flex items-center gap-2 text-sm text-olive-ink cursor-pointer">
+								<input type="checkbox" name="remove_image" value="1" class="rounded"/>
+								Remove current photo
+							</label>
+							<p class="text-xs text-olive-ink/50 mt-1">Or upload a new file below to replace it</p>
+						</div>
+					}
+					<input
+						type="file"
+						name="image"
+						accept="image/jpeg,image/png,image/gif,image/webp"
+						class="block text-sm text-olive-ink file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:bg-sage-border/30 file:text-olive-ink hover:file:bg-sage-border/50 file:cursor-pointer"
+					/>
+					<p class="text-xs text-olive-ink/50 mt-1">JPEG, PNG, GIF or WebP — max 5 MB</p>
+				</div>
 				<!-- Actions -->
 				<div class="flex gap-3">
 					<button

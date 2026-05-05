@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "skills": [
+    "neoeinstein/claude-plugins/plugins/htmx-alpine/skills/htmx-alpine",
+    "xobotyi/cc-foundry/plugins/golang/skills/templ"
+  ]
+}

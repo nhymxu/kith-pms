@@ -3,10 +3,10 @@
 ## Go Conventions
 
 ### Package Naming
-- Lowercase, single word: `config`, `auth`, `people`, `labels`, `journal`
+- Lowercase, single word: `config`, `auth`, `audit`, `people`, `labels`, `journal`
 - No underscores or mixed case in package names
 - Package name matches directory name
-- Domain packages under `internal/` (auth, people, labels, journal, db, web)
+- Domain packages under `internal/` (auth, audit, people, labels, journal, dates, reminders, files, db, web)
 - Shared packages under `pkg/` (config)
 
 ### File Naming
@@ -18,7 +18,7 @@
 ### Database & SQL
 - Use raw `database/sql` (no ORM)
 - Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0009)
+- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0011)
 - Load migrations programmatically in `internal/db/migrations.go`
 
 ### Struct Organization (Domain Models)

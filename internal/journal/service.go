@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 const defaultPageSize = 30
@@ -24,6 +26,7 @@ type Service struct {
 	DB         *sql.DB
 	Activities ActivityRepo
 	Links      ActivityPersonRepo
+	Audit      *audit.Service // optional; nil = no audit logging
 }
 
 // NewService constructs a Service wired to db.
@@ -55,6 +58,9 @@ func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (in
 	if err := tx.Commit(); err != nil {
 		return 0, fmt.Errorf("journal: commit create: %w", err)
 	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityJournal, id, a.Title, audit.ActionCreate)
+	}
 	return id, nil
 }
 
@@ -75,6 +81,9 @@ func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) err
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("journal: commit update: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityJournal, a.ID, a.Title, audit.ActionUpdate)
 	}
 	return nil
 }
@@ -100,7 +109,19 @@ func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 
 // Delete removes an activity; FTS mirror is updated by the activity_ad trigger.
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	return s.Activities.Delete(ctx, id)
+	var title string
+	if s.Audit != nil {
+		if a, err := s.Activities.Get(ctx, id); err == nil && a != nil {
+			title = a.Title
+		}
+	}
+	if err := s.Activities.Delete(ctx, id); err != nil {
+		return err
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityJournal, id, title, audit.ActionDelete)
+	}
+	return nil
 }
 
 // List returns a paginated, optionally filtered list of activities (no people populated).

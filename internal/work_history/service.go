@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 // Service provides business logic for work history operations.
 type Service struct {
-	db   *sql.DB
-	repo WorkHistoryRepo
+	db    *sql.DB
+	repo  WorkHistoryRepo
+	Audit *audit.Service // optional; nil = no audit logging
 }
 
 // NewService creates a new Service backed by the given database.
@@ -39,6 +42,9 @@ func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, entries 
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityWorkHistory, personID, "", audit.ActionUpdate)
 	}
 	return nil
 }

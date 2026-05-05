@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v5/middleware"
 
 	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
@@ -26,16 +27,17 @@ var staticFS embed.FS
 
 // Deps holds application-level dependencies passed into the web layer.
 type Deps struct {
-	DB                  *sql.DB
-	AuthService         *auth.Service
-	PeopleService       *people.Service
-	LabelsService       *labels.Service
-	JournalService      *journal.Service
-	DatesService        *dates.Service
-	RemindersService    *reminders.Service
-	WorkHistoryService  *work_history.Service
-	AvatarBasePath      string
-	APIToken            string
+	DB                 *sql.DB
+	AuthService        *auth.Service
+	PeopleService      *people.Service
+	LabelsService      *labels.Service
+	JournalService     *journal.Service
+	DatesService       *dates.Service
+	RemindersService   *reminders.Service
+	WorkHistoryService *work_history.Service
+	AuditService       *audit.Service
+	AvatarBasePath     string
+	APIToken           string
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -75,7 +77,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	}
 
 	// Protected routes — RequireAuth redirects to /login when unauthenticated.
-	protected := e.Group("", sessionLoader, csrfMiddleware, auth.RequireAuth())
+	protected := e.Group("", sessionLoader, csrfMiddleware, auth.RequireAuth(), injectAuditActor(deps))
 	{
 		authH := &handlers.AuthHandlers{Svc: deps.AuthService}
 		protected.POST("/logout", authH.PostLogout)
@@ -92,6 +94,10 @@ func Mount(e *echo.Echo, deps Deps) {
 		}
 		protected.GET("/", homeH.Get)
 
+		// Audit log route
+		auditH := &handlers.AuditHandlers{Svc: deps.AuditService}
+		protected.GET("/audit", auditH.GetList)
+
 		// People routes
 		peopleH := &handlers.PeopleHandlers{
 			Svc:            deps.PeopleService,
@@ -99,6 +105,7 @@ func Mount(e *echo.Echo, deps Deps) {
 			JournalSvc:     deps.JournalService,
 			DatesSvc:       deps.DatesService,
 			WorkHistorySvc: deps.WorkHistoryService,
+			AuditSvc:       deps.AuditService,
 			AvatarBasePath: deps.AvatarBasePath,
 		}
 		protected.GET("/people", peopleH.GetList)
@@ -169,6 +176,21 @@ func Mount(e *echo.Echo, deps Deps) {
 		RemindersService:   deps.RemindersService,
 		WorkHistoryService: deps.WorkHistoryService,
 		DatesService:       deps.DatesService,
+		AuditService:       deps.AuditService,
 		APIToken:           deps.APIToken,
 	})
+}
+
+// injectAuditActor copies the authenticated user ID from the Echo context into
+// the request context so service-layer audit calls have actor attribution.
+func injectAuditActor(deps Deps) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			if u := auth.UserFromContext(c); u != nil {
+				ctx := audit.WithActor(c.Request().Context(), u.ID)
+				c.SetRequest(c.Request().WithContext(ctx))
+			}
+			return next(c)
+		}
+	}
 }

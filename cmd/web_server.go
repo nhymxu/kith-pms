@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/urfave/cli/v3"
 
+	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
@@ -124,6 +125,15 @@ Can scale later.`,
 			// Wire work history service.
 			workHistorySvc := work_history.NewService(db)
 
+			// Wire audit service and attach to all domain services.
+			auditSvc := audit.NewService(db)
+			peopleSvc.Audit = auditSvc
+			labelsSvc.Audit = auditSvc
+			journalSvc.Audit = auditSvc
+			remindersSvc.Audit = auditSvc
+			workHistorySvc.Audit = auditSvc
+			datesSvc.Audit = auditSvc
+
 			// Read API token for the JSON REST API.
 			apiToken := os.Getenv("API_TOKEN")
 
@@ -137,6 +147,7 @@ Can scale later.`,
 				DatesService:       datesSvc,
 				RemindersService:   remindersSvc,
 				WorkHistoryService: workHistorySvc,
+				AuditService:       auditSvc,
 				AvatarBasePath:     avatarPath,
 				APIToken:           apiToken,
 			})

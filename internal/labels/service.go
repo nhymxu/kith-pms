@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 // Sentinel errors for validation failures — handlers can type-assert to re-render forms.
@@ -23,6 +25,7 @@ var reColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 type Service struct {
 	Labels       LabelRepo
 	PersonLabels PersonLabelRepo
+	Audit        *audit.Service // optional; nil = no audit logging
 }
 
 // NewService constructs a Service wired to db.
@@ -45,6 +48,9 @@ func (s *Service) Create(ctx context.Context, name, color string) (int64, error)
 		}
 		return 0, err
 	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionCreate)
+	}
 	return id, nil
 }
 
@@ -59,12 +65,27 @@ func (s *Service) Update(ctx context.Context, id int64, name, color string) erro
 		}
 		return err
 	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionUpdate)
+	}
 	return nil
 }
 
 // Delete removes a label; person_label rows cascade automatically.
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	return s.Labels.Delete(ctx, id)
+	var name string
+	if s.Audit != nil {
+		if l, err := s.Labels.Get(ctx, id); err == nil && l != nil {
+			name = l.Name
+		}
+	}
+	if err := s.Labels.Delete(ctx, id); err != nil {
+		return err
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionDelete)
+	}
+	return nil
 }
 
 // List returns all labels ordered by name (no usage counts).

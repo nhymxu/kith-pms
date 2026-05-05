@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -19,18 +20,20 @@ type Deps struct {
 	RemindersService   *reminders.Service
 	WorkHistoryService *work_history.Service
 	DatesService       *dates.Service
+	AuditService       *audit.Service
 	APIToken           string
 }
 
 // Mount registers all /v1/* API routes onto e, protected by BearerAuth.
 func Mount(e *echo.Echo, deps Deps) {
-	v1 := e.Group("/v1", BearerAuth(deps.APIToken))
+	v1 := e.Group("/v1", BearerAuth(deps.APIToken), injectAPIActor())
 	mountPeople(v1, deps)
 	mountLabels(v1, deps)
 	mountJournal(v1, deps)
 	mountReminders(v1, deps)
 	mountWorkHistory(v1, deps)
 	mountDates(v1, deps)
+	mountAudit(v1, deps)
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
@@ -81,4 +84,9 @@ func mountDates(g *echo.Group, deps Deps) {
 	g.GET("/people/:id/dates", h.ListByPerson)
 	g.PUT("/people/:id/dates", h.ReplaceForPerson)
 	g.GET("/dates/upcoming", h.Upcoming)
+}
+
+func mountAudit(g *echo.Group, deps Deps) {
+	h := &AuditAPI{Svc: deps.AuditService}
+	g.GET("/audit", h.List)
 }

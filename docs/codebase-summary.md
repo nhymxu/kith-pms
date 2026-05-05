@@ -26,6 +26,12 @@ kith-pms/
 │   │   ├── repo.go               # User & session queries
 │   │   ├── service_test.go       # Service unit tests
 │   │   └── password_test.go      # Password hashing tests
+│   ├── audit/                    # Audit logging & change tracking
+│   │   ├── domain.go             # Entry, EntityType, Action structures
+│   │   ├── context.go            # Actor context helpers (WithActor, ActorFromCtx)
+│   │   ├── service.go            # Audit logging service (best-effort Log)
+│   │   ├── repo.go               # Audit log database queries
+│   │   └── service_test.go       # Service unit tests
 │   ├── people/                   # Contacts & relationships
 │   │   ├── domain.go             # Person, Contact, Location structures
 │   │   ├── service.go            # CRUD and query business logic
@@ -102,7 +108,8 @@ kith-pms/
 │   ├── 0006_activity_fts.sql     # FTS5 virtual table + triggers
 │   ├── 0007_important_date.sql   # Important dates table with virtual month_day column
 │   ├── 0008_reminder.sql         # Reminders table with person/date associations
-│   └── 0009_person_avatar.sql    # Avatar metadata columns on person table
+│   ├── 0009_person_avatar.sql    # Avatar metadata columns on person table
+│   └── 0011_audit_log.sql        # Audit log table for entity change tracking
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -137,6 +144,13 @@ kith-pms/
 - **middleware.go**: Echo middleware for session validation and CSRF checks
 - **service.go**: Login/logout business logic; token refresh; password changes
 - **repo.go**: SQL queries for user lookups, session CRUD, token management
+
+### `internal/audit` — Audit logging & change tracking
+- **domain.go**: Entry (id, entity_type, entity_id, entity_name, action, actor_id, created_at), EntityType enum, Action enum
+- **context.go**: Helper functions for actor context — `WithActor(ctx, userID)` and `ActorFromCtx(ctx)`
+- **service.go**: `Log(ctx, entityType, entityID, entityName, action)` — best-effort logging (never blocks, errors logged as warnings)
+- **repo.go**: Database queries for audit log insertion and list retrieval with filtering
+- **service_test.go**: Tests for logging behavior and list queries
 
 ### `internal/people` — Contacts management
 - **domain.go**: Person (name, DOB, type), Contact (email, phone), Location (street, city, country)
@@ -215,8 +229,9 @@ kith-pms/
 
 ## Test Coverage
 
-9 test files across:
+10 test files across:
 - `auth`: password hashing, session tokens, CSRF token generation
+- `audit`: logging behavior, list queries, actor attribution
 - `people`: CRUD, search, label associations
 - `labels`: CRUD, many-to-many associations
 - `journal`: CRUD, FTS5 full-text search
@@ -224,4 +239,4 @@ kith-pms/
 - `files`: avatar upload, MIME validation, path traversal prevention
 - `reminders`: CRUD, completion tracking, status filtering
 
-Run all: `make tests` (includes race detector)
+**Total**: 114 tests passing. Run all: `make tests` (includes race detector)

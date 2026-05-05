@@ -12,6 +12,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
@@ -24,12 +25,13 @@ import (
 
 // PeopleHandlers groups all /people/* HTTP handlers.
 type PeopleHandlers struct {
-	Svc             *people.Service
-	LabelsSvc       *labels.Service
-	JournalSvc      *journal.Service
-	DatesSvc        *dates.Service
-	WorkHistorySvc  *work_history.Service
-	AvatarBasePath  string
+	Svc            *people.Service
+	LabelsSvc      *labels.Service
+	JournalSvc     *journal.Service
+	DatesSvc       *dates.Service
+	WorkHistorySvc *work_history.Service
+	AuditSvc       *audit.Service
+	AvatarBasePath string
 }
 
 // GetList handles GET /people
@@ -162,6 +164,17 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		workHistory, _ = h.WorkHistorySvc.ListByPerson(c.Request().Context(), id)
 	}
 
+	// Fetch recent audit history for this person (best-effort).
+	var auditHistory []audit.Entry
+	if h.AuditSvc != nil {
+		auditHistory, _ = h.AuditSvc.List(c.Request().Context(), audit.ListParams{
+			EntityType: audit.EntityPerson,
+			EntityID:   id,
+			Page:       1,
+			PageSize:   10,
+		})
+	}
+
 	component := templates.PeopleDetail(templates.PeopleDetailParams{
 		Person:           *p,
 		Labels:           attached,
@@ -170,6 +183,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		RecentActivities: recentActivities,
 		Dates:            importantDates,
 		WorkHistory:      workHistory,
+		AuditHistory:     auditHistory,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }

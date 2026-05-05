@@ -22,11 +22,12 @@
 │  │  ├─ /labels/*      → Labels CRUD                         │   │
 │  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
 │  │  ├─ /dates         → Important dates & milestones        │   │
-│  │  └─ /reminders/*   → Reminders & notifications           │   │
+│  │  ├─ /reminders/*   → Reminders & notifications           │   │
+│  │  └─ /audit         → Audit log with filter tabs          │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Service Layer (auth, people, labels, journal, dates,     │   │
-│  │                reminders, files)                          │   │
+│  │                reminders, files, audit)                   │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -128,6 +129,7 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /reminders             → GET (list), POST (create)
 /reminders/:id         → GET (detail), PUT (update), DELETE
 /reminders/:id/complete → POST (mark as completed)
+/audit                 → GET (paginated log, ?entity_type=X&page=N filters)
 ```
 
 ### Session & Auth Flow
@@ -219,6 +221,7 @@ Connection settings:
 | `0007_important_date.sql` | important_date table with virtual month_day column for date queries |
 | `0008_reminder.sql` | reminders table with person/date associations and completion tracking |
 | `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
+| `0011_audit_log.sql` | audit_log table for entity change tracking (entity_type, entity_id, entity_name, action, actor_id, created_at) |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
@@ -233,6 +236,20 @@ Connection settings:
 ```sql
 SELECT activities.* FROM activities
 WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH 'search term')
+```
+
+### Audit Logging
+
+**Architecture**:
+- Service: `internal/audit/Service` — logs all entity mutations (CREATE, UPDATE, DELETE)
+- Integration: Injected into people, journal, labels, reminders, dates, work_history services
+- Best-effort: Logging failures never block primary operations; errors logged as warnings only
+- Actor attribution: `audit.WithActor(ctx, userID)` and `ActorFromCtx(ctx)` for context-based user tracking
+- Storage: `audit_log` table (entity_type, entity_id, entity_name, action, actor_id, created_at)
+
+**Usage**:
+```go
+s.auditSvc.Log(ctx, audit.EntityType("person"), id, "Alice Smith", audit.ActionCreated)
 ```
 
 ## Entity Relationships

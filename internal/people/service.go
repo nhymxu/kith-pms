@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"mime/multipart"
 	"time"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 const defaultPageSize = 50
@@ -25,6 +27,7 @@ type Service struct {
 	Contacts    ContactRepo
 	Locations   LocationRepo
 	FileService FileService
+	Audit       *audit.Service // optional; nil = no audit logging
 }
 
 type FileService interface {
@@ -66,6 +69,9 @@ func (s *Service) Create(ctx context.Context, p Person, contacts []ContactInfo, 
 	if err := tx.Commit(); err != nil {
 		return 0, fmt.Errorf("people: commit create: %w", err)
 	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, id, p.Name, audit.ActionCreate)
+	}
 	return id, nil
 }
 
@@ -89,6 +95,9 @@ func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, 
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("people: commit update: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, p.ID, p.Name, audit.ActionUpdate)
 	}
 	return nil
 }
@@ -138,7 +147,19 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 
 // Delete removes a person and cascades to their contacts and locations.
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	return s.People.Delete(ctx, id)
+	var name string
+	if s.Audit != nil {
+		if p, err := s.People.Get(ctx, id); err == nil && p != nil {
+			name = p.Name
+		}
+	}
+	if err := s.People.Delete(ctx, id); err != nil {
+		return err
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionDelete)
+	}
+	return nil
 }
 
 // UploadAvatar saves a new avatar file and updates the person's avatar metadata.
@@ -187,7 +208,9 @@ func (s *Service) UploadAvatar(ctx context.Context, personID int64, file multipa
 	if oldAvatarPath != "" {
 		_ = s.FileService.DeleteAvatar(personID, oldAvatarPath)
 	}
-
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+	}
 	return nil
 }
 
@@ -224,6 +247,8 @@ func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	if avatarPath != "" {
 		_ = s.FileService.DeleteAvatar(personID, avatarPath)
 	}
-
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+	}
 	return nil
 }

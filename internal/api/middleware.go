@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v5"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 // BearerAuth returns an Echo middleware that validates a static Bearer token.
@@ -33,6 +35,18 @@ func BearerAuth(token string) echo.MiddlewareFunc {
 				return apiErr(c, http.StatusUnauthorized, "unauthorized")
 			}
 
+			return next(c)
+		}
+	}
+}
+
+// injectAPIActor injects a fixed actor ID (0) into the request context to
+// distinguish API-originated mutations from web UI mutations in the audit log.
+func injectAPIActor() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			ctx := audit.WithActor(c.Request().Context(), 0)
+			c.SetRequest(c.Request().WithContext(ctx))
 			return next(c)
 		}
 	}

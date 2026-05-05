@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 type Service struct {
-	db   *sql.DB
-	repo ImportantDateRepo
+	db    *sql.DB
+	repo  ImportantDateRepo
+	Audit *audit.Service // optional; nil = no audit logging
 }
 
 func NewService(db *sql.DB) *Service {
@@ -37,6 +40,9 @@ func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, dates []
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityDate, personID, "", audit.ActionUpdate)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -17,9 +18,10 @@ type PeopleDetailParams struct {
 	Labels           []labels.Label // attached labels
 	AllLabels        []labels.Label // all labels (for dropdown)
 	CSRFToken        string
-	RecentActivities []journal.Activity       // latest 10 activities (Phase 5)
+	RecentActivities []journal.Activity       // latest 10 activities
 	Dates            []dates.ImportantDate    // important dates
 	WorkHistory      []work_history.WorkEntry // work history entries
+	AuditHistory     []audit.Entry            // latest 10 audit entries for this person
 }
 
 // PeopleDetail renders the detail view for a single person.
@@ -222,6 +224,7 @@ templ PeopleDetail(params PeopleDetailParams) {
 					</ul>
 				}
 			</section>
+			@AuditWidget(params.AuditHistory)
 			<!-- Back link -->
 			<a href="/people" class="text-sm text-deep-olive hover:underline">← Back to People</a>
 		</div>

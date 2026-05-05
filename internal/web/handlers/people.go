@@ -785,3 +785,20 @@ func (h *PeopleHandlers) PostDeleteAvatar(c *echo.Context) error {
 
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(personID, 10))
 }
+
+// PostUpdateLastContact handles POST /people/:id/last-contact
+func (h *PeopleHandlers) PostUpdateLastContact(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	if err := h.Svc.UpdateLastContact(c.Request().Context(), personID, time.Now().UTC()); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return echo.ErrNotFound
+		}
+		return c.String(http.StatusInternalServerError, "Failed to update last contact")
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(personID, 10))
+}

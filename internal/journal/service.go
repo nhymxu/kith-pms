@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
@@ -27,6 +29,20 @@ type Service struct {
 	Activities ActivityRepo
 	Links      ActivityPersonRepo
 	Audit      *audit.Service // optional; nil = no audit logging
+	PeopleSvc  PeopleServiceInterface
+}
+
+// PeopleServiceInterface defines methods needed from people.Service.
+type PeopleServiceInterface interface {
+	GetSelf(ctx context.Context) (*PersonAdapter, error)
+	Get(ctx context.Context, id int64) (*PersonAdapter, error)
+	UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error
+}
+
+// PersonAdapter wraps person data for interface compatibility.
+type PersonAdapter struct {
+	PersonID      int64
+	LastContactAt *time.Time
 }
 
 // NewService constructs a Service wired to db.
@@ -58,6 +74,14 @@ func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (in
 	if err := tx.Commit(); err != nil {
 		return 0, fmt.Errorf("journal: commit create: %w", err)
 	}
+
+	// Update last contact after transaction commits to avoid nested transaction deadlock.
+	a.ID = id
+	if err := s.updateLastContactForParticipants(ctx, a, personIDs); err != nil {
+		// Log error but don't fail the entire operation since the journal entry was created successfully.
+		slog.Warn("failed to update last contact for participants", "activity_id", id, "error", err)
+	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityJournal, id, a.Title, audit.ActionCreate)
 	}
@@ -82,10 +106,84 @@ func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) err
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("journal: commit update: %w", err)
 	}
+
+	// Update last contact after transaction commits to avoid nested transaction deadlock.
+	if err := s.updateLastContactForParticipants(ctx, a, personIDs); err != nil {
+		// Log error but don't fail the entire operation since the journal entry was updated successfully.
+		slog.Warn("failed to update last contact for participants", "activity_id", a.ID, "error", err)
+	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityJournal, a.ID, a.Title, audit.ActionUpdate)
 	}
 	return nil
+}
+
+// updateLastContactForParticipants updates last_contact_at for people linked to this activity,
+// but only if the activity includes the self person and the activity date is newer.
+func (s *Service) updateLastContactForParticipants(ctx context.Context, a Activity, personIDs []int64) error {
+	if s.PeopleSvc == nil || len(personIDs) == 0 {
+		return nil
+	}
+
+	selfPerson, err := s.PeopleSvc.GetSelf(ctx)
+	if err != nil || selfPerson == nil {
+		return nil
+	}
+
+	selfID := selfPerson.PersonID
+	hasSelf := false
+	for _, pid := range personIDs {
+		if pid == selfID {
+			hasSelf = true
+			break
+		}
+	}
+	if !hasSelf {
+		return nil
+	}
+
+	activityTime, err := parseActivityTimestamp(a.OccurredAtDate, a.OccurredAtTime)
+	if err != nil {
+		return nil
+	}
+
+	for _, pid := range personIDs {
+		if pid == selfID {
+			continue
+		}
+
+		person, err := s.PeopleSvc.Get(ctx, pid)
+		if err != nil || person == nil {
+			continue
+		}
+
+		if person.LastContactAt == nil || activityTime.After(*person.LastContactAt) {
+			if err := s.PeopleSvc.UpdateLastContact(ctx, pid, activityTime); err != nil {
+				slog.Warn("failed to update last contact", "person_id", pid, "error", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// parseActivityTimestamp converts occurred_at_date + occurred_at_time to time.Time.
+// If time is empty, uses midnight UTC.
+func parseActivityTimestamp(date, timeStr string) (time.Time, error) {
+	if timeStr != "" {
+		combined := date + " " + timeStr
+		t, err := time.Parse("2006-01-02 15:04", combined)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return t.UTC(), nil
+	}
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
 }
 
 // Get returns an activity by ID with its linked people populated.

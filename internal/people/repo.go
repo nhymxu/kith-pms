@@ -21,6 +21,7 @@ type PersonRepo interface {
 	ClearSelf(ctx context.Context, tx *sql.Tx) error
 	UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error
 	ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error
+	UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error
 }
 
 // ContactRepo defines persistence operations for ContactInfo records.
@@ -66,7 +67,7 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 
 	query := `SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 	                 other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-	                 created_at, updated_at
+	                 last_contact_at, created_at, updated_at
 	          FROM person`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
@@ -106,7 +107,7 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        created_at, updated_at
+		        last_contact_at, created_at, updated_at
 		 FROM person WHERE id = ?`,
 		id,
 	)
@@ -124,7 +125,7 @@ func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        created_at, updated_at
+		        last_contact_at, created_at, updated_at
 		 FROM person WHERE is_self = 1 LIMIT 1`,
 	)
 	p, err := scanPerson(row)
@@ -236,6 +237,20 @@ func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx *sql.Tx, personID in
 	return nil
 }
 
+func (r *sqlPersonRepo) UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error {
+	contactTimeStr := contactTime.UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+
+	_, err := tx.ExecContext(ctx,
+		`UPDATE person SET last_contact_at=?, updated_at=? WHERE id=?`,
+		contactTimeStr, now, personID,
+	)
+	if err != nil {
+		return fmt.Errorf("people: update last contact: %w", err)
+	}
+	return nil
+}
+
 // ---- sqlContactRepo ---------------------------------------------------------
 
 type sqlContactRepo struct{ db *sql.DB }
@@ -336,13 +351,14 @@ func scanPerson(row rowScanner) (Person, error) {
 	var p Person
 	var dobStr sql.NullString
 	var avatarUploadedAtStr sql.NullString
+	var lastContactAtStr sql.NullString
 	var createdAt, updatedAt string
 
 	err := row.Scan(
 		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
 		&dobStr, &p.RelationshipType, &p.OtherNotes,
 		&p.AvatarPath, &p.AvatarMimeType, &p.AvatarSize, &avatarUploadedAtStr,
-		&createdAt, &updatedAt,
+		&lastContactAtStr, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return Person{}, fmt.Errorf("people: scan person: %w", err)
@@ -356,6 +372,11 @@ func scanPerson(row rowScanner) (Person, error) {
 	if avatarUploadedAtStr.Valid && avatarUploadedAtStr.String != "" {
 		if t, err := parseTime(avatarUploadedAtStr.String); err == nil {
 			p.AvatarUploadedAt = &t
+		}
+	}
+	if lastContactAtStr.Valid && lastContactAtStr.String != "" {
+		if t, err := parseTime(lastContactAtStr.String); err == nil {
+			p.LastContactAt = &t
 		}
 	}
 	p.CreatedAt, _ = parseTime(createdAt)

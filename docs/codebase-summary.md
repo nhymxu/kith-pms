@@ -75,7 +75,7 @@ kith-pms/
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
 │       │   ├── home.go           # Dashboard (includes OnThisDay widget)
-│       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal, PostQuickGift for inline forms
+│       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal, PostQuickGift for inline forms; PostUpdateLastContact for manual contact timestamp updates
 │       │   ├── me.go             # Self-profile handlers (GetMe, GetSetup, PostSetup)
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
@@ -166,9 +166,9 @@ kith-pms/
 - **service_test.go**: Tests for logging behavior and list queries
 
 ### `internal/people` — Contacts management
-- **domain.go**: Person (name, DOB, type, is_self), Contact (email, phone), Location (street, city, country)
-- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search; self-profile management (GetSelfPerson, SetSelfPerson)
-- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations; self-profile queries
+- **domain.go**: Person (name, DOB, type, is_self, last_contact_at), Contact (email, phone), Location (street, city, country)
+- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search; self-profile management (GetSelfPerson, SetSelfPerson); UpdateLastContact(personID, contactTime) for manual updates
+- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations; self-profile queries; UpdateLastContact for timestamp persistence
 - **service_test.go**: Integration tests for CRUD, complex queries, and self-profile operations
 
 ### `internal/labels` — Tag system
@@ -179,7 +179,7 @@ kith-pms/
 
 ### `internal/journal` — Activity log with full-text search
 - **domain.go**: Entry (title, content, date, author), EntryLink (link to People via FK)
-- **service.go**: CRUD; full-text search via FTS5; link entries to multiple people
+- **service.go**: CRUD; full-text search via FTS5; link entries to multiple people; auto-update last_contact_at for participants when self is included and activity date is newer
 - **repo.go**: Queries including FTS5 search; maintains FTS5 trigger-based index
 - **service_test.go**: Integration tests for FTS5 search
 

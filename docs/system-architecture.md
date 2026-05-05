@@ -124,6 +124,7 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people/:id/gifts/quick → POST (quick-add gift, htmx fragment)
 /people/:id/avatar     → POST (upload), GET (retrieve)
 /people/:id/avatar/delete → POST (delete)
+/people/:id/last-contact → POST (update last contact timestamp to now)
 /me                    → GET (self profile or setup redirect)
 /me/setup              → GET (setup form), POST (set person as self)
 /labels                → GET (list), POST (create)
@@ -229,6 +230,7 @@ Connection settings:
 | `0011_audit_log.sql` | audit_log table for entity change tracking (entity_type, entity_id, entity_name, action, actor_id, created_at) |
 | `0012_gift.sql` | gift table with direction (gave/received), debt_type (owed/owe), person association, and image storage metadata |
 | `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
+| `0014_person_last_contact.sql` | last_contact_at nullable timestamp column on person table with partial index |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

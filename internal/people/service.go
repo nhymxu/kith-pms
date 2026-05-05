@@ -286,3 +286,32 @@ func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	}
 	return nil
 }
+
+// UpdateLastContact sets last_contact_at to the given time for a person.
+func (s *Service) UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error {
+	person, err := s.People.Get(ctx, personID)
+	if err != nil {
+		return fmt.Errorf("get person: %w", err)
+	}
+	if person == nil {
+		return fmt.Errorf("person not found")
+	}
+
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := s.People.UpdateLastContact(ctx, tx, personID, contactTime); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+	}
+	return nil
+}

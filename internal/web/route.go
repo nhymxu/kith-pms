@@ -137,6 +137,8 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people/:id/avatar", peopleH.PostUploadAvatar)
 		protected.GET("/people/:id/avatar", peopleH.GetAvatar)
 		protected.POST("/people/:id/avatar/delete", peopleH.PostDeleteAvatar)
+		// Last contact route
+		protected.POST("/people/:id/last-contact", peopleH.PostUpdateLastContact)
 		// Label attach/detach routes (htmx fragments)
 		protected.POST("/people/:id/labels/attach", peopleH.PostAttachLabel)
 		protected.POST("/people/:id/labels/:labelID/delete", peopleH.PostDetachLabel)

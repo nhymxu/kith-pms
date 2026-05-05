@@ -15,11 +15,15 @@ type Person struct {
 	AvatarMimeType   string
 	AvatarSize       int64
 	AvatarUploadedAt *time.Time
+	LastContactAt    *time.Time // nullable
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	Contacts         []ContactInfo // populated by service.Get
 	Locations        []Location    // populated by service.Get
 }
+
+// GetLastContactAt returns the last contact timestamp (for interface compatibility).
+func (p *Person) GetLastContactAt() *time.Time { return p.LastContactAt }
 
 // ContactInfo represents a contact method (phone, email, social, etc.) for a Person.
 type ContactInfo struct {

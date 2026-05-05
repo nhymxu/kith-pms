@@ -108,6 +108,25 @@ templ PeopleDetail(params PeopleDetailParams) {
 						<span>{ params.Person.DateOfBirth.Format("2 January 2006") }</span>
 					</div>
 				}
+				<div class="flex gap-4 text-sm items-center">
+					<span class="text-olive-ink/60 w-36 shrink-0">Last Contact</span>
+					<span>
+						if params.Person.LastContactAt != nil {
+							{ params.Person.LastContactAt.Format("2 January 2006, 15:04") }
+						} else {
+							<span class="text-olive-ink/40">Never</span>
+						}
+					</span>
+					<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/people/%d/last-contact", params.Person.ID)) } class="inline">
+						<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+						<button
+							type="submit"
+							class="text-xs border border-sage-border rounded px-2 py-1 hover:bg-sage-border/20 transition"
+						>
+							Update to now
+						</button>
+					</form>
+				</div>
 				if params.Person.OtherNotes != "" {
 					<div class="flex gap-4 text-sm">
 						<span class="text-olive-ink/60 w-36 shrink-0">Notes</span>

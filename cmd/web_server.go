@@ -27,6 +27,43 @@ import (
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
+// journalPeopleAdapter adapts people.Service to journal.PeopleServiceInterface.
+type journalPeopleAdapter struct {
+	svc *people.Service
+}
+
+func (a *journalPeopleAdapter) GetSelf(ctx context.Context) (*journal.PersonAdapter, error) {
+	p, err := a.svc.GetSelf(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, nil
+	}
+	return &journal.PersonAdapter{
+		PersonID:      p.ID,
+		LastContactAt: p.LastContactAt,
+	}, nil
+}
+
+func (a *journalPeopleAdapter) Get(ctx context.Context, id int64) (*journal.PersonAdapter, error) {
+	p, err := a.svc.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, nil
+	}
+	return &journal.PersonAdapter{
+		PersonID:      p.ID,
+		LastContactAt: p.LastContactAt,
+	}, nil
+}
+
+func (a *journalPeopleAdapter) UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error {
+	return a.svc.UpdateLastContact(ctx, personID, contactTime)
+}
+
 func webServerCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "serve",
@@ -116,6 +153,7 @@ Can scale later.`,
 
 			// Wire journal service.
 			journalSvc := journal.NewService(db)
+			journalSvc.PeopleSvc = &journalPeopleAdapter{svc: peopleSvc}
 
 			// Wire dates service.
 			datesSvc := dates.NewService(db)

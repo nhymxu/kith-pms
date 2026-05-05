@@ -3,6 +3,7 @@ package templates
 import (
 	"fmt"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
 	"github.com/nhymxu/kith-pms/internal/work_history"
@@ -370,6 +371,87 @@ templ WorkRow(index int) {
 			</button>
 		</td>
 	</tr>
+}
+
+// PersonRecentActivitiesParams holds data for the person's recent activities widget.
+type PersonRecentActivitiesParams struct {
+	PersonID   int64
+	Activities []journal.Activity
+	CSRFToken  string
+	TodayDate  string
+	Error      string
+}
+
+// PersonRecentActivities renders the recent activities section with inline quick-add form.
+templ PersonRecentActivities(params PersonRecentActivitiesParams) {
+	<section id="recent-activities" class="mb-6 border border-sage-border rounded p-4">
+		<div class="flex items-center justify-between mb-3">
+			<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide">Recent Activities</h2>
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/journal?people=%d", params.PersonID)) }
+				class="text-xs text-deep-olive hover:underline"
+			>View all →</a>
+		</div>
+		@PersonQuickJournalForm(params.PersonID, params.CSRFToken, params.TodayDate, params.Error)
+		if len(params.Activities) == 0 {
+			<p class="text-sm text-olive-ink/40 mt-3">No activities yet.</p>
+		} else {
+			<ul class="space-y-2 mt-3">
+				for _, a := range params.Activities {
+					<li class="flex items-center justify-between text-sm">
+						<a
+							href={ templ.SafeURL(fmt.Sprintf("/journal/%d", a.ID)) }
+							class="text-deep-olive hover:underline truncate"
+						>{ a.Title }</a>
+						<span class="text-xs text-olive-ink/50 shrink-0 ml-2">{ a.OccurredAtDate }</span>
+					</li>
+				}
+			</ul>
+		}
+	</section>
+}
+
+// PersonQuickJournalForm renders a compact inline form to create a journal entry for the person.
+templ PersonQuickJournalForm(personID int64, csrfToken string, todayDate string, formError string) {
+	<form
+		hx-post={ fmt.Sprintf("/people/%d/journal/quick", personID) }
+		hx-target="#recent-activities"
+		hx-swap="outerHTML"
+		class="border-t border-sage-border/50 pt-3 mt-1 space-y-2"
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		if formError != "" {
+			<p class="text-xs text-red-600 mb-1">{ formError }</p>
+		}
+		<div class="flex gap-2">
+			<input
+				type="text"
+				name="title"
+				placeholder="New entry title…"
+				required
+				class="flex-1 border border-sage-border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+			<input
+				type="date"
+				name="occurred_at_date"
+				value={ todayDate }
+				required
+				class="border border-sage-border rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			/>
+		</div>
+		<div class="flex gap-2 items-end">
+			<textarea
+				name="content"
+				placeholder="Notes (optional)…"
+				rows="2"
+				class="flex-1 border border-sage-border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive resize-none"
+			></textarea>
+			<button
+				type="submit"
+				class="bg-deep-olive text-parchment rounded px-4 py-1.5 text-sm font-semibold hover:opacity-90 transition shrink-0"
+			>Add</button>
+		</div>
+	</form>
 }
 
 // WorkRowFilled renders a pre-filled work history input row for the edit form.

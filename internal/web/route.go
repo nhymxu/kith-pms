@@ -14,10 +14,10 @@ import (
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
-	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
 	"github.com/nhymxu/kith-pms/internal/work_history"
@@ -122,6 +122,8 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people/:id", peopleH.PostUpdate)
 		protected.GET("/people/:id/delete-confirm", peopleH.GetDeleteConfirm)
 		protected.POST("/people/:id/delete", peopleH.PostDelete)
+		// Quick-add journal entry from person detail (htmx fragment)
+		protected.POST("/people/:id/journal/quick", peopleH.PostQuickJournal)
 		// Avatar routes
 		protected.POST("/people/:id/avatar", peopleH.PostUploadAvatar)
 		protected.GET("/people/:id/avatar", peopleH.GetAvatar)

@@ -184,6 +184,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		Dates:            importantDates,
 		WorkHistory:      workHistory,
 		AuditHistory:     auditHistory,
+		TodayDate:        time.Now().Format("2006-01-02"),
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
@@ -372,6 +373,70 @@ func (h *PeopleHandlers) renderLabelStrip(c *echo.Context, personID int64) error
 	}
 	component := templates.PersonLabelsStrip(attached, allLabels, personID, auth.CSRFToken(c))
 	return component.Render(c.Request().Context(), c.Response())
+}
+
+// PostQuickJournal handles POST /people/:id/journal/quick (htmx fragment).
+// Creates a journal entry with the current person auto-attached and returns
+// the updated recent-activities section.
+func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), personID)
+	if err != nil {
+		return err
+	}
+	if p == nil {
+		return echo.ErrNotFound
+	}
+
+	if h.JournalSvc == nil {
+		return echo.ErrInternalServerError
+	}
+
+	today := time.Now().Format("2006-01-02")
+	csrfToken := auth.CSRFToken(c)
+
+	rerender := func(formErr string) error {
+		activities, _ := h.JournalSvc.List(c.Request().Context(), journal.ListParams{
+			PersonIDs: []int64{personID},
+			Page:      1,
+			PageSize:  10,
+		})
+		return templates.PersonRecentActivities(templates.PersonRecentActivitiesParams{
+			PersonID:   personID,
+			Activities: activities,
+			CSRFToken:  csrfToken,
+			TodayDate:  today,
+			Error:      formErr,
+		}).Render(c.Request().Context(), c.Response())
+	}
+
+	title := strings.TrimSpace(c.FormValue("title"))
+	if title == "" {
+		return rerender("Title is required.")
+	}
+
+	date := strings.TrimSpace(c.FormValue("occurred_at_date"))
+	if date == "" {
+		date = today
+	}
+	if _, err := time.Parse("2006-01-02", date); err != nil {
+		return rerender("Invalid date format.")
+	}
+
+	activity := journal.Activity{
+		Title:          title,
+		OccurredAtDate: date,
+		Content:        strings.TrimSpace(c.FormValue("content")),
+	}
+	if _, err := h.JournalSvc.Create(c.Request().Context(), activity, []int64{personID}); err != nil {
+		return rerender("Failed to save entry.")
+	}
+
+	return rerender("")
 }
 
 // ---- helpers ----------------------------------------------------------------

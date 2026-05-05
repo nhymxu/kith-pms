@@ -15,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -31,6 +32,7 @@ type PeopleHandlers struct {
 	DatesSvc       *dates.Service
 	WorkHistorySvc *work_history.Service
 	AuditSvc       *audit.Service
+	GiftsSvc       *gifts.Service
 	AvatarBasePath string
 }
 
@@ -175,6 +177,16 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		})
 	}
 
+	// Fetch gifts for this person (best-effort, latest 10).
+	var personGifts []gifts.GiftWithPerson
+	if h.GiftsSvc != nil {
+		personGifts, _ = h.GiftsSvc.List(c.Request().Context(), gifts.ListParams{
+			PersonID: &id,
+			PageSize: 10,
+			Page:     1,
+		})
+	}
+
 	component := templates.PeopleDetail(templates.PeopleDetailParams{
 		Person:           *p,
 		Labels:           attached,
@@ -184,6 +196,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		Dates:            importantDates,
 		WorkHistory:      workHistory,
 		AuditHistory:     auditHistory,
+		Gifts:            personGifts,
 		TodayDate:        time.Now().Format("2006-01-02"),
 	})
 	return component.Render(c.Request().Context(), c.Response())

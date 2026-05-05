@@ -108,6 +108,7 @@ func Mount(e *echo.Echo, deps Deps) {
 			DatesSvc:       deps.DatesService,
 			WorkHistorySvc: deps.WorkHistoryService,
 			AuditSvc:       deps.AuditService,
+			GiftsSvc:       deps.GiftsService,
 			AvatarBasePath: deps.AvatarBasePath,
 		}
 		protected.GET("/people", peopleH.GetList)

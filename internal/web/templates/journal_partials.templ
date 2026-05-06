@@ -49,6 +49,15 @@ templ JournalRow(a journal.Activity) {
 
 // PersonPickerResults renders an htmx dropdown of matching people.
 templ PersonPickerResults(ps []people.Person) {
+	@PersonPickerResultsWithHandler(ps, "addPersonChip")
+}
+
+// PersonFilterPickerResults renders an htmx dropdown for journal list filters.
+templ PersonFilterPickerResults(ps []people.Person) {
+	@PersonPickerResultsWithHandler(ps, "addPersonFilter")
+}
+
+templ PersonPickerResultsWithHandler(ps []people.Person, handler string) {
 	if len(ps) == 0 {
 		<div class="px-3 py-2 text-sm text-olive-ink/50">No people found</div>
 	} else {
@@ -56,7 +65,7 @@ templ PersonPickerResults(ps []people.Person) {
 			<button
 				type="button"
 				class="w-full text-left px-3 py-2 text-sm hover:bg-sage-border/20 transition"
-				onclick={ templ.ComponentScript{Call: fmt.Sprintf("addPersonChip(%d, '%s')", p.ID, strings.ReplaceAll(p.Name, "'", "\\'"))} }
+				onclick={ templ.ComponentScript{Call: fmt.Sprintf("%s(%d, '%s')", handler, p.ID, strings.ReplaceAll(p.Name, "'", "\\'"))} }
 			>
 				{ p.Name }
 			</button>
@@ -75,6 +84,25 @@ templ PersonChip(personID int64, name string) {
 		<button
 			type="button"
 			onclick={ templ.ComponentScript{Call: fmt.Sprintf("removePersonChip(%d)", personID)} }
+			class="text-olive-ink/50 hover:text-olive-ink ml-1 font-bold leading-none"
+			aria-label={ "Remove " + name }
+		>
+			×
+		</button>
+	</span>
+}
+
+// PersonFilterChip renders a selected-person chip for filter context with person_filter[] input name.
+templ PersonFilterChip(personID int64, name string) {
+	<span
+		id={ fmt.Sprintf("filter-chip-%d", personID) }
+		class="inline-flex items-center gap-1 bg-sage-border/30 rounded-full px-3 py-1 text-sm"
+	>
+		<input type="hidden" name="person_filter[]" value={ fmt.Sprintf("%d", personID) }/>
+		{ name }
+		<button
+			type="button"
+			onclick={ templ.ComponentScript{Call: fmt.Sprintf("removePersonFilter(%d)", personID)} }
 			class="text-olive-ink/50 hover:text-olive-ink ml-1 font-bold leading-none"
 			aria-label={ "Remove " + name }
 		>

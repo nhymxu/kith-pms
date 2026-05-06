@@ -31,6 +31,9 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 
 	// Parse ?people=1,2 — comma-separated person IDs.
 	personIDs := parsePersonIDs(c.QueryParam("people"))
+	if filterPersonIDs := parsePersonIDSlice(c.Request().URL.Query()["person_filter[]"]); len(filterPersonIDs) > 0 {
+		personIDs = filterPersonIDs
+	}
 
 	list, err := h.Svc.List(c.Request().Context(), journal.ListParams{
 		Query:     q,
@@ -53,6 +56,16 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 		}
 	}
 
+	// Populate person names map for filter chips
+	personNames := make(map[int64]string)
+	if h.PeopleSvc != nil {
+		for _, pid := range personIDs {
+			if p, err := h.PeopleSvc.Get(c.Request().Context(), pid); err == nil && p != nil {
+				personNames[pid] = p.Name
+			}
+		}
+	}
+
 	component := templates.JournalList(templates.JournalListParams{
 		Activities:   list,
 		Query:        q,
@@ -61,6 +74,7 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 		Page:         page,
 		HasMore:      hasMore,
 		PersonIDs:    personIDs,
+		PersonNames:  personNames,
 		SelfPersonID: selfPersonID,
 	})
 	return component.Render(c.Request().Context(), c.Response())
@@ -226,6 +240,11 @@ func (h *JournalHandlers) GetPeopleSearch(c *echo.Context) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	if c.QueryParam("mode") == "filter" {
+		component := templates.PersonFilterPickerResults(list)
+		return component.Render(c.Request().Context(), c.Response())
 	}
 
 	component := templates.PersonPickerResults(list)

@@ -151,6 +151,7 @@ Can scale later.`,
 
 			// Wire labels service.
 			labelsSvc := labels.NewService(db)
+			peopleSvc.LabelsSvc = labelsSvc
 
 			// Wire journal service.
 			journalSvc := journal.NewService(db)
@@ -188,19 +189,19 @@ Can scale later.`,
 
 			// Mount HTML UI routes on the same Echo instance.
 			web.Mount(e, web.Deps{
-				DB:                 db,
-				AuthService:        authSvc,
-				PeopleService:      peopleSvc,
-				LabelsService:      labelsSvc,
-				JournalService:     journalSvc,
-				DatesService:       datesSvc,
-				RemindersService:   remindersSvc,
-				WorkHistoryService: workHistorySvc,
-				AuditService:       auditSvc,
+				DB:                   db,
+				AuthService:          authSvc,
+				PeopleService:        peopleSvc,
+				LabelsService:        labelsSvc,
+				JournalService:       journalSvc,
+				DatesService:         datesSvc,
+				RemindersService:     remindersSvc,
+				WorkHistoryService:   workHistorySvc,
+				AuditService:         auditSvc,
 				GiftsService:         giftsSvc,
 				RelationshipsService: relsSvc,
 				AvatarBasePath:       avatarPath,
-				APIToken:           apiToken,
+				APIToken:             apiToken,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

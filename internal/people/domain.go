@@ -1,6 +1,10 @@
 package people
 
-import "time"
+import (
+	"time"
+
+	"github.com/nhymxu/kith-pms/internal/labels"
+)
 
 // Person represents a contact in the personal relationship manager.
 type Person struct {
@@ -18,8 +22,9 @@ type Person struct {
 	LastContactAt    *time.Time // nullable
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
-	Contacts         []ContactInfo // populated by service.Get
-	Locations        []Location    // populated by service.Get
+	Contacts         []ContactInfo  // populated by service.Get
+	Locations        []Location     // populated by service.Get
+	Labels           []labels.Label // populated by service.List
 }
 
 // GetLastContactAt returns the last contact timestamp (for interface compatibility).

@@ -11,7 +11,7 @@ import (
 
 // PersonRepo defines persistence operations for Person records.
 type PersonRepo interface {
-	List(ctx context.Context, q string, labelIDs []int64, limit, offset int) ([]Person, error)
+	List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error)
@@ -45,7 +45,7 @@ type sqlPersonRepo struct{ db *sql.DB }
 // NewPersonRepo returns a PersonRepo backed by db.
 func NewPersonRepo(db *sql.DB) PersonRepo { return &sqlPersonRepo{db: db} }
 
-func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, limit, offset int) ([]Person, error) {
+func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error) {
 	// Build WHERE clause and args dynamically.
 	var where []string
 	var args []any
@@ -72,7 +72,7 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
-	query += " ORDER BY name_lower LIMIT ? OFFSET ?"
+	query += " ORDER BY " + buildOrderBy(sort) + " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -90,6 +90,22 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 		people = append(people, p)
 	}
 	return people, rows.Err()
+}
+
+// buildOrderBy returns the ORDER BY clause based on sort parameter.
+func buildOrderBy(sort string) string {
+	switch sort {
+	case "name":
+		return "name_lower ASC"
+	case "-name":
+		return "name_lower DESC"
+	case "last_contact":
+		return "last_contact_at ASC NULLS LAST"
+	case "-last_contact":
+		return "last_contact_at DESC NULLS LAST"
+	default:
+		return "name_lower ASC"
+	}
 }
 
 // buildLabelIntersect builds an INTERSECT subquery for AND-semantics label filtering.

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
+	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
 const defaultPageSize = 50
@@ -18,6 +19,7 @@ type ListParams struct {
 	Page     int
 	PageSize int
 	LabelIDs []int64 // AND-semantics: person must have ALL listed labels
+	Sort     string  // sort parameter: name, -name, last_contact, -last_contact
 }
 
 // Service provides business logic for managing people.
@@ -27,7 +29,12 @@ type Service struct {
 	Contacts    ContactRepo
 	Locations   LocationRepo
 	FileService FileService
+	LabelsSvc   LabelService   // optional; nil = no label loading
 	Audit       *audit.Service // optional; nil = no audit logging
+}
+
+type LabelService interface {
+	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]labels.Label, error)
 }
 
 type FileService interface {
@@ -142,7 +149,31 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 	}
 	offset := (page - 1) * pageSize
 
-	return s.People.List(ctx, params.Query, params.LabelIDs, pageSize, offset)
+	people, err := s.People.List(ctx, params.Query, params.LabelIDs, pageSize, offset, params.Sort)
+	if err != nil {
+		return nil, err
+	}
+
+	// Batch-load labels for all people
+	if s.LabelsSvc != nil && len(people) > 0 {
+		personIDs := make([]int64, len(people))
+		for i, p := range people {
+			personIDs[i] = p.ID
+		}
+
+		labelsMap, err := s.LabelsSvc.ListByPersonIDs(ctx, personIDs)
+		if err != nil {
+			return nil, fmt.Errorf("batch load labels: %w", err)
+		}
+
+		for i := range people {
+			if labels, ok := labelsMap[people[i].ID]; ok {
+				people[i].Labels = labels
+			}
+		}
+	}
+
+	return people, nil
 }
 
 // Delete removes a person and cascades to their contacts and locations.

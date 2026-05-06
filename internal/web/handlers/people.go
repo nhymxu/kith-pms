@@ -51,11 +51,18 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 	// Parse ?labels=1,3 — comma-separated label IDs for AND-filter.
 	labelIDs := parseLabelIDs(c.QueryParam("labels"))
 
+	// Parse ?sort= parameter (default: name ascending)
+	sort := c.QueryParam("sort")
+	if sort == "" {
+		sort = "name"
+	}
+
 	list, err := h.Svc.List(c.Request().Context(), people.ListParams{
 		Query:    q,
 		Page:     page,
 		PageSize: 50,
 		LabelIDs: labelIDs,
+		Sort:     sort,
 	})
 	if err != nil {
 		return err
@@ -63,10 +70,10 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 
 	hasMore := len(list) == 50
 
-	// Load all labels for the filter pill row (best-effort; nil on error is fine).
+	// Load all labels with counts for the filter pill row (best-effort; nil on error is fine).
 	var allLabels []labels.Label
 	if h.LabelsSvc != nil {
-		allLabels, _ = h.LabelsSvc.List(c.Request().Context())
+		allLabels, _ = h.LabelsSvc.ListWithCounts(c.Request().Context())
 	}
 
 	component := templates.PeopleList(templates.PeopleListParams{
@@ -76,6 +83,7 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 		HasMore:      hasMore,
 		AllLabels:    allLabels,
 		ActiveLabels: labelIDs,
+		Sort:         sort,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }

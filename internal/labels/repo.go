@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type LabelRepo interface {
 	Get(ctx context.Context, id int64) (*Label, error)
 	List(ctx context.Context) ([]Label, error)
 	ListWithCounts(ctx context.Context) ([]Label, error)
+	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error)
 }
 
 // PersonLabelRepo defines persistence operations for person↔label associations.
@@ -116,6 +118,47 @@ func (r *sqlLabelRepo) ListWithCounts(ctx context.Context) ([]Label, error) {
 		labels = append(labels, l)
 	}
 	return labels, rows.Err()
+}
+
+func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error) {
+	if len(personIDs) == 0 {
+		return make(map[int64][]Label), nil
+	}
+
+	placeholders := make([]string, len(personIDs))
+	args := make([]interface{}, len(personIDs))
+	for i, id := range personIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(
+		`SELECT pl.person_id, l.id, l.name, l.color, l.created_at
+		 FROM person_label pl
+		 JOIN label l ON l.id = pl.label_id
+		 WHERE pl.person_id IN (%s)
+		 ORDER BY pl.person_id, l.name`,
+		strings.Join(placeholders, ","),
+	)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("labels: list by person ids: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[int64][]Label)
+	for rows.Next() {
+		var personID int64
+		var l Label
+		var createdAt string
+		if err := rows.Scan(&personID, &l.ID, &l.Name, &l.Color, &createdAt); err != nil {
+			return nil, fmt.Errorf("labels: scan label by person: %w", err)
+		}
+		l.CreatedAt, _ = parseTime(createdAt)
+		result[personID] = append(result[personID], l)
+	}
+	return result, rows.Err()
 }
 
 // ---- sqlPersonLabelRepo -----------------------------------------------------

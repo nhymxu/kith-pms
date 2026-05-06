@@ -118,6 +118,11 @@ func (s *Service) ListByPersonID(ctx context.Context, personID int64) ([]Label, 
 	return s.PersonLabels.ListByPersonID(ctx, personID)
 }
 
+// ListByPersonIDs returns a map of person IDs to their labels for batch loading.
+func (s *Service) ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error) {
+	return s.Labels.ListByPersonIDs(ctx, personIDs)
+}
+
 // ---- validation -------------------------------------------------------------
 
 func validate(name, color string) error {

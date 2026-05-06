@@ -5,6 +5,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"strings"
+	"time"
 )
 
 // PeopleListParams holds data for the people list page.
@@ -15,6 +16,7 @@ type PeopleListParams struct {
 	HasMore      bool
 	AllLabels    []labels.Label // for filter pills
 	ActiveLabels []int64        // currently-filtered label IDs
+	Sort         string         // current sort parameter
 }
 
 // PeopleList renders the /people index page with search, label filter, and pagination.
@@ -79,15 +81,40 @@ templ PeopleList(params PeopleListParams) {
 				<table class="w-full text-sm border-collapse">
 					<thead>
 						<tr class="border-b border-sage-border text-left text-olive-ink/70">
-							<th class="pb-2 pr-4 font-medium">Name</th>
+							<th class="pb-2 pr-4 font-medium w-12"></th>
+							<th class="pb-2 pr-4 font-medium">
+								<a href={ templ.SafeURL(buildSortURL("name", params.Sort, params.Query, params.ActiveLabels)) } class="flex items-center gap-1 hover:text-deep-olive cursor-pointer">
+									Name
+									if params.Sort == "name" {
+										<span>↑</span>
+									} else if params.Sort == "-name" {
+										<span>↓</span>
+									}
+								</a>
+							</th>
 							<th class="pb-2 pr-4 font-medium">Nickname</th>
 							<th class="pb-2 pr-4 font-medium">Relationship</th>
-							<th class="pb-2 font-medium">Added</th>
+							<th class="pb-2 pr-4 font-medium">Labels</th>
+							<th class="pb-2 font-medium text-right">
+								<a href={ templ.SafeURL(buildSortURL("last_contact", params.Sort, params.Query, params.ActiveLabels)) } class="flex items-center justify-end gap-1 hover:text-deep-olive cursor-pointer">
+									Last Contact
+									if params.Sort == "last_contact" {
+										<span>↑</span>
+									} else if params.Sort == "-last_contact" {
+										<span>↓</span>
+									}
+								</a>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
 						for _, p := range params.People {
 							<tr class="border-b border-sage-border/50 hover:bg-sage-border/10">
+								<td class="py-2 pr-4">
+									<a href={ templ.SafeURL(fmt.Sprintf("/people/%d", p.ID)) }>
+										@PersonAvatar(p, "sm")
+									</a>
+								</td>
 								<td class="py-2 pr-4">
 									<a href={ templ.SafeURL(fmt.Sprintf("/people/%d", p.ID)) } class="font-medium text-deep-olive hover:underline">
 										if p.Prefix != "" {
@@ -99,7 +126,16 @@ templ PeopleList(params PeopleListParams) {
 								</td>
 								<td class="py-2 pr-4 text-olive-ink/70">{ p.Nickname }</td>
 								<td class="py-2 pr-4 text-olive-ink/70">{ p.RelationshipType }</td>
-								<td class="py-2 text-olive-ink/50 text-xs">{ p.CreatedAt.Format("2006-01-02") }</td>
+								<td class="py-2 pr-4">
+									@PersonLabels(p.Labels, params.Query)
+								</td>
+								<td class="py-2 text-right text-xs" title={ formatAbsoluteDate(p.LastContactAt) }>
+									if p.LastContactAt == nil {
+										<span class="text-olive-ink/40">{ formatRelativeTime(p.LastContactAt) }</span>
+									} else {
+										<span class="text-olive-ink/50">{ formatRelativeTime(p.LastContactAt) }</span>
+									}
+								</td>
 							</tr>
 						}
 					</tbody>
@@ -108,7 +144,7 @@ templ PeopleList(params PeopleListParams) {
 			<div class="flex gap-4 mt-6 text-sm">
 				if params.Page > 1 {
 					<a
-						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s", params.Query, params.Page-1, joinInt64s(params.ActiveLabels))) }
+						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s&sort=%s", params.Query, params.Page-1, joinInt64s(params.ActiveLabels), params.Sort)) }
 						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
 					>
 						← Previous
@@ -116,7 +152,7 @@ templ PeopleList(params PeopleListParams) {
 				}
 				if params.HasMore {
 					<a
-						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s", params.Query, params.Page+1, joinInt64s(params.ActiveLabels))) }
+						href={ templ.SafeURL(fmt.Sprintf("/people?q=%s&page=%d&labels=%s&sort=%s", params.Query, params.Page+1, joinInt64s(params.ActiveLabels), params.Sort)) }
 						class="border border-sage-border rounded px-3 py-1 hover:bg-sage-border/20 transition"
 					>
 						Next →
@@ -136,6 +172,9 @@ templ labelFilterPill(l labels.Label, q string, activeIDs []int64) {
 		{ buildPillStyleAttr(l, activeIDs)... }
 	>
 		{ l.Name }
+		if l.Count > 0 {
+			<span class="opacity-60 ml-1">({ fmt.Sprintf("%d", l.Count) })</span>
+		}
 	</a>
 }
 
@@ -200,4 +239,182 @@ func joinInt64s(ids []int64) string {
 		parts[i] = fmt.Sprintf("%d", id)
 	}
 	return strings.Join(parts, ",")
+}
+
+// getInitials extracts initials from a person's name.
+func getInitials(name string) string {
+	parts := strings.Fields(name)
+	if len(parts) == 0 {
+		return "?"
+	}
+	if len(parts) == 1 {
+		if len(parts[0]) >= 2 {
+			return strings.ToUpper(parts[0][:2])
+		}
+		return strings.ToUpper(parts[0][:1])
+	}
+	return strings.ToUpper(parts[0][:1] + parts[len(parts)-1][:1])
+}
+
+// getInitialsColor generates a consistent HSL color based on person ID.
+func getInitialsColor(id int64) string {
+	hue := (float64(id) * 137.508)
+	for hue >= 360 {
+		hue -= 360
+	}
+	return fmt.Sprintf("hsl(%.1f, 45%%, 60%%)", hue)
+}
+
+// PersonAvatar renders an avatar thumbnail or initials badge.
+templ PersonAvatar(p people.Person, size string) {
+	<div class={ "flex items-center justify-center rounded-full overflow-hidden " + avatarSizeClass(size) }>
+		if p.AvatarPath != "" {
+			<img
+				src={ templ.SafeURL(fmt.Sprintf("/people/%d/avatar", p.ID)) }
+				alt={ p.Name }
+				class="w-full h-full object-cover"
+			/>
+		} else {
+			<div
+				class="w-full h-full flex items-center justify-center text-white font-semibold"
+				style={ fmt.Sprintf("background-color: %s", getInitialsColor(p.ID)) }
+			>
+				<span class={ avatarTextClass(size) }>{ getInitials(p.Name) }</span>
+			</div>
+		}
+	</div>
+}
+
+func avatarSizeClass(size string) string {
+	switch size {
+	case "sm":
+		return "w-8 h-8"
+	case "md":
+		return "w-16 h-16"
+	case "lg":
+		return "w-32 h-32"
+	default:
+		return "w-8 h-8"
+	}
+}
+
+func avatarTextClass(size string) string {
+	switch size {
+	case "sm":
+		return "text-xs"
+	case "md":
+		return "text-base"
+	case "lg":
+		return "text-2xl"
+	default:
+		return "text-xs"
+	}
+}
+
+// PersonLabels renders labels for a person with overflow handling.
+templ PersonLabels(labels []labels.Label, query string) {
+	if len(labels) == 0 {
+		<span class="text-olive-ink/40">—</span>
+	} else {
+		<div class="flex flex-wrap gap-1">
+			for i, l := range labels {
+				if i < 3 {
+					@LabelBadge(l, query)
+				}
+			}
+			if len(labels) > 3 {
+				<span class="text-xs text-olive-ink/60">+{ fmt.Sprintf("%d", len(labels)-3) } more</span>
+			}
+		</div>
+	}
+}
+
+// LabelBadge renders a single label badge that filters when clicked.
+templ LabelBadge(l labels.Label, query string) {
+	<a
+		href={ templ.SafeURL(buildLabelFilterURL(l.ID, query)) }
+		class="inline-block rounded-full px-2 py-0.5 text-xs font-medium hover:opacity-80 transition"
+		style={ fmt.Sprintf("background-color: %s; color: %s", l.Color, contrastColor(l.Color)) }
+	>
+		{ l.Name }
+	</a>
+}
+
+// buildLabelFilterURL creates a URL that filters by a single label.
+func buildLabelFilterURL(labelID int64, query string) string {
+	if query != "" {
+		return fmt.Sprintf("/people?q=%s&labels=%d", query, labelID)
+	}
+	return fmt.Sprintf("/people?labels=%d", labelID)
+}
+
+// buildSortURL creates a URL that toggles sort direction for a field.
+func buildSortURL(field, currentSort, query string, activeLabels []int64) string {
+	var nextSort string
+	if currentSort == field {
+		nextSort = "-" + field
+	} else {
+		nextSort = field
+	}
+
+	labelsParam := joinInt64s(activeLabels)
+	params := []string{}
+
+	if query != "" {
+		params = append(params, "q="+query)
+	}
+	if labelsParam != "" {
+		params = append(params, "labels="+labelsParam)
+	}
+	params = append(params, "sort="+nextSort)
+
+	return "/people?" + strings.Join(params, "&")
+}
+
+// formatRelativeTime formats a timestamp as relative time (e.g., "2 days ago").
+func formatRelativeTime(t *time.Time) string {
+	if t == nil {
+		return "Never"
+	}
+
+	now := time.Now()
+	diff := now.Sub(*t)
+
+	if diff < 24*time.Hour {
+		return "Today"
+	}
+	if diff < 48*time.Hour {
+		return "Yesterday"
+	}
+	if diff < 7*24*time.Hour {
+		days := int(diff.Hours() / 24)
+		return fmt.Sprintf("%d days ago", days)
+	}
+	if diff < 30*24*time.Hour {
+		weeks := int(diff.Hours() / 24 / 7)
+		if weeks == 1 {
+			return "1 week ago"
+		}
+		return fmt.Sprintf("%d weeks ago", weeks)
+	}
+	if diff < 365*24*time.Hour {
+		months := int(diff.Hours() / 24 / 30)
+		if months == 1 {
+			return "1 month ago"
+		}
+		return fmt.Sprintf("%d months ago", months)
+	}
+	years := int(diff.Hours() / 24 / 365)
+	if years == 1 {
+		return "1 year ago"
+	}
+	return fmt.Sprintf("%d years ago", years)
+}
+
+// formatAbsoluteDate formats a timestamp for hover title attribute.
+func formatAbsoluteDate(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("January 2, 2006")
 }

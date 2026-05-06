@@ -82,11 +82,12 @@ kith-pms/
 │       │   ├── home.go           # Dashboard (includes OnThisDay widget)
 │       │   ├── people.go         # CRUD handlers for People; PostQuickJournal, PostQuickGift, PostQuickRelationship, PostDeleteRelationship for inline HTMX forms
 │       │   ├── me.go             # Self-profile handlers (GetMe, GetSetup, PostSetup)
-│       │   ├── labels.go         # CRUD handlers for Labels
+│       │   ├── settings.go       # Settings hub + relationship types + labels CRUD handlers
 │       │   ├── journal.go        # CRUD handlers for Journal
 │       │   ├── dates.go          # Handlers for Important Dates
 │       │   ├── reminders.go      # Handlers for Reminders
 │       │   ├── gifts.go          # CRUD & image handlers for Gifts
+│       │   ├── audit.go          # Audit log list handler
 │       │   └── errors.go         # Error page handlers
 │       ├── templates/            # Templ HTML components (.templ files)
 │       │   ├── layout.templ      # Base layout with navbar, footer
@@ -209,6 +210,12 @@ kith-pms/
 - **repo.go**: Queries for gifts with person joins; UpdateImage metadata updates
 - **service_test.go**: Integration tests for gift CRUD and image operations
 
+### `internal/relationships` — Person-to-person relationships
+- **domain.go**: RelationshipType (name, reverse_name, optional inverse_type_id), PersonRelationship (from/to person IDs, type, notes), RelationshipView (rendered relationship with resolved type names)
+- **service.go**: CreateType/UpdateType/DeleteType for relationship types; AttachRelationship/DetachRelationship for person junctions; handles symmetric and asymmetric paired types with bidirectional row creation
+- **repo.go**: sqlRelationshipTypeRepo and sqlPersonRelationshipRepo; paired transaction writes for bidirectional relationships; FindPair for locating inverse rows
+- **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
+
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
@@ -221,7 +228,7 @@ kith-pms/
 ### `internal/web` — HTTP & template layer
 - **server.go**: Creates Echo instance
 - **route.go**: Echo mounts static file server, registers route groups, injects service dependencies into handlers
-- **handlers/**: HTTP handler functions for each domain (auth, people, labels, journal, home, me); includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift); me.go handles self-profile setup and display
+- **handlers/**: HTTP handler functions for each domain; auth.go (login/logout), home.go (dashboard), people.go (people CRUD + quick-add forms), me.go (self-profile), settings.go (labels & relationship types CRUD), journal.go (journal CRUD), other domain handlers; includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift, PostQuickRelationship)
 - **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; includes inline forms (PersonQuickJournalForm, PersonQuickGiftForm) and me_setup.templ for self-profile
 - **forms/**: Form struct definitions for validation & binding
 - **static/**: Embedded htmx library and generated Tailwind CSS

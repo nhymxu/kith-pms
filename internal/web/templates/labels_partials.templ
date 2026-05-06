@@ -44,7 +44,7 @@ templ PersonLabelsStrip(attached []labels.Label, all []labels.Label, personID in
 			@LabelChipDetach(l, personID, csrfToken)
 		}
 		if len(all) == 0 {
-			<a href="/labels" class="text-xs text-olive-ink/50 hover:underline">No labels yet — create one</a>
+			<a href="/settings/labels" class="text-xs text-olive-ink/50 hover:underline">No labels yet — create one</a>
 		} else {
 			@LabelDropdown(unattached(all, attached), personID, csrfToken)
 		}

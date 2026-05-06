@@ -29,15 +29,15 @@ var staticFS embed.FS
 
 // Deps holds application-level dependencies passed into the web layer.
 type Deps struct {
-	DB                 *sql.DB
-	AuthService        *auth.Service
-	PeopleService      *people.Service
-	LabelsService      *labels.Service
-	JournalService     *journal.Service
-	DatesService       *dates.Service
-	RemindersService   *reminders.Service
-	WorkHistoryService *work_history.Service
-	AuditService       *audit.Service
+	DB                   *sql.DB
+	AuthService          *auth.Service
+	PeopleService        *people.Service
+	LabelsService        *labels.Service
+	JournalService       *journal.Service
+	DatesService         *dates.Service
+	RemindersService     *reminders.Service
+	WorkHistoryService   *work_history.Service
+	AuditService         *audit.Service
 	GiftsService         *gifts.Service
 	RelationshipsService *relationships.Service
 	AvatarBasePath       string
@@ -150,7 +150,10 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/people/:id/relationships/:relID/delete", peopleH.PostDeleteRelationship)
 
 		// Settings routes
-		settingsH := &handlers.SettingsHandlers{Svc: deps.RelationshipsService}
+		settingsH := &handlers.SettingsHandlers{
+			RelSvc:    deps.RelationshipsService,
+			LabelsSvc: deps.LabelsService,
+		}
 		protected.GET("/settings", settingsH.GetHub)
 		protected.GET("/settings/relationship-types", settingsH.GetRelationshipTypes)
 		protected.GET("/settings/relationship-types/:id/edit", settingsH.GetRelationshipTypeEdit)
@@ -159,13 +162,15 @@ func Mount(e *echo.Echo, deps Deps) {
 		protected.POST("/settings/relationship-types/:id", settingsH.PostUpdateRelationshipType)
 		protected.POST("/settings/relationship-types/:id/delete", settingsH.PostDeleteRelationshipType)
 
-		// Labels CRUD routes
-		labelsH := &handlers.LabelsHandlers{Svc: deps.LabelsService}
-		protected.GET("/labels", labelsH.GetList)
-		protected.POST("/labels", labelsH.PostCreate)
-		protected.GET("/labels/:id/edit", labelsH.GetEdit)
-		protected.POST("/labels/:id", labelsH.PostUpdate)
-		protected.POST("/labels/:id/delete", labelsH.PostDelete)
+		// Labels routes (under settings)
+		protected.GET("/labels", func(c *echo.Context) error {
+			return c.Redirect(http.StatusFound, "/settings/labels")
+		})
+		protected.GET("/settings/labels", settingsH.GetLabels)
+		protected.POST("/settings/labels", settingsH.PostCreateLabel)
+		protected.GET("/settings/labels/:id/edit", settingsH.GetLabelEdit)
+		protected.POST("/settings/labels/:id", settingsH.PostUpdateLabel)
+		protected.POST("/settings/labels/:id/delete", settingsH.PostDeleteLabel)
 
 		// Journal routes — /journal/* must come before /journal/:id to avoid
 		// routing collisions with the static sub-paths.

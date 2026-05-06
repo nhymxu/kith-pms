@@ -19,7 +19,7 @@
 │  │  ├─ /              → Dashboard (home)                    │   │
 │  │  ├─ /auth/login    → Login form + session creation       │   │
 │  │  ├─ /people/*      → People CRUD                         │   │
-│  │  ├─ /labels/*      → Labels CRUD                         │   │
+│  │  ├─ /settings/*    → Settings hub, labels, rel types     │   │
 │  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
 │  │  ├─ /dates         → Important dates & milestones        │   │
 │  │  ├─ /reminders/*   → Reminders & notifications           │   │
@@ -127,8 +127,12 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /people/:id/last-contact → POST (update last contact timestamp to now)
 /me                    → GET (self profile or setup redirect)
 /me/setup              → GET (setup form), POST (set person as self)
-/labels                → GET (list), POST (create)
-/labels/:id            → GET (detail), PUT (update), DELETE
+/settings              → GET (settings hub with tiles for labels and rel types)
+/settings/labels       → GET (list), POST (create)
+/settings/labels/:id   → GET (detail), PUT (update), DELETE
+/settings/relationship-types → GET (list, with counts), POST (create)
+/settings/relationship-types/:id → GET (detail), POST (update), DELETE
+/labels                → GET (302 redirect to /settings/labels)
 /journal               → GET (list + FTS5 search), POST (create)
 /journal/:id           → GET (detail), PUT (update), DELETE
 /dates                 → GET (upcoming dates, ?days=N query param)

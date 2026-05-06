@@ -8,6 +8,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 	"strings"
 	"unicode"
@@ -15,17 +16,21 @@ import (
 
 // PeopleDetailParams holds data for the person detail page.
 type PeopleDetailParams struct {
-	Person           people.Person
-	Labels           []labels.Label // attached labels
-	AllLabels        []labels.Label // all labels (for dropdown)
-	CSRFToken        string
-	RecentActivities []journal.Activity       // latest 10 activities
-	Dates            []dates.ImportantDate    // important dates
-	WorkHistory      []work_history.WorkEntry // work history entries
-	AuditHistory     []audit.Entry            // latest 10 audit entries for this person
-	Gifts            []gifts.GiftWithPerson   // latest 10 gifts for this person
-	TodayDate        string                   // pre-filled date for quick-add journal form
-	SelfPersonID     int64
+	Person                people.Person
+	Labels                []labels.Label // attached labels
+	AllLabels             []labels.Label // all labels (for dropdown)
+	CSRFToken             string
+	RecentActivities      []journal.Activity       // latest 10 activities
+	Dates                 []dates.ImportantDate    // important dates
+	WorkHistory           []work_history.WorkEntry // work history entries
+	AuditHistory          []audit.Entry            // latest 10 audit entries for this person
+	Gifts                 []gifts.GiftWithPerson   // latest 10 gifts for this person
+	TodayDate             string                   // pre-filled date for quick-add journal form
+	SelfPersonID          int64
+	RelationshipViews     []relationships.RelationshipView  // outgoing relationships for this person
+	RelationshipTypes     []relationships.RelationshipType  // all types (for modal dropdown)
+	AllPeople             []people.Person                    // all people except self (for modal dropdown)
+	RelationshipsError    string
 }
 
 // PeopleDetail renders the detail view for a single person.
@@ -232,6 +237,15 @@ templ PeopleDetail(params PeopleDetailParams) {
 				<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide mb-3">Labels</h2>
 				@PersonLabelsStrip(params.Labels, params.AllLabels, params.Person.ID, params.CSRFToken)
 			</section>
+			<!-- Relationships -->
+			@PersonRelationshipsSection(PersonRelationshipsSectionParams{
+				PersonID:   params.Person.ID,
+				Rows:       params.RelationshipViews,
+				Types:      params.RelationshipTypes,
+				Candidates: params.AllPeople,
+				CSRFToken:  params.CSRFToken,
+				Error:      params.RelationshipsError,
+			})
 			<!-- Recent Activities with quick-add form -->
 			@PersonRecentActivities(PersonRecentActivitiesParams{
 				PersonID:   params.Person.ID,

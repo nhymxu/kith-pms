@@ -18,6 +18,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
 	"github.com/nhymxu/kith-pms/internal/work_history"
@@ -37,9 +38,10 @@ type Deps struct {
 	RemindersService   *reminders.Service
 	WorkHistoryService *work_history.Service
 	AuditService       *audit.Service
-	GiftsService       *gifts.Service
-	AvatarBasePath     string
-	APIToken           string
+	GiftsService         *gifts.Service
+	RelationshipsService *relationships.Service
+	AvatarBasePath       string
+	APIToken             string
 }
 
 // Mount registers all UI routes and the /static/* file server onto e.
@@ -108,14 +110,15 @@ func Mount(e *echo.Echo, deps Deps) {
 
 		// People routes
 		peopleH := &handlers.PeopleHandlers{
-			Svc:            deps.PeopleService,
-			LabelsSvc:      deps.LabelsService,
-			JournalSvc:     deps.JournalService,
-			DatesSvc:       deps.DatesService,
-			WorkHistorySvc: deps.WorkHistoryService,
-			AuditSvc:       deps.AuditService,
-			GiftsSvc:       deps.GiftsService,
-			AvatarBasePath: deps.AvatarBasePath,
+			Svc:              deps.PeopleService,
+			LabelsSvc:        deps.LabelsService,
+			JournalSvc:       deps.JournalService,
+			DatesSvc:         deps.DatesService,
+			WorkHistorySvc:   deps.WorkHistoryService,
+			AuditSvc:         deps.AuditService,
+			GiftsSvc:         deps.GiftsService,
+			RelationshipsSvc: deps.RelationshipsService,
+			AvatarBasePath:   deps.AvatarBasePath,
 		}
 		protected.GET("/people", peopleH.GetList)
 		protected.GET("/people/new", peopleH.GetNew)
@@ -142,6 +145,19 @@ func Mount(e *echo.Echo, deps Deps) {
 		// Label attach/detach routes (htmx fragments)
 		protected.POST("/people/:id/labels/attach", peopleH.PostAttachLabel)
 		protected.POST("/people/:id/labels/:labelID/delete", peopleH.PostDetachLabel)
+		// Relationship routes (htmx fragments)
+		protected.POST("/people/:id/relationships/quick", peopleH.PostQuickRelationship)
+		protected.POST("/people/:id/relationships/:relID/delete", peopleH.PostDeleteRelationship)
+
+		// Settings routes
+		settingsH := &handlers.SettingsHandlers{Svc: deps.RelationshipsService}
+		protected.GET("/settings", settingsH.GetHub)
+		protected.GET("/settings/relationship-types", settingsH.GetRelationshipTypes)
+		protected.GET("/settings/relationship-types/:id/edit", settingsH.GetRelationshipTypeEdit)
+		protected.GET("/settings/relationship-types/:id/row", settingsH.GetRelationshipTypeRow)
+		protected.POST("/settings/relationship-types", settingsH.PostRelationshipType)
+		protected.POST("/settings/relationship-types/:id", settingsH.PostUpdateRelationshipType)
+		protected.POST("/settings/relationship-types/:id/delete", settingsH.PostDeleteRelationshipType)
 
 		// Labels CRUD routes
 		labelsH := &handlers.LabelsHandlers{Svc: deps.LabelsService}

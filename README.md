@@ -10,6 +10,7 @@
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
 - **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
+- **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types (e.g. "Manager" / "Reports to")
 - **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking
 - **Dashboard** — at-a-glance counts and recent activity on the homepage
 - **Auth** — single-user, password-protected; session cookies with CSRF protection

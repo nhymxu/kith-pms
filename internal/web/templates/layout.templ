@@ -15,15 +15,25 @@ templ Layout(title string) {
 		<body class="bg-parchment text-olive-ink min-h-screen">
 			<nav class="border-b border-sage-border px-6 py-3 flex items-center gap-6">
 				<a href="/" class="font-bold text-deep-olive text-lg tracking-tight hover:opacity-80 transition">kith</a>
-				<div class="flex gap-4 text-sm">
+				<div class="flex gap-4 text-sm items-center">
 					<a href="/people" class="text-olive-ink hover:text-deep-olive transition">People</a>
-					<a href="/me" class="text-olive-ink hover:text-deep-olive transition">Me</a>
 					<a href="/labels" class="text-olive-ink hover:text-deep-olive transition">Labels</a>
 					<a href="/journal" class="text-olive-ink hover:text-deep-olive transition">Journal</a>
 					<a href="/reminders" class="text-olive-ink hover:text-deep-olive transition">Reminders</a>
 					<a href="/gifts" class="text-olive-ink hover:text-deep-olive transition">Gifts</a>
 					<a href="/audit" class="text-olive-ink hover:text-deep-olive transition">Audit</a>
 				</div>
+				<details class="relative ml-auto text-sm">
+					<summary class="list-none cursor-pointer text-olive-ink hover:text-deep-olive transition select-none">Me ▾</summary>
+					<div class="absolute right-0 mt-1 bg-white border border-sage-border rounded shadow-md min-w-[140px] z-50">
+						<a href="/me" class="block px-4 py-2 text-sm text-olive-ink hover:bg-sage-border/20">My profile</a>
+						<a href="/settings" class="block px-4 py-2 text-sm text-olive-ink hover:bg-sage-border/20">Settings</a>
+						<form method="POST" action="/logout" onsubmit="this.querySelector('[name=_csrf]').value=document.cookie.replace(/.*(?:^|;\s*)_csrf=([^;]+).*/,'$1')">
+							<input type="hidden" name="_csrf" value=""/>
+							<button type="submit" class="w-full text-left px-4 py-2 text-sm text-olive-ink hover:bg-sage-border/20">Logout</button>
+						</form>
+					</div>
+				</details>
 			</nav>
 			<main class="mx-auto max-w-6xl px-6 py-8">
 				{ children... }

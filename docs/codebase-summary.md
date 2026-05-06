@@ -62,6 +62,11 @@ kith-pms/
 │   │   ├── service.go            # CRUD, image upload/delete business logic
 │   │   ├── repo.go               # Database queries for gifts
 │   │   └── service_test.go       # Service integration tests
+│   ├── relationships/            # Person-to-person relationship junctions
+│   │   ├── domain.go             # RelationshipType, PersonRelationship, RelationshipView structures
+│   │   ├── service.go            # CreateType/UpdateType/DeleteType; AttachRelationship/DetachRelationship/ListByPerson
+│   │   ├── repo.go               # sqlRelationshipTypeRepo + sqlPersonRelationshipRepo; paired tx writes
+│   │   └── service_test.go       # 10 integration tests (paired rows, self-loop guard, FK restrict)
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
@@ -75,7 +80,7 @@ kith-pms/
 │       ├── handlers/             # HTTP handlers for each domain
 │       │   ├── auth.go           # Login, logout, password change
 │       │   ├── home.go           # Dashboard (includes OnThisDay widget)
-│       │   ├── people.go         # CRUD handlers for People (dates integration); PostQuickJournal, PostQuickGift for inline forms; PostUpdateLastContact for manual contact timestamp updates
+│       │   ├── people.go         # CRUD handlers for People; PostQuickJournal, PostQuickGift, PostQuickRelationship, PostDeleteRelationship for inline HTMX forms
 │       │   ├── me.go             # Self-profile handlers (GetMe, GetSetup, PostSetup)
 │       │   ├── labels.go         # CRUD handlers for Labels
 │       │   ├── journal.go        # CRUD handlers for Journal
@@ -96,7 +101,8 @@ kith-pms/
 │       │   ├── labels_list.templ, labels_partials.templ
 │       │   ├── journal_list.templ, journal_detail.templ, journal_form.templ
 │       │   ├── journal_partials.templ
-│       │   ├── error_404.templ, error_500.templ
+│       │   ├── settings_hub.templ, relationship_types_list.templ, relationship_types_partials.templ
+│   │   ├── error_404.templ, error_500.templ
 │       │   ├── styles.css        # Tailwind CSS output
 │       │   └── templates_stub.go # Templ code generation marker
 │       ├── forms/                # Form validation & binding
@@ -122,7 +128,9 @@ kith-pms/
 │   ├── 0010_work_history.sql     # Work history table
 │   ├── 0011_audit_log.sql        # Audit log table for entity change tracking
 │   ├── 0012_gift.sql             # Gift table with direction, debt type, and image columns
-│   └── 0013_person_self.sql      # is_self column with unique index for self-profile
+│   ├── 0013_person_self.sql      # is_self column with unique index for self-profile
+│   ├── 0014_person_last_contact.sql  # last_contact_at column on person
+│   └── 0015_relationship_type.sql   # relationship_type + person_relationship tables
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph

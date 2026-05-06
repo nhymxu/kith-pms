@@ -231,6 +231,7 @@ Connection settings:
 | `0012_gift.sql` | gift table with direction (gave/received), debt_type (owed/owe), person association, and image storage metadata |
 | `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
 | `0014_person_last_contact.sql` | last_contact_at nullable timestamp column on person table with partial index |
+| `0015_relationship_type.sql` | relationship_type table (name, reverse_name, self-FK inverse_type_id) + person_relationship junction table (from_person_id, to_person_id, relationship_type_id, notes) with UNIQUE and CHECK constraints |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

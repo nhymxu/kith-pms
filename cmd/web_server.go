@@ -20,6 +20,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web"
 	"github.com/nhymxu/kith-pms/internal/web/handlers"
@@ -178,6 +179,10 @@ Can scale later.`,
 			giftsSvc.Audit = auditSvc
 			giftsSvc.FileSvc = fileSvc
 
+			// Wire relationships service.
+			relsSvc := relationships.NewService(db)
+			relsSvc.Audit = auditSvc
+
 			// Read API token for the JSON REST API.
 			apiToken := os.Getenv("API_TOKEN")
 
@@ -192,8 +197,9 @@ Can scale later.`,
 				RemindersService:   remindersSvc,
 				WorkHistoryService: workHistorySvc,
 				AuditService:       auditSvc,
-				GiftsService:       giftsSvc,
-				AvatarBasePath:     avatarPath,
+				GiftsService:         giftsSvc,
+				RelationshipsService: relsSvc,
+				AvatarBasePath:       avatarPath,
 				APIToken:           apiToken,
 			})
 

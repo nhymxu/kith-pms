@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"math"
@@ -20,6 +21,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
 	"github.com/nhymxu/kith-pms/internal/web/templates"
 	"github.com/nhymxu/kith-pms/internal/work_history"
@@ -27,14 +29,15 @@ import (
 
 // PeopleHandlers groups all /people/* HTTP handlers.
 type PeopleHandlers struct {
-	Svc            *people.Service
-	LabelsSvc      *labels.Service
-	JournalSvc     *journal.Service
-	DatesSvc       *dates.Service
-	WorkHistorySvc *work_history.Service
-	AuditSvc       *audit.Service
-	GiftsSvc       *gifts.Service
-	AvatarBasePath string
+	Svc              *people.Service
+	LabelsSvc        *labels.Service
+	JournalSvc       *journal.Service
+	DatesSvc         *dates.Service
+	WorkHistorySvc   *work_history.Service
+	AuditSvc         *audit.Service
+	GiftsSvc         *gifts.Service
+	RelationshipsSvc *relationships.Service
+	AvatarBasePath   string
 }
 
 // GetList handles GET /people
@@ -193,18 +196,36 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		})
 	}
 
+	// Fetch relationships and related data for the relationships section.
+	var relViews []relationships.RelationshipView
+	var relTypes []relationships.RelationshipType
+	var allPeopleExceptSelf []people.Person
+	if h.RelationshipsSvc != nil {
+		relViews, _ = h.RelationshipsSvc.ListByPerson(c.Request().Context(), id)
+		relTypes, _ = h.RelationshipsSvc.ListTypes(c.Request().Context())
+		all, _ := h.Svc.List(c.Request().Context(), people.ListParams{PageSize: 9999})
+		for _, pp := range all {
+			if pp.ID != id {
+				allPeopleExceptSelf = append(allPeopleExceptSelf, pp)
+			}
+		}
+	}
+
 	component := templates.PeopleDetail(templates.PeopleDetailParams{
-		Person:           *p,
-		Labels:           attached,
-		AllLabels:        allLabels,
-		CSRFToken:        auth.CSRFToken(c),
-		SelfPersonID:     selfPersonID,
-		RecentActivities: recentActivities,
-		Dates:            importantDates,
-		WorkHistory:      workHistory,
-		AuditHistory:     auditHistory,
-		Gifts:            personGifts,
-		TodayDate:        time.Now().Format("2006-01-02"),
+		Person:            *p,
+		Labels:            attached,
+		AllLabels:         allLabels,
+		CSRFToken:         auth.CSRFToken(c),
+		SelfPersonID:      selfPersonID,
+		RecentActivities:  recentActivities,
+		Dates:             importantDates,
+		WorkHistory:       workHistory,
+		AuditHistory:      auditHistory,
+		Gifts:             personGifts,
+		TodayDate:         time.Now().Format("2006-01-02"),
+		RelationshipViews: relViews,
+		RelationshipTypes: relTypes,
+		AllPeople:         allPeopleExceptSelf,
 	})
 	return component.Render(c.Request().Context(), c.Response())
 }
@@ -801,4 +822,99 @@ func (h *PeopleHandlers) PostUpdateLastContact(c *echo.Context) error {
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/people/"+strconv.FormatInt(personID, 10))
+}
+
+// PostQuickRelationship handles POST /people/:id/relationships/quick (htmx fragment).
+func (h *PeopleHandlers) PostQuickRelationship(c *echo.Context) error {
+	ctx := c.Request().Context()
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	p, err := h.Svc.Get(ctx, personID)
+	if err != nil || p == nil {
+		return echo.ErrNotFound
+	}
+
+	csrfToken := auth.CSRFToken(c)
+
+	rerender := func(formErr string) error {
+		rows, _ := h.RelationshipsSvc.ListByPerson(ctx, personID)
+		types, _ := h.RelationshipsSvc.ListTypes(ctx)
+		all, _ := h.Svc.List(ctx, people.ListParams{PageSize: 9999})
+		var candidates []people.Person
+		for _, pp := range all {
+			if pp.ID != personID {
+				candidates = append(candidates, pp)
+			}
+		}
+		return templates.PersonRelationshipsSection(templates.PersonRelationshipsSectionParams{
+			PersonID:   personID,
+			Rows:       rows,
+			Types:      types,
+			Candidates: candidates,
+			CSRFToken:  csrfToken,
+			Error:      formErr,
+		}).Render(ctx, c.Response())
+	}
+
+	toID, _ := strconv.ParseInt(c.FormValue("to_person_id"), 10, 64)
+	typeID, _ := strconv.ParseInt(c.FormValue("relationship_type_id"), 10, 64)
+	notes := strings.TrimSpace(c.FormValue("notes"))
+
+	if toID == 0 {
+		return rerender("Select a person.")
+	}
+	if toID == personID {
+		return rerender("Cannot relate a person to themselves.")
+	}
+	if typeID == 0 {
+		return rerender("Select a relationship type.")
+	}
+
+	if _, err := h.RelationshipsSvc.AttachRelationship(ctx, personID, toID, typeID, notes); err != nil {
+		switch {
+		case errors.Is(err, relationships.ErrDuplicateRelationship):
+			return rerender("That relationship already exists.")
+		default:
+			return rerender("Failed to save relationship.")
+		}
+	}
+	return rerender("")
+}
+
+// PostDeleteRelationship handles POST /people/:id/relationships/:relID/delete (htmx fragment).
+func (h *PeopleHandlers) PostDeleteRelationship(c *echo.Context) error {
+	ctx := c.Request().Context()
+	personID, err := parseID(c)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	relID, err := strconv.ParseInt(c.Param("relID"), 10, 64)
+	if err != nil {
+		return echo.ErrNotFound
+	}
+
+	csrfToken := auth.CSRFToken(c)
+
+	_ = h.RelationshipsSvc.DetachRelationship(ctx, relID)
+
+	rows, _ := h.RelationshipsSvc.ListByPerson(ctx, personID)
+	types, _ := h.RelationshipsSvc.ListTypes(ctx)
+	all, _ := h.Svc.List(ctx, people.ListParams{PageSize: 9999})
+	var candidates []people.Person
+	for _, pp := range all {
+		if pp.ID != personID {
+			candidates = append(candidates, pp)
+		}
+	}
+	return templates.PersonRelationshipsSection(templates.PersonRelationshipsSectionParams{
+		PersonID:   personID,
+		Rows:       rows,
+		Types:      types,
+		Candidates: candidates,
+		CSRFToken:  csrfToken,
+	}).Render(ctx, c.Response())
 }

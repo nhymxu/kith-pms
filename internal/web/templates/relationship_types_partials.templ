@@ -1,0 +1,96 @@
+package templates
+
+import (
+	"fmt"
+	"github.com/nhymxu/kith-pms/internal/relationships"
+)
+
+// TypeRow renders a single relationship type row in display mode.
+templ TypeRow(rt relationships.RelationshipType, csrfToken string) {
+	<tr class="border-b border-sage-border/50 hover:bg-sage-border/10" id={ fmt.Sprintf("rt-row-%d", rt.ID) }>
+		<td class="py-2 pr-4 font-medium">{ rt.Name }</td>
+		<td class="py-2 pr-4 text-olive-ink/60">
+			if rt.ReverseName != "" {
+				{ rt.ReverseName }
+			} else {
+				<span class="italic text-olive-ink/30">—</span>
+			}
+		</td>
+		<td class="py-2 pr-4 text-olive-ink/60">{ fmt.Sprintf("%d", rt.UsageCount) }</td>
+		<td class="py-2 flex gap-2">
+			<button
+				type="button"
+				hx-get={ fmt.Sprintf("/settings/relationship-types/%d/edit", rt.ID) }
+				hx-target={ fmt.Sprintf("#rt-row-%d", rt.ID) }
+				hx-swap="outerHTML"
+				class="border border-sage-border rounded px-3 py-1 text-xs hover:bg-sage-border/20 transition"
+			>
+				Edit
+			</button>
+			<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/settings/relationship-types/%d/delete", rt.ID)) } class="inline">
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				<button
+					type="submit"
+					class="border border-red-300 text-red-600 rounded px-3 py-1 text-xs hover:bg-red-50 transition"
+					onclick="return confirm('Delete this relationship type? This will fail if the type is currently in use.')"
+				>
+					Delete
+				</button>
+			</form>
+		</td>
+	</tr>
+}
+
+// TypeRowEditing renders a single relationship type row in inline edit mode.
+templ TypeRowEditing(rt relationships.RelationshipType, csrfToken string, formErr string) {
+	<tr class="border-b border-sage-border/50 bg-sage-border/5" id={ fmt.Sprintf("rt-row-%d", rt.ID) }>
+		<td class="py-2 pr-2" colspan="4">
+			<form
+				hx-post={ fmt.Sprintf("/settings/relationship-types/%d", rt.ID) }
+				hx-target={ fmt.Sprintf("#rt-row-%d", rt.ID) }
+				hx-swap="outerHTML"
+				class="flex flex-wrap gap-2 items-center"
+			>
+				<input type="hidden" name="_csrf" value={ csrfToken }/>
+				if formErr != "" {
+					<span class="text-xs text-red-600 w-full">{ formErr }</span>
+				}
+				<input
+					type="text"
+					name="name"
+					value={ rt.Name }
+					maxlength="80"
+					required
+					placeholder="Name"
+					class="border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive w-44"
+				/>
+				<input
+					type="text"
+					name="reverse_name"
+					value={ rt.ReverseName }
+					maxlength="80"
+					placeholder="Reverse name (optional)"
+					class="border border-sage-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-deep-olive w-44"
+				/>
+				if rt.InverseTypeID != nil {
+					<span class="text-xs text-olive-ink/50 italic">Edit the paired type separately to keep names in sync.</span>
+				}
+				<button
+					type="submit"
+					class="bg-deep-olive text-parchment rounded px-3 py-1 text-xs font-semibold hover:opacity-90 transition"
+				>
+					Save
+				</button>
+				<button
+					type="button"
+					hx-get={ fmt.Sprintf("/settings/relationship-types/%d/row", rt.ID) }
+					hx-target={ fmt.Sprintf("#rt-row-%d", rt.ID) }
+					hx-swap="outerHTML"
+					class="border border-sage-border rounded px-3 py-1 text-xs hover:bg-sage-border/20 transition"
+				>
+					Cancel
+				</button>
+			</form>
+		</td>
+	</tr>
+}

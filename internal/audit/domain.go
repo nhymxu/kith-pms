@@ -12,7 +12,9 @@ const (
 	EntityReminder    EntityType = "reminder"
 	EntityDate        EntityType = "date"
 	EntityWorkHistory EntityType = "work_history"
-	EntityGift        EntityType = "gift"
+	EntityGift               EntityType = "gift"
+	EntityRelationshipType   EntityType = "relationship_type"
+	EntityPersonRelationship EntityType = "person_relationship"
 
 	ActionCreate Action = "create"
 	ActionUpdate Action = "update"

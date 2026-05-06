@@ -1,0 +1,19 @@
+package templates
+
+// SettingsHub renders the /settings landing page with navigation tiles.
+templ SettingsHub() {
+	@Layout("Settings — kith") {
+		<div class="flex items-center justify-between mb-6">
+			<h1 class="text-2xl font-bold text-deep-olive">Settings</h1>
+		</div>
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+			<a
+				href="/settings/relationship-types"
+				class="block border border-sage-border rounded p-4 hover:bg-sage-border/10 transition"
+			>
+				<h2 class="font-semibold text-deep-olive mb-1">Relationship Types</h2>
+				<p class="text-sm text-olive-ink/60">Customize the kinds of links between people, with optional paired reverse types.</p>
+			</a>
+		</div>
+	}
+}

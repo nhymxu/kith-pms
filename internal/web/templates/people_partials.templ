@@ -6,6 +6,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/web/forms"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 )
@@ -834,4 +835,145 @@ templ WorkRowFilled(index int, w work_history.WorkEntry) {
 			</button>
 		</td>
 	</tr>
+}
+
+// ---- Relationships section --------------------------------------------------
+
+// PersonRelationshipsSectionParams holds data for the relationships section on the person detail page.
+type PersonRelationshipsSectionParams struct {
+	PersonID   int64
+	Rows       []relationships.RelationshipView
+	Types      []relationships.RelationshipType
+	Candidates []people.Person // all people except the current person (for modal select)
+	CSRFToken  string
+	Error      string
+}
+
+// PersonRelationshipsSection renders the relationships section with a popup quick-add form.
+templ PersonRelationshipsSection(params PersonRelationshipsSectionParams) {
+	<section id={ fmt.Sprintf("rel-section-%d", params.PersonID) } class="mb-6 border border-sage-border rounded p-4">
+		<div class="flex items-center justify-between mb-3">
+			<h2 class="text-sm font-semibold text-olive-ink/70 uppercase tracking-wide">Relationships</h2>
+			if len(params.Types) > 0 && len(params.Candidates) > 0 {
+				<button
+					type="button"
+					data-dialog={ fmt.Sprintf("rel-modal-%d", params.PersonID) }
+					onclick="document.getElementById(this.dataset.dialog).showModal()"
+					class="text-xs text-deep-olive hover:underline"
+				>+ Add</button>
+			}
+		</div>
+		if len(params.Rows) == 0 {
+			<p class="text-sm text-olive-ink/40">No relationships yet.</p>
+		} else {
+			<ul class="space-y-2">
+				for _, r := range params.Rows {
+					<li class="flex items-center gap-3 text-sm flex-wrap">
+						<a href={ templ.SafeURL(fmt.Sprintf("/people/%d", r.OtherPersonID)) } class="text-deep-olive hover:underline">
+							{ r.OtherPersonName }
+						</a>
+						<span class="inline-block border border-sage-border rounded-full px-2 py-0.5 text-xs text-olive-ink/70">{ r.TypeName }</span>
+						if r.Notes != "" {
+							<span class="text-olive-ink/50 text-xs">— { r.Notes }</span>
+						}
+						<form
+							method="POST"
+							action={ templ.SafeURL(fmt.Sprintf("/people/%d/relationships/%d/delete", params.PersonID, r.ID)) }
+							hx-post={ fmt.Sprintf("/people/%d/relationships/%d/delete", params.PersonID, r.ID) }
+							hx-target={ fmt.Sprintf("#rel-section-%d", params.PersonID) }
+							hx-swap="outerHTML"
+							class="inline"
+						>
+							<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+							<button type="submit" class="text-xs text-red-500 hover:underline">Remove</button>
+						</form>
+					</li>
+				}
+			</ul>
+		}
+		if len(params.Types) > 0 && len(params.Candidates) > 0 {
+			<dialog
+				id={ fmt.Sprintf("rel-modal-%d", params.PersonID) }
+				if params.Error != "" {
+					data-open=""
+				}
+				class="rounded-lg border border-sage-border shadow-lg backdrop:bg-black/30 max-w-lg w-full p-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+			>
+				<div class="p-5 overflow-y-auto max-h-[90vh]">
+					<div class="flex items-center justify-between mb-4">
+						<h3 class="text-base font-semibold text-deep-olive">Add Relationship</h3>
+						<button type="button" onclick="this.closest('dialog').close()" class="text-olive-ink/50 hover:text-olive-ink text-lg leading-none">&times;</button>
+					</div>
+					@PersonQuickRelationshipForm(params)
+				</div>
+			</dialog>
+			<script>
+				(function() {
+					document.querySelectorAll('dialog[data-open]').forEach(function(d) { d.showModal(); });
+				})();
+			</script>
+		}
+	</section>
+}
+
+// PersonQuickRelationshipForm renders the form inside the relationship modal dialog.
+templ PersonQuickRelationshipForm(params PersonRelationshipsSectionParams) {
+	<form
+		hx-post={ fmt.Sprintf("/people/%d/relationships/quick", params.PersonID) }
+		hx-target={ fmt.Sprintf("#rel-section-%d", params.PersonID) }
+		hx-swap="outerHTML"
+		class="space-y-3"
+	>
+		<input type="hidden" name="_csrf" value={ params.CSRFToken }/>
+		if params.Error != "" {
+			<p class="text-xs text-red-600">{ params.Error }</p>
+		}
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Person <span class="text-red-500">*</span></label>
+			<select
+				name="to_person_id"
+				required
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			>
+				<option value="">Select a person…</option>
+				for _, p := range params.Candidates {
+					<option value={ fmt.Sprintf("%d", p.ID) }>{ p.Name }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Relationship type <span class="text-red-500">*</span></label>
+			<select
+				name="relationship_type_id"
+				required
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
+			>
+				<option value="">Select a type…</option>
+				for _, rt := range params.Types {
+					<option value={ fmt.Sprintf("%d", rt.ID) }>{ rt.Name }</option>
+				}
+			</select>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-olive-ink mb-1">Notes</label>
+			<textarea
+				name="notes"
+				maxlength="1000"
+				rows="2"
+				placeholder="Optional context…"
+				class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive resize-none"
+			></textarea>
+		</div>
+		<div class="flex gap-2 pt-1">
+			<button
+				type="submit"
+				class="bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+			>Save</button>
+			<button
+				type="button"
+				onclick="this.closest('dialog').close()"
+				class="border border-sage-border rounded px-4 py-2 text-sm hover:bg-sage-border/20 transition"
+			>Cancel</button>
+		</div>
+	</form>
 }

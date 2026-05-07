@@ -74,11 +74,15 @@ func TestCreateNoDeadlock(t *testing.T) {
 
 	// This should complete quickly without hanging
 	done := make(chan struct{})
-	var id int64
-	var createErr error
+
+	var (
+		id        int64
+		createErr error
+	)
 
 	go func() {
 		id, createErr = svc.Create(ctx, activity, personIDs)
+
 		close(done)
 	}()
 
@@ -87,9 +91,11 @@ func TestCreateNoDeadlock(t *testing.T) {
 		if createErr != nil {
 			t.Fatalf("Create failed: %v", createErr)
 		}
+
 		if id == 0 {
 			t.Fatal("Expected non-zero activity ID")
 		}
+
 		t.Logf("✅ Create completed successfully without deadlock (id=%d)", id)
 
 	case <-ctx.Done():
@@ -98,10 +104,12 @@ func TestCreateNoDeadlock(t *testing.T) {
 
 	// Verify the activity was created
 	var count int
+
 	err = db.QueryRow("SELECT COUNT(*) FROM activity WHERE id = ?", id).Scan(&count)
 	if err != nil {
 		t.Fatalf("failed to query activity: %v", err)
 	}
+
 	if count != 1 {
 		t.Fatalf("expected 1 activity, got %d", count)
 	}
@@ -111,6 +119,7 @@ func TestCreateNoDeadlock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to query activity_person: %v", err)
 	}
+
 	if count != 2 {
 		t.Fatalf("expected 2 person links, got %d", count)
 	}
@@ -124,8 +133,11 @@ type mockPeopleService struct {
 }
 
 func (m *mockPeopleService) GetSelf(ctx context.Context) (*PersonAdapter, error) {
-	var id int64
-	var lastContact sql.NullString
+	var (
+		id          int64
+		lastContact sql.NullString
+	)
+
 	err := m.db.QueryRowContext(ctx, "SELECT id, last_contact_at FROM person WHERE is_self = 1 LIMIT 1").
 		Scan(&id, &lastContact)
 	if err != nil {
@@ -133,6 +145,7 @@ func (m *mockPeopleService) GetSelf(ctx context.Context) (*PersonAdapter, error)
 	}
 
 	var lastContactTime *time.Time
+
 	if lastContact.Valid {
 		t, _ := time.Parse(time.RFC3339, lastContact.String)
 		lastContactTime = &t
@@ -146,6 +159,7 @@ func (m *mockPeopleService) GetSelf(ctx context.Context) (*PersonAdapter, error)
 
 func (m *mockPeopleService) Get(ctx context.Context, id int64) (*PersonAdapter, error) {
 	var lastContact sql.NullString
+
 	err := m.db.QueryRowContext(ctx, "SELECT last_contact_at FROM person WHERE id = ?", id).
 		Scan(&lastContact)
 	if err != nil {
@@ -153,6 +167,7 @@ func (m *mockPeopleService) Get(ctx context.Context, id int64) (*PersonAdapter, 
 	}
 
 	var lastContactTime *time.Time
+
 	if lastContact.Valid {
 		t, _ := time.Parse(time.RFC3339, lastContact.String)
 		lastContactTime = &t

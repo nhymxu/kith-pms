@@ -29,6 +29,7 @@ func SessionLoader(svc *Service) echo.MiddlewareFunc {
 					c.Set(contextKey, user)
 				}
 			}
+
 			return next(c)
 		}
 	}
@@ -43,6 +44,7 @@ func RequireAuth() echo.MiddlewareFunc {
 				next := url.QueryEscape(c.Request().URL.RequestURI())
 				return c.Redirect(http.StatusFound, "/login?next="+next)
 			}
+
 			return next(c)
 		}
 	}
@@ -68,6 +70,7 @@ func (l *ipRateLimiter) allow(ip string) bool {
 		l.max,
 	))
 	lim := val.(*rate.Limiter)
+
 	return lim.Allow()
 }
 
@@ -75,12 +78,14 @@ func (l *ipRateLimiter) allow(ip string) bool {
 // per window per remote IP. Excess requests receive 429 Too Many Requests.
 func RateLimitLogin(max int, window time.Duration) echo.MiddlewareFunc {
 	limiter := &ipRateLimiter{max: max, window: window}
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			ip := c.RealIP()
 			if !limiter.allow(ip) {
 				return c.String(http.StatusTooManyRequests, "too many requests")
 			}
+
 			return next(c)
 		}
 	}

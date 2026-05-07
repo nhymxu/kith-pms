@@ -27,6 +27,7 @@ func (s *Service) Login(ctx context.Context, plainPwd, ip, ua string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("auth: login get user: %w", err)
 	}
+
 	if user == nil {
 		// No user configured — reject all logins.
 		return "", ErrInvalidCredentials
@@ -36,6 +37,7 @@ func (s *Service) Login(ctx context.Context, plainPwd, ip, ua string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("auth: login verify: %w", err)
 	}
+
 	if !ok {
 		slog.Warn("auth: failed login attempt", "ip", ip)
 		return "", ErrInvalidCredentials
@@ -50,6 +52,7 @@ func (s *Service) Login(ctx context.Context, plainPwd, ip, ua string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("auth: login issue session: %w", err)
 	}
+
 	return token, nil
 }
 
@@ -64,9 +67,11 @@ func (s *Service) LogoutAll(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("auth: logout all get user: %w", err)
 	}
+
 	if user == nil {
 		return nil
 	}
+
 	return RevokeAll(ctx, user.ID, s.Sessions)
 }
 
@@ -77,6 +82,7 @@ func (s *Service) LoadUser(ctx context.Context, token string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if sess == nil {
 		return nil, nil
 	}
@@ -85,6 +91,7 @@ func (s *Service) LoadUser(ctx context.Context, token string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("auth: load user: %w", err)
 	}
+
 	return user, nil
 }
 
@@ -96,6 +103,7 @@ func (s *Service) ChangePassword(ctx context.Context, currentPwd, newPwd string)
 	if err != nil {
 		return fmt.Errorf("auth: change password get user: %w", err)
 	}
+
 	if user == nil {
 		return ErrInvalidCredentials
 	}
@@ -105,6 +113,7 @@ func (s *Service) ChangePassword(ctx context.Context, currentPwd, newPwd string)
 	if err != nil {
 		return fmt.Errorf("auth: change password verify: %w", err)
 	}
+
 	if !ok {
 		slog.Warn("auth: failed password change attempt (wrong current password)", "user_id", user.ID)
 		return ErrInvalidCredentials
@@ -122,5 +131,6 @@ func (s *Service) ChangePassword(ctx context.Context, currentPwd, newPwd string)
 	}
 
 	slog.Info("auth: password changed successfully", "user_id", user.ID)
+
 	return nil
 }

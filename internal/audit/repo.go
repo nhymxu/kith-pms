@@ -21,6 +21,7 @@ func (r *Repo) Insert(ctx context.Context, db sqlExecer, e Entry) error {
 	if err != nil {
 		return fmt.Errorf("audit: insert: %w", err)
 	}
+
 	return nil
 }
 
@@ -30,10 +31,12 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	if pageSize <= 0 {
 		pageSize = 50
 	}
+
 	page := p.Page
 	if page < 1 {
 		page = 1
 	}
+
 	offset := (page - 1) * pageSize
 
 	query := `SELECT id, entity_type, entity_id, entity_name, action, actor_id, created_at
@@ -43,14 +46,17 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	if p.EntityType != "" {
 		if p.EntityID > 0 {
 			query += ` WHERE entity_type = ? AND entity_id = ?`
+
 			args = append(args, string(p.EntityType), p.EntityID)
 		} else {
 			query += ` WHERE entity_type = ?`
+
 			args = append(args, string(p.EntityType))
 		}
 	}
 
 	query += ` ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`
+
 	args = append(args, pageSize, offset)
 
 	rows, err := db.QueryContext(ctx, query, args...)
@@ -60,16 +66,21 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	defer rows.Close()
 
 	var entries []Entry
+
 	for rows.Next() {
-		var e Entry
-		var createdAtStr string
+		var (
+			e            Entry
+			createdAtStr string
+		)
 		if err := rows.Scan(&e.ID, &e.EntityType, &e.EntityID, &e.EntityName,
 			&e.Action, &e.ActorID, &createdAtStr); err != nil {
 			return nil, fmt.Errorf("audit: scan row: %w", err)
 		}
+
 		e.CreatedAt, _ = time.Parse("2006-01-02T15:04:05.999Z", createdAtStr)
 		entries = append(entries, e)
 	}
+
 	return entries, rows.Err()
 }
 

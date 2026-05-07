@@ -15,9 +15,10 @@ import (
 
 func newApp() *cli.Command {
 	return &cli.Command{
-		Name:        "kith-pms",
-		Usage:       "Kith - Personal Management System",
-		Description: `kith (kith and kin) is a dead simple Personal Management System with relationship, life log, memory, ...`,
+		Name:  "kith-pms",
+		Usage: "Kith - Personal Management System",
+		Description: `kith (kith and kin) is a dead simple Personal Management System
+with relationship, life log, memory, ...`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
@@ -54,6 +55,7 @@ func newBaseHandler() slog.Handler {
 	if config.ENV.Debug {
 		return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
+
 	return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 }
 

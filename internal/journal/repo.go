@@ -32,18 +32,22 @@ func (r *sqlActivityRepo) Create(ctx context.Context, tx *sql.Tx, a Activity) (i
 	const q = `
 		INSERT INTO activity (title, occurred_at_date, occurred_at_time, content)
 		VALUES (?, ?, ?, ?)`
+
 	var oat any
 	if a.OccurredAtTime != "" {
 		oat = a.OccurredAtTime
 	}
+
 	res, err := tx.ExecContext(ctx, q, a.Title, a.OccurredAtDate, oat, a.Content)
 	if err != nil {
 		return 0, fmt.Errorf("journal: create activity: %w", err)
 	}
+
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("journal: last insert id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -53,14 +57,17 @@ func (r *sqlActivityRepo) Update(ctx context.Context, tx *sql.Tx, a Activity) er
 		SET title = ?, occurred_at_date = ?, occurred_at_time = ?,
 		    content = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
 		WHERE id = ?`
+
 	var oat any
 	if a.OccurredAtTime != "" {
 		oat = a.OccurredAtTime
 	}
+
 	_, err := tx.ExecContext(ctx, q, a.Title, a.OccurredAtDate, oat, a.Content, a.ID)
 	if err != nil {
 		return fmt.Errorf("journal: update activity: %w", err)
 	}
+
 	return nil
 }
 
@@ -68,14 +75,18 @@ func (r *sqlActivityRepo) Get(ctx context.Context, id int64) (*Activity, error) 
 	const q = `
 		SELECT id, title, occurred_at_date, occurred_at_time, content, created_at, updated_at
 		FROM activity WHERE id = ?`
+
 	row := r.db.QueryRowContext(ctx, q, id)
+
 	a, err := scanActivity(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("journal: get activity: %w", err)
 	}
+
 	return a, nil
 }
 
@@ -84,14 +95,17 @@ func (r *sqlActivityRepo) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("journal: delete activity: %w", err)
 	}
+
 	return nil
 }
 
 // List builds a dynamic SQL query based on non-zero filter fields in params.
 func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activity, error) {
-	var joins []string
-	var where []string
-	var args []any
+	var (
+		joins []string
+		where []string
+		args  []any
+	)
 
 	// FTS full-text search — join activity_fts and use MATCH.
 	useFTS := strings.TrimSpace(params.Query) != ""
@@ -105,7 +119,11 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	if len(params.PersonIDs) > 0 {
 		placeholders := strings.Repeat("?,", len(params.PersonIDs))
 		placeholders = placeholders[:len(placeholders)-1]
-		where = append(where, "activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))")
+
+		where = append(
+			where,
+			"activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))",
+		)
 		for _, pid := range params.PersonIDs {
 			args = append(args, pid)
 		}
@@ -115,7 +133,11 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	if len(params.LabelIDs) > 0 {
 		placeholders := strings.Repeat("?,", len(params.LabelIDs))
 		placeholders = placeholders[:len(placeholders)-1]
-		where = append(where, "activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))")
+
+		where = append(
+			where,
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))",
+		)
 		for _, lid := range params.LabelIDs {
 			args = append(args, lid)
 		}
@@ -140,6 +162,7 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	if len(joins) > 0 {
 		query += " " + strings.Join(joins, " ")
 	}
+
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
@@ -155,12 +178,15 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	if pageSize <= 0 {
 		pageSize = 30
 	}
+
 	page := params.Page
 	if page < 1 {
 		page = 1
 	}
+
 	offset := (page - 1) * pageSize
 	query += " LIMIT ? OFFSET ?"
+
 	args = append(args, pageSize, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -170,16 +196,20 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	defer rows.Close()
 
 	var list []Activity
+
 	for rows.Next() {
 		a, err := scanActivityRow(rows)
 		if err != nil {
 			return nil, fmt.Errorf("journal: scan activity row: %w", err)
 		}
+
 		list = append(list, *a)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("journal: list rows err: %w", err)
 	}
+
 	return list, nil
 }
 
@@ -190,6 +220,7 @@ func sanitizeFTSQuery(q string) string {
 	q = strings.TrimSpace(q)
 	// Escape existing double quotes by doubling them (FTS5 phrase literal rules).
 	q = strings.ReplaceAll(q, `"`, `""`)
+
 	return `"` + q + `"`
 }
 
@@ -200,9 +231,12 @@ type rowScanner interface {
 }
 
 func scanActivity(s rowScanner) (*Activity, error) {
-	var a Activity
-	var oat sql.NullString
-	var createdAt, updatedAt string
+	var (
+		a                    Activity
+		oat                  sql.NullString
+		createdAt, updatedAt string
+	)
+
 	err := s.Scan(
 		&a.ID, &a.Title, &a.OccurredAtDate, &oat,
 		&a.Content, &createdAt, &updatedAt,
@@ -210,18 +244,24 @@ func scanActivity(s rowScanner) (*Activity, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if oat.Valid {
 		a.OccurredAtTime = oat.String
 	}
+
 	a.CreatedAt = parseTime(createdAt)
 	a.UpdatedAt = parseTime(updatedAt)
+
 	return &a, nil
 }
 
 func scanActivityRow(rows *sql.Rows) (*Activity, error) {
-	var a Activity
-	var oat sql.NullString
-	var createdAt, updatedAt string
+	var (
+		a                    Activity
+		oat                  sql.NullString
+		createdAt, updatedAt string
+	)
+
 	err := rows.Scan(
 		&a.ID, &a.Title, &a.OccurredAtDate, &oat,
 		&a.Content, &createdAt, &updatedAt,
@@ -229,11 +269,14 @@ func scanActivityRow(rows *sql.Rows) (*Activity, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if oat.Valid {
 		a.OccurredAtTime = oat.String
 	}
+
 	a.CreatedAt = parseTime(createdAt)
 	a.UpdatedAt = parseTime(updatedAt)
+
 	return &a, nil
 }
 
@@ -249,6 +292,7 @@ func parseTime(s string) time.Time {
 			return t
 		}
 	}
+
 	return time.Time{}
 }
 
@@ -265,6 +309,7 @@ func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, acti
 	if _, err := tx.ExecContext(ctx, `DELETE FROM activity_person WHERE activity_id = ?`, activityID); err != nil {
 		return fmt.Errorf("journal: delete activity_person: %w", err)
 	}
+
 	for _, pid := range personIDs {
 		if _, err := tx.ExecContext(ctx,
 			`INSERT INTO activity_person (activity_id, person_id) VALUES (?, ?)`,
@@ -273,6 +318,7 @@ func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, acti
 			return fmt.Errorf("journal: insert activity_person: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -284,6 +330,7 @@ func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID i
 		JOIN person p ON p.id = ap.person_id
 		WHERE ap.activity_id = ?
 		ORDER BY p.name`
+
 	rows, err := r.db.QueryContext(ctx, q, activityID)
 	if err != nil {
 		return nil, fmt.Errorf("journal: list activity people: %w", err)
@@ -291,12 +338,15 @@ func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID i
 	defer rows.Close()
 
 	var list []ActivityPerson
+
 	for rows.Next() {
 		var ap ActivityPerson
 		if err := rows.Scan(&ap.PersonID, &ap.Name); err != nil {
 			return nil, fmt.Errorf("journal: scan activity person: %w", err)
 		}
+
 		list = append(list, ap)
 	}
+
 	return list, rows.Err()
 }

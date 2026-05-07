@@ -85,6 +85,7 @@ func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (in
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityJournal, id, a.Title, audit.ActionCreate)
 	}
+
 	return id, nil
 }
 
@@ -99,6 +100,7 @@ func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) err
 	if err := s.Activities.Update(ctx, tx, a); err != nil {
 		return err
 	}
+
 	if err := s.Links.ReplaceAll(ctx, tx, a.ID, personIDs); err != nil {
 		return err
 	}
@@ -116,6 +118,7 @@ func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) err
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityJournal, a.ID, a.Title, audit.ActionUpdate)
 	}
+
 	return nil
 }
 
@@ -133,12 +136,14 @@ func (s *Service) updateLastContactForParticipants(ctx context.Context, a Activi
 
 	selfID := selfPerson.PersonID
 	hasSelf := false
+
 	for _, pid := range personIDs {
 		if pid == selfID {
 			hasSelf = true
 			break
 		}
 	}
+
 	if !hasSelf {
 		return nil
 	}
@@ -173,16 +178,20 @@ func (s *Service) updateLastContactForParticipants(ctx context.Context, a Activi
 func parseActivityTimestamp(date, timeStr string) (time.Time, error) {
 	if timeStr != "" {
 		combined := date + " " + timeStr
+
 		t, err := time.Parse("2006-01-02 15:04", combined)
 		if err != nil {
 			return time.Time{}, err
 		}
+
 		return t.UTC(), nil
 	}
+
 	t, err := time.Parse("2006-01-02", date)
 	if err != nil {
 		return time.Time{}, err
 	}
+
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
 }
 
@@ -192,6 +201,7 @@ func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if a == nil {
 		return nil, nil
 	}
@@ -200,24 +210,30 @@ func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	a.People = people
+
 	return a, nil
 }
 
 // Delete removes an activity; FTS mirror is updated by the activity_ad trigger.
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	var title string
+
 	if s.Audit != nil {
 		if a, err := s.Activities.Get(ctx, id); err == nil && a != nil {
 			title = a.Title
 		}
 	}
+
 	if err := s.Activities.Delete(ctx, id); err != nil {
 		return err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityJournal, id, title, audit.ActionDelete)
 	}
+
 	return nil
 }
 
@@ -225,11 +241,14 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Activity, erro
 	if params.PageSize <= 0 {
 		params.PageSize = defaultPageSize
 	}
+
 	if params.PageSize > 500 {
 		params.PageSize = 500
 	}
+
 	if params.Page < 1 {
 		params.Page = 1
 	}
+
 	return s.Activities.List(ctx, params)
 }

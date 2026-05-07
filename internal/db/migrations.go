@@ -43,10 +43,12 @@ func Up(db *sql.DB) error {
 		if applied[mf.version] {
 			continue
 		}
+
 		if err := applyMigration(db, mf); err != nil {
 			return fmt.Errorf("migrations: applying %04d_%s: %w", mf.version, mf.name, err)
 		}
 	}
+
 	return nil
 }
 
@@ -70,14 +72,19 @@ func Status(db *sql.DB) ([]MigrationStatus, error) {
 	defer rows.Close()
 
 	appliedMap := map[int]string{}
+
 	for rows.Next() {
-		var ver int
-		var name, appliedAt string
+		var (
+			ver             int
+			name, appliedAt string
+		)
 		if err := rows.Scan(&ver, &name, &appliedAt); err != nil {
 			return nil, fmt.Errorf("migrations: scan status row: %w", err)
 		}
+
 		appliedMap[ver] = appliedAt
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("migrations: iterate status rows: %w", err)
 	}
@@ -90,6 +97,7 @@ func Status(db *sql.DB) ([]MigrationStatus, error) {
 			AppliedAt: appliedMap[mf.version],
 		})
 	}
+
 	return out, nil
 }
 
@@ -108,30 +116,36 @@ func loadMigrationFiles() ([]migrationFile, error) {
 	}
 
 	var files []migrationFile
+
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sql") {
 			continue
 		}
+
 		mf, err := parseMigrationFilename(e.Name())
 		if err != nil {
 			return nil, err
 		}
+
 		files = append(files, mf)
 	}
 
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].version < files[j].version
 	})
+
 	return files, nil
 }
 
 // parseMigrationFilename parses a filename like "0001_init.sql" into version=1, name="init".
 func parseMigrationFilename(filename string) (migrationFile, error) {
 	base := strings.TrimSuffix(filename, ".sql")
+
 	idx := strings.Index(base, "_")
 	if idx < 0 {
 		return migrationFile{}, fmt.Errorf("migrations: invalid filename (no underscore): %q", filename)
 	}
+
 	versionStr := base[:idx]
 	name := base[idx+1:]
 
@@ -139,6 +153,7 @@ func parseMigrationFilename(filename string) (migrationFile, error) {
 	if err != nil {
 		return migrationFile{}, fmt.Errorf("migrations: non-numeric version in %q: %w", filename, err)
 	}
+
 	return migrationFile{version: version, name: name, filename: filename}, nil
 }
 
@@ -153,6 +168,7 @@ func ensureMigrationsTable(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrations: ensure table: %w", err)
 	}
+
 	return nil
 }
 
@@ -164,13 +180,16 @@ func appliedVersions(db *sql.DB) (map[int]bool, error) {
 	defer rows.Close()
 
 	m := map[int]bool{}
+
 	for rows.Next() {
 		var v int
 		if err := rows.Scan(&v); err != nil {
 			return nil, fmt.Errorf("migrations: scan version: %w", err)
 		}
+
 		m[v] = true
 	}
+
 	return m, rows.Err()
 }
 

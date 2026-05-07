@@ -72,6 +72,7 @@ The restore file is set to 0600 permissions after copy.`,
 			}
 
 			fmt.Printf("Restored %s → %s  (%s)\n", src, dst, humanBytes(srcInfo.Size()))
+
 			return nil
 		},
 	}
@@ -93,5 +94,6 @@ func copyFile(src, dst string) error {
 	if _, err := io.Copy(out, in); err != nil {
 		return err
 	}
+
 	return out.Sync()
 }

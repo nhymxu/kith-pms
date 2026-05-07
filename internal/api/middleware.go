@@ -20,6 +20,7 @@ func BearerAuth(token string) echo.MiddlewareFunc {
 			}
 
 			header := c.Request().Header.Get("Authorization")
+
 			t, ok := extractBearer(header)
 			if !ok {
 				return apiErr(c, http.StatusUnauthorized, "unauthorized")
@@ -31,6 +32,7 @@ func BearerAuth(token string) echo.MiddlewareFunc {
 			if len(tb) != len(kb) {
 				return apiErr(c, http.StatusUnauthorized, "unauthorized")
 			}
+
 			if subtle.ConstantTimeCompare(tb, kb) != 1 {
 				return apiErr(c, http.StatusUnauthorized, "unauthorized")
 			}
@@ -45,6 +47,7 @@ func injectAPIActor() echo.MiddlewareFunc {
 		return func(c *echo.Context) error {
 			ctx := audit.WithActor(c.Request().Context(), 0)
 			c.SetRequest(c.Request().WithContext(ctx))
+
 			return next(c)
 		}
 	}
@@ -55,9 +58,11 @@ func extractBearer(header string) (string, bool) {
 	if !strings.HasPrefix(header, prefix) {
 		return "", false
 	}
+
 	t := strings.TrimPrefix(header, prefix)
 	if t == "" {
 		return "", false
 	}
+
 	return t, true
 }

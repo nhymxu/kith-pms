@@ -21,6 +21,7 @@ const (
 func tokenToID(tokenRaw []byte, secret []byte) string {
 	mac := hmac.New(sha256.New, secret)
 	mac.Write(tokenRaw)
+
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
@@ -44,6 +45,7 @@ func Issue(
 	id := tokenToID(raw, secret)
 
 	now := time.Now().UTC()
+
 	s := Session{
 		ID:         id,
 		UserID:     userID,
@@ -55,6 +57,7 @@ func Issue(
 	if err := repo.CreateSession(ctx, s); err != nil {
 		return "", fmt.Errorf("auth: issue session: %w", err)
 	}
+
 	return token, nil
 }
 
@@ -68,10 +71,12 @@ func Lookup(ctx context.Context, token string, repo SessionRepo, secret []byte) 
 	}
 
 	id := tokenToID(raw, secret)
+
 	s, err := repo.GetSession(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("auth: lookup session: %w", err)
 	}
+
 	if s == nil {
 		return nil, nil
 	}
@@ -80,6 +85,7 @@ func Lookup(ctx context.Context, token string, repo SessionRepo, secret []byte) 
 	if time.Now().UTC().After(s.ExpiresAt) {
 		return nil, nil
 	}
+
 	return s, nil
 }
 
@@ -89,7 +95,9 @@ func Revoke(ctx context.Context, token string, repo SessionRepo, secret []byte) 
 	if err != nil {
 		return nil // already invalid
 	}
+
 	id := tokenToID(raw, secret)
+
 	return repo.DeleteSession(ctx, id)
 }
 

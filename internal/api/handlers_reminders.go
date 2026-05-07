@@ -36,10 +36,12 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 		if days < 1 {
 			days = 30
 		}
+
 		list, err := h.Svc.GetUpcoming(c.Request().Context(), days)
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
 		}
+
 		return ok(c, list)
 
 	case "overdue":
@@ -47,6 +49,7 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
 		}
+
 		return ok(c, list)
 
 	default:
@@ -54,6 +57,7 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
 		}
+
 		return ok(c, list)
 	}
 }
@@ -68,6 +72,7 @@ func (h *RemindersAPI) Get(c *echo.Context) error {
 	if errors.Is(err, sql.ErrNoRows) {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
+
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}

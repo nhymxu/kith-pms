@@ -53,17 +53,20 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	if pageSize < 1 {
 		pageSize = 50
 	}
+
 	if pageSize > 100 {
 		pageSize = 100
 	}
 
 	var labelIDs []int64
+
 	if raw := c.QueryParam("labels"); raw != "" {
 		for _, part := range strings.Split(raw, ",") {
 			part = strings.TrimSpace(part)
 			if part == "" {
 				continue
 			}
+
 			id, err := strconv.ParseInt(part, 10, 64)
 			if err == nil {
 				labelIDs = append(labelIDs, id)
@@ -94,6 +97,7 @@ func (h *PeopleAPI) Get(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if p == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
@@ -137,6 +141,7 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if existing == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
@@ -175,6 +180,7 @@ func (h *PeopleAPI) Delete(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if p == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}

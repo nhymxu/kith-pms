@@ -43,8 +43,10 @@ func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, entries 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityWorkHistory, personID, "", audit.ActionUpdate)
 	}
+
 	return nil
 }

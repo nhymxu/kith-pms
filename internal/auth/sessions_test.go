@@ -6,21 +6,26 @@ import (
 	"testing"
 	"time"
 
-	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	_ "modernc.org/sqlite"
+
+	internaldb "github.com/nhymxu/kith-pms/internal/db"
 )
 
 // newTestDB opens an in-memory SQLite DB and runs all migrations.
 func newTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}
+
 	if err := internaldb.Up(db); err != nil {
 		t.Fatalf("migrate test db: %v", err)
 	}
+
 	t.Cleanup(func() { db.Close() })
+
 	return db
 }
 
@@ -40,6 +45,7 @@ func TestIssueAndLookup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Issue: %v", err)
 	}
+
 	if token == "" {
 		t.Fatal("expected non-empty token")
 	}
@@ -48,9 +54,11 @@ func TestIssueAndLookup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Lookup: %v", err)
 	}
+
 	if sess == nil {
 		t.Fatal("expected session, got nil")
 	}
+
 	if sess.UserID != 1 {
 		t.Errorf("expected userID=1, got %d", sess.UserID)
 	}
@@ -77,6 +85,7 @@ func TestLookup_ExpiredSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Lookup error: %v", err)
 	}
+
 	if sess != nil {
 		t.Error("expected nil session for expired token")
 	}
@@ -103,6 +112,7 @@ func TestRevoke(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Lookup after revoke: %v", err)
 	}
+
 	if sess != nil {
 		t.Error("expected nil session after revoke")
 	}
@@ -131,6 +141,7 @@ func TestRevokeAll(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Lookup: %v", err)
 		}
+
 		if sess != nil {
 			t.Errorf("expected nil after RevokeAll, got session for token")
 		}
@@ -147,6 +158,7 @@ func TestLookup_InvalidToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error for malformed token, got: %v", err)
 	}
+
 	if sess != nil {
 		t.Error("expected nil for malformed token")
 	}

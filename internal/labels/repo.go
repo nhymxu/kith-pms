@@ -33,6 +33,7 @@ func NewLabelRepo(db *sql.DB) LabelRepo { return &sqlLabelRepo{db: db} }
 
 func (r *sqlLabelRepo) Create(ctx context.Context, name, color string) (int64, error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	res, err := r.db.ExecContext(ctx,
 		`INSERT INTO label (name, color, created_at) VALUES (?, ?, ?)`,
 		name, color, now,
@@ -40,10 +41,12 @@ func (r *sqlLabelRepo) Create(ctx context.Context, name, color string) (int64, e
 	if err != nil {
 		return 0, fmt.Errorf("labels: create: %w", err)
 	}
+
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("labels: create last id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -55,6 +58,7 @@ func (r *sqlLabelRepo) Update(ctx context.Context, id int64, name, color string)
 	if err != nil {
 		return fmt.Errorf("labels: update: %w", err)
 	}
+
 	return nil
 }
 
@@ -63,6 +67,7 @@ func (r *sqlLabelRepo) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("labels: delete: %w", err)
 	}
+
 	return nil
 }
 
@@ -70,13 +75,16 @@ func (r *sqlLabelRepo) Get(ctx context.Context, id int64) (*Label, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, name, color, created_at FROM label WHERE id = ?`, id,
 	)
+
 	l, err := scanLabel(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &l, nil
 }
 
@@ -88,6 +96,7 @@ func (r *sqlLabelRepo) List(ctx context.Context) ([]Label, error) {
 		return nil, fmt.Errorf("labels: list: %w", err)
 	}
 	defer rows.Close()
+
 	return collectLabels(rows)
 }
 
@@ -105,15 +114,20 @@ func (r *sqlLabelRepo) ListWithCounts(ctx context.Context) ([]Label, error) {
 	defer rows.Close()
 
 	var labels []Label
+
 	for rows.Next() {
-		var l Label
-		var createdAt string
+		var (
+			l         Label
+			createdAt string
+		)
 		if err := rows.Scan(&l.ID, &l.Name, &l.Color, &createdAt, &l.Count); err != nil {
 			return nil, fmt.Errorf("labels: scan label with count: %w", err)
 		}
+
 		l.CreatedAt, _ = parseTime(createdAt)
 		labels = append(labels, l)
 	}
+
 	return labels, rows.Err()
 }
 
@@ -123,6 +137,7 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 	}
 
 	placeholders := make([]string, len(personIDs))
+
 	args := make([]interface{}, len(personIDs))
 	for i, id := range personIDs {
 		placeholders[i] = "?"
@@ -145,16 +160,21 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 	defer rows.Close()
 
 	result := make(map[int64][]Label)
+
 	for rows.Next() {
-		var personID int64
-		var l Label
-		var createdAt string
+		var (
+			personID  int64
+			l         Label
+			createdAt string
+		)
 		if err := rows.Scan(&personID, &l.ID, &l.Name, &l.Color, &createdAt); err != nil {
 			return nil, fmt.Errorf("labels: scan label by person: %w", err)
 		}
+
 		l.CreatedAt, _ = parseTime(createdAt)
 		result[personID] = append(result[personID], l)
 	}
+
 	return result, rows.Err()
 }
 
@@ -172,6 +192,7 @@ func (r *sqlPersonLabelRepo) Attach(ctx context.Context, personID, labelID int64
 	if err != nil {
 		return fmt.Errorf("labels: attach: %w", err)
 	}
+
 	return nil
 }
 
@@ -183,6 +204,7 @@ func (r *sqlPersonLabelRepo) Detach(ctx context.Context, personID, labelID int64
 	if err != nil {
 		return fmt.Errorf("labels: detach: %w", err)
 	}
+
 	return nil
 }
 
@@ -199,6 +221,7 @@ func (r *sqlPersonLabelRepo) ListByPersonID(ctx context.Context, personID int64)
 		return nil, fmt.Errorf("labels: list by person: %w", err)
 	}
 	defer rows.Close()
+
 	return collectLabels(rows)
 }
 
@@ -209,24 +232,31 @@ type rowScanner interface {
 }
 
 func scanLabel(row rowScanner) (Label, error) {
-	var l Label
-	var createdAt string
+	var (
+		l         Label
+		createdAt string
+	)
 	if err := row.Scan(&l.ID, &l.Name, &l.Color, &createdAt); err != nil {
 		return Label{}, fmt.Errorf("labels: scan label: %w", err)
 	}
+
 	l.CreatedAt, _ = parseTime(createdAt)
+
 	return l, nil
 }
 
 func collectLabels(rows *sql.Rows) ([]Label, error) {
 	var labels []Label
+
 	for rows.Next() {
 		l, err := scanLabel(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		labels = append(labels, l)
 	}
+
 	return labels, rows.Err()
 }
 
@@ -234,5 +264,6 @@ func parseTime(s string) (time.Time, error) {
 	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
 		return t, nil
 	}
+
 	return time.Parse(time.RFC3339, s)
 }

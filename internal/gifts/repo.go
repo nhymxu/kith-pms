@@ -20,6 +20,7 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, g *Gift) (int64, error) {
 	if g.Date != "" {
 		dateVal = &g.Date
 	}
+
 	result, err := tx.ExecContext(ctx, `
 		INSERT INTO gift (person_id, title, direction, date, notes, amount_cents, currency, debt_type, image_path, image_mime_type)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -29,17 +30,22 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, g *Gift) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("insert gift: %w", err)
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("get last insert id: %w", err)
 	}
+
 	return id, nil
 }
 
 func (r *Repo) GetByID(ctx context.Context, id int64) (*Gift, error) {
-	var g Gift
-	var dateVal sql.NullString
-	var createdAt, updatedAt string
+	var (
+		g                    Gift
+		dateVal              sql.NullString
+		createdAt, updatedAt string
+	)
+
 	err := r.db.QueryRowContext(ctx, `
 		SELECT id, person_id, title, direction, date, notes, amount_cents, currency, debt_type,
 		       image_path, image_mime_type, created_at, updated_at
@@ -51,11 +57,14 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Gift, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if dateVal.Valid {
 		g.Date = dateVal.String
 	}
+
 	g.CreatedAt, _ = parseTimestamp(createdAt)
 	g.UpdatedAt, _ = parseTimestamp(updatedAt)
+
 	return &g, nil
 }
 
@@ -71,14 +80,19 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 
 	if params.Direction != "" {
 		query += " AND g.direction = ?"
+
 		args = append(args, string(params.Direction))
 	}
+
 	if params.PersonID != nil {
 		query += " AND g.person_id = ?"
+
 		args = append(args, *params.PersonID)
 	}
+
 	if params.DebtType != "" {
 		query += " AND g.debt_type = ?"
+
 		args = append(args, string(params.DebtType))
 	}
 
@@ -89,7 +103,9 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 		if offset < 0 {
 			offset = 0
 		}
+
 		query += " LIMIT ? OFFSET ?"
+
 		args = append(args, params.PageSize, offset)
 	}
 
@@ -100,10 +116,14 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 	defer rows.Close()
 
 	var results []GiftWithPerson
+
 	for rows.Next() {
-		var gwp GiftWithPerson
-		var dateVal sql.NullString
-		var createdAt, updatedAt string
+		var (
+			gwp                  GiftWithPerson
+			dateVal              sql.NullString
+			createdAt, updatedAt string
+		)
+
 		err := rows.Scan(
 			&gwp.ID, &gwp.PersonID, &gwp.Title, &gwp.Direction, &dateVal, &gwp.Notes,
 			&gwp.AmountCents, &gwp.Currency, &gwp.DebtType,
@@ -112,13 +132,16 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 		if err != nil {
 			return nil, fmt.Errorf("scan gift: %w", err)
 		}
+
 		if dateVal.Valid {
 			gwp.Date = dateVal.String
 		}
+
 		gwp.CreatedAt, _ = parseTimestamp(createdAt)
 		gwp.UpdatedAt, _ = parseTimestamp(updatedAt)
 		results = append(results, gwp)
 	}
+
 	return results, rows.Err()
 }
 
@@ -127,6 +150,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, g *Gift) error {
 	if g.Date != "" {
 		dateVal = &g.Date
 	}
+
 	_, err := tx.ExecContext(ctx, `
 		UPDATE gift
 		SET title=?, direction=?, date=?, notes=?, amount_cents=?, currency=?, debt_type=?,
@@ -138,6 +162,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, g *Gift) error {
 	if err != nil {
 		return fmt.Errorf("update gift: %w", err)
 	}
+
 	return nil
 }
 
@@ -148,6 +173,7 @@ func (r *Repo) UpdateImage(ctx context.Context, tx *sql.Tx, id int64, imagePath,
 	if err != nil {
 		return fmt.Errorf("update gift image: %w", err)
 	}
+
 	return nil
 }
 
@@ -156,6 +182,7 @@ func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) error {
 	if err != nil {
 		return fmt.Errorf("delete gift: %w", err)
 	}
+
 	return nil
 }
 
@@ -164,5 +191,6 @@ func parseTimestamp(s string) (time.Time, error) {
 	if err != nil {
 		t, err = time.Parse("2006-01-02T15:04:05Z", s)
 	}
+
 	return t, err
 }

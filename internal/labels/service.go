@@ -41,16 +41,20 @@ func (s *Service) Create(ctx context.Context, name, color string) (int64, error)
 	if err := validate(name, color); err != nil {
 		return 0, err
 	}
+
 	id, err := s.Labels.Create(ctx, name, color)
 	if err != nil {
 		if isUniqueErr(err) {
 			return 0, ErrNameConflict
 		}
+
 		return 0, err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionCreate)
 	}
+
 	return id, nil
 }
 
@@ -59,32 +63,40 @@ func (s *Service) Update(ctx context.Context, id int64, name, color string) erro
 	if err := validate(name, color); err != nil {
 		return err
 	}
+
 	if err := s.Labels.Update(ctx, id, name, color); err != nil {
 		if isUniqueErr(err) {
 			return ErrNameConflict
 		}
+
 		return err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionUpdate)
 	}
+
 	return nil
 }
 
 // Delete removes a label; person_label rows cascade automatically.
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	var name string
+
 	if s.Audit != nil {
 		if l, err := s.Labels.Get(ctx, id); err == nil && l != nil {
 			name = l.Name
 		}
 	}
+
 	if err := s.Labels.Delete(ctx, id); err != nil {
 		return err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityLabel, id, name, audit.ActionDelete)
 	}
+
 	return nil
 }
 
@@ -128,12 +140,15 @@ func validate(name, color string) error {
 	if name == "" {
 		return ErrNameEmpty
 	}
+
 	if len(name) > 64 {
 		return ErrNameTooLong
 	}
+
 	if !reColor.MatchString(color) {
 		return ErrInvalidColor
 	}
+
 	return nil
 }
 
@@ -142,6 +157,7 @@ func isUniqueErr(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	return strings.Contains(err.Error(), "UNIQUE constraint failed") ||
 		strings.Contains(err.Error(), "unique constraint")
 }

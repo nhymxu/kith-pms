@@ -24,6 +24,7 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 	q := strings.TrimSpace(c.QueryParam("q"))
 	from := strings.TrimSpace(c.QueryParam("from"))
 	to := strings.TrimSpace(c.QueryParam("to"))
+
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1
@@ -50,6 +51,7 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 	hasMore := len(list) == 30
 
 	var selfPersonID int64
+
 	if h.PeopleSvc != nil {
 		if selfPerson, err := h.PeopleSvc.GetSelf(c.Request().Context()); err == nil && selfPerson != nil {
 			selfPersonID = selfPerson.ID
@@ -58,6 +60,7 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 
 	// Populate person names map for filter chips
 	personNames := make(map[int64]string)
+
 	if h.PeopleSvc != nil {
 		for _, pid := range personIDs {
 			if p, err := h.PeopleSvc.Get(c.Request().Context(), pid); err == nil && p != nil {
@@ -77,6 +80,7 @@ func (h *JournalHandlers) GetList(c *echo.Context) error {
 		PersonNames:  personNames,
 		SelfPersonID: selfPersonID,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -100,6 +104,7 @@ func (h *JournalHandlers) GetNew(c *echo.Context) error {
 		Activity:  journal.Activity{People: preselected},
 		CSRFToken: auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -112,6 +117,7 @@ func (h *JournalHandlers) PostCreate(c *echo.Context) error {
 			CSRFToken: auth.CSRFToken(c),
 			Error:     formErr,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -119,6 +125,7 @@ func (h *JournalHandlers) PostCreate(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/journal/"+strconv.FormatInt(id, 10))
 }
 
@@ -133,6 +140,7 @@ func (h *JournalHandlers) GetDetail(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if a == nil {
 		return echo.ErrNotFound
 	}
@@ -141,6 +149,7 @@ func (h *JournalHandlers) GetDetail(c *echo.Context) error {
 		Activity:  *a,
 		CSRFToken: auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -155,6 +164,7 @@ func (h *JournalHandlers) GetEdit(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if a == nil {
 		return echo.ErrNotFound
 	}
@@ -164,6 +174,7 @@ func (h *JournalHandlers) GetEdit(c *echo.Context) error {
 		CSRFToken: auth.CSRFToken(c),
 		IsEdit:    true,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -184,12 +195,14 @@ func (h *JournalHandlers) PostUpdate(c *echo.Context) error {
 			IsEdit:    true,
 			Error:     formErr,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
 	if err := h.Svc.Update(c.Request().Context(), a, personIDs); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/journal/"+strconv.FormatInt(id, 10))
 }
 
@@ -203,6 +216,7 @@ func (h *JournalHandlers) PostDelete(c *echo.Context) error {
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/journal")
 }
 
@@ -217,11 +231,13 @@ func (h *JournalHandlers) GetDeleteConfirm(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if a == nil {
 		return echo.ErrNotFound
 	}
 
 	component := templates.JournalDeleteConfirm(*a, auth.CSRFToken(c))
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -248,6 +264,7 @@ func (h *JournalHandlers) GetPeopleSearch(c *echo.Context) error {
 	}
 
 	component := templates.PersonPickerResults(list)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -290,7 +307,9 @@ func parsePersonIDs(s string) []int64 {
 	if s == "" {
 		return nil
 	}
+
 	parts := strings.Split(s, ",")
+
 	out := make([]int64, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -298,12 +317,14 @@ func parsePersonIDs(s string) []int64 {
 			out = append(out, id)
 		}
 	}
+
 	return out
 }
 
 // parsePersonIDSlice parses a slice of string person IDs (from form multi-value).
 func parsePersonIDSlice(vals []string) []int64 {
 	out := make([]int64, 0, len(vals))
+
 	seen := make(map[int64]bool)
 	for _, v := range vals {
 		if id, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64); err == nil && id > 0 && !seen[id] {
@@ -311,5 +332,6 @@ func parsePersonIDSlice(vals []string) []int64 {
 			out = append(out, id)
 		}
 	}
+
 	return out
 }

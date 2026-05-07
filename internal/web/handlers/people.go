@@ -43,6 +43,7 @@ type PeopleHandlers struct {
 // GetList handles GET /people
 func (h *PeopleHandlers) GetList(c *echo.Context) error {
 	q := strings.TrimSpace(c.QueryParam("q"))
+
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1
@@ -85,6 +86,7 @@ func (h *PeopleHandlers) GetList(c *echo.Context) error {
 		ActiveLabels: labelIDs,
 		Sort:         sort,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -95,6 +97,7 @@ func (h *PeopleHandlers) GetNew(c *echo.Context) error {
 		Dates:       []dates.ImportantDate{},
 		WorkHistory: []work_history.WorkEntry{},
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -111,6 +114,7 @@ func (h *PeopleHandlers) PostCreate(c *echo.Context) error {
 			CSRFToken:   auth.CSRFToken(c),
 			Error:       formErr,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -147,6 +151,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return echo.ErrNotFound
 	}
@@ -205,12 +210,16 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 	}
 
 	// Fetch relationships and related data for the relationships section.
-	var relViews []relationships.RelationshipView
-	var relTypes []relationships.RelationshipType
-	var allPeopleExceptSelf []people.Person
+	var (
+		relViews            []relationships.RelationshipView
+		relTypes            []relationships.RelationshipType
+		allPeopleExceptSelf []people.Person
+	)
+
 	if h.RelationshipsSvc != nil {
 		relViews, _ = h.RelationshipsSvc.ListByPerson(c.Request().Context(), id)
 		relTypes, _ = h.RelationshipsSvc.ListTypes(c.Request().Context())
+
 		all, _ := h.Svc.List(c.Request().Context(), people.ListParams{PageSize: 9999})
 		for _, pp := range all {
 			if pp.ID != id {
@@ -235,6 +244,7 @@ func (h *PeopleHandlers) GetDetail(c *echo.Context) error {
 		RelationshipTypes: relTypes,
 		AllPeople:         allPeopleExceptSelf,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -249,6 +259,7 @@ func (h *PeopleHandlers) GetEdit(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return echo.ErrNotFound
 	}
@@ -272,6 +283,7 @@ func (h *PeopleHandlers) GetEdit(c *echo.Context) error {
 		CSRFToken:   auth.CSRFToken(c),
 		IsEdit:      true,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -296,6 +308,7 @@ func (h *PeopleHandlers) PostUpdate(c *echo.Context) error {
 			IsEdit:      true,
 			Error:       formErr,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -330,6 +343,7 @@ func (h *PeopleHandlers) PostDelete(c *echo.Context) error {
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/people")
 }
 
@@ -344,11 +358,13 @@ func (h *PeopleHandlers) GetDeleteConfirm(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return echo.ErrNotFound
 	}
 
 	component := templates.PeopleDeleteConfirm(*p, auth.CSRFToken(c))
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -356,6 +372,7 @@ func (h *PeopleHandlers) GetDeleteConfirm(c *echo.Context) error {
 func (h *PeopleHandlers) PostContactRow(c *echo.Context) error {
 	count, _ := strconv.Atoi(c.FormValue("count"))
 	component := templates.ContactRow(count)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -363,6 +380,7 @@ func (h *PeopleHandlers) PostContactRow(c *echo.Context) error {
 func (h *PeopleHandlers) PostLocationRow(c *echo.Context) error {
 	count, _ := strconv.Atoi(c.FormValue("count"))
 	component := templates.LocationRow(count)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -370,6 +388,7 @@ func (h *PeopleHandlers) PostLocationRow(c *echo.Context) error {
 func (h *PeopleHandlers) PostDateRow(c *echo.Context) error {
 	index, _ := strconv.Atoi(c.QueryParam("index"))
 	component := templates.DateRow(index)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -377,6 +396,7 @@ func (h *PeopleHandlers) PostDateRow(c *echo.Context) error {
 func (h *PeopleHandlers) PostWorkRow(c *echo.Context) error {
 	index, _ := strconv.Atoi(c.QueryParam("index"))
 	component := templates.WorkRow(index)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -386,14 +406,17 @@ func (h *PeopleHandlers) PostAttachLabel(c *echo.Context) error {
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	labelID, err := strconv.ParseInt(c.FormValue("label_id"), 10, 64)
 	if err != nil || labelID <= 0 {
 		// No label selected — re-render strip unchanged.
 		return h.renderLabelStrip(c, personID)
 	}
+
 	if h.LabelsSvc != nil {
 		_ = h.LabelsSvc.Attach(c.Request().Context(), personID, labelID)
 	}
+
 	return h.renderLabelStrip(c, personID)
 }
 
@@ -403,13 +426,16 @@ func (h *PeopleHandlers) PostDetachLabel(c *echo.Context) error {
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	labelID, err := strconv.ParseInt(c.Param("labelID"), 10, 64)
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	if h.LabelsSvc != nil {
 		_ = h.LabelsSvc.Detach(c.Request().Context(), personID, labelID)
 	}
+
 	return h.renderLabelStrip(c, personID)
 }
 
@@ -420,7 +446,9 @@ func (h *PeopleHandlers) renderLabelStrip(c *echo.Context, personID int64) error
 		attached, _ = h.LabelsSvc.ListByPersonID(c.Request().Context(), personID)
 		allLabels, _ = h.LabelsSvc.List(c.Request().Context())
 	}
+
 	component := templates.PersonLabelsStrip(attached, allLabels, personID, auth.CSRFToken(c))
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -437,6 +465,7 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return echo.ErrNotFound
 	}
@@ -454,6 +483,7 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 			Page:      1,
 			PageSize:  10,
 		})
+
 		return templates.PersonRecentActivities(templates.PersonRecentActivitiesParams{
 			PersonID:   personID,
 			PersonName: p.Name,
@@ -473,6 +503,7 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 	if date == "" {
 		date = today
 	}
+
 	if _, err := time.Parse("2006-01-02", date); err != nil {
 		return rerender("Invalid date format.")
 	}
@@ -488,11 +519,14 @@ func (h *PeopleHandlers) PostQuickJournal(c *echo.Context) error {
 	if err := c.Request().ParseForm(); err != nil {
 		return rerender("Failed to parse form.")
 	}
+
 	personIDs := parsePersonIDSlice(c.Request().Form["person_id[]"])
+
 	seen := make(map[int64]bool, len(personIDs)+1)
 	for _, id := range personIDs {
 		seen[id] = true
 	}
+
 	if !seen[personID] {
 		personIDs = append([]int64{personID}, personIDs...)
 	}
@@ -516,6 +550,7 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return echo.ErrNotFound
 	}
@@ -532,6 +567,7 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 			Page:     1,
 			PageSize: 10,
 		})
+
 		return templates.PeopleGiftsSection(templates.PeopleGiftsSectionParams{
 			PersonID:  personID,
 			Gifts:     giftList,
@@ -554,11 +590,14 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 	if currency == "" {
 		currency = "USD"
 	}
+
 	debtType := gifts.DebtType(c.FormValue("debt_type"))
 	if debtType != gifts.DebtIOwe && debtType != gifts.DebtTheyOwe {
 		debtType = gifts.DebtNone
 	}
+
 	var amountCents *int64
+
 	if amtStr := strings.TrimSpace(c.FormValue("amount")); amtStr != "" {
 		if f, parseErr := strconv.ParseFloat(amtStr, 64); parseErr == nil && f >= 0 {
 			cents := int64(math.Round(f * 100))
@@ -584,6 +623,7 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
 		defer src.Close()
+
 		_ = h.GiftsSvc.UploadImage(c.Request().Context(), giftID, src, file)
 	}
 
@@ -602,7 +642,9 @@ func parseLabelIDs(s string) []int64 {
 	if s == "" {
 		return nil
 	}
+
 	parts := strings.Split(s, ",")
+
 	out := make([]int64, 0, len(parts))
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
@@ -610,12 +652,15 @@ func parseLabelIDs(s string) []int64 {
 			out = append(out, id)
 		}
 	}
+
 	return out
 }
 
 // parsePersonForm reads form values and returns domain structs plus an error message.
 // Returns a non-empty error string when validation fails.
-func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []people.Location, []dates.ImportantDate, []work_history.WorkEntry, string) {
+func parsePersonForm(
+	c *echo.Context,
+) (people.Person, []people.ContactInfo, []people.Location, []dates.ImportantDate, []work_history.WorkEntry, string) {
 	name := strings.TrimSpace(c.FormValue("name"))
 	if name == "" {
 		return people.Person{}, nil, nil, nil, nil, "Name is required."
@@ -637,12 +682,15 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 
 	// Parse indexed contact rows.
 	contactRows := forms.ParseIndexed(c.Request().Form, "contact")
+
 	var contacts []people.ContactInfo
+
 	for _, row := range contactRows {
 		val := strings.TrimSpace(forms.GetField(row, "value"))
 		if val == "" {
 			continue // skip empty rows
 		}
+
 		contacts = append(contacts, people.ContactInfo{
 			Type:  strings.TrimSpace(forms.GetField(row, "type")),
 			Value: val,
@@ -652,15 +700,19 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 
 	// Parse indexed location rows.
 	locationRows := forms.ParseIndexed(c.Request().Form, "location")
+
 	var locations []people.Location
+
 	for _, row := range locationRows {
 		addr := strings.TrimSpace(forms.GetField(row, "address"))
 		city := strings.TrimSpace(forms.GetField(row, "city"))
 		country := strings.TrimSpace(forms.GetField(row, "country"))
+
 		postal := strings.TrimSpace(forms.GetField(row, "postal_code"))
 		if addr == "" && city == "" && country == "" && postal == "" {
 			continue // skip entirely empty rows
 		}
+
 		locations = append(locations, people.Location{
 			Type:       strings.TrimSpace(forms.GetField(row, "type")),
 			Address:    addr,
@@ -672,7 +724,9 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 
 	// Parse indexed date rows.
 	dateRows := forms.ParseIndexed(c.Request().Form, "date")
+
 	var importantDates []dates.ImportantDate
+
 	for i, row := range dateRows {
 		dateValue := strings.TrimSpace(forms.GetField(row, "date_value"))
 		if dateValue == "" {
@@ -698,7 +752,9 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 
 	// Parse indexed work history rows.
 	workRows := forms.ParseIndexed(c.Request().Form, "work")
+
 	var workEntries []work_history.WorkEntry
+
 	for i, row := range workRows {
 		company := strings.TrimSpace(forms.GetField(row, "company"))
 		if company == "" {
@@ -709,12 +765,14 @@ func parsePersonForm(c *echo.Context) (people.Person, []people.ContactInfo, []pe
 		if startDate == "" {
 			return p, contacts, locations, importantDates, nil, "Work history entry is missing a start date."
 		}
+
 		canonicalStart, err := work_history.ParseWorkDate(startDate)
 		if err != nil {
 			return p, contacts, locations, importantDates, nil, "Invalid work history start date: " + startDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
 		}
 
 		endDate := strings.TrimSpace(forms.GetField(row, "end_date"))
+
 		canonicalEnd := ""
 		if endDate != "" {
 			canonicalEnd, err = work_history.ParseWorkDate(endDate)
@@ -752,6 +810,7 @@ func (h *PeopleHandlers) PostUploadAvatar(c *echo.Context) error {
 		if strings.Contains(err.Error(), "request body too large") {
 			return c.String(http.StatusBadRequest, "File too large (max 5MB)")
 		}
+
 		return c.String(http.StatusBadRequest, "No file uploaded")
 	}
 
@@ -779,11 +838,13 @@ func (h *PeopleHandlers) GetAvatar(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if p == nil || p.AvatarPath == "" {
 		return echo.ErrNotFound
 	}
 
 	fullPath := filepath.Join(h.AvatarBasePath, p.AvatarPath)
+
 	cleanPath := filepath.Clean(fullPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(h.AvatarBasePath)) {
 		return echo.ErrNotFound
@@ -798,6 +859,7 @@ func (h *PeopleHandlers) GetAvatar(c *echo.Context) error {
 	c.Response().Header().Set("Content-Type", p.AvatarMimeType)
 	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
 	_, err = io.Copy(c.Response(), f)
+
 	return err
 }
 
@@ -826,6 +888,7 @@ func (h *PeopleHandlers) PostUpdateLastContact(c *echo.Context) error {
 		if strings.Contains(err.Error(), "not found") {
 			return echo.ErrNotFound
 		}
+
 		return c.String(http.StatusInternalServerError, "Failed to update last contact")
 	}
 
@@ -835,6 +898,7 @@ func (h *PeopleHandlers) PostUpdateLastContact(c *echo.Context) error {
 // PostQuickRelationship handles POST /people/:id/relationships/quick (htmx fragment).
 func (h *PeopleHandlers) PostQuickRelationship(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	personID, err := parseID(c)
 	if err != nil {
 		return echo.ErrNotFound
@@ -851,12 +915,15 @@ func (h *PeopleHandlers) PostQuickRelationship(c *echo.Context) error {
 		rows, _ := h.RelationshipsSvc.ListByPerson(ctx, personID)
 		types, _ := h.RelationshipsSvc.ListTypes(ctx)
 		all, _ := h.Svc.List(ctx, people.ListParams{PageSize: 9999})
+
 		var candidates []people.Person
+
 		for _, pp := range all {
 			if pp.ID != personID {
 				candidates = append(candidates, pp)
 			}
 		}
+
 		return templates.PersonRelationshipsSection(templates.PersonRelationshipsSectionParams{
 			PersonID:   personID,
 			Rows:       rows,
@@ -874,9 +941,11 @@ func (h *PeopleHandlers) PostQuickRelationship(c *echo.Context) error {
 	if toID == 0 {
 		return rerender("Select a person.")
 	}
+
 	if toID == personID {
 		return rerender("Cannot relate a person to themselves.")
 	}
+
 	if typeID == 0 {
 		return rerender("Select a relationship type.")
 	}
@@ -889,12 +958,14 @@ func (h *PeopleHandlers) PostQuickRelationship(c *echo.Context) error {
 			return rerender("Failed to save relationship.")
 		}
 	}
+
 	return rerender("")
 }
 
 // PostDeleteRelationship handles POST /people/:id/relationships/:relID/delete (htmx fragment).
 func (h *PeopleHandlers) PostDeleteRelationship(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	personID, err := parseID(c)
 	if err != nil {
 		return echo.ErrNotFound
@@ -912,12 +983,15 @@ func (h *PeopleHandlers) PostDeleteRelationship(c *echo.Context) error {
 	rows, _ := h.RelationshipsSvc.ListByPerson(ctx, personID)
 	types, _ := h.RelationshipsSvc.ListTypes(ctx)
 	all, _ := h.Svc.List(ctx, people.ListParams{PageSize: 9999})
+
 	var candidates []people.Person
+
 	for _, pp := range all {
 		if pp.ID != personID {
 			candidates = append(candidates, pp)
 		}
 	}
+
 	return templates.PersonRelationshipsSection(templates.PersonRelationshipsSectionParams{
 		PersonID:   personID,
 		Rows:       rows,

@@ -25,6 +25,7 @@ type GiftsHandlers struct {
 
 func (h *GiftsHandlers) GetList(c *echo.Context) error {
 	direction := gifts.Direction(c.QueryParam("direction"))
+
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1
@@ -35,6 +36,7 @@ func (h *GiftsHandlers) GetList(c *echo.Context) error {
 		PageSize:  50,
 		Page:      page,
 	}
+
 	if pidStr := c.QueryParam("person_id"); pidStr != "" {
 		if pid, err := strconv.ParseInt(pidStr, 10, 64); err == nil && pid > 0 {
 			params.PersonID = &pid
@@ -53,6 +55,7 @@ func (h *GiftsHandlers) GetList(c *echo.Context) error {
 		HasMore:   len(list) == 50,
 		CSRFToken: auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -70,6 +73,7 @@ func (h *GiftsHandlers) GetNew(c *echo.Context) error {
 		CSRFToken: auth.CSRFToken(c),
 		AllPeople: allPeople,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -77,6 +81,7 @@ func (h *GiftsHandlers) PostCreate(c *echo.Context) error {
 	g, formErr := parseGiftForm(c)
 	if formErr != "" {
 		allPeople, _ := h.PeopleSvc.List(c.Request().Context(), people.ListParams{PageSize: 1000, Page: 1})
+
 		return templates.GiftsForm(templates.GiftsFormParams{
 			Gift:      *g,
 			CSRFToken: auth.CSRFToken(c),
@@ -93,6 +98,7 @@ func (h *GiftsHandlers) PostCreate(c *echo.Context) error {
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
 		defer src.Close()
+
 		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
 	}
 
@@ -109,6 +115,7 @@ func (h *GiftsHandlers) GetDetail(c *echo.Context) error {
 	if err == sql.ErrNoRows {
 		return echo.ErrNotFound
 	}
+
 	if err != nil {
 		return err
 	}
@@ -134,11 +141,13 @@ func (h *GiftsHandlers) GetEdit(c *echo.Context) error {
 	if err == sql.ErrNoRows {
 		return echo.ErrNotFound
 	}
+
 	if err != nil {
 		return err
 	}
 
 	allPeople, _ := h.PeopleSvc.List(c.Request().Context(), people.ListParams{PageSize: 1000, Page: 1})
+
 	return templates.GiftsForm(templates.GiftsFormParams{
 		Gift:      *g,
 		CSRFToken: auth.CSRFToken(c),
@@ -157,6 +166,7 @@ func (h *GiftsHandlers) PostUpdate(c *echo.Context) error {
 	if formErr != "" {
 		allPeople, _ := h.PeopleSvc.List(c.Request().Context(), people.ListParams{PageSize: 1000, Page: 1})
 		g.ID = id
+
 		return templates.GiftsForm(templates.GiftsFormParams{
 			Gift:      *g,
 			CSRFToken: auth.CSRFToken(c),
@@ -165,6 +175,7 @@ func (h *GiftsHandlers) PostUpdate(c *echo.Context) error {
 			AllPeople: allPeople,
 		}).Render(c.Request().Context(), c.Response())
 	}
+
 	g.ID = id
 
 	if err := h.Svc.Update(c.Request().Context(), g); err != nil {
@@ -173,6 +184,7 @@ func (h *GiftsHandlers) PostUpdate(c *echo.Context) error {
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
 		defer src.Close()
+
 		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
 	} else if c.FormValue("remove_image") == "1" {
 		_ = h.Svc.DeleteImage(c.Request().Context(), id)
@@ -191,6 +203,7 @@ func (h *GiftsHandlers) GetDeleteConfirm(c *echo.Context) error {
 	if err == sql.ErrNoRows {
 		return echo.ErrNotFound
 	}
+
 	if err != nil {
 		return err
 	}
@@ -207,6 +220,7 @@ func (h *GiftsHandlers) PostDelete(c *echo.Context) error {
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/gifts")
 }
 
@@ -220,11 +234,13 @@ func (h *GiftsHandlers) GetImage(c *echo.Context) error {
 	if err == sql.ErrNoRows || g == nil || !g.HasImage() {
 		return echo.ErrNotFound
 	}
+
 	if err != nil {
 		return err
 	}
 
 	fullPath := filepath.Join(h.ImageBasePath, g.ImagePath)
+
 	cleanPath := filepath.Clean(fullPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(h.ImageBasePath)) {
 		return echo.ErrForbidden
@@ -234,8 +250,10 @@ func (h *GiftsHandlers) GetImage(c *echo.Context) error {
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
+
 	c.Response().Header().Set("Content-Type", mimeType)
 	c.Response().Header().Set("Cache-Control", "private, max-age=3600")
+
 	return c.File(fullPath)
 }
 
@@ -247,28 +265,33 @@ func parseGiftForm(c *echo.Context) (*gifts.Gift, string) {
 	}
 
 	personIDStr := c.FormValue("person_id")
+
 	personID, err := strconv.ParseInt(personIDStr, 10, 64)
 	if err != nil || personID <= 0 {
 		return &gifts.Gift{Title: title}, "Person is required"
 	}
 
 	direction := gifts.Direction(c.FormValue("direction"))
-	if direction != gifts.DirectionGiven && direction != gifts.DirectionReceived && direction != gifts.DirectionPlanned {
+	if direction != gifts.DirectionGiven && direction != gifts.DirectionReceived &&
+		direction != gifts.DirectionPlanned {
 		direction = gifts.DirectionPlanned
 	}
 
 	date := strings.TrimSpace(c.FormValue("date"))
 	notes := strings.TrimSpace(c.FormValue("notes"))
+
 	currency := strings.TrimSpace(c.FormValue("currency"))
 	if currency == "" {
 		currency = "USD"
 	}
+
 	debtType := gifts.DebtType(c.FormValue("debt_type"))
 	if debtType != gifts.DebtIOwe && debtType != gifts.DebtTheyOwe {
 		debtType = gifts.DebtNone
 	}
 
 	var amountCents *int64
+
 	if amtStr := strings.TrimSpace(c.FormValue("amount")); amtStr != "" {
 		f, err := strconv.ParseFloat(amtStr, 64)
 		if err == nil && f >= 0 {

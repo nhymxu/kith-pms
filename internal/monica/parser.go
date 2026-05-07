@@ -26,7 +26,7 @@ type Contact struct {
 }
 
 type Information struct {
-	Birthdate     string `json:"birthdate"`       // "YYYY-MM-DD" | "0000-MM-DD" | ""
+	Birthdate     string `json:"birthdate"` // "YYYY-MM-DD" | "0000-MM-DD" | ""
 	IsYearUnknown bool   `json:"is_year_unknown"`
 	FirstMetDate  string `json:"first_met_date"` // "YYYY-MM-DD" | ""
 }
@@ -76,5 +76,6 @@ func Parse(r io.Reader) (*Export, error) {
 	if err := json.NewDecoder(r).Decode(&exp); err != nil {
 		return nil, err
 	}
+
 	return &exp, nil
 }

@@ -8,6 +8,7 @@ import (
 
 func TestMapContactBasicName(t *testing.T) {
 	c := Contact{FirstName: "Jane", LastName: "Doe"}
+
 	rec := MapContact(c)
 	if rec.Person.Name != "Jane Doe" {
 		t.Errorf("expected 'Jane Doe', got %q", rec.Person.Name)
@@ -16,6 +17,7 @@ func TestMapContactBasicName(t *testing.T) {
 
 func TestMapContactNicknameFallback(t *testing.T) {
 	c := Contact{Nickname: "Ace"}
+
 	rec := MapContact(c)
 	if rec.Person.Name != "Ace" {
 		t.Errorf("expected 'Ace', got %q", rec.Person.Name)
@@ -30,21 +32,25 @@ func TestMapContactBirthdateWithYear(t *testing.T) {
 			IsYearUnknown: false,
 		},
 	}
+
 	rec := MapContact(c)
 	if rec.Person.DateOfBirth == nil {
 		t.Fatal("expected DateOfBirth to be set")
 	}
+
 	expected := time.Date(1990, 6, 15, 0, 0, 0, 0, time.UTC)
 	if !rec.Person.DateOfBirth.Equal(expected) {
 		t.Errorf("expected %v, got %v", expected, rec.Person.DateOfBirth)
 	}
 	// Should also produce an ImportantDate birthday entry
 	found := false
+
 	for _, d := range rec.Dates {
 		if d.Kind == "birthday" && d.DateValue == "1990-06-15" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Error("expected ImportantDate birthday with full date")
 	}
@@ -58,16 +64,20 @@ func TestMapContactBirthdateYearUnknown(t *testing.T) {
 			IsYearUnknown: true,
 		},
 	}
+
 	rec := MapContact(c)
 	if rec.Person.DateOfBirth != nil {
 		t.Error("expected DateOfBirth to be nil when year unknown")
 	}
+
 	found := false
+
 	for _, d := range rec.Dates {
 		if d.Kind == "birthday" && d.DateValue == "--05-15" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Errorf("expected yearless ImportantDate '--05-15', got %+v", rec.Dates)
 	}
@@ -75,10 +85,12 @@ func TestMapContactBirthdateYearUnknown(t *testing.T) {
 
 func TestMapContactWorkNotes(t *testing.T) {
 	c := Contact{FirstName: "Alice", Job: "Engineer", Company: "Acme"}
+
 	rec := MapContact(c)
 	if !strings.Contains(rec.Person.OtherNotes, "Engineer") {
 		t.Errorf("expected OtherNotes to contain job, got %q", rec.Person.OtherNotes)
 	}
+
 	if !strings.Contains(rec.Person.OtherNotes, "Acme") {
 		t.Errorf("expected OtherNotes to contain company, got %q", rec.Person.OtherNotes)
 	}
@@ -86,6 +98,7 @@ func TestMapContactWorkNotes(t *testing.T) {
 
 func TestMapContactWorkNotesEmpty(t *testing.T) {
 	c := Contact{FirstName: "Alice"}
+
 	rec := MapContact(c)
 	if rec.Person.OtherNotes != "" {
 		t.Errorf("expected empty OtherNotes, got %q", rec.Person.OtherNotes)
@@ -97,6 +110,7 @@ func TestMapContactInfoEmail(t *testing.T) {
 		FirstName:   "Test",
 		ContactInfo: []ContactField{{Data: "test@example.com", Type: ContactFieldType{Name: "Email"}}},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Contacts) != 1 || rec.Contacts[0].Type != "email" {
 		t.Errorf("expected email type, got %+v", rec.Contacts)
@@ -108,6 +122,7 @@ func TestMapContactInfoPhone(t *testing.T) {
 		FirstName:   "Test",
 		ContactInfo: []ContactField{{Data: "+1234567890", Type: ContactFieldType{Name: "Phone"}}},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Contacts) != 1 || rec.Contacts[0].Type != "phone" {
 		t.Errorf("expected phone type, got %+v", rec.Contacts)
@@ -122,6 +137,7 @@ func TestMapContactInfoSocial(t *testing.T) {
 			{Data: "testuser", Type: ContactFieldType{Name: "LinkedIn"}},
 		},
 	}
+
 	rec := MapContact(c)
 	for _, ci := range rec.Contacts {
 		if ci.Type != "social" {
@@ -135,6 +151,7 @@ func TestMapContactInfoEmpty(t *testing.T) {
 		FirstName:   "Test",
 		ContactInfo: []ContactField{{Data: "", Type: ContactFieldType{Name: "Email"}}},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Contacts) != 0 {
 		t.Error("expected empty contacts when data is empty")
@@ -147,10 +164,12 @@ func TestMapContactNotesTruncation(t *testing.T) {
 		FirstName: "Test",
 		Notes:     []Note{{Body: longBody, CreatedAt: "2024-01-01T00:00:00Z"}},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Activities) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(rec.Activities))
 	}
+
 	if len([]rune(rec.Activities[0].Title)) != 60 {
 		t.Errorf("expected title truncated to 60 runes, got %d", len([]rune(rec.Activities[0].Title)))
 	}
@@ -164,6 +183,7 @@ func TestMapContactReminderInvalidDateSkipped(t *testing.T) {
 			{Title: "Invalid", InitialDate: "not-a-date"},
 		},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Reminders) != 1 {
 		t.Errorf("expected 1 reminder (invalid date skipped), got %d", len(rec.Reminders))
@@ -178,6 +198,7 @@ func TestMapContactReminderEmptySkipped(t *testing.T) {
 			{Title: "OK", InitialDate: ""},
 		},
 	}
+
 	rec := MapContact(c)
 	if len(rec.Reminders) != 0 {
 		t.Errorf("expected 0 reminders, got %d", len(rec.Reminders))
@@ -191,11 +212,13 @@ func TestMapContactFirstMetDate(t *testing.T) {
 	}
 	rec := MapContact(c)
 	found := false
+
 	for _, d := range rec.Dates {
 		if d.Kind == "met" && d.DateValue == "2020-03-10" {
 			found = true
 		}
 	}
+
 	if !found {
 		t.Errorf("expected met ImportantDate, got %+v", rec.Dates)
 	}
@@ -203,13 +226,16 @@ func TestMapContactFirstMetDate(t *testing.T) {
 
 func TestParse(t *testing.T) {
 	json := `{"contacts":[{"id":"abc","first_name":"Alice","last_name":"Smith","information":{"birthdate":"","is_year_unknown":false,"first_met_date":""},"addresses":[],"contactInformation":[],"notes":[],"activities":[],"reminders":[],"tags":[]}]}`
+
 	exp, err := Parse(strings.NewReader(json))
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
+
 	if len(exp.Contacts) != 1 {
 		t.Fatalf("expected 1 contact, got %d", len(exp.Contacts))
 	}
+
 	if exp.Contacts[0].FirstName != "Alice" {
 		t.Errorf("expected 'Alice', got %q", exp.Contacts[0].FirstName)
 	}

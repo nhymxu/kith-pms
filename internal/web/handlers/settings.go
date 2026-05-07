@@ -36,6 +36,7 @@ func (h *SettingsHandlers) GetRelationshipTypes(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return templates.RelationshipTypesList(templates.RelationshipTypesListParams{
 		Types:     types,
 		CSRFToken: auth.CSRFToken(c),
@@ -50,7 +51,9 @@ func (h *SettingsHandlers) PostRelationshipType(c *echo.Context) error {
 
 	rerender := func(formErr string) error {
 		types, _ := h.RelSvc.ListTypesWithCounts(ctx)
+
 		c.Response().WriteHeader(http.StatusUnprocessableEntity)
+
 		return templates.RelationshipTypesList(templates.RelationshipTypesListParams{
 			Types:         types,
 			CSRFToken:     auth.CSRFToken(c),
@@ -63,29 +66,35 @@ func (h *SettingsHandlers) PostRelationshipType(c *echo.Context) error {
 	if _, err := h.RelSvc.CreateType(ctx, name, reverseName); err != nil {
 		return rerender(typeErrMsg(err))
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/settings/relationship-types")
 }
 
 // GetRelationshipTypeEdit handles GET /settings/relationship-types/:id/edit — HTMX row swap to edit form.
 func (h *SettingsHandlers) GetRelationshipTypeEdit(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	id, err := parseSettingsTypeID(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	rt, err := h.RelSvc.GetType(ctx, id)
 	if err != nil {
 		return err
 	}
+
 	if rt == nil {
 		return echo.ErrNotFound
 	}
+
 	return templates.TypeRowEditing(*rt, auth.CSRFToken(c), "").Render(ctx, c.Response())
 }
 
 // PostUpdateRelationshipType handles POST /settings/relationship-types/:id — update a type inline.
 func (h *SettingsHandlers) PostUpdateRelationshipType(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	id, err := parseSettingsTypeID(c)
 	if err != nil {
 		return echo.ErrNotFound
@@ -99,7 +108,9 @@ func (h *SettingsHandlers) PostUpdateRelationshipType(c *echo.Context) error {
 		if rt == nil {
 			rt = &relationships.RelationshipType{ID: id, Name: name, ReverseName: reverseName}
 		}
+
 		c.Response().WriteHeader(http.StatusUnprocessableEntity)
+
 		return templates.TypeRowEditing(*rt, auth.CSRFToken(c), typeErrMsg(err)).Render(ctx, c.Response())
 	}
 
@@ -107,29 +118,35 @@ func (h *SettingsHandlers) PostUpdateRelationshipType(c *echo.Context) error {
 	if err != nil || rt == nil {
 		return c.Redirect(http.StatusSeeOther, "/settings/relationship-types")
 	}
+
 	return templates.TypeRow(*rt, auth.CSRFToken(c)).Render(ctx, c.Response())
 }
 
 // GetRelationshipTypeRow handles GET /settings/relationship-types/:id/row — returns the display row (used by Cancel in inline edit).
 func (h *SettingsHandlers) GetRelationshipTypeRow(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	id, err := parseSettingsTypeID(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	rt, err := h.RelSvc.GetType(ctx, id)
 	if err != nil {
 		return err
 	}
+
 	if rt == nil {
 		return echo.ErrNotFound
 	}
+
 	return templates.TypeRow(*rt, auth.CSRFToken(c)).Render(ctx, c.Response())
 }
 
 // PostDeleteRelationshipType handles POST /settings/relationship-types/:id/delete.
 func (h *SettingsHandlers) PostDeleteRelationshipType(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	id, err := parseSettingsTypeID(c)
 	if err != nil {
 		return echo.ErrNotFound
@@ -138,15 +155,19 @@ func (h *SettingsHandlers) PostDeleteRelationshipType(c *echo.Context) error {
 	if err := h.RelSvc.DeleteType(ctx, id); err != nil {
 		if errors.Is(err, relationships.ErrTypeInUse) {
 			types, _ := h.RelSvc.ListTypesWithCounts(ctx)
+
 			c.Response().WriteHeader(http.StatusConflict)
+
 			return templates.RelationshipTypesList(templates.RelationshipTypesListParams{
 				Types:       types,
 				CSRFToken:   auth.CSRFToken(c),
 				DeleteError: "Cannot delete a relationship type that is in use. Remove all relationships using this type first.",
 			}).Render(ctx, c.Response())
 		}
+
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/settings/relationship-types")
 }
 
@@ -158,6 +179,7 @@ func (h *SettingsHandlers) GetLabels(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return templates.LabelsList(templates.LabelsListParams{
 		Labels:    list,
 		CSRFToken: auth.CSRFToken(c),
@@ -168,6 +190,7 @@ func (h *SettingsHandlers) GetLabels(c *echo.Context) error {
 func (h *SettingsHandlers) PostCreateLabel(c *echo.Context) error {
 	ctx := c.Request().Context()
 	name := c.FormValue("name")
+
 	color := c.FormValue("color")
 	if color == "" {
 		color = "#9ea096"
@@ -176,7 +199,9 @@ func (h *SettingsHandlers) PostCreateLabel(c *echo.Context) error {
 	_, err := h.LabelsSvc.Create(ctx, name, color)
 	if err != nil {
 		list, _ := h.LabelsSvc.ListWithCounts(ctx)
+
 		c.Response().WriteHeader(http.StatusUnprocessableEntity)
+
 		return templates.LabelsList(templates.LabelsListParams{
 			Labels:      list,
 			CSRFToken:   auth.CSRFToken(c),
@@ -185,6 +210,7 @@ func (h *SettingsHandlers) PostCreateLabel(c *echo.Context) error {
 			CreateColor: color,
 		}).Render(ctx, c.Response())
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/settings/labels")
 }
 
@@ -194,13 +220,16 @@ func (h *SettingsHandlers) GetLabelEdit(c *echo.Context) error {
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	l, err := h.LabelsSvc.Get(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}
+
 	if l == nil {
 		return echo.ErrNotFound
 	}
+
 	return templates.LabelEdit(templates.LabelEditParams{
 		Label:     *l,
 		CSRFToken: auth.CSRFToken(c),
@@ -210,11 +239,14 @@ func (h *SettingsHandlers) GetLabelEdit(c *echo.Context) error {
 // PostUpdateLabel handles POST /settings/labels/:id.
 func (h *SettingsHandlers) PostUpdateLabel(c *echo.Context) error {
 	ctx := c.Request().Context()
+
 	id, err := parseSettingsLabelID(c)
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	name := c.FormValue("name")
+
 	color := c.FormValue("color")
 	if color == "" {
 		color = "#9ea096"
@@ -225,15 +257,19 @@ func (h *SettingsHandlers) PostUpdateLabel(c *echo.Context) error {
 		if l == nil {
 			return echo.ErrNotFound
 		}
+
 		l.Name = name
 		l.Color = color
+
 		c.Response().WriteHeader(http.StatusUnprocessableEntity)
+
 		return templates.LabelEdit(templates.LabelEditParams{
 			Label:     *l,
 			CSRFToken: auth.CSRFToken(c),
 			Error:     labelErrMsg(err),
 		}).Render(ctx, c.Response())
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/settings/labels")
 }
 
@@ -243,9 +279,11 @@ func (h *SettingsHandlers) PostDeleteLabel(c *echo.Context) error {
 	if err != nil {
 		return echo.ErrNotFound
 	}
+
 	if err := h.LabelsSvc.Delete(c.Request().Context(), id); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/settings/labels")
 }
 
@@ -298,6 +336,7 @@ func (h *SettingsHandlers) GetSecurity(c *echo.Context) error {
 	}
 
 	component := templates.SettingsSecurity(user, csrfToken, successMsg, "")
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -328,7 +367,13 @@ func (h *SettingsHandlers) PostChangePassword(c *echo.Context) error {
 	}
 
 	if currentPwd == newPwd {
-		component := templates.SettingsSecurity(user, csrfToken, "", "New password must be different from current password")
+		component := templates.SettingsSecurity(
+			user,
+			csrfToken,
+			"",
+			"New password must be different from current password",
+		)
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -339,6 +384,7 @@ func (h *SettingsHandlers) PostChangePassword(c *echo.Context) error {
 			component := templates.SettingsSecurity(user, csrfToken, "", "Current password is incorrect")
 			return component.Render(c.Request().Context(), c.Response())
 		}
+
 		return err
 	}
 
@@ -350,6 +396,7 @@ func (h *SettingsHandlers) PostChangePassword(c *echo.Context) error {
 	// Re-issue new session for current request
 	ip := c.RealIP()
 	ua := c.Request().Header.Get("User-Agent")
+
 	token, err := h.AuthSvc.Login(c.Request().Context(), newPwd, ip, ua)
 	if err != nil {
 		return fmt.Errorf("settings: re-issue session after password change: %w", err)
@@ -362,10 +409,12 @@ func (h *SettingsHandlers) PostChangePassword(c *echo.Context) error {
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteLaxMode
+
 	cookie.Expires = time.Now().Add(config.ENV.SessionLifetime)
 	if config.ENV.BehindTLS {
 		cookie.Secure = true
 	}
+
 	http.SetCookie(c.Response(), cookie)
 
 	// Redirect with success message

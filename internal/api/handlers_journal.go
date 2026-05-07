@@ -62,6 +62,7 @@ func (h *JournalAPI) Get(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if a == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
@@ -135,6 +136,7 @@ func (h *JournalAPI) Delete(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if a == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}

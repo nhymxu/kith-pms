@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v3"
+	_ "modernc.org/sqlite"
 
 	"github.com/nhymxu/kith-pms/pkg/config"
-	_ "modernc.org/sqlite"
 )
 
 func backupCommand() *cli.Command {
@@ -55,6 +55,7 @@ The backup file contains all data including password hashes — store it securel
 				humanBytes(srcInfo.Size()),
 				humanBytes(dstInfo.Size()),
 			)
+
 			return nil
 		},
 	}

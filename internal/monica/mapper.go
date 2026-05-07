@@ -13,10 +13,10 @@ import (
 
 // ImportRecord holds all kith-pms domain objects for a single Monica contact.
 type ImportRecord struct {
-	Person    people.Person
-	Contacts  []people.ContactInfo
-	Locations []people.Location
-	TagNames  []string // label names to create-or-find and attach
+	Person     people.Person
+	Contacts   []people.ContactInfo
+	Locations  []people.Location
+	TagNames   []string // label names to create-or-find and attach
 	Activities []journal.Activity
 	Reminders  []reminders.Reminder
 	Dates      []dates.ImportantDate
@@ -25,10 +25,10 @@ type ImportRecord struct {
 // MapContact converts a Monica Contact into an ImportRecord.
 func MapContact(c Contact) ImportRecord {
 	return ImportRecord{
-		Person:    mapPerson(c),
-		Contacts:  mapContactInfo(c.ContactInfo),
-		Locations: mapLocations(c.Addresses),
-		TagNames:  mapTags(c.Tags),
+		Person:     mapPerson(c),
+		Contacts:   mapContactInfo(c.ContactInfo),
+		Locations:  mapLocations(c.Addresses),
+		TagNames:   mapTags(c.Tags),
 		Activities: mapActivities(c),
 		Reminders:  mapReminders(c.Reminders),
 		Dates:      mapDates(c.Information),
@@ -40,6 +40,7 @@ func mapPerson(c Contact) people.Person {
 	if name == "" {
 		name = c.Nickname
 	}
+
 	p := people.Person{
 		Name:     name,
 		Nickname: c.Nickname,
@@ -49,9 +50,11 @@ func mapPerson(c Contact) people.Person {
 	if c.Job != "" {
 		workParts = append(workParts, c.Job)
 	}
+
 	if c.Company != "" {
 		workParts = append(workParts, "at "+c.Company)
 	}
+
 	if len(workParts) > 0 {
 		p.OtherNotes = "Work: " + strings.Join(workParts, " ")
 	}
@@ -61,6 +64,7 @@ func mapPerson(c Contact) people.Person {
 			p.DateOfBirth = &t
 		}
 	}
+
 	return p
 }
 
@@ -70,6 +74,7 @@ func mapContactInfo(fields []ContactField) []people.ContactInfo {
 		if f.Data == "" {
 			continue
 		}
+
 		ci := people.ContactInfo{
 			Value:    f.Data,
 			Position: i,
@@ -86,8 +91,10 @@ func mapContactInfo(fields []ContactField) []people.ContactInfo {
 			ci.Type = "other"
 			ci.Label = f.Type.Name
 		}
+
 		out = append(out, ci)
 	}
+
 	return out
 }
 
@@ -108,8 +115,10 @@ func mapLocations(addrs []Address) []people.Location {
 		default:
 			loc.Type = "other"
 		}
+
 		out = append(out, loc)
 	}
+
 	return out
 }
 
@@ -120,35 +129,42 @@ func mapTags(tags []Tag) []string {
 			names = append(names, n)
 		}
 	}
+
 	return names
 }
 
 func mapActivities(c Contact) []journal.Activity {
 	var out []journal.Activity
+
 	for _, n := range c.Notes {
 		if n.Body == "" {
 			continue
 		}
+
 		out = append(out, journal.Activity{
 			Title:          truncate(n.Body, 60),
 			Content:        n.Body,
 			OccurredAtDate: dateFromISO(n.CreatedAt),
 		})
 	}
+
 	for _, a := range c.Activities {
 		title := strings.TrimSpace(a.Summary)
 		if title == "" {
 			title = truncate(a.Description, 60)
 		}
+
 		if title == "" {
 			continue
 		}
+
 		out = append(out, journal.Activity{
 			Title:          title,
 			Content:        a.Description,
 			OccurredAtDate: a.HappenedAt,
 		})
 	}
+
 	return out
 }
 
@@ -158,23 +174,28 @@ func mapReminders(mrs []MReminder) []reminders.Reminder {
 		if r.Title == "" || r.InitialDate == "" {
 			continue
 		}
+
 		t, err := time.Parse("2006-01-02", r.InitialDate)
 		if err != nil {
 			continue
 		}
+
 		out = append(out, reminders.Reminder{
 			Title:   r.Title,
 			Notes:   r.Description,
 			DueDate: t,
 		})
 	}
+
 	return out
 }
 
 func mapDates(info Information) []dates.ImportantDate {
 	var out []dates.ImportantDate
+
 	if info.Birthdate != "" {
 		d := dates.ImportantDate{Kind: string(dates.KindBirthday), Recurring: true}
+
 		if info.IsYearUnknown {
 			// "0000-MM-DD" → "--MM-DD"
 			if len(info.Birthdate) == 10 {
@@ -183,10 +204,12 @@ func mapDates(info Information) []dates.ImportantDate {
 		} else {
 			d.DateValue = info.Birthdate
 		}
+
 		if d.DateValue != "" {
 			out = append(out, d)
 		}
 	}
+
 	if info.FirstMetDate != "" {
 		out = append(out, dates.ImportantDate{
 			Kind:      string(dates.KindMet),
@@ -194,6 +217,7 @@ func mapDates(info Information) []dates.ImportantDate {
 			Recurring: false,
 		})
 	}
+
 	return out
 }
 
@@ -203,6 +227,7 @@ func truncate(s string, n int) string {
 	if utf8.RuneCountInString(s) <= n {
 		return s
 	}
+
 	return string([]rune(s)[:n])
 }
 
@@ -211,5 +236,6 @@ func dateFromISO(ts string) string {
 	if len(ts) >= 10 {
 		return ts[:10]
 	}
+
 	return time.Now().Format("2006-01-02")
 }

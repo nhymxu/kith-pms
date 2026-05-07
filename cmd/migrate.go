@@ -31,6 +31,7 @@ func migrateCommand() *cli.Command {
 					}
 
 					pendingBefore := 0
+
 					for _, s := range before {
 						if s.AppliedAt == "" {
 							pendingBefore++
@@ -42,6 +43,7 @@ func migrateCommand() *cli.Command {
 					}
 
 					fmt.Printf("Applied %d migration(s).\n", pendingBefore)
+
 					return nil
 				},
 			},
@@ -67,13 +69,16 @@ func migrateCommand() *cli.Command {
 
 					fmt.Printf("%-8s %-30s %s\n", "VERSION", "NAME", "APPLIED AT")
 					fmt.Printf("%-8s %-30s %s\n", "-------", "----", "----------")
+
 					for _, s := range statuses {
 						appliedAt := s.AppliedAt
 						if appliedAt == "" {
 							appliedAt = "(pending)"
 						}
+
 						fmt.Printf("%-8d %-30s %s\n", s.Version, s.Name, appliedAt)
 					}
+
 					return nil
 				},
 			},

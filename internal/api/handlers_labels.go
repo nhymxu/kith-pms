@@ -25,6 +25,7 @@ func (h *LabelsAPI) List(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, list)
 }
 
@@ -38,6 +39,7 @@ func (h *LabelsAPI) Get(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if label == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
@@ -91,6 +93,7 @@ func (h *LabelsAPI) Delete(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	if label == nil {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}

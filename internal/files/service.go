@@ -39,13 +39,18 @@ func NewLocalFileService(baseDir string) *LocalFileService {
 	return &LocalFileService{BaseDir: baseDir}
 }
 
-func (s *LocalFileService) SaveAvatar(personID int64, file multipart.File, header *multipart.FileHeader) (string, error) {
+func (s *LocalFileService) SaveAvatar(
+	personID int64,
+	file multipart.File,
+	header *multipart.FileHeader,
+) (string, error) {
 	if header.Size > maxAvatarSize {
 		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, maxAvatarSize)
 	}
 
 	// Verify actual file content (magic number check)
 	buffer := make([]byte, 512)
+
 	n, err := file.Read(buffer)
 	if err != nil && err != io.EOF {
 		return "", fmt.Errorf("read file header: %w", err)
@@ -77,6 +82,7 @@ func (s *LocalFileService) SaveAvatar(personID int64, file multipart.File, heade
 	if _, err := rand.Read(randomBytes); err != nil {
 		return "", fmt.Errorf("generate random filename: %w", err)
 	}
+
 	randomStr := hex.EncodeToString(randomBytes)
 
 	sanitizedName := sanitizeFilename(strings.TrimSuffix(header.Filename, ext))
@@ -112,6 +118,7 @@ func (s *LocalFileService) SaveAvatar(personID int64, file multipart.File, heade
 	}
 
 	relativePath := filepath.Join(fmt.Sprintf("%d", personID), filename)
+
 	return relativePath, nil
 }
 
@@ -132,6 +139,7 @@ func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {
 	}
 
 	personDir := filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
+
 	entries, err := os.ReadDir(personDir)
 	if err == nil && len(entries) == 0 {
 		os.Remove(personDir)
@@ -144,20 +152,27 @@ func (s *LocalFileService) GetAvatarPath(personID int64) string {
 	return filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
 }
 
-func (s *LocalFileService) SaveGiftImage(giftID int64, file multipart.File, header *multipart.FileHeader) (string, error) {
+func (s *LocalFileService) SaveGiftImage(
+	giftID int64,
+	file multipart.File,
+	header *multipart.FileHeader,
+) (string, error) {
 	if header.Size > maxAvatarSize {
 		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, maxAvatarSize)
 	}
 
 	buffer := make([]byte, 512)
+
 	n, err := file.Read(buffer)
 	if err != nil && err != io.EOF {
 		return "", fmt.Errorf("read file header: %w", err)
 	}
+
 	detectedType := http.DetectContentType(buffer[:n])
 	if !allowedMimeTypes[detectedType] {
 		return "", fmt.Errorf("file content type %s not allowed", detectedType)
 	}
+
 	if seeker, ok := file.(io.Seeker); ok {
 		if _, err := seeker.Seek(0, 0); err != nil {
 			return "", fmt.Errorf("reset file pointer: %w", err)
@@ -178,6 +193,7 @@ func (s *LocalFileService) SaveGiftImage(giftID int64, file multipart.File, head
 	if _, err := rand.Read(randomBytes); err != nil {
 		return "", fmt.Errorf("generate random filename: %w", err)
 	}
+
 	sanitizedName := sanitizeFilename(strings.TrimSuffix(header.Filename, ext))
 	filename := fmt.Sprintf("%s-%s%s", hex.EncodeToString(randomBytes), sanitizedName, ext)
 
@@ -188,6 +204,7 @@ func (s *LocalFileService) SaveGiftImage(giftID int64, file multipart.File, head
 
 	destPath := filepath.Join(giftDir, filename)
 	tempPath := destPath + ".tmp"
+
 	dest, err := os.Create(tempPath)
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
@@ -198,10 +215,12 @@ func (s *LocalFileService) SaveGiftImage(giftID int64, file multipart.File, head
 		os.Remove(tempPath)
 		return "", fmt.Errorf("write file: %w", err)
 	}
+
 	if err := dest.Sync(); err != nil {
 		os.Remove(tempPath)
 		return "", fmt.Errorf("sync file: %w", err)
 	}
+
 	if err := os.Rename(tempPath, destPath); err != nil {
 		os.Remove(tempPath)
 		return "", fmt.Errorf("rename file: %w", err)
@@ -214,18 +233,23 @@ func (s *LocalFileService) DeleteGiftImage(giftID int64, path string) error {
 	if path == "" {
 		return nil
 	}
+
 	fullPath := filepath.Join(s.BaseDir, path)
+
 	cleanPath := filepath.Clean(fullPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(s.BaseDir)) {
 		return fmt.Errorf("invalid path: outside base directory")
 	}
+
 	if err := os.Remove(fullPath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("remove file: %w", err)
 	}
+
 	giftDir := filepath.Join(s.BaseDir, "gifts", fmt.Sprintf("%d", giftID))
 	if entries, err := os.ReadDir(giftDir); err == nil && len(entries) == 0 {
 		os.Remove(giftDir)
 	}
+
 	return nil
 }
 
@@ -234,6 +258,7 @@ func sanitizeFilename(name string) string {
 		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
 			return r
 		}
+
 		return '-'
 	}, name)
 

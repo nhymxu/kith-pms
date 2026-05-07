@@ -17,6 +17,7 @@ type AuditHandlers struct {
 // GetList handles GET /audit
 func (h *AuditHandlers) GetList(c *echo.Context) error {
 	entityType := audit.EntityType(c.QueryParam("entity_type"))
+
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1
@@ -37,5 +38,6 @@ func (h *AuditHandlers) GetList(c *echo.Context) error {
 		Page:       page,
 		HasMore:    len(entries) == 50,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }

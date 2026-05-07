@@ -35,13 +35,16 @@ func ParseIndexed(values url.Values, prefix string) []map[string]string {
 		if !strings.HasPrefix(key, prefix+"[") {
 			continue
 		}
+
 		rest := key[len(prefix):]
 		// rest is like "[0][type]"
 		idxEnd := strings.Index(rest, "]")
 		if idxEnd < 2 {
 			continue // malformed
 		}
+
 		idxStr := rest[1:idxEnd]
+
 		idx, err := strconv.Atoi(idxStr)
 		if err != nil || idx < 0 {
 			continue
@@ -52,6 +55,7 @@ func ParseIndexed(values url.Values, prefix string) []map[string]string {
 		if !strings.HasPrefix(fieldPart, "[") || !strings.HasSuffix(fieldPart, "]") {
 			continue
 		}
+
 		field := fieldPart[1 : len(fieldPart)-1]
 		if field == "" {
 			continue
@@ -60,10 +64,12 @@ func ParseIndexed(values url.Values, prefix string) []map[string]string {
 		if indexMap[idx] == nil {
 			indexMap[idx] = map[string]string{}
 		}
+
 		v := ""
 		if len(vals) > 0 {
 			v = vals[0]
 		}
+
 		indexMap[idx][field] = v
 	}
 
@@ -72,12 +78,14 @@ func ParseIndexed(values url.Values, prefix string) []map[string]string {
 	for idx := range indexMap {
 		indices = append(indices, idx)
 	}
+
 	sort.Ints(indices)
 
 	result := make([]map[string]string, 0, len(indices))
 	for _, idx := range indices {
 		result = append(result, indexMap[idx])
 	}
+
 	return result
 }
 

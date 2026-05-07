@@ -32,7 +32,9 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 	if page < 1 {
 		page = 1
 	}
+
 	var personID *int64
+
 	if pidStr := c.QueryParam("person_id"); pidStr != "" {
 		if pid, err := strconv.ParseInt(pidStr, 10, 64); err == nil {
 			personID = &pid
@@ -49,6 +51,7 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, list)
 }
 
@@ -57,19 +60,24 @@ func (h *GiftsAPI) Create(c *echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid request body")
 	}
+
 	if strings.TrimSpace(req.Title) == "" {
 		return apiErr(c, http.StatusBadRequest, "title is required")
 	}
+
 	if req.PersonID <= 0 {
 		return apiErr(c, http.StatusBadRequest, "person_id is required")
 	}
 
 	g := giftFromRequest(req)
+
 	id, err := h.Svc.Create(c.Request().Context(), g)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	g.ID = id
+
 	return created(c, g)
 }
 
@@ -79,13 +87,16 @@ func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
+
 	g, err := h.Svc.GetByID(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
+
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, g)
 }
 
@@ -94,19 +105,23 @@ func (h *GiftsAPI) Update(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
+
 	var req giftRequest
 	if err := c.Bind(&req); err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid request body")
 	}
+
 	if strings.TrimSpace(req.Title) == "" {
 		return apiErr(c, http.StatusBadRequest, "title is required")
 	}
 
 	g := giftFromRequest(req)
+
 	g.ID = id
 	if err := h.Svc.Update(c.Request().Context(), g); err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, g)
 }
 
@@ -115,9 +130,11 @@ func (h *GiftsAPI) Delete(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
+
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return noContent(c)
 }
 
@@ -127,6 +144,7 @@ func (h *GiftsAPI) ListByPerson(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
+
 	list, err := h.Svc.List(c.Request().Context(), gifts.ListParams{
 		PersonID: &personID,
 		PageSize: 200,
@@ -135,18 +153,22 @@ func (h *GiftsAPI) ListByPerson(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, list)
 }
 
 func giftFromRequest(req giftRequest) *gifts.Gift {
 	direction := gifts.Direction(req.Direction)
-	if direction != gifts.DirectionGiven && direction != gifts.DirectionReceived && direction != gifts.DirectionPlanned {
+	if direction != gifts.DirectionGiven && direction != gifts.DirectionReceived &&
+		direction != gifts.DirectionPlanned {
 		direction = gifts.DirectionPlanned
 	}
+
 	debtType := gifts.DebtType(req.DebtType)
 	if debtType != gifts.DebtIOwe && debtType != gifts.DebtTheyOwe {
 		debtType = gifts.DebtNone
 	}
+
 	currency := strings.TrimSpace(req.Currency)
 	if currency == "" {
 		currency = "USD"

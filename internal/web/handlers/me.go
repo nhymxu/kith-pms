@@ -21,9 +21,11 @@ func (h *MeHandlers) GetMe(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	if self == nil {
 		return c.Redirect(http.StatusFound, "/me/setup")
 	}
+
 	return c.Redirect(http.StatusFound, fmt.Sprintf("/people/%d", self.ID))
 }
 
@@ -32,15 +34,18 @@ func (h *MeHandlers) GetSetup(c *echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	self, err := h.PeopleSvc.GetSelf(c.Request().Context())
 	if err != nil {
 		return err
 	}
+
 	component := templates.MeSetup(templates.MeSetupParams{
 		People:     all,
 		SelfPerson: self,
 		CSRFToken:  auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -49,8 +54,10 @@ func (h *MeHandlers) PostSetup(c *echo.Context) error {
 	if err != nil || personID <= 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid person_id")
 	}
+
 	if err := h.PeopleSvc.SetSelf(c.Request().Context(), personID); err != nil {
 		return err
 	}
+
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/people/%d", personID))
 }

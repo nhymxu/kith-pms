@@ -35,6 +35,7 @@ it does not exist yet.`,
 			if pwd1 != pwd2 {
 				return fmt.Errorf("set-password: passwords do not match")
 			}
+
 			if len(pwd1) == 0 {
 				return fmt.Errorf("set-password: password must not be empty")
 			}
@@ -48,6 +49,7 @@ it does not exist yet.`,
 			if err := os.MkdirAll(dirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("set-password: create db dir: %w", err)
 			}
+
 			db, err := internaldb.Open(dbPath)
 			if err != nil {
 				return fmt.Errorf("set-password: open db: %w", err)
@@ -64,6 +66,7 @@ it does not exist yet.`,
 			}
 
 			fmt.Fprintln(os.Stdout, "Password updated successfully.")
+
 			return nil
 		},
 	}
@@ -71,10 +74,14 @@ it does not exist yet.`,
 
 func promptPassword(prompt string) (string, error) {
 	fmt.Fprint(os.Stderr, prompt)
+
 	raw, err := term.ReadPassword(int(syscall.Stdin))
+
 	fmt.Fprintln(os.Stderr)
+
 	if err != nil {
 		return "", err
 	}
+
 	return string(raw), nil
 }

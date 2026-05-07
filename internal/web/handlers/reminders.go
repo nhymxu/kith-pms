@@ -25,6 +25,7 @@ func (h *RemindersHandlers) GetList(c *echo.Context) error {
 	}
 
 	var personID *int64
+
 	if pidStr := c.QueryParam("person_id"); pidStr != "" {
 		if pid, err := strconv.ParseInt(pidStr, 10, 64); err == nil {
 			personID = &pid
@@ -55,6 +56,7 @@ func (h *RemindersHandlers) GetList(c *echo.Context) error {
 		HasMore:   hasMore,
 		CSRFToken: auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -68,6 +70,7 @@ func (h *RemindersHandlers) GetNew(c *echo.Context) error {
 		CSRFToken: auth.CSRFToken(c),
 		AllPeople: allPeople,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -85,6 +88,7 @@ func (h *RemindersHandlers) PostCreate(c *echo.Context) error {
 			Error:     formErr,
 			AllPeople: allPeople,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -108,6 +112,7 @@ func (h *RemindersHandlers) GetDetail(c *echo.Context) error {
 	}
 
 	var personName string
+
 	if rem.PersonID != nil && h.PeopleSvc != nil {
 		if p, err := h.PeopleSvc.Get(c.Request().Context(), *rem.PersonID); err == nil && p != nil {
 			personName = p.Name
@@ -119,6 +124,7 @@ func (h *RemindersHandlers) GetDetail(c *echo.Context) error {
 		PersonName: personName,
 		CSRFToken:  auth.CSRFToken(c),
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -144,6 +150,7 @@ func (h *RemindersHandlers) GetEdit(c *echo.Context) error {
 		IsEdit:    true,
 		AllPeople: allPeople,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -169,6 +176,7 @@ func (h *RemindersHandlers) PutUpdate(c *echo.Context) error {
 			Error:     formErr,
 			AllPeople: allPeople,
 		})
+
 		return component.Render(c.Request().Context(), c.Response())
 	}
 
@@ -208,6 +216,7 @@ func (h *RemindersHandlers) PostToggleComplete(c *echo.Context) error {
 	}
 
 	var personName string
+
 	if rem.PersonID != nil && h.PeopleSvc != nil {
 		if p, err := h.PeopleSvc.Get(c.Request().Context(), *rem.PersonID); err == nil && p != nil {
 			personName = p.Name
@@ -220,6 +229,7 @@ func (h *RemindersHandlers) PostToggleComplete(c *echo.Context) error {
 	}
 
 	component := templates.ReminderRow(rwp, auth.CSRFToken(c))
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -238,6 +248,7 @@ func parseReminderForm(c *echo.Context) (reminders.Reminder, string) {
 	if err != nil {
 		return rem, "Invalid due date format"
 	}
+
 	rem.DueDate = dueDate
 
 	if personIDStr := c.FormValue("person_id"); personIDStr != "" {

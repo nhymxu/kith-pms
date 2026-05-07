@@ -51,6 +51,7 @@ func (d ImportantDate) MonthDay() string {
 	if len(d.DateValue) < 5 {
 		return ""
 	}
+
 	return d.DateValue[len(d.DateValue)-5:]
 }
 
@@ -64,17 +65,22 @@ func ParseFlexible(s string) (string, bool, error) {
 		if err != nil {
 			return "", false, fmt.Errorf("invalid date: %w", err)
 		}
+
 		return s, false, nil
 	}
+
 	if yearlessRe.MatchString(s) {
 		// Validate month/day by attempting parse with a leap year
 		testDate := "2024" + s[1:] // 2024 is leap year
+
 		_, err := time.Parse("2006-01-02", testDate)
 		if err != nil {
 			return "", false, fmt.Errorf("invalid month/day: %w", err)
 		}
+
 		return s, true, nil
 	}
+
 	return "", false, fmt.Errorf("date must be YYYY-MM-DD or --MM-DD format")
 }
 
@@ -87,21 +93,26 @@ func nextOccurrence(d ImportantDate, today time.Time) time.Time {
 		if len(monthDay) != 5 {
 			return time.Time{}
 		}
+
 		thisYear := time.Date(today.Year(), 1, 1, 0, 0, 0, 0, today.Location())
+
 		candidate, err := time.Parse("2006-01-02", fmt.Sprintf("%d-%s", today.Year(), monthDay))
 		if err != nil {
 			return time.Time{}
 		}
+
 		candidate = time.Date(candidate.Year(), candidate.Month(), candidate.Day(), 0, 0, 0, 0, today.Location())
 		if !candidate.Before(today) {
 			return candidate
 		}
 		// Try next year
 		nextYear := thisYear.AddDate(1, 0, 0)
+
 		candidate, err = time.Parse("2006-01-02", fmt.Sprintf("%d-%s", nextYear.Year(), monthDay))
 		if err != nil {
 			return time.Time{}
 		}
+
 		return time.Date(candidate.Year(), candidate.Month(), candidate.Day(), 0, 0, 0, 0, today.Location())
 	}
 
@@ -110,6 +121,7 @@ func nextOccurrence(d ImportantDate, today time.Time) time.Time {
 	if err != nil {
 		return time.Time{}
 	}
+
 	exact = time.Date(exact.Year(), exact.Month(), exact.Day(), 0, 0, 0, 0, today.Location())
 
 	if d.Recurring {
@@ -118,10 +130,12 @@ func nextOccurrence(d ImportantDate, today time.Time) time.Time {
 		if len(monthDay) != 5 {
 			return time.Time{}
 		}
+
 		candidate, err := time.Parse("2006-01-02", fmt.Sprintf("%d-%s", today.Year(), monthDay))
 		if err != nil {
 			return time.Time{}
 		}
+
 		candidate = time.Date(candidate.Year(), candidate.Month(), candidate.Day(), 0, 0, 0, 0, today.Location())
 		if !candidate.Before(today) {
 			return candidate
@@ -131,6 +145,7 @@ func nextOccurrence(d ImportantDate, today time.Time) time.Time {
 		if err != nil {
 			return time.Time{}
 		}
+
 		return time.Date(candidate.Year(), candidate.Month(), candidate.Day(), 0, 0, 0, 0, today.Location())
 	}
 
@@ -138,5 +153,6 @@ func nextOccurrence(d ImportantDate, today time.Time) time.Time {
 	if exact.Before(today) {
 		return time.Time{}
 	}
+
 	return exact
 }

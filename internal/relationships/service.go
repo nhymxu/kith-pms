@@ -43,6 +43,7 @@ func NewService(db *sql.DB) *Service {
 func (s *Service) CreateType(ctx context.Context, name, reverseName string) (RelationshipType, error) {
 	name = strings.TrimSpace(name)
 	reverseName = strings.TrimSpace(reverseName)
+
 	if err := validateTypeName(name); err != nil {
 		return RelationshipType{}, err
 	}
@@ -71,6 +72,7 @@ func (s *Service) CreateType(ctx context.Context, name, reverseName string) (Rel
 	if err != nil || rt == nil {
 		return RelationshipType{ID: id, Name: name, ReverseName: reverseName}, err
 	}
+
 	return *rt, nil
 }
 
@@ -79,15 +81,19 @@ func (s *Service) CreateType(ctx context.Context, name, reverseName string) (Rel
 func (s *Service) UpdateType(ctx context.Context, id int64, name, reverseName string) error {
 	name = strings.TrimSpace(name)
 	reverseName = strings.TrimSpace(reverseName)
+
 	if err := validateTypeName(name); err != nil {
 		return err
 	}
+
 	if err := s.Types.Update(ctx, id, name, reverseName); err != nil {
 		return err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityRelationshipType, id, name, audit.ActionUpdate)
 	}
+
 	return nil
 }
 
@@ -99,6 +105,7 @@ func (s *Service) DeleteType(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
+
 	var name string
 	if rt != nil {
 		name = rt.Name
@@ -112,11 +119,14 @@ func (s *Service) DeleteType(ctx context.Context, id int64) error {
 		if isFKConstraintErr(err) {
 			return ErrTypeInUse
 		}
+
 		return err
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityRelationshipType, id, name, audit.ActionDelete)
 	}
+
 	return nil
 }
 
@@ -143,6 +153,7 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 	if fromID == toID {
 		return 0, ErrSelfRelationship
 	}
+
 	if len(notes) > 1000 {
 		notes = notes[:1000]
 	}
@@ -151,6 +162,7 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 	if err != nil {
 		return 0, err
 	}
+
 	if rt == nil {
 		return 0, ErrTypeNotFound
 	}
@@ -168,6 +180,7 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 		if isUniqueErr(err) {
 			return 0, ErrDuplicateRelationship
 		}
+
 		return 0, err
 	}
 
@@ -195,6 +208,7 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityPersonRelationship, fwdID, "", audit.ActionCreate)
 	}
+
 	return fwdID, nil
 }
 
@@ -204,6 +218,7 @@ func (s *Service) DetachRelationship(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
+
 	if row == nil {
 		return nil // already gone
 	}
@@ -243,6 +258,7 @@ func (s *Service) DetachRelationship(ctx context.Context, id int64) error {
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityPersonRelationship, id, "", audit.ActionDelete)
 	}
+
 	return nil
 }
 
@@ -257,8 +273,10 @@ func validateTypeName(name string) error {
 	if name == "" {
 		return ErrNameEmpty
 	}
+
 	if len(name) > 80 {
 		return ErrNameTooLong
 	}
+
 	return nil
 }

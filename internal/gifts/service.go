@@ -35,12 +35,15 @@ func (s *Service) Create(ctx context.Context, g *Gift) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if err := tx.Commit(); err != nil {
 		return 0, fmt.Errorf("commit: %w", err)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, id, g.Title, audit.ActionCreate)
 	}
+
 	return id, nil
 }
 
@@ -62,18 +65,24 @@ func (s *Service) Update(ctx context.Context, g *Gift) error {
 	if err := s.repo.Update(ctx, tx, g); err != nil {
 		return err
 	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, g.ID, g.Title, audit.ActionUpdate)
 	}
+
 	return nil
 }
 
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	var title string
-	var imagePath string
+	var (
+		title     string
+		imagePath string
+	)
+
 	if g, err := s.repo.GetByID(ctx, id); err == nil && g != nil {
 		title = g.Title
 		imagePath = g.ImagePath
@@ -88,6 +97,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if err := s.repo.Delete(ctx, tx, id); err != nil {
 		return err
 	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
@@ -95,13 +105,20 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if s.FileSvc != nil && imagePath != "" {
 		_ = s.FileSvc.DeleteGiftImage(id, imagePath)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, id, title, audit.ActionDelete)
 	}
+
 	return nil
 }
 
-func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.File, header *multipart.FileHeader) error {
+func (s *Service) UploadImage(
+	ctx context.Context,
+	giftID int64,
+	file multipart.File,
+	header *multipart.FileHeader,
+) error {
 	if s.FileSvc == nil {
 		return fmt.Errorf("file service not configured")
 	}
@@ -116,6 +133,7 @@ func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.
 	if err != nil {
 		return fmt.Errorf("save gift image: %w", err)
 	}
+
 	mimeType := header.Header.Get("Content-Type")
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -127,6 +145,7 @@ func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.
 	if err := s.repo.UpdateImage(ctx, tx, giftID, path, mimeType); err != nil {
 		return err
 	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
@@ -134,9 +153,11 @@ func (s *Service) UploadImage(ctx context.Context, giftID int64, file multipart.
 	if s.FileSvc != nil && oldPath != "" && oldPath != path {
 		_ = s.FileSvc.DeleteGiftImage(giftID, oldPath)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, giftID, "", audit.ActionUpdate)
 	}
+
 	return nil
 }
 
@@ -145,6 +166,7 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	if err != nil {
 		return err
 	}
+
 	oldPath := g.ImagePath
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -156,6 +178,7 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	if err := s.repo.UpdateImage(ctx, tx, giftID, "", ""); err != nil {
 		return err
 	}
+
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
@@ -163,8 +186,10 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	if s.FileSvc != nil && oldPath != "" {
 		_ = s.FileSvc.DeleteGiftImage(giftID, oldPath)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityGift, giftID, g.Title, audit.ActionUpdate)
 	}
+
 	return nil
 }

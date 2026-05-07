@@ -15,6 +15,7 @@ import (
 // openTestDB opens an in-memory SQLite database with all migrations applied.
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
@@ -23,16 +24,20 @@ func openTestDB(t *testing.T) *sql.DB {
 	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
+
 	if err := internaldb.Up(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+
 	t.Cleanup(func() { _ = db.Close() })
+
 	return db
 }
 
 func newSvc(t *testing.T) (*labels.Service, *sql.DB) {
 	t.Helper()
 	db := openTestDB(t)
+
 	return labels.NewService(db), db
 }
 
@@ -46,6 +51,7 @@ func TestCreate_ListWithCounts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if id <= 0 {
 		t.Fatalf("expected positive ID, got %d", id)
 	}
@@ -54,12 +60,15 @@ func TestCreate_ListWithCounts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListWithCounts: %v", err)
 	}
+
 	if len(list) != 1 {
 		t.Fatalf("expected 1 label, got %d", len(list))
 	}
+
 	if list[0].Name != "VIP" {
 		t.Errorf("Name: got %q, want %q", list[0].Name, "VIP")
 	}
+
 	if list[0].Color != "#ff0000" {
 		t.Errorf("Color: got %q, want %q", list[0].Color, "#ff0000")
 	}
@@ -93,12 +102,14 @@ func TestCreate_ValidationErrors(t *testing.T) {
 			}
 			// errors.Is traversal
 			found := false
+
 			e := err
 			for e != nil {
 				if e == tc.wantErr {
 					found = true
 					break
 				}
+
 				type unwrapper interface{ Unwrap() error }
 				if u, ok := e.(unwrapper); ok {
 					e = u.Unwrap()
@@ -106,6 +117,7 @@ func TestCreate_ValidationErrors(t *testing.T) {
 					break
 				}
 			}
+
 			if !found {
 				t.Errorf("got %v, want %v", err, tc.wantErr)
 			}
@@ -120,10 +132,12 @@ func TestCreate_UniqueConflict(t *testing.T) {
 	if _, err := svc.Create(ctx, "dup", "#123456"); err != nil {
 		t.Fatalf("first create: %v", err)
 	}
+
 	_, err := svc.Create(ctx, "dup", "#654321")
 	if err == nil {
 		t.Fatal("expected conflict error, got nil")
 	}
+
 	if err != labels.ErrNameConflict {
 		t.Errorf("got %v, want ErrNameConflict", err)
 	}
@@ -135,6 +149,7 @@ func TestAttach_Idempotent(t *testing.T) {
 
 	// Create a person via the people service.
 	peopleSvc := people.NewService(db)
+
 	personID, err := peopleSvc.Create(ctx, people.Person{Name: "Alice"}, nil, nil)
 	if err != nil {
 		t.Fatalf("create person: %v", err)
@@ -149,6 +164,7 @@ func TestAttach_Idempotent(t *testing.T) {
 	if err := svc.Attach(ctx, personID, labelID); err != nil {
 		t.Fatalf("first attach: %v", err)
 	}
+
 	if err := svc.Attach(ctx, personID, labelID); err != nil {
 		t.Fatalf("second attach (idempotent): %v", err)
 	}
@@ -158,6 +174,7 @@ func TestAttach_Idempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListWithCounts: %v", err)
 	}
+
 	if len(list) != 1 || list[0].Count != 1 {
 		t.Errorf("expected count=1, got count=%d", list[0].Count)
 	}
@@ -167,9 +184,11 @@ func TestAttach_Idempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListByPersonID: %v", err)
 	}
+
 	if len(attached) != 1 {
 		t.Fatalf("expected 1 attached label, got %d", len(attached))
 	}
+
 	if attached[0].ID != labelID {
 		t.Errorf("attached label ID: got %d, want %d", attached[0].ID, labelID)
 	}
@@ -180,6 +199,7 @@ func TestDetach(t *testing.T) {
 	ctx := context.Background()
 
 	peopleSvc := people.NewService(db)
+
 	personID, err := peopleSvc.Create(ctx, people.Person{Name: "Bob"}, nil, nil)
 	if err != nil {
 		t.Fatalf("create person: %v", err)
@@ -215,6 +235,7 @@ func TestDetach(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get label after detach: %v", err)
 	}
+
 	if l == nil {
 		t.Error("label was deleted unexpectedly")
 	}
@@ -224,6 +245,7 @@ func TestDetach(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get person after detach: %v", err)
 	}
+
 	if p == nil {
 		t.Error("person was deleted unexpectedly")
 	}
@@ -254,9 +276,11 @@ func TestFilter_AndSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List with AND filter: %v", err)
 	}
+
 	if len(results) != 1 {
 		t.Fatalf("AND filter: got %d results, want 1", len(results))
 	}
+
 	if results[0].ID != personA {
 		t.Errorf("AND filter: got person %d, want %d (personA)", results[0].ID, personA)
 	}
@@ -269,6 +293,7 @@ func TestFilter_AndSemantics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List with single label filter: %v", err)
 	}
+
 	if len(results) != 2 {
 		t.Errorf("single label filter: got %d results, want 2", len(results))
 	}
@@ -290,6 +315,7 @@ func TestDelete_Cascade(t *testing.T) {
 	).Scan(&count); err != nil {
 		t.Fatalf("count person_label: %v", err)
 	}
+
 	if count != 1 {
 		t.Fatalf("expected 1 person_label row before delete, got %d", count)
 	}
@@ -305,6 +331,7 @@ func TestDelete_Cascade(t *testing.T) {
 	).Scan(&count); err != nil {
 		t.Fatalf("count person_label after label delete: %v", err)
 	}
+
 	if count != 0 {
 		t.Errorf("person_label not cascaded: got %d rows", count)
 	}
@@ -314,6 +341,7 @@ func TestDelete_Cascade(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get person after label delete: %v", err)
 	}
+
 	if p == nil {
 		t.Error("person was deleted by label cascade — must not happen")
 	}

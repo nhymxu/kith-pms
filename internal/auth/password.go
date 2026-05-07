@@ -42,6 +42,7 @@ func HashPassword(plain string) (string, error) {
 		base64.RawStdEncoding.EncodeToString(salt),
 		base64.RawStdEncoding.EncodeToString(hash),
 	)
+
 	return encoded, nil
 }
 
@@ -54,8 +55,10 @@ func VerifyPassword(hash, plain string) (bool, error) {
 	}
 
 	// Re-derive with same params (parsed from the encoded string).
-	var m, t uint32
-	var p uint8
+	var (
+		m, t uint32
+		p    uint8
+	)
 	// We always store our fixed params; parse for future flexibility.
 	_, err = fmt.Sscanf(
 		extractParams(hash),
@@ -70,6 +73,7 @@ func VerifyPassword(hash, plain string) (bool, error) {
 	if subtle.ConstantTimeCompare(candidate, storedHash) != 1 {
 		return false, nil
 	}
+
 	return true, nil
 }
 
@@ -100,5 +104,6 @@ func extractParams(encoded string) string {
 	if len(parts) < 5 {
 		return ""
 	}
+
 	return parts[3]
 }

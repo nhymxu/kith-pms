@@ -11,10 +11,10 @@ import (
 
 func TestParseFlexible(t *testing.T) {
 	tests := []struct {
-		input       string
-		wantCanon   string
+		input        string
+		wantCanon    string
 		wantYearless bool
-		wantErr     bool
+		wantErr      bool
 	}{
 		{"2024-03-14", "2024-03-14", false, false},
 		{"--03-14", "--03-14", true, false},
@@ -35,9 +35,11 @@ func TestParseFlexible(t *testing.T) {
 				t.Errorf("ParseFlexible(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
 				return
 			}
+
 			if canon != tt.wantCanon {
 				t.Errorf("ParseFlexible(%q) canon = %q, want %q", tt.input, canon, tt.wantCanon)
 			}
+
 			if yearless != tt.wantYearless {
 				t.Errorf("ParseFlexible(%q) yearless = %v, want %v", tt.input, yearless, tt.wantYearless)
 			}
@@ -140,6 +142,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	personID, _ := res.LastInsertId()
 
 	// Replace with 2 dates
@@ -147,6 +150,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
 		{Kind: "anniversary", Label: "Met", DateValue: "--03-14", Recurring: true, Position: 1},
 	}
+
 	err = svc.ReplaceForPerson(ctx, personID, dates)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson: %v", err)
@@ -157,22 +161,27 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListByPerson: %v", err)
 	}
+
 	if len(got) != 2 {
 		t.Fatalf("got %d dates, want 2", len(got))
 	}
+
 	if got[0].DateValue != "1990-05-01" {
 		t.Errorf("date[0] = %q, want 1990-05-01", got[0].DateValue)
 	}
+
 	if got[1].DateValue != "--03-14" {
 		t.Errorf("date[1] = %q, want --03-14", got[1].DateValue)
 	}
 
 	// Verify month_day virtual column
 	var monthDay string
+
 	err = db.QueryRowContext(ctx, "SELECT month_day FROM important_date WHERE id = ?", got[0].ID).Scan(&monthDay)
 	if err != nil {
 		t.Fatalf("query month_day: %v", err)
 	}
+
 	if monthDay != "05-01" {
 		t.Errorf("month_day = %q, want 05-01", monthDay)
 	}
@@ -181,6 +190,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	dates = []ImportantDate{
 		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
 	}
+
 	err = svc.ReplaceForPerson(ctx, personID, dates)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson (2nd): %v", err)
@@ -190,6 +200,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListByPerson (2nd): %v", err)
 	}
+
 	if len(got) != 1 {
 		t.Fatalf("got %d dates, want 1", len(got))
 	}
@@ -207,11 +218,13 @@ func TestService_CascadeDelete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	personID, _ := res.LastInsertId()
 
 	dates := []ImportantDate{
 		{Kind: "birthday", Label: "Birthday", DateValue: "1985-12-25", Recurring: true, Position: 0},
 	}
+
 	err = svc.ReplaceForPerson(ctx, personID, dates)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson: %v", err)
@@ -225,10 +238,12 @@ func TestService_CascadeDelete(t *testing.T) {
 
 	// Verify dates cascade-deleted
 	var count int
+
 	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM important_date WHERE person_id = ?", personID).Scan(&count)
 	if err != nil {
 		t.Fatalf("count dates: %v", err)
 	}
+
 	if count != 0 {
 		t.Errorf("got %d dates after person delete, want 0", count)
 	}
@@ -252,6 +267,7 @@ func TestService_OnThisDay(t *testing.T) {
 		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
 		{Kind: "anniversary", Label: "Met", DateValue: "--05-01", Recurring: true, Position: 1},
 	}
+
 	err := svc.ReplaceForPerson(ctx, person1ID, dates1)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson person1: %v", err)
@@ -261,6 +277,7 @@ func TestService_OnThisDay(t *testing.T) {
 		{Kind: "birthday", Label: "Birthday", DateValue: "2026-05-01", Recurring: false, Position: 0},
 		{Kind: "other", Label: "Past event", DateValue: "2024-05-01", Recurring: false, Position: 1},
 	}
+
 	err = svc.ReplaceForPerson(ctx, person2ID, dates2)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson person2: %v", err)
@@ -268,6 +285,7 @@ func TestService_OnThisDay(t *testing.T) {
 
 	// Test OnThisDay for 2026-05-01
 	today := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+
 	items, err := svc.OnThisDay(ctx, today)
 	if err != nil {
 		t.Fatalf("OnThisDay: %v", err)
@@ -281,19 +299,23 @@ func TestService_OnThisDay(t *testing.T) {
 
 	// Check Alice's birthday has YearsSince calculated
 	found := false
+
 	for _, item := range items {
 		if item.Person.Name == "Alice" && item.Date.Kind == "birthday" {
 			found = true
+
 			if item.YearsSince != 36 {
 				t.Errorf("Alice birthday YearsSince = %d, want 36", item.YearsSince)
 			}
 		}
+
 		if item.Person.Name == "Alice" && item.Date.Kind == "anniversary" {
 			if item.YearsSince != 0 {
 				t.Errorf("Alice anniversary (yearless) YearsSince = %d, want 0", item.YearsSince)
 			}
 		}
 	}
+
 	if !found {
 		t.Error("Alice's birthday not found in results")
 	}
@@ -317,6 +339,7 @@ func TestService_Upcoming(t *testing.T) {
 		{Kind: "other", Label: "Future", DateValue: "2026-06-15", Recurring: false, Position: 2},
 		{Kind: "other", Label: "Past", DateValue: "2026-04-01", Recurring: false, Position: 3},
 	}
+
 	err := svc.ReplaceForPerson(ctx, personID, dates)
 	if err != nil {
 		t.Fatalf("ReplaceForPerson: %v", err)
@@ -324,6 +347,7 @@ func TestService_Upcoming(t *testing.T) {
 
 	// Test Upcoming for 30 days from 2026-05-01
 	today := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+
 	items, err := svc.Upcoming(ctx, today, 30)
 	if err != nil {
 		t.Fatalf("Upcoming: %v", err)
@@ -339,6 +363,7 @@ func TestService_Upcoming(t *testing.T) {
 	if items[0].Date.Label != "Birthday" {
 		t.Errorf("first item label = %q, want Birthday", items[0].Date.Label)
 	}
+
 	if items[1].Date.Label != "Anniversary" {
 		t.Errorf("second item label = %q, want Anniversary", items[1].Date.Label)
 	}
@@ -425,8 +450,10 @@ func TestNextOccurrence(t *testing.T) {
 				if !got.IsZero() {
 					t.Errorf("nextOccurrence() = %v, want zero time", got)
 				}
+
 				return
 			}
+
 			if got.Year() != tt.wantYear || got.Month() != tt.wantMonth || got.Day() != tt.wantDay {
 				t.Errorf("nextOccurrence() = %v, want %d-%02d-%02d", got, tt.wantYear, tt.wantMonth, tt.wantDay)
 			}

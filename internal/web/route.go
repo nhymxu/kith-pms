@@ -52,11 +52,13 @@ func Mount(e *echo.Echo, deps Deps) {
 	if err != nil {
 		panic("web: failed to sub static FS: " + err.Error())
 	}
+
 	fileServer := http.FileServer(http.FS(sub))
 
 	e.GET("/static/*", func(c *echo.Context) error {
 		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
 		http.StripPrefix("/static", fileServer).ServeHTTP(c.Response(), c.Request())
+
 		return nil
 	})
 
@@ -248,6 +250,7 @@ func injectAuditActor(deps Deps) echo.MiddlewareFunc {
 				ctx := audit.WithActor(c.Request().Context(), u.ID)
 				c.SetRequest(c.Request().WithContext(ctx))
 			}
+
 			return next(c)
 		}
 	}

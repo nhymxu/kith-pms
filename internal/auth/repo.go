@@ -31,11 +31,13 @@ func (r *sqlUserRepo) GetUser(ctx context.Context) (*User, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, password_hash, created_at, updated_at FROM user LIMIT 1`,
 	)
+
 	return scanUser(row)
 }
 
 func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO user (id, password_hash, updated_at)
 		 VALUES (1, ?, ?)
@@ -47,6 +49,7 @@ func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
 	if err != nil {
 		return fmt.Errorf("auth: upsert user: %w", err)
 	}
+
 	return nil
 }
 
@@ -69,6 +72,7 @@ func (r *sqlSessionRepo) CreateSession(ctx context.Context, s Session) error {
 	if err != nil {
 		return fmt.Errorf("auth: create session: %w", err)
 	}
+
 	return nil
 }
 
@@ -78,11 +82,13 @@ func (r *sqlSessionRepo) GetSession(ctx context.Context, id string) (*Session, e
 		 FROM session WHERE id = ?`,
 		id,
 	)
+
 	return scanSession(row)
 }
 
 func (r *sqlSessionRepo) TouchSession(ctx context.Context, id string, expiresAt time.Time) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	_, err := r.db.ExecContext(ctx,
 		`UPDATE session SET expires_at = ?, last_seen_at = ? WHERE id = ?`,
 		expiresAt.UTC().Format(time.RFC3339Nano), now, id,
@@ -90,6 +96,7 @@ func (r *sqlSessionRepo) TouchSession(ctx context.Context, id string, expiresAt 
 	if err != nil {
 		return fmt.Errorf("auth: touch session: %w", err)
 	}
+
 	return nil
 }
 
@@ -98,6 +105,7 @@ func (r *sqlSessionRepo) DeleteSession(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("auth: delete session: %w", err)
 	}
+
 	return nil
 }
 
@@ -106,15 +114,18 @@ func (r *sqlSessionRepo) DeleteAllSessions(ctx context.Context, userID int64) er
 	if err != nil {
 		return fmt.Errorf("auth: delete all sessions: %w", err)
 	}
+
 	return nil
 }
 
 func (r *sqlSessionRepo) DeleteExpiredSessions(ctx context.Context) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	_, err := r.db.ExecContext(ctx, `DELETE FROM session WHERE expires_at < ?`, now)
 	if err != nil {
 		return fmt.Errorf("auth: delete expired sessions: %w", err)
 	}
+
 	return nil
 }
 
@@ -125,32 +136,44 @@ type rowScanner interface {
 }
 
 func scanUser(row rowScanner) (*User, error) {
-	var u User
-	var createdAt, updatedAt string
+	var (
+		u                    User
+		createdAt, updatedAt string
+	)
+
 	err := row.Scan(&u.ID, &u.PasswordHash, &createdAt, &updatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, fmt.Errorf("auth: scan user: %w", err)
 	}
+
 	u.CreatedAt, _ = parseTime(createdAt)
 	u.UpdatedAt, _ = parseTime(updatedAt)
+
 	return &u, nil
 }
 
 func scanSession(row rowScanner) (*Session, error) {
-	var s Session
-	var expiresAt, lastSeenAt string
+	var (
+		s                     Session
+		expiresAt, lastSeenAt string
+	)
+
 	err := row.Scan(&s.ID, &s.UserID, &expiresAt, &lastSeenAt, &s.IP, &s.UserAgent)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, fmt.Errorf("auth: scan session: %w", err)
 	}
+
 	s.ExpiresAt, _ = parseTime(expiresAt)
 	s.LastSeenAt, _ = parseTime(lastSeenAt)
+
 	return &s, nil
 }
 
@@ -159,5 +182,6 @@ func parseTime(s string) (time.Time, error) {
 	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
 		return t, nil
 	}
+
 	return time.Parse(time.RFC3339, s)
 }

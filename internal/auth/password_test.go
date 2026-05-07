@@ -7,6 +7,7 @@ import (
 
 func TestHashPassword_Roundtrip(t *testing.T) {
 	plain := "correct-horse-battery-staple"
+
 	hash, err := HashPassword(plain)
 	if err != nil {
 		t.Fatalf("HashPassword: %v", err)
@@ -20,6 +21,7 @@ func TestHashPassword_Roundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("VerifyPassword: %v", err)
 	}
+
 	if !ok {
 		t.Error("expected password to verify correctly")
 	}
@@ -35,6 +37,7 @@ func TestHashPassword_WrongPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("VerifyPassword: %v", err)
 	}
+
 	if ok {
 		t.Error("expected wrong password to fail verification")
 	}
@@ -43,6 +46,7 @@ func TestHashPassword_WrongPassword(t *testing.T) {
 func TestHashPassword_UniqueSalts(t *testing.T) {
 	plain := "same-password"
 	h1, _ := HashPassword(plain)
+
 	h2, _ := HashPassword(plain)
 	if h1 == h2 {
 		t.Error("two hashes of the same password should differ (different salts)")

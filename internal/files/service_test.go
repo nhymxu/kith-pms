@@ -19,14 +19,17 @@ func TestLocalFileService_SaveAvatar(t *testing.T) {
 	}
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
+
 	part, err := writer.CreateFormFile("avatar", "test-photo.jpg")
 	if err != nil {
 		t.Fatalf("create form file: %v", err)
 	}
+
 	part.Write(content)
 	writer.Close()
 
 	reader := multipart.NewReader(buf, writer.Boundary())
+
 	form, err := reader.ReadForm(maxAvatarSize)
 	if err != nil {
 		t.Fatalf("read form: %v", err)
@@ -69,6 +72,7 @@ func TestLocalFileService_SaveAvatar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read saved file: %v", err)
 	}
+
 	if !bytes.Equal(savedContent, content) {
 		t.Error("saved content does not match original")
 	}
@@ -81,14 +85,17 @@ func TestLocalFileService_SaveAvatar_SizeLimit(t *testing.T) {
 	content := make([]byte, maxAvatarSize+1)
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
+
 	part, err := writer.CreateFormFile("avatar", "large.jpg")
 	if err != nil {
 		t.Fatalf("create form file: %v", err)
 	}
+
 	part.Write(content)
 	writer.Close()
 
 	reader := multipart.NewReader(buf, writer.Boundary())
+
 	form, err := reader.ReadForm(maxAvatarSize + 1024)
 	if err != nil {
 		t.Fatalf("read form: %v", err)
@@ -108,6 +115,7 @@ func TestLocalFileService_SaveAvatar_SizeLimit(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for oversized file")
 	}
+
 	if !strings.Contains(err.Error(), "exceeds maximum") {
 		t.Errorf("error = %v, want 'exceeds maximum'", err)
 	}
@@ -123,14 +131,17 @@ func TestLocalFileService_SaveAvatar_InvalidMimeType(t *testing.T) {
 	}
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
+
 	part, err := writer.CreateFormFile("avatar", "test.txt")
 	if err != nil {
 		t.Fatalf("create form file: %v", err)
 	}
+
 	part.Write(content)
 	writer.Close()
 
 	reader := multipart.NewReader(buf, writer.Boundary())
+
 	form, err := reader.ReadForm(maxAvatarSize)
 	if err != nil {
 		t.Fatalf("read form: %v", err)
@@ -150,6 +161,7 @@ func TestLocalFileService_SaveAvatar_InvalidMimeType(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for invalid MIME type")
 	}
+
 	if !strings.Contains(err.Error(), "unsupported MIME type") {
 		t.Errorf("error = %v, want 'unsupported MIME type'", err)
 	}
@@ -191,6 +203,7 @@ func TestLocalFileService_DeleteAvatar_PathTraversal(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for path traversal attempt")
 	}
+
 	if !strings.Contains(err.Error(), "outside base directory") {
 		t.Errorf("error = %v, want 'outside base directory'", err)
 	}

@@ -14,6 +14,7 @@ import (
 // openTestDB opens an in-memory SQLite database and runs all migrations.
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
@@ -22,10 +23,13 @@ func openTestDB(t *testing.T) *sql.DB {
 	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
+
 	if err := internaldb.Up(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+
 	t.Cleanup(func() { _ = db.Close() })
+
 	return db
 }
 
@@ -37,29 +41,40 @@ func newSvc(t *testing.T) *journal.Service {
 // insertPerson inserts a bare person row and returns its ID.
 func insertPerson(t *testing.T, db *sql.DB, name string) int64 {
 	t.Helper()
+
 	res, err := db.Exec(`INSERT INTO person (name) VALUES (?)`, name)
 	if err != nil {
 		t.Fatalf("insert person %q: %v", name, err)
 	}
+
 	id, _ := res.LastInsertId()
+
 	return id
 }
 
 // insertLabel inserts a label row and returns its ID.
 func insertLabel(t *testing.T, db *sql.DB, name string) int64 {
 	t.Helper()
+
 	res, err := db.Exec(`INSERT INTO label (name, color) VALUES (?, '#aabbcc')`, name)
 	if err != nil {
 		t.Fatalf("insert label %q: %v", name, err)
 	}
+
 	id, _ := res.LastInsertId()
+
 	return id
 }
 
 // attachLabel links a label to a person.
 func attachLabel(t *testing.T, db *sql.DB, personID, labelID int64) {
 	t.Helper()
-	if _, err := db.Exec(`INSERT INTO person_label (person_id, label_id) VALUES (?, ?)`, personID, labelID); err != nil {
+
+	if _, err := db.Exec(
+		`INSERT INTO person_label (person_id, label_id) VALUES (?, ?)`,
+		personID,
+		labelID,
+	); err != nil {
 		t.Fatalf("attach label: %v", err)
 	}
 }
@@ -67,10 +82,12 @@ func attachLabel(t *testing.T, db *sql.DB, personID, labelID int64) {
 // mustCreate creates an activity and asserts no error.
 func mustCreate(t *testing.T, svc *journal.Service, a journal.Activity, personIDs []int64) int64 {
 	t.Helper()
+
 	id, err := svc.Create(context.Background(), a, personIDs)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	return id
 }
 
@@ -92,9 +109,11 @@ func TestCreate_FTSRoundtrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
+
 	if len(list) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(list))
 	}
+
 	if list[0].Title != "Beach day" {
 		t.Errorf("unexpected title %q", list[0].Title)
 	}
@@ -194,9 +213,11 @@ func TestFilter_PersonIDs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List by personID: %v", err)
 	}
+
 	if len(list) != 1 {
 		t.Fatalf("expected 1 activity for Alice, got %d", len(list))
 	}
+
 	if list[0].ID != aID {
 		t.Errorf("unexpected activity ID %d", list[0].ID)
 	}
@@ -244,9 +265,11 @@ func TestFilter_Combined(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List combined: %v", err)
 	}
+
 	if len(list) != 1 {
 		t.Fatalf("expected 1 combined result, got %d", len(list))
 	}
+
 	if list[0].ID != targetID {
 		t.Errorf("wrong activity returned: ID %d", list[0].ID)
 	}
@@ -272,9 +295,11 @@ func TestGet_PopulatesPeople(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
+
 	if a == nil {
 		t.Fatal("expected activity, got nil")
 	}
+
 	if len(a.People) != 2 {
 		t.Errorf("expected 2 people, got %d", len(a.People))
 	}
@@ -302,6 +327,7 @@ func TestDelete_CascadesLinks(t *testing.T) {
 	if err := db.QueryRow(`SELECT COUNT(*) FROM activity_person WHERE activity_id = ?`, id).Scan(&count); err != nil {
 		t.Fatalf("count activity_person: %v", err)
 	}
+
 	if count != 0 {
 		t.Errorf("expected 0 activity_person rows after delete, got %d", count)
 	}

@@ -29,12 +29,14 @@ func ParseWorkDate(s string) (string, error) {
 	if s == "" {
 		return "", fmt.Errorf("date is required")
 	}
+
 	if !workDateRe.MatchString(s) {
 		return "", fmt.Errorf("date must be YYYY, YYYY-MM, or YYYY-MM-DD format: %q", s)
 	}
 	// Validate month for YYYY-MM and YYYY-MM-DD.
 	if len(s) >= 7 {
 		var year, month int
+
 		_, err := fmt.Sscanf(s[:7], "%d-%d", &year, &month)
 		if err != nil || month < 1 || month > 12 {
 			return "", fmt.Errorf("invalid month in date: %q", s)
@@ -46,6 +48,7 @@ func ParseWorkDate(s string) (string, error) {
 			return "", fmt.Errorf("invalid date: %q", s)
 		}
 	}
+
 	return s, nil
 }
 
@@ -60,6 +63,7 @@ func (w WorkEntry) DisplayEnd() string {
 	if w.EndDate == "" {
 		return "Present"
 	}
+
 	return displayWorkDate(w.EndDate)
 }
 
@@ -73,12 +77,14 @@ func displayWorkDate(s string) string {
 		if err != nil {
 			return s
 		}
+
 		return t.Format("Jan 2006")
 	case 10: // YYYY-MM-DD
 		t, err := time.Parse("2006-01-02", s)
 		if err != nil {
 			return s
 		}
+
 		return t.Format("Jan 2, 2006")
 	default:
 		return s

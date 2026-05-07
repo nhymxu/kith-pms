@@ -14,13 +14,16 @@ import (
 // setupTestDB creates an in-memory SQLite database with schema applied.
 func setupTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}
+
 	if err := internaldb.Up(db); err != nil {
 		t.Fatalf("migrate test db: %v", err)
 	}
+
 	return db
 }
 
@@ -34,10 +37,12 @@ func TestChangePassword_Success(t *testing.T) {
 
 	// Setup: create user with initial password
 	initialPwd := "initial-password-123"
+
 	initialHash, err := auth.HashPassword(initialPwd)
 	if err != nil {
 		t.Fatalf("hash initial password: %v", err)
 	}
+
 	if err := userRepo.UpsertUser(ctx, initialHash); err != nil {
 		t.Fatalf("create user: %v", err)
 	}
@@ -52,6 +57,7 @@ func TestChangePassword_Success(t *testing.T) {
 
 	// Test: change password
 	newPwd := "new-password-456"
+
 	err = svc.ChangePassword(ctx, initialPwd, newPwd)
 	if err != nil {
 		t.Fatalf("ChangePassword failed: %v", err)
@@ -62,10 +68,12 @@ func TestChangePassword_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get user after change: %v", err)
 	}
+
 	ok, err := auth.VerifyPassword(user.PasswordHash, newPwd)
 	if err != nil {
 		t.Fatalf("verify new password: %v", err)
 	}
+
 	if !ok {
 		t.Error("new password does not verify")
 	}
@@ -75,6 +83,7 @@ func TestChangePassword_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("verify old password: %v", err)
 	}
+
 	if ok {
 		t.Error("old password still verifies (should not)")
 	}
@@ -90,10 +99,12 @@ func TestChangePassword_WrongCurrentPassword(t *testing.T) {
 
 	// Setup: create user with initial password
 	initialPwd := "correct-password-123"
+
 	initialHash, err := auth.HashPassword(initialPwd)
 	if err != nil {
 		t.Fatalf("hash initial password: %v", err)
 	}
+
 	if err := userRepo.UpsertUser(ctx, initialHash); err != nil {
 		t.Fatalf("create user: %v", err)
 	}
@@ -121,10 +132,12 @@ func TestChangePassword_WrongCurrentPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get user after failed change: %v", err)
 	}
+
 	ok, err := auth.VerifyPassword(user.PasswordHash, initialPwd)
 	if err != nil {
 		t.Fatalf("verify original password: %v", err)
 	}
+
 	if !ok {
 		t.Error("original password no longer works (should still work)")
 	}

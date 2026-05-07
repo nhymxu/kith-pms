@@ -41,15 +41,18 @@ func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, dates []
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit: %w", err)
 	}
+
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityDate, personID, "", audit.ActionUpdate)
 	}
+
 	return nil
 }
 
 func (s *Service) OnThisDay(ctx context.Context, today time.Time) ([]OnThisDayItem, error) {
 	monthDay := today.Format("01-02")
 	todayISO := today.Format("2006-01-02")
+
 	return s.repo.OnThisDay(ctx, monthDay, todayISO)
 }
 
@@ -65,11 +68,13 @@ func (s *Service) Upcoming(ctx context.Context, today time.Time, days int) ([]On
 	}
 
 	var upcoming []upcomingItem
+
 	for _, item := range all {
 		next := nextOccurrence(item.Date, today)
 		if next.IsZero() {
 			continue
 		}
+
 		daysDiff := int(next.Sub(today).Hours() / 24)
 		if daysDiff <= days {
 			// Calculate YearsSince if year-having and recurring
@@ -79,6 +84,7 @@ func (s *Service) Upcoming(ctx context.Context, today time.Time, days int) ([]On
 					item.YearsSince = next.Year() - dateVal.Year()
 				}
 			}
+
 			upcoming = append(upcoming, upcomingItem{item: item, next: next})
 		}
 	}
@@ -92,5 +98,6 @@ func (s *Service) Upcoming(ctx context.Context, today time.Time, days int) ([]On
 	for i, u := range upcoming {
 		result[i] = u.item
 	}
+
 	return result, nil
 }

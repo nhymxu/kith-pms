@@ -41,9 +41,11 @@ func wantsHTML(c *echo.Context) bool {
 	if accept == "" {
 		return true
 	}
+
 	if strings.Contains(accept, "text/html") {
 		return true
 	}
+
 	return !strings.HasPrefix(c.Request().URL.Path, "/v1")
 }
 
@@ -53,12 +55,14 @@ func renderHTMLError(c *echo.Context, code int) {
 	c.Response().WriteHeader(code)
 
 	var renderErr error
+
 	switch code {
 	case http.StatusNotFound:
 		renderErr = templates.Error404().Render(c.Request().Context(), c.Response())
 	default:
 		renderErr = templates.Error500(http.StatusText(code)).Render(c.Request().Context(), c.Response())
 	}
+
 	if renderErr != nil {
 		slog.Error("error handler: render template", "error", renderErr)
 	}

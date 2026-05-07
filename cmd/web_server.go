@@ -37,9 +37,11 @@ func (a *journalPeopleAdapter) GetSelf(ctx context.Context) (*journal.PersonAdap
 	if err != nil {
 		return nil, err
 	}
+
 	if p == nil {
 		return nil, nil
 	}
+
 	return &journal.PersonAdapter{
 		PersonID:      p.ID,
 		LastContactAt: p.LastContactAt,
@@ -51,9 +53,11 @@ func (a *journalPeopleAdapter) Get(ctx context.Context, id int64) (*journal.Pers
 	if err != nil {
 		return nil, err
 	}
+
 	if p == nil {
 		return nil, nil
 	}
+
 	return &journal.PersonAdapter{
 		PersonID:      p.ID,
 		LastContactAt: p.LastContactAt,
@@ -102,6 +106,7 @@ Can scale later.`,
 			if err := os.MkdirAll(dirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("api: create db dir: %w", err)
 			}
+
 			db, err := internaldb.Open(dbPath)
 			if err != nil {
 				return fmt.Errorf("api: open db: %w", err)
@@ -118,6 +123,7 @@ Can scale later.`,
 			if lifetime <= 0 {
 				lifetime = 30 * 24 * time.Hour
 			}
+
 			authSvc := &auth.Service{
 				Users:    auth.NewUserRepo(db),
 				Sessions: auth.NewSessionRepo(db),
@@ -135,9 +141,11 @@ Can scale later.`,
 			if avatarPath == "" {
 				avatarPath = "data/avatars"
 			}
+
 			if err := os.MkdirAll(avatarPath, 0o700); err != nil {
 				return fmt.Errorf("web-server: create avatar dir: %w", err)
 			}
+
 			fileSvc := files.NewLocalFileService(avatarPath)
 			peopleSvc.FileService = fileSvc
 
@@ -214,6 +222,7 @@ Can scale later.`,
 func runSessionGC(ctx context.Context, repo auth.SessionRepo) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -234,5 +243,6 @@ func dirOf(path string) string {
 			return path[:i]
 		}
 	}
+
 	return "."
 }

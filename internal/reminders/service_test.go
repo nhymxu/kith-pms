@@ -84,6 +84,7 @@ func TestService_CreateAndGetByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
+
 	if id == 0 {
 		t.Fatal("expected non-zero ID")
 	}
@@ -92,9 +93,11 @@ func TestService_CreateAndGetByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetByID: %v", err)
 	}
+
 	if fetched.Title != rem.Title {
 		t.Errorf("Title = %q, want %q", fetched.Title, rem.Title)
 	}
+
 	if fetched.Notes != rem.Notes {
 		t.Errorf("Notes = %q, want %q", fetched.Notes, rem.Notes)
 	}
@@ -102,6 +105,7 @@ func TestService_CreateAndGetByID(t *testing.T) {
 	if !fetched.DueDate.Truncate(time.Second).Equal(dueDate.Truncate(time.Second)) {
 		t.Errorf("DueDate = %v, want %v", fetched.DueDate, dueDate)
 	}
+
 	if fetched.Completed {
 		t.Error("expected Completed = false")
 	}
@@ -142,9 +146,11 @@ func TestService_Update(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetByID after update: %v", err)
 	}
+
 	if updated.Title != "Updated title" {
 		t.Errorf("Title = %q, want %q", updated.Title, "Updated title")
 	}
+
 	if updated.Notes != "Updated notes" {
 		t.Errorf("Notes = %q, want %q", updated.Notes, "Updated notes")
 	}
@@ -175,6 +181,7 @@ func TestService_Delete(t *testing.T) {
 	if err == nil {
 		t.Error("expected error when fetching deleted reminder")
 	}
+
 	if err != sql.ErrNoRows {
 		t.Errorf("expected sql.ErrNoRows, got %v", err)
 	}
@@ -274,9 +281,11 @@ func TestService_MarkComplete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetByID: %v", err)
 	}
+
 	if !fetched.Completed {
 		t.Error("expected Completed = true")
 	}
+
 	if fetched.CompletedAt == nil {
 		t.Error("expected CompletedAt to be set")
 	}
@@ -293,6 +302,7 @@ func TestService_ListWithPersonFilter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	personID, _ := res.LastInsertId()
 
 	reminders := []*Reminder{
@@ -315,6 +325,7 @@ func TestService_ListWithPersonFilter(t *testing.T) {
 	if len(filtered) != 1 {
 		t.Errorf("expected 1 reminder for person, got %d", len(filtered))
 	}
+
 	if len(filtered) > 0 && filtered[0].Title != "Alice reminder" {
 		t.Errorf("Title = %q, want %q", filtered[0].Title, "Alice reminder")
 	}
@@ -339,6 +350,7 @@ func TestService_ListByStatus(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Create: %v", err)
 		}
+
 		if r.Title == "Pending future" {
 			if err := svc.MarkComplete(ctx, id); err != nil {
 				t.Fatalf("MarkComplete: %v", err)
@@ -350,6 +362,7 @@ func TestService_ListByStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List pending: %v", err)
 	}
+
 	if len(pending) != 1 {
 		t.Errorf("expected 1 pending, got %d", len(pending))
 	}
@@ -358,6 +371,7 @@ func TestService_ListByStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List completed: %v", err)
 	}
+
 	if len(completed) != 1 {
 		t.Errorf("expected 1 completed, got %d", len(completed))
 	}
@@ -366,6 +380,7 @@ func TestService_ListByStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List overdue: %v", err)
 	}
+
 	if len(overdue) != 1 {
 		t.Errorf("expected 1 overdue, got %d", len(overdue))
 	}

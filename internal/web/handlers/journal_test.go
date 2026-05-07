@@ -19,45 +19,57 @@ import (
 // openTestDB opens an in-memory SQLite database and runs all migrations.
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}
+
 	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
+
 	if err := internaldb.Up(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+
 	t.Cleanup(func() { _ = db.Close() })
+
 	return db
 }
 
 // insertPerson inserts a person and returns ID.
 func insertPerson(t *testing.T, db *sql.DB, name string) int64 {
 	t.Helper()
+
 	res, err := db.Exec(`INSERT INTO person (name) VALUES (?)`, name)
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	id, _ := res.LastInsertId()
+
 	return id
 }
 
 // insertActivity inserts an activity and returns ID.
 func insertActivity(t *testing.T, db *sql.DB, title, date string) int64 {
 	t.Helper()
+
 	res, err := db.Exec(`INSERT INTO activity (title, occurred_at_date) VALUES (?, ?)`, title, date)
 	if err != nil {
 		t.Fatalf("insert activity: %v", err)
 	}
+
 	id, _ := res.LastInsertId()
+
 	return id
 }
 
 // linkActivityPerson links an activity to a person.
 func linkActivityPerson(t *testing.T, db *sql.DB, activityID, personID int64) {
 	t.Helper()
+
 	_, err := db.Exec(`INSERT INTO activity_person (activity_id, person_id) VALUES (?, ?)`, activityID, personID)
 	if err != nil {
 		t.Fatalf("link activity person: %v", err)
@@ -94,6 +106,7 @@ func TestGetList_PeopleFilter_Single(t *testing.T) {
 	if !strings.Contains(body, "Meeting with Alice") {
 		t.Errorf("expected Alice's meeting in response")
 	}
+
 	if strings.Contains(body, "Meeting with Bob") {
 		t.Errorf("unexpected Bob's meeting in response")
 	}
@@ -133,9 +146,11 @@ func TestGetList_PeopleFilter_Multiple(t *testing.T) {
 	if !strings.Contains(body, "Alice solo") {
 		t.Errorf("expected Alice's entry")
 	}
+
 	if !strings.Contains(body, "Bob solo") {
 		t.Errorf("expected Bob's entry")
 	}
+
 	if strings.Contains(body, "Charlie solo") {
 		t.Errorf("unexpected Charlie's entry")
 	}
@@ -169,6 +184,7 @@ func TestGetList_PeopleFilter_Empty(t *testing.T) {
 	if !strings.Contains(body, "Entry 1") {
 		t.Errorf("expected Entry 1")
 	}
+
 	if !strings.Contains(body, "Entry 2") {
 		t.Errorf("expected Entry 2")
 	}
@@ -232,6 +248,7 @@ func TestGetList_PeopleFilter_WithQuery(t *testing.T) {
 	if !strings.Contains(body, "Meeting about project") {
 		t.Errorf("expected meeting entry")
 	}
+
 	if strings.Contains(body, "Lunch with Alice") {
 		t.Errorf("unexpected lunch entry (no 'project' in title)")
 	}
@@ -266,6 +283,7 @@ func TestGetList_PeopleFilter_WithDates(t *testing.T) {
 	if !strings.Contains(body, "January meeting") {
 		t.Errorf("expected January meeting")
 	}
+
 	if strings.Contains(body, "February meeting") {
 		t.Errorf("unexpected February meeting (outside date range)")
 	}
@@ -299,6 +317,7 @@ func TestGetList_PeopleFilter_Pagination(t *testing.T) {
 	if !strings.Contains(body, "people=1") {
 		t.Errorf("expected people=1 in pagination links")
 	}
+
 	if !strings.Contains(body, "Next") {
 		t.Errorf("expected Next link (35 entries > 30 page size)")
 	}
@@ -334,6 +353,7 @@ func TestGetList_PersonFilterArray(t *testing.T) {
 	if !strings.Contains(body, "Alice entry") {
 		t.Errorf("expected Alice entry")
 	}
+
 	if !strings.Contains(body, "Bob entry") {
 		t.Errorf("expected Bob entry")
 	}

@@ -32,6 +32,7 @@ func (h *AuthHandlers) GetLogin(c *echo.Context) error {
 	csrfToken := auth.CSRFToken(c)
 
 	component := templates.Login(csrfToken, next, showError)
+
 	return component.Render(c.Request().Context(), c.Response())
 }
 
@@ -52,18 +53,22 @@ func (h *AuthHandlers) PostLogin(c *echo.Context) error {
 			if next != "" {
 				redirectURL += "&next=" + url.QueryEscape(next)
 			}
+
 			return c.Redirect(http.StatusSeeOther, redirectURL)
 		}
+
 		return err
 	}
 
 	setSessionCookie(c, token, time.Now().Add(config.ENV.SessionLifetime))
+
 	if next != "" {
 		// Basic open-redirect guard: only allow relative paths.
 		if u, err := url.Parse(next); err == nil && u.Host == "" && len(next) > 0 && next[0] == '/' {
 			return c.Redirect(http.StatusSeeOther, next)
 		}
 	}
+
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -74,7 +79,9 @@ func (h *AuthHandlers) PostLogout(c *echo.Context) error {
 	if err == nil && cookie.Value != "" {
 		_ = h.Svc.Logout(c.Request().Context(), cookie.Value)
 	}
+
 	clearSessionCookie(c)
+
 	return c.Redirect(http.StatusSeeOther, "/login")
 }
 
@@ -83,6 +90,7 @@ func (h *AuthHandlers) PostLogout(c *echo.Context) error {
 func (h *AuthHandlers) PostLogoutAll(c *echo.Context) error {
 	_ = h.Svc.LogoutAll(c.Request().Context())
 	clearSessionCookie(c)
+
 	return c.Redirect(http.StatusSeeOther, "/login")
 }
 
@@ -95,10 +103,12 @@ func setSessionCookie(c *echo.Context, token string, expires time.Time) {
 	cookie.Path = "/"
 	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteLaxMode
+
 	cookie.Expires = expires
 	if config.ENV.BehindTLS {
 		cookie.Secure = true
 	}
+
 	http.SetCookie(c.Response(), cookie)
 }
 

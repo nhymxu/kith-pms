@@ -16,5 +16,6 @@ func ActorFromCtx(ctx context.Context) *int64 {
 	if !ok {
 		return nil
 	}
+
 	return &v
 }

@@ -89,29 +89,36 @@ func runImport(
 	if err != nil {
 		return fmt.Errorf("monica-import: load labels: %w", err)
 	}
+
 	labelMap := make(map[string]int64, len(existingLabels))
 	for _, l := range existingLabels {
 		labelMap[strings.ToLower(l.Name)] = l.ID
 	}
 
 	var imported, errCount int
+
 	for _, c := range export.Contacts {
 		rec := monica.MapContact(c)
 		if rec.Person.Name == "" {
 			slog.Warn("monica-import: skipping contact with empty name", "id", c.ID)
+
 			errCount++
+
 			continue
 		}
 
 		personID, err := peopleSvc.Create(ctx, rec.Person, rec.Contacts, rec.Locations)
 		if err != nil {
 			slog.Warn("monica-import: failed to create person", "name", rec.Person.Name, "err", err)
+
 			errCount++
+
 			continue
 		}
 
 		for _, tagName := range rec.TagNames {
 			key := strings.ToLower(tagName)
+
 			labelID, ok := labelMap[key]
 			if !ok {
 				labelID, err = labelsSvc.Create(ctx, tagName, "#6366f1")
@@ -119,8 +126,10 @@ func runImport(
 					slog.Warn("monica-import: failed to create label", "name", tagName, "err", err)
 					continue
 				}
+
 				labelMap[key] = labelID
 			}
+
 			if err := labelsSvc.Attach(ctx, personID, labelID); err != nil {
 				slog.Warn("monica-import: failed to attach label", "person_id", personID, "label", tagName, "err", err)
 			}
@@ -146,15 +155,18 @@ func runImport(
 		}
 
 		imported++
+
 		slog.Info("monica-import: imported contact", "name", rec.Person.Name, "person_id", personID)
 	}
 
 	fmt.Printf("\nImport complete: %d imported, %d skipped/errors\n", imported, errCount)
+
 	return nil
 }
 
 func printDryRunSummary(export *monica.Export) error {
 	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates int
+
 	for _, c := range export.Contacts {
 		rec := monica.MapContact(c)
 		totalContacts += len(rec.Contacts)
@@ -164,6 +176,7 @@ func printDryRunSummary(export *monica.Export) error {
 		totalReminders += len(rec.Reminders)
 		totalDates += len(rec.Dates)
 	}
+
 	fmt.Printf("\nDry-run summary:\n")
 	fmt.Printf("  Contacts (people):   %d\n", len(export.Contacts))
 	fmt.Printf("  Contact info:        %d\n", totalContacts)
@@ -172,5 +185,6 @@ func printDryRunSummary(export *monica.Export) error {
 	fmt.Printf("  Journal entries:     %d\n", totalActivities)
 	fmt.Printf("  Reminders:           %d\n", totalReminders)
 	fmt.Printf("  Important dates:     %d\n", totalDates)
+
 	return nil
 }

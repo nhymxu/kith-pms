@@ -40,6 +40,7 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 		count int
 		err   error
 	}
+
 	ch := make(chan countResult, 3)
 
 	go func() {
@@ -60,6 +61,7 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 		if r.err != nil {
 			slog.Warn("dashboard: count error", "table", r.name, "error", r.err)
 		}
+
 		switch r.name {
 		case "people":
 			data.PeopleCount = r.count
@@ -89,6 +91,7 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 	// On this day dates
 	if h.DatesSvc != nil {
 		today := time.Now()
+
 		onThisDay, err := h.DatesSvc.OnThisDay(ctx, today)
 		if err != nil {
 			slog.Warn("dashboard: on this day", "error", err)
@@ -119,6 +122,7 @@ func (h *HomeHandler) Get(c *echo.Context) error {
 
 	c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.Response().WriteHeader(http.StatusOK)
+
 	return templates.Home(data).Render(ctx, c.Response())
 }
 
@@ -128,5 +132,6 @@ func countRows(ctx context.Context, db *sql.DB, query string) (int, error) {
 	if err := db.QueryRowContext(ctx, query).Scan(&n); err != nil {
 		return 0, err
 	}
+
 	return n, nil
 }

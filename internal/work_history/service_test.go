@@ -10,6 +10,7 @@ import (
 
 func setupTestDB(t *testing.T) *sql.DB {
 	t.Helper()
+
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
@@ -79,6 +80,7 @@ func TestParseWorkDate(t *testing.T) {
 				t.Errorf("ParseWorkDate(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
 				return
 			}
+
 			if got != tt.want {
 				t.Errorf("ParseWorkDate(%q) = %q, want %q", tt.input, got, tt.want)
 			}
@@ -98,6 +100,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	personID, _ := res.LastInsertId()
 
 	// Insert 3 entries.
@@ -114,6 +117,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListByPerson: %v", err)
 	}
+
 	if len(got) != 3 {
 		t.Fatalf("got %d entries, want 3", len(got))
 	}
@@ -131,12 +135,15 @@ func TestService_ReplaceForPerson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListByPerson (after replace): %v", err)
 	}
+
 	if len(got) != 2 {
 		t.Fatalf("got %d entries after replace, want 2", len(got))
 	}
+
 	if got[0].Company != "Acme" {
 		t.Errorf("entry[0].Company = %q, want Acme", got[0].Company)
 	}
+
 	if got[1].EndDate != "" {
 		t.Errorf("entry[1].EndDate = %q, want empty (Present)", got[1].EndDate)
 	}
@@ -154,6 +161,7 @@ func TestService_CascadeDelete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("insert person: %v", err)
 	}
+
 	personID, _ := res.LastInsertId()
 
 	entries := []WorkEntry{
@@ -171,10 +179,12 @@ func TestService_CascadeDelete(t *testing.T) {
 	}
 
 	var count int
+
 	err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM work_history WHERE person_id = ?", personID).Scan(&count)
 	if err != nil {
 		t.Fatalf("count work history: %v", err)
 	}
+
 	if count != 0 {
 		t.Errorf("got %d work history rows after person delete, want 0", count)
 	}

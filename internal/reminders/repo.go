@@ -20,11 +20,14 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, er
 		INSERT INTO reminder (title, notes, due_date, person_id, important_date_id, completed, completed_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
+
 	var completedInt int
 	if rem.Completed {
 		completedInt = 1
 	}
+
 	var completedAtStr *string
+
 	if rem.CompletedAt != nil {
 		s := rem.CompletedAt.Format(time.RFC3339)
 		completedAtStr = &s
@@ -36,10 +39,12 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, er
 	if err != nil {
 		return 0, fmt.Errorf("insert reminder: %w", err)
 	}
+
 	id, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("get last insert id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -50,10 +55,13 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 		FROM reminder
 		WHERE id = ?
 	`
-	var rem Reminder
-	var dueDateStr, createdAtStr, updatedAtStr string
-	var completedInt int
-	var completedAtStr *string
+
+	var (
+		rem                                    Reminder
+		dueDateStr, createdAtStr, updatedAtStr string
+		completedInt                           int
+		completedAtStr                         *string
+	)
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&rem.ID, &rem.Title, &rem.Notes, &dueDateStr, &rem.PersonID, &rem.ImportantDateID,
@@ -66,6 +74,7 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 	rem.Completed = completedInt == 1
 	rem.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 	rem.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+
 	rem.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
 	if completedAtStr != nil {
 		t, _ := time.Parse(time.RFC3339, *completedAtStr)
@@ -82,11 +91,14 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
 		    completed = ?, completed_at = ?, updated_at = ?
 		WHERE id = ?
 	`
+
 	var completedInt int
 	if rem.Completed {
 		completedInt = 1
 	}
+
 	var completedAtStr *string
+
 	if rem.CompletedAt != nil {
 		s := rem.CompletedAt.Format(time.RFC3339)
 		completedAtStr = &s
@@ -99,15 +111,18 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
 	if err != nil {
 		return fmt.Errorf("update reminder: %w", err)
 	}
+
 	return nil
 }
 
 func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) error {
 	query := `DELETE FROM reminder WHERE id = ?`
+
 	_, err := tx.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("delete reminder: %w", err)
 	}
+
 	return nil
 }
 
@@ -122,17 +137,20 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	`
 	args := []interface{}{}
 
-	if params.Status == "pending" {
+	switch params.Status {
+	case "pending":
 		query += " AND r.completed = 0"
-	} else if params.Status == "completed" {
+	case "completed":
 		query += " AND r.completed = 1"
-	} else if params.Status == "overdue" {
+	case "overdue":
 		query += " AND r.completed = 0 AND r.due_date < ?"
+
 		args = append(args, time.Now().Format(time.RFC3339))
 	}
 
 	if params.PersonID != nil {
 		query += " AND r.person_id = ?"
+
 		args = append(args, *params.PersonID)
 	}
 
@@ -151,11 +169,14 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	defer rows.Close()
 
 	var results []ReminderWithPerson
+
 	for rows.Next() {
-		var rwp ReminderWithPerson
-		var dueDateStr, createdAtStr, updatedAtStr string
-		var completedInt int
-		var completedAtStr *string
+		var (
+			rwp                                    ReminderWithPerson
+			dueDateStr, createdAtStr, updatedAtStr string
+			completedInt                           int
+			completedAtStr                         *string
+		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
@@ -168,6 +189,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
@@ -201,11 +223,14 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 	defer rows.Close()
 
 	var results []ReminderWithPerson
+
 	for rows.Next() {
-		var rwp ReminderWithPerson
-		var dueDateStr, createdAtStr, updatedAtStr string
-		var completedInt int
-		var completedAtStr *string
+		var (
+			rwp                                    ReminderWithPerson
+			dueDateStr, createdAtStr, updatedAtStr string
+			completedInt                           int
+			completedAtStr                         *string
+		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
@@ -218,6 +243,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
@@ -248,11 +274,14 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	defer rows.Close()
 
 	var results []ReminderWithPerson
+
 	for rows.Next() {
-		var rwp ReminderWithPerson
-		var dueDateStr, createdAtStr, updatedAtStr string
-		var completedInt int
-		var completedAtStr *string
+		var (
+			rwp                                    ReminderWithPerson
+			dueDateStr, createdAtStr, updatedAtStr string
+			completedInt                           int
+			completedAtStr                         *string
+		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
@@ -265,6 +294,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
+
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
@@ -283,6 +313,7 @@ func (r *Repo) MarkComplete(ctx context.Context, tx *sql.Tx, id int64, completed
 		SET completed = 1, completed_at = ?, updated_at = ?
 		WHERE id = ?
 	`
+
 	_, err := tx.ExecContext(ctx, query,
 		completedAt.Format(time.RFC3339),
 		time.Now().Format(time.RFC3339),
@@ -290,6 +321,7 @@ func (r *Repo) MarkComplete(ctx context.Context, tx *sql.Tx, id int64, completed
 	if err != nil {
 		return fmt.Errorf("mark reminder complete: %w", err)
 	}
+
 	return nil
 }
 
@@ -297,19 +329,23 @@ func (r *Repo) CountByStatus(ctx context.Context, status string) (int, error) {
 	query := `SELECT COUNT(*) FROM reminder WHERE 1=1`
 	args := []interface{}{}
 
-	if status == "pending" {
+	switch status {
+	case "pending":
 		query += " AND completed = 0"
-	} else if status == "completed" {
+	case "completed":
 		query += " AND completed = 1"
-	} else if status == "overdue" {
+	case "overdue":
 		query += " AND completed = 0 AND due_date < ?"
+
 		args = append(args, time.Now().Format(time.RFC3339))
 	}
 
 	var count int
+
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count reminders: %w", err)
 	}
+
 	return count, nil
 }

@@ -29,6 +29,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]Important
 		WHERE person_id = ?
 		ORDER BY position, id
 	`
+
 	rows, err := r.db.QueryContext(ctx, query, personID)
 	if err != nil {
 		return nil, fmt.Errorf("query dates: %w", err)
@@ -36,10 +37,14 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]Important
 	defer rows.Close()
 
 	var dates []ImportantDate
+
 	for rows.Next() {
-		var d ImportantDate
-		var recurring int
-		var createdAt string
+		var (
+			d         ImportantDate
+			recurring int
+			createdAt string
+		)
+
 		err := rows.Scan(
 			&d.ID,
 			&d.PersonID,
@@ -54,13 +59,16 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]Important
 		if err != nil {
 			return nil, fmt.Errorf("scan date: %w", err)
 		}
+
 		d.Recurring = recurring == 1
 		d.CreatedAt, _ = parseTimestamp(createdAt)
 		dates = append(dates, d)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate dates: %w", err)
 	}
+
 	return dates, nil
 }
 
@@ -90,11 +98,13 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, da
 		if d.Recurring {
 			recurringInt = 1
 		}
+
 		_, err := stmt.ExecContext(ctx, personID, d.Kind, d.Label, d.DateValue, recurringInt, d.Notes, d.Position)
 		if err != nil {
 			return fmt.Errorf("insert date: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -103,6 +113,7 @@ func parseTimestamp(s string) (time.Time, error) {
 	if err != nil {
 		t, err = time.Parse("2006-01-02T15:04:05Z", s)
 	}
+
 	return t, err
 }
 
@@ -117,6 +128,7 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		   AND (d.recurring = 1 OR d.date_value = ?)
 		 ORDER BY p.name COLLATE NOCASE
 	`
+
 	rows, err := r.db.QueryContext(ctx, query, monthDay, todayISO)
 	if err != nil {
 		return nil, fmt.Errorf("query on this day: %w", err)
@@ -124,11 +136,15 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 	defer rows.Close()
 
 	var items []OnThisDayItem
+
 	for rows.Next() {
-		var item OnThisDayItem
-		var recurring int
-		var createdAt string
-		var nickname sql.NullString
+		var (
+			item      OnThisDayItem
+			recurring int
+			createdAt string
+			nickname  sql.NullString
+		)
+
 		err := rows.Scan(
 			&item.Date.ID,
 			&item.Date.PersonID,
@@ -146,7 +162,9 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		if err != nil {
 			return nil, fmt.Errorf("scan on this day: %w", err)
 		}
+
 		item.Date.Recurring = recurring == 1
+
 		item.Date.CreatedAt, _ = parseTimestamp(createdAt)
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
@@ -165,9 +183,11 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 
 		items = append(items, item)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate on this day: %w", err)
 	}
+
 	return items, nil
 }
 
@@ -180,6 +200,7 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 		  JOIN person p ON p.id = d.person_id
 		 ORDER BY d.month_day, p.name COLLATE NOCASE
 	`
+
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("query list all: %w", err)
@@ -187,11 +208,15 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 	defer rows.Close()
 
 	var items []OnThisDayItem
+
 	for rows.Next() {
-		var item OnThisDayItem
-		var recurring int
-		var createdAt string
-		var nickname sql.NullString
+		var (
+			item      OnThisDayItem
+			recurring int
+			createdAt string
+			nickname  sql.NullString
+		)
+
 		err := rows.Scan(
 			&item.Date.ID,
 			&item.Date.PersonID,
@@ -209,15 +234,20 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 		if err != nil {
 			return nil, fmt.Errorf("scan list all: %w", err)
 		}
+
 		item.Date.Recurring = recurring == 1
+
 		item.Date.CreatedAt, _ = parseTimestamp(createdAt)
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
 		}
+
 		items = append(items, item)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate list all: %w", err)
 	}
+
 	return items, nil
 }

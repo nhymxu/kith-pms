@@ -22,6 +22,7 @@ func (h *AuditAPI) List(c *echo.Context) error {
 
 	entityType := audit.EntityType(c.QueryParam("entity_type"))
 	entityID, _ := strconv.ParseInt(c.QueryParam("entity_id"), 10, 64)
+
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
 		page = 1

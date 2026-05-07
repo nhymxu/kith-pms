@@ -28,6 +28,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]WorkEntry
 		WHERE person_id = ?
 		ORDER BY position ASC, id ASC
 	`
+
 	rows, err := r.db.QueryContext(ctx, query, personID)
 	if err != nil {
 		return nil, fmt.Errorf("query work history: %w", err)
@@ -35,9 +36,13 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]WorkEntry
 	defer rows.Close()
 
 	var entries []WorkEntry
+
 	for rows.Next() {
-		var e WorkEntry
-		var createdAt string
+		var (
+			e         WorkEntry
+			createdAt string
+		)
+
 		err := rows.Scan(
 			&e.ID,
 			&e.PersonID,
@@ -53,12 +58,15 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]WorkEntry
 		if err != nil {
 			return nil, fmt.Errorf("scan work entry: %w", err)
 		}
+
 		e.CreatedAt, _ = parseTimestamp(createdAt)
 		entries = append(entries, e)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate work history: %w", err)
 	}
+
 	return entries, nil
 }
 
@@ -83,11 +91,22 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, en
 	defer stmt.Close()
 
 	for _, e := range entries {
-		_, err := stmt.ExecContext(ctx, personID, e.Company, e.Title, e.StartDate, e.EndDate, e.Location, e.Description, e.Position)
+		_, err := stmt.ExecContext(
+			ctx,
+			personID,
+			e.Company,
+			e.Title,
+			e.StartDate,
+			e.EndDate,
+			e.Location,
+			e.Description,
+			e.Position,
+		)
 		if err != nil {
 			return fmt.Errorf("insert work entry: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -96,5 +115,6 @@ func parseTimestamp(s string) (time.Time, error) {
 	if err != nil {
 		t, err = time.Parse("2006-01-02T15:04:05Z", s)
 	}
+
 	return t, err
 }

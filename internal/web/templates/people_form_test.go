@@ -11,6 +11,7 @@ import (
 
 func TestPeopleFormDynamicRowsUseCurrentRowCounts(t *testing.T) {
 	var buf bytes.Buffer
+
 	err := PeopleForm(PeopleFormParams{
 		Person: people.Person{ID: 42, Name: "Ada"},
 		Contacts: []people.ContactInfo{
@@ -23,6 +24,7 @@ func TestPeopleFormDynamicRowsUseCurrentRowCounts(t *testing.T) {
 	}
 
 	html := buf.String()
+
 	want := []string{
 		`hx-vals="js:{count: document.querySelectorAll('#contacts-table tbody tr').length}"`,
 		`hx-vals="js:{count: document.querySelectorAll('#locations-table tbody tr').length}"`,

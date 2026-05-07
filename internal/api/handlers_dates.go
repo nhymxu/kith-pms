@@ -95,11 +95,13 @@ func (h *DatesAPI) Upcoming(c *echo.Context) error {
 	if days < 1 {
 		days = 30
 	}
+
 	if days > 365 {
 		days = 365
 	}
 
 	today := time.Now()
+
 	items, err := h.Svc.Upcoming(c.Request().Context(), today, days)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -129,17 +131,21 @@ func nextOccurrenceStr(d dates.ImportantDate, today time.Time) string {
 		if len(monthDay) != 5 {
 			return ""
 		}
+
 		candidate, err := time.Parse("2006-01-02", today.Format("2006")+"-"+monthDay)
 		if err != nil {
 			return ""
 		}
+
 		if !candidate.Before(today.Truncate(24 * time.Hour)) {
 			return candidate.Format("2006-01-02")
 		}
+
 		next, err := time.Parse("2006-01-02", strconv.Itoa(today.Year()+1)+"-"+monthDay)
 		if err != nil {
 			return ""
 		}
+
 		return next.Format("2006-01-02")
 	}
 
@@ -147,28 +153,34 @@ func nextOccurrenceStr(d dates.ImportantDate, today time.Time) string {
 	if err != nil {
 		return ""
 	}
+
 	todayTrunc := today.Truncate(24 * time.Hour)
 
 	if d.Recurring {
 		if len(monthDay) != 5 {
 			return ""
 		}
+
 		candidate, err := time.Parse("2006-01-02", today.Format("2006")+"-"+monthDay)
 		if err != nil {
 			return ""
 		}
+
 		if !candidate.Before(todayTrunc) {
 			return candidate.Format("2006-01-02")
 		}
+
 		next, err := time.Parse("2006-01-02", strconv.Itoa(today.Year()+1)+"-"+monthDay)
 		if err != nil {
 			return ""
 		}
+
 		return next.Format("2006-01-02")
 	}
 
 	if exact.Before(todayTrunc) {
 		return ""
 	}
+
 	return exact.Format("2006-01-02")
 }

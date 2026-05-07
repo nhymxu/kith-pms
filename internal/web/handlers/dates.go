@@ -19,6 +19,7 @@ type DatesHandlers struct {
 func (h *DatesHandlers) GetUpcoming(c *echo.Context) error {
 	daysStr := c.QueryParam("days")
 	days := 30 // default
+
 	if daysStr != "" {
 		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 365 {
 			days = d
@@ -26,6 +27,7 @@ func (h *DatesHandlers) GetUpcoming(c *echo.Context) error {
 	}
 
 	today := time.Now()
+
 	items, err := h.Svc.Upcoming(c.Request().Context(), today, days)
 	if err != nil {
 		return err
@@ -35,5 +37,6 @@ func (h *DatesHandlers) GetUpcoming(c *echo.Context) error {
 		Items: items,
 		Days:  days,
 	})
+
 	return component.Render(c.Request().Context(), c.Response())
 }

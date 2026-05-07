@@ -18,7 +18,14 @@ type PersonRepo interface {
 	Delete(ctx context.Context, id int64) error
 	SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error
 	ClearSelf(ctx context.Context, tx *sql.Tx) error
-	UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error
+	UpdateAvatar(
+		ctx context.Context,
+		tx *sql.Tx,
+		personID int64,
+		path, mimeType string,
+		size int64,
+		uploadedAt time.Time,
+	) error
 	ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error
 	UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error
 }
@@ -41,10 +48,18 @@ type sqlPersonRepo struct{ db *sql.DB }
 
 func NewPersonRepo(db *sql.DB) PersonRepo { return &sqlPersonRepo{db: db} }
 
-func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error) {
+func (r *sqlPersonRepo) List(
+	ctx context.Context,
+	q string,
+	labelIDs []int64,
+	limit, offset int,
+	sort string,
+) ([]Person, error) {
 	// Build WHERE clause and args dynamically.
-	var where []string
-	var args []any
+	var (
+		where []string
+		args  []any
+	)
 
 	if q != "" {
 		where = append(where, "name_lower LIKE ?")
@@ -55,6 +70,7 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 	// Use INTERSECT subqueries — one per label ID.
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
+
 		where = append(where, "id IN ("+sub+")")
 		for _, id := range labelIDs {
 			args = append(args, id)
@@ -68,7 +84,9 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
+
 	query += " ORDER BY " + buildOrderBy(sort) + " LIMIT ? OFFSET ?"
+
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -78,13 +96,16 @@ func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, li
 	defer rows.Close()
 
 	var people []Person
+
 	for rows.Next() {
 		p, err := scanPerson(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		people = append(people, p)
 	}
+
 	return people, rows.Err()
 }
 
@@ -112,6 +133,7 @@ func buildLabelIntersect(labelIDs []int64) string {
 	for i := range labelIDs {
 		parts[i] = "SELECT person_id FROM person_label WHERE label_id = ?"
 	}
+
 	return strings.Join(parts, " INTERSECT ")
 }
 
@@ -123,13 +145,16 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 		 FROM person WHERE id = ?`,
 		id,
 	)
+
 	p, err := scanPerson(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &p, nil
 }
 
@@ -140,13 +165,16 @@ func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
 		        last_contact_at, created_at, updated_at
 		 FROM person WHERE is_self = 1 LIMIT 1`,
 	)
+
 	p, err := scanPerson(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &p, nil
 }
 
@@ -154,18 +182,28 @@ func (r *sqlPersonRepo) Create(ctx context.Context, tx *sql.Tx, p Person) (int64
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	dob := formatNullableDate(p.DateOfBirth)
 
-	res, err := tx.ExecContext(ctx,
+	res, err := tx.ExecContext(
+		ctx,
 		`INSERT INTO person (prefix, name, nickname, date_of_birth, relationship_type, other_notes, created_at, updated_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.Prefix, p.Name, p.Nickname, dob, p.RelationshipType, p.OtherNotes, now, now,
+		p.Prefix,
+		p.Name,
+		p.Nickname,
+		dob,
+		p.RelationshipType,
+		p.OtherNotes,
+		now,
+		now,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("people: create person: %w", err)
 	}
+
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("people: create person last id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -182,6 +220,7 @@ func (r *sqlPersonRepo) Update(ctx context.Context, tx *sql.Tx, p Person) error 
 	if err != nil {
 		return fmt.Errorf("people: update person: %w", err)
 	}
+
 	return nil
 }
 
@@ -190,35 +229,49 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("people: delete person: %w", err)
 	}
+
 	return nil
 }
 
 func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	res, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 1, updated_at = ? WHERE id = ?`, now, personID)
 	if err != nil {
 		return fmt.Errorf("people: set self: %w", err)
 	}
+
 	rows, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("people: set self rows affected: %w", err)
 	}
+
 	if rows == 0 {
 		return fmt.Errorf("person not found")
 	}
+
 	return nil
 }
 
 func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx *sql.Tx) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+
 	_, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 0, updated_at = ? WHERE is_self = 1`, now)
 	if err != nil {
 		return fmt.Errorf("people: clear self: %w", err)
 	}
+
 	return nil
 }
 
-func (r *sqlPersonRepo) UpdateAvatar(ctx context.Context, tx *sql.Tx, personID int64, path, mimeType string, size int64, uploadedAt time.Time) error {
+func (r *sqlPersonRepo) UpdateAvatar(
+	ctx context.Context,
+	tx *sql.Tx,
+	personID int64,
+	path, mimeType string,
+	size int64,
+	uploadedAt time.Time,
+) error {
 	uploadedAtStr := uploadedAt.UTC().Format(time.RFC3339Nano)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
@@ -231,6 +284,7 @@ func (r *sqlPersonRepo) UpdateAvatar(ctx context.Context, tx *sql.Tx, personID i
 	if err != nil {
 		return fmt.Errorf("people: update avatar: %w", err)
 	}
+
 	return nil
 }
 
@@ -246,10 +300,16 @@ func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx *sql.Tx, personID in
 	if err != nil {
 		return fmt.Errorf("people: clear avatar: %w", err)
 	}
+
 	return nil
 }
 
-func (r *sqlPersonRepo) UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error {
+func (r *sqlPersonRepo) UpdateLastContact(
+	ctx context.Context,
+	tx *sql.Tx,
+	personID int64,
+	contactTime time.Time,
+) error {
 	contactTimeStr := contactTime.UTC().Format(time.RFC3339Nano)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
@@ -260,6 +320,7 @@ func (r *sqlPersonRepo) UpdateLastContact(ctx context.Context, tx *sql.Tx, perso
 	if err != nil {
 		return fmt.Errorf("people: update last contact: %w", err)
 	}
+
 	return nil
 }
 
@@ -273,6 +334,7 @@ func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID in
 	if _, err := tx.ExecContext(ctx, `DELETE FROM contact_info WHERE person_id = ?`, personID); err != nil {
 		return fmt.Errorf("people: delete contacts: %w", err)
 	}
+
 	for i, c := range contacts {
 		_, err := tx.ExecContext(ctx,
 			`INSERT INTO contact_info (person_id, type, value, label, position) VALUES (?, ?, ?, ?, ?)`,
@@ -282,6 +344,7 @@ func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID in
 			return fmt.Errorf("people: insert contact[%d]: %w", i, err)
 		}
 	}
+
 	return nil
 }
 
@@ -297,13 +360,16 @@ func (r *sqlContactRepo) ListByPerson(ctx context.Context, personID int64) ([]Co
 	defer rows.Close()
 
 	var contacts []ContactInfo
+
 	for rows.Next() {
 		var c ContactInfo
 		if err := rows.Scan(&c.ID, &c.PersonID, &c.Type, &c.Value, &c.Label, &c.Position); err != nil {
 			return nil, fmt.Errorf("people: scan contact: %w", err)
 		}
+
 		contacts = append(contacts, c)
 	}
+
 	return contacts, rows.Err()
 }
 
@@ -317,15 +383,24 @@ func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID i
 	if _, err := tx.ExecContext(ctx, `DELETE FROM location WHERE person_id = ?`, personID); err != nil {
 		return fmt.Errorf("people: delete locations: %w", err)
 	}
+
 	for i, l := range locations {
-		_, err := tx.ExecContext(ctx,
+		_, err := tx.ExecContext(
+			ctx,
 			`INSERT INTO location (person_id, type, address, city, country, postal_code, position) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			personID, l.Type, l.Address, l.City, l.Country, l.PostalCode, i,
+			personID,
+			l.Type,
+			l.Address,
+			l.City,
+			l.Country,
+			l.PostalCode,
+			i,
 		)
 		if err != nil {
 			return fmt.Errorf("people: insert location[%d]: %w", i, err)
 		}
 	}
+
 	return nil
 }
 
@@ -341,13 +416,25 @@ func (r *sqlLocationRepo) ListByPerson(ctx context.Context, personID int64) ([]L
 	defer rows.Close()
 
 	var locations []Location
+
 	for rows.Next() {
 		var l Location
-		if err := rows.Scan(&l.ID, &l.PersonID, &l.Type, &l.Address, &l.City, &l.Country, &l.PostalCode, &l.Position); err != nil {
+		if err := rows.Scan(
+			&l.ID,
+			&l.PersonID,
+			&l.Type,
+			&l.Address,
+			&l.City,
+			&l.Country,
+			&l.PostalCode,
+			&l.Position,
+		); err != nil {
 			return nil, fmt.Errorf("people: scan location: %w", err)
 		}
+
 		locations = append(locations, l)
 	}
+
 	return locations, rows.Err()
 }
 
@@ -358,11 +445,13 @@ type rowScanner interface {
 }
 
 func scanPerson(row rowScanner) (Person, error) {
-	var p Person
-	var dobStr sql.NullString
-	var avatarUploadedAtStr sql.NullString
-	var lastContactAtStr sql.NullString
-	var createdAt, updatedAt string
+	var (
+		p                    Person
+		dobStr               sql.NullString
+		avatarUploadedAtStr  sql.NullString
+		lastContactAtStr     sql.NullString
+		createdAt, updatedAt string
+	)
 
 	err := row.Scan(
 		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
@@ -379,18 +468,22 @@ func scanPerson(row rowScanner) (Person, error) {
 			p.DateOfBirth = &t
 		}
 	}
+
 	if avatarUploadedAtStr.Valid && avatarUploadedAtStr.String != "" {
 		if t, err := parseTime(avatarUploadedAtStr.String); err == nil {
 			p.AvatarUploadedAt = &t
 		}
 	}
+
 	if lastContactAtStr.Valid && lastContactAtStr.String != "" {
 		if t, err := parseTime(lastContactAtStr.String); err == nil {
 			p.LastContactAt = &t
 		}
 	}
+
 	p.CreatedAt, _ = parseTime(createdAt)
 	p.UpdatedAt, _ = parseTime(updatedAt)
+
 	return p, nil
 }
 
@@ -398,6 +491,7 @@ func parseTime(s string) (time.Time, error) {
 	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
 		return t, nil
 	}
+
 	return time.Parse(time.RFC3339, s)
 }
 
@@ -409,5 +503,6 @@ func formatNullableDate(t *time.Time) interface{} {
 	if t == nil {
 		return nil
 	}
+
 	return t.Format("2006-01-02")
 }

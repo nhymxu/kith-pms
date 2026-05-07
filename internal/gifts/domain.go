@@ -60,10 +60,13 @@ func (g Gift) DisplayAmount() string {
 	if g.AmountCents == nil {
 		return ""
 	}
+
 	major := *g.AmountCents / 100
+
 	minor := *g.AmountCents % 100
 	if minor == 0 {
 		return fmt.Sprintf("%s %d", g.Currency, major)
 	}
+
 	return fmt.Sprintf("%s %d.%02d", g.Currency, major, minor)
 }

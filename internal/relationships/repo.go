@@ -35,10 +35,12 @@ func (r *sqlRelationshipTypeRepo) Create(ctx context.Context, name, reverseName 
 	if err != nil {
 		return 0, fmt.Errorf("relationships: create type: %w", err)
 	}
+
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("relationships: create type last id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -50,6 +52,7 @@ func (r *sqlRelationshipTypeRepo) Update(ctx context.Context, id int64, name, re
 	if err != nil {
 		return fmt.Errorf("relationships: update type: %w", err)
 	}
+
 	return nil
 }
 
@@ -61,6 +64,7 @@ func (r *sqlRelationshipTypeRepo) SetInverseTypeID(ctx context.Context, id int64
 	if err != nil {
 		return fmt.Errorf("relationships: set inverse type: %w", err)
 	}
+
 	return nil
 }
 
@@ -69,6 +73,7 @@ func (r *sqlRelationshipTypeRepo) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("relationships: delete type: %w", err)
 	}
+
 	return nil
 }
 
@@ -76,13 +81,16 @@ func (r *sqlRelationshipTypeRepo) Get(ctx context.Context, id int64) (*Relations
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, name, reverse_name, inverse_type_id, created_at FROM relationship_type WHERE id = ?`, id,
 	)
+
 	t, err := scanRelationshipType(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &t, nil
 }
 
@@ -94,6 +102,7 @@ func (r *sqlRelationshipTypeRepo) List(ctx context.Context) ([]RelationshipType,
 		return nil, fmt.Errorf("relationships: list types: %w", err)
 	}
 	defer rows.Close()
+
 	return collectRelationshipTypes(rows)
 }
 
@@ -112,20 +121,27 @@ func (r *sqlRelationshipTypeRepo) ListWithCounts(ctx context.Context) ([]Relatio
 	defer rows.Close()
 
 	var types []RelationshipType
+
 	for rows.Next() {
-		var rt RelationshipType
-		var createdAt string
-		var inverseID sql.NullInt64
+		var (
+			rt        RelationshipType
+			createdAt string
+			inverseID sql.NullInt64
+		)
 		if err := rows.Scan(&rt.ID, &rt.Name, &rt.ReverseName, &inverseID, &createdAt, &rt.UsageCount); err != nil {
 			return nil, fmt.Errorf("relationships: scan type with count: %w", err)
 		}
+
 		rt.CreatedAt, _ = parseTime(createdAt)
+
 		if inverseID.Valid {
 			v := inverseID.Int64
 			rt.InverseTypeID = &v
 		}
+
 		types = append(types, rt)
 	}
+
 	return types, rows.Err()
 }
 
@@ -152,7 +168,11 @@ func NewSQLPersonRelationshipRepo(db *sql.DB) PersonRelationshipRepo {
 	return &sqlPersonRelationshipRepo{db: db}
 }
 
-func (r *sqlPersonRelationshipRepo) Attach(ctx context.Context, fromID, toID, typeID int64, notes string) (int64, error) {
+func (r *sqlPersonRelationshipRepo) Attach(
+	ctx context.Context,
+	fromID, toID, typeID int64,
+	notes string,
+) (int64, error) {
 	res, err := r.db.ExecContext(ctx,
 		`INSERT INTO person_relationship (from_person_id, to_person_id, relationship_type_id, notes)
 		 VALUES (?, ?, ?, ?)`,
@@ -161,10 +181,12 @@ func (r *sqlPersonRelationshipRepo) Attach(ctx context.Context, fromID, toID, ty
 	if err != nil {
 		return 0, fmt.Errorf("relationships: attach: %w", err)
 	}
+
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("relationships: attach last id: %w", err)
 	}
+
 	return id, nil
 }
 
@@ -173,6 +195,7 @@ func (r *sqlPersonRelationshipRepo) Detach(ctx context.Context, id int64) error 
 	if err != nil {
 		return fmt.Errorf("relationships: detach: %w", err)
 	}
+
 	return nil
 }
 
@@ -181,30 +204,39 @@ func (r *sqlPersonRelationshipRepo) Get(ctx context.Context, id int64) (*PersonR
 		`SELECT id, from_person_id, to_person_id, relationship_type_id, notes, created_at
 		 FROM person_relationship WHERE id = ?`, id,
 	)
+
 	pr, err := scanPersonRelationship(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &pr, nil
 }
 
-func (r *sqlPersonRelationshipRepo) FindPair(ctx context.Context, fromID, toID, typeID int64) (*PersonRelationship, error) {
+func (r *sqlPersonRelationshipRepo) FindPair(
+	ctx context.Context,
+	fromID, toID, typeID int64,
+) (*PersonRelationship, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, from_person_id, to_person_id, relationship_type_id, notes, created_at
 		 FROM person_relationship
 		 WHERE from_person_id = ? AND to_person_id = ? AND relationship_type_id = ?`,
 		fromID, toID, typeID,
 	)
+
 	pr, err := scanPersonRelationship(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return &pr, nil
 }
 
@@ -224,13 +256,23 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 	defer rows.Close()
 
 	var views []RelationshipView
+
 	for rows.Next() {
 		var v RelationshipView
-		if err := rows.Scan(&v.ID, &v.OtherPersonID, &v.OtherPersonName, &v.OtherPersonAvatar, &v.TypeName, &v.Notes); err != nil {
+		if err := rows.Scan(
+			&v.ID,
+			&v.OtherPersonID,
+			&v.OtherPersonName,
+			&v.OtherPersonAvatar,
+			&v.TypeName,
+			&v.Notes,
+		); err != nil {
 			return nil, fmt.Errorf("relationships: scan view: %w", err)
 		}
+
 		views = append(views, v)
 	}
+
 	return views, rows.Err()
 }
 
@@ -241,39 +283,58 @@ type rowScanner interface {
 }
 
 func scanRelationshipType(row rowScanner) (RelationshipType, error) {
-	var rt RelationshipType
-	var createdAt string
-	var inverseID sql.NullInt64
+	var (
+		rt        RelationshipType
+		createdAt string
+		inverseID sql.NullInt64
+	)
 	if err := row.Scan(&rt.ID, &rt.Name, &rt.ReverseName, &inverseID, &createdAt); err != nil {
 		return RelationshipType{}, fmt.Errorf("relationships: scan type: %w", err)
 	}
+
 	rt.CreatedAt, _ = parseTime(createdAt)
+
 	if inverseID.Valid {
 		v := inverseID.Int64
 		rt.InverseTypeID = &v
 	}
+
 	return rt, nil
 }
 
 func collectRelationshipTypes(rows *sql.Rows) ([]RelationshipType, error) {
 	var types []RelationshipType
+
 	for rows.Next() {
 		rt, err := scanRelationshipType(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		types = append(types, rt)
 	}
+
 	return types, rows.Err()
 }
 
 func scanPersonRelationship(row rowScanner) (PersonRelationship, error) {
-	var pr PersonRelationship
-	var createdAt string
-	if err := row.Scan(&pr.ID, &pr.FromPersonID, &pr.ToPersonID, &pr.RelationshipTypeID, &pr.Notes, &createdAt); err != nil {
+	var (
+		pr        PersonRelationship
+		createdAt string
+	)
+	if err := row.Scan(
+		&pr.ID,
+		&pr.FromPersonID,
+		&pr.ToPersonID,
+		&pr.RelationshipTypeID,
+		&pr.Notes,
+		&createdAt,
+	); err != nil {
 		return PersonRelationship{}, fmt.Errorf("relationships: scan junction: %w", err)
 	}
+
 	pr.CreatedAt, _ = parseTime(createdAt)
+
 	return pr, nil
 }
 
@@ -281,6 +342,7 @@ func parseTime(s string) (time.Time, error) {
 	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
 		return t, nil
 	}
+
 	return time.Parse(time.RFC3339, s)
 }
 
@@ -289,7 +351,9 @@ func isFKConstraintErr(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	msg := err.Error()
+
 	return strings.Contains(msg, "FOREIGN KEY constraint failed") ||
 		strings.Contains(msg, "foreign key constraint")
 }
@@ -299,7 +363,9 @@ func isUniqueErr(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	msg := err.Error()
+
 	return strings.Contains(msg, "UNIQUE constraint failed") ||
 		strings.Contains(msg, "unique constraint")
 }

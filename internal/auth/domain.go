@@ -2,7 +2,6 @@ package auth
 
 import "time"
 
-// User is the single application user. There is exactly one row in the user table.
 type User struct {
 	ID           int64
 	PasswordHash string

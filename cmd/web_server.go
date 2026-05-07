@@ -28,7 +28,6 @@ import (
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
-// journalPeopleAdapter adapts people.Service to journal.PeopleServiceInterface.
 type journalPeopleAdapter struct {
 	svc *people.Service
 }
@@ -93,14 +92,12 @@ Can scale later.`,
 			port := cmd.Int64("port")
 			shutdownTime := cmd.Int64("shutdown_time")
 
-			// Validate SESSION_SECRET before opening anything.
 			secret := []byte(config.ENV.SessionSecret)
 			if len(secret) < 32 {
 				slog.Error("SESSION_SECRET must be at least 32 bytes — refusing to start")
 				os.Exit(1)
 			}
 
-			// Open SQLite database.
 			dbPath := config.ENV.DBPath
 			if err := os.MkdirAll(dirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("api: create db dir: %w", err)
@@ -111,14 +108,12 @@ Can scale later.`,
 			}
 			defer db.Close()
 
-			// Run migrations automatically when configured (default: true).
 			if config.ENV.DBAutoMigrate {
 				if err := internaldb.Up(db); err != nil {
 					return fmt.Errorf("api: auto-migrate: %w", err)
 				}
 			}
 
-			// Wire auth service.
 			lifetime := config.ENV.SessionLifetime
 			if lifetime <= 0 {
 				lifetime = 30 * 24 * time.Hour
@@ -132,13 +127,10 @@ Can scale later.`,
 
 			e := web.New()
 
-			// Set custom error handler for styled HTML error pages.
 			e.HTTPErrorHandler = handlers.CustomHTTPErrorHandler
 
-			// Wire people service.
 			peopleSvc := people.NewService(db)
 
-			// Wire file service for avatars.
 			avatarPath := config.ENV.AvatarStoragePath
 			if avatarPath == "" {
 				avatarPath = "data/avatars"
@@ -149,24 +141,18 @@ Can scale later.`,
 			fileSvc := files.NewLocalFileService(avatarPath)
 			peopleSvc.FileService = fileSvc
 
-			// Wire labels service.
 			labelsSvc := labels.NewService(db)
 			peopleSvc.LabelsSvc = labelsSvc
 
-			// Wire journal service.
 			journalSvc := journal.NewService(db)
 			journalSvc.PeopleSvc = &journalPeopleAdapter{svc: peopleSvc}
 
-			// Wire dates service.
 			datesSvc := dates.NewService(db)
 
-			// Wire reminders service.
 			remindersSvc := reminders.NewService(db)
 
-			// Wire work history service.
 			workHistorySvc := work_history.NewService(db)
 
-			// Wire audit service and attach to all domain services.
 			auditSvc := audit.NewService(db)
 			peopleSvc.Audit = auditSvc
 			labelsSvc.Audit = auditSvc
@@ -184,10 +170,8 @@ Can scale later.`,
 			relsSvc := relationships.NewService(db)
 			relsSvc.Audit = auditSvc
 
-			// Read API token for the JSON REST API.
 			apiToken := os.Getenv("API_TOKEN")
 
-			// Mount HTML UI routes on the same Echo instance.
 			web.Mount(e, web.Deps{
 				DB:                   db,
 				AuthService:          authSvc,
@@ -207,7 +191,6 @@ Can scale later.`,
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 			defer stop()
 
-			// Background session GC — runs every hour, cancels on shutdown.
 			go runSessionGC(ctx, authSvc.Sessions)
 
 			sc := echo.StartConfig{
@@ -228,7 +211,6 @@ Can scale later.`,
 	}
 }
 
-// runSessionGC deletes expired sessions every hour until ctx is cancelled.
 func runSessionGC(ctx context.Context, repo auth.SessionRepo) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
@@ -246,8 +228,6 @@ func runSessionGC(ctx context.Context, repo auth.SessionRepo) {
 	}
 }
 
-// dirOf returns the directory component of a file path.
-// e.g. "data/kith.db" → "data"
 func dirOf(path string) string {
 	for i := len(path) - 1; i >= 0; i-- {
 		if path[i] == '/' || path[i] == '\\' {

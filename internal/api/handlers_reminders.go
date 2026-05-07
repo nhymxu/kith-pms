@@ -13,7 +13,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/reminders"
 )
 
-// RemindersAPI handles /v1/reminders endpoints.
 type RemindersAPI struct {
 	Svc *reminders.Service
 }
@@ -27,7 +26,6 @@ type reminderRequest struct {
 	ImportantDateID *int64 `json:"important_date_id"`
 }
 
-// List handles GET /v1/reminders
 // Query params: status (upcoming|overdue|default=all), days (default 30 for upcoming)
 func (h *RemindersAPI) List(c *echo.Context) error {
 	status := c.QueryParam("status")
@@ -60,7 +58,6 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 	}
 }
 
-// Get handles GET /v1/reminders/:id
 func (h *RemindersAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -78,7 +75,6 @@ func (h *RemindersAPI) Get(c *echo.Context) error {
 	return ok(c, r)
 }
 
-// Create handles POST /v1/reminders
 func (h *RemindersAPI) Create(c *echo.Context) error {
 	var req reminderRequest
 	if err := c.Bind(&req); err != nil {
@@ -110,7 +106,6 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
-// Update handles PUT /v1/reminders/:id
 func (h *RemindersAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -153,7 +148,6 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
-// Delete handles DELETE /v1/reminders/:id
 func (h *RemindersAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -173,7 +167,6 @@ func (h *RemindersAPI) Delete(c *echo.Context) error {
 	return noContent(c)
 }
 
-// Complete handles PATCH /v1/reminders/:id/complete
 func (h *RemindersAPI) Complete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

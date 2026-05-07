@@ -10,7 +10,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
-// LabelsAPI handles /v1/labels CRUD endpoints.
 type LabelsAPI struct {
 	Svc *labels.Service
 }
@@ -21,7 +20,6 @@ type labelRequest struct {
 	Color string `json:"color"` // "#RRGGBB"
 }
 
-// List handles GET /v1/labels
 func (h *LabelsAPI) List(c *echo.Context) error {
 	list, err := h.Svc.ListWithCounts(c.Request().Context())
 	if err != nil {
@@ -30,7 +28,6 @@ func (h *LabelsAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
-// Get handles GET /v1/labels/:id
 func (h *LabelsAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -48,7 +45,6 @@ func (h *LabelsAPI) Get(c *echo.Context) error {
 	return ok(c, label)
 }
 
-// Create handles POST /v1/labels
 func (h *LabelsAPI) Create(c *echo.Context) error {
 	var req labelRequest
 	if err := c.Bind(&req); err != nil {
@@ -67,7 +63,6 @@ func (h *LabelsAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
-// Update handles PUT /v1/labels/:id
 func (h *LabelsAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -86,7 +81,6 @@ func (h *LabelsAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
-// Delete handles DELETE /v1/labels/:id
 func (h *LabelsAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

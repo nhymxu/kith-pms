@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// LabelRepo defines persistence operations for Label records.
 type LabelRepo interface {
 	Create(ctx context.Context, name, color string) (int64, error)
 	Update(ctx context.Context, id int64, name, color string) error
@@ -20,7 +19,6 @@ type LabelRepo interface {
 	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error)
 }
 
-// PersonLabelRepo defines persistence operations for person↔label associations.
 type PersonLabelRepo interface {
 	Attach(ctx context.Context, personID, labelID int64) error
 	Detach(ctx context.Context, personID, labelID int64) error
@@ -31,7 +29,6 @@ type PersonLabelRepo interface {
 
 type sqlLabelRepo struct{ db *sql.DB }
 
-// NewLabelRepo returns a LabelRepo backed by db.
 func NewLabelRepo(db *sql.DB) LabelRepo { return &sqlLabelRepo{db: db} }
 
 func (r *sqlLabelRepo) Create(ctx context.Context, name, color string) (int64, error) {
@@ -165,7 +162,6 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 
 type sqlPersonLabelRepo struct{ db *sql.DB }
 
-// NewPersonLabelRepo returns a PersonLabelRepo backed by db.
 func NewPersonLabelRepo(db *sql.DB) PersonLabelRepo { return &sqlPersonLabelRepo{db: db} }
 
 func (r *sqlPersonLabelRepo) Attach(ctx context.Context, personID, labelID int64) error {

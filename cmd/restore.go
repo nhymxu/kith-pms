@@ -57,7 +57,6 @@ The restore file is set to 0600 permissions after copy.`,
 				}
 			}
 
-			// Verify source is readable and stat its size.
 			srcInfo, err := os.Stat(src)
 			if err != nil {
 				return fmt.Errorf("restore: stat source %q: %w", src, err)
@@ -78,7 +77,6 @@ The restore file is set to 0600 permissions after copy.`,
 	}
 }
 
-// copyFile copies src to dst, creating or truncating dst.
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {

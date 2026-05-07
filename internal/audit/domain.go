@@ -6,12 +6,12 @@ type EntityType string
 type Action string
 
 const (
-	EntityPerson      EntityType = "person"
-	EntityJournal     EntityType = "journal"
-	EntityLabel       EntityType = "label"
-	EntityReminder    EntityType = "reminder"
-	EntityDate        EntityType = "date"
-	EntityWorkHistory EntityType = "work_history"
+	EntityPerson             EntityType = "person"
+	EntityJournal            EntityType = "journal"
+	EntityLabel              EntityType = "label"
+	EntityReminder           EntityType = "reminder"
+	EntityDate               EntityType = "date"
+	EntityWorkHistory        EntityType = "work_history"
 	EntityGift               EntityType = "gift"
 	EntityRelationshipType   EntityType = "relationship_type"
 	EntityPersonRelationship EntityType = "person_relationship"
@@ -21,7 +21,6 @@ const (
 	ActionDelete Action = "delete"
 )
 
-// Entry is a single audit log record.
 type Entry struct {
 	ID         int64
 	EntityType EntityType

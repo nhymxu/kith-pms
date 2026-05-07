@@ -11,12 +11,10 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 )
 
-// PeopleAPI handles /v1/people CRUD endpoints.
 type PeopleAPI struct {
 	Svc *people.Service
 }
 
-// personRequest is the JSON body for create and update.
 type personRequest struct {
 	Name             string            `json:"name"`
 	Nickname         string            `json:"nickname"`
@@ -43,7 +41,6 @@ type locationRequest struct {
 	Position   int    `json:"position"`
 }
 
-// List handles GET /v1/people
 func (h *PeopleAPI) List(c *echo.Context) error {
 	q := c.QueryParam("q")
 
@@ -87,7 +84,6 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
-// Get handles GET /v1/people/:id
 func (h *PeopleAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -105,7 +101,6 @@ func (h *PeopleAPI) Get(c *echo.Context) error {
 	return ok(c, p)
 }
 
-// Create handles POST /v1/people
 func (h *PeopleAPI) Create(c *echo.Context) error {
 	var req personRequest
 	if err := c.Bind(&req); err != nil {
@@ -132,7 +127,6 @@ func (h *PeopleAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
-// Update handles PUT /v1/people/:id
 func (h *PeopleAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -171,14 +165,12 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
-// Delete handles DELETE /v1/people/:id
 func (h *PeopleAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
 
-	// Check existence before delete.
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -194,12 +186,10 @@ func (h *PeopleAPI) Delete(c *echo.Context) error {
 	return noContent(c)
 }
 
-// parseID extracts and parses the :id route parameter.
 func parseID(c *echo.Context) (int64, error) {
 	return strconv.ParseInt(c.Param("id"), 10, 64)
 }
 
-// mapPersonRequest converts a personRequest to domain types.
 func mapPersonRequest(id int64, req personRequest) (people.Person, []people.ContactInfo, []people.Location) {
 	p := people.Person{
 		ID:               id,

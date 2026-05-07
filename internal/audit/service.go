@@ -32,7 +32,6 @@ func (s *Service) Log(ctx context.Context, entityType EntityType, entityID int64
 	}
 }
 
-// List returns paginated audit entries.
 func (s *Service) List(ctx context.Context, p ListParams) ([]Entry, error) {
 	return s.repo.List(ctx, s.db, p)
 }

@@ -14,10 +14,6 @@ import (
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
-// setPasswordCommand registers the `set-password` CLI subcommand.
-// Usage: ./kith-pms set-password
-// Prompts twice for a password (masked), hashes it with argon2id, and
-// upserts the single user row in the database.
 func setPasswordCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "set-password",
@@ -58,7 +54,6 @@ it does not exist yet.`,
 			}
 			defer db.Close()
 
-			// Ensure schema is up to date before writing.
 			if err := internaldb.Up(db); err != nil {
 				return fmt.Errorf("set-password: migrate: %w", err)
 			}
@@ -74,11 +69,10 @@ it does not exist yet.`,
 	}
 }
 
-// promptPassword prints prompt and reads a masked password from stdin.
 func promptPassword(prompt string) (string, error) {
 	fmt.Fprint(os.Stderr, prompt)
 	raw, err := term.ReadPassword(int(syscall.Stdin))
-	fmt.Fprintln(os.Stderr) // newline after masked input
+	fmt.Fprintln(os.Stderr)
 	if err != nil {
 		return "", err
 	}

@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// WorkHistoryRepo defines persistence operations for work history entries.
 type WorkHistoryRepo interface {
 	ListByPerson(ctx context.Context, personID int64) ([]WorkEntry, error)
 	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, entries []WorkEntry) error

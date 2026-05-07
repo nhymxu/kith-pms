@@ -30,7 +30,6 @@ The backup file contains all data including password hashes — store it securel
 			src := config.ENV.DBPath
 			dst := cmd.String("to")
 
-			// Stat source before opening to report size.
 			srcInfo, err := os.Stat(src)
 			if err != nil {
 				return fmt.Errorf("backup: stat source %q: %w", src, err)
@@ -42,7 +41,6 @@ The backup file contains all data including password hashes — store it securel
 			}
 			defer db.Close()
 
-			// VACUUM INTO creates an atomic, compacted copy — safe on a live WAL db.
 			if _, err := db.ExecContext(context.Background(), "VACUUM INTO ?", dst); err != nil {
 				return fmt.Errorf("backup: VACUUM INTO %q: %w", dst, err)
 			}
@@ -62,7 +60,6 @@ The backup file contains all data including password hashes — store it securel
 	}
 }
 
-// humanBytes formats a byte count as a human-readable string (KB / MB).
 func humanBytes(n int64) string {
 	switch {
 	case n >= 1<<20:

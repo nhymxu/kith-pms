@@ -10,8 +10,8 @@ import (
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
-// BearerAuth returns an Echo middleware that validates a static Bearer token.
-// If token is empty, every request gets a 501 "api not configured" response.
+// BearerAuth validates a static Bearer token.
+// If token is empty, returns 501 "api not configured" to signal misconfiguration.
 func BearerAuth(token string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
@@ -40,8 +40,6 @@ func BearerAuth(token string) echo.MiddlewareFunc {
 	}
 }
 
-// injectAPIActor injects a fixed actor ID (0) into the request context to
-// distinguish API-originated mutations from web UI mutations in the audit log.
 func injectAPIActor() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
@@ -52,7 +50,6 @@ func injectAPIActor() echo.MiddlewareFunc {
 	}
 }
 
-// extractBearer parses "Bearer <token>" from the Authorization header value.
 func extractBearer(header string) (string, bool) {
 	const prefix = "Bearer "
 	if !strings.HasPrefix(header, prefix) {

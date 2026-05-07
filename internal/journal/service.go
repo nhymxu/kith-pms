@@ -186,7 +186,6 @@ func parseActivityTimestamp(date, timeStr string) (time.Time, error) {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
 }
 
-// Get returns an activity by ID with its linked people populated.
 // Returns nil, nil when not found.
 func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 	a, err := s.Activities.Get(ctx, id)
@@ -222,7 +221,6 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// List returns a paginated, optionally filtered list of activities (no people populated).
 func (s *Service) List(ctx context.Context, params ListParams) ([]Activity, error) {
 	if params.PageSize <= 0 {
 		params.PageSize = defaultPageSize

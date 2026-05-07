@@ -90,7 +90,6 @@ type personRef struct {
 	Name string `json:"name"`
 }
 
-// Upcoming handles GET /v1/dates/upcoming?days=N
 func (h *DatesAPI) Upcoming(c *echo.Context) error {
 	days, _ := strconv.Atoi(c.QueryParam("days"))
 	if days < 1 {

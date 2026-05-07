@@ -12,23 +12,21 @@ import (
 	"github.com/nhymxu/kith-pms/internal/gifts"
 )
 
-// GiftsAPI handles /v1/gifts endpoints.
 type GiftsAPI struct {
 	Svc *gifts.Service
 }
 
 type giftRequest struct {
-	PersonID    int64   `json:"person_id"`
-	Title       string  `json:"title"`
-	Direction   string  `json:"direction"`
-	Date        string  `json:"date"`
-	Notes       string  `json:"notes"`
-	AmountCents *int64  `json:"amount_cents"`
-	Currency    string  `json:"currency"`
-	DebtType    string  `json:"debt_type"`
+	PersonID    int64  `json:"person_id"`
+	Title       string `json:"title"`
+	Direction   string `json:"direction"`
+	Date        string `json:"date"`
+	Notes       string `json:"notes"`
+	AmountCents *int64 `json:"amount_cents"`
+	Currency    string `json:"currency"`
+	DebtType    string `json:"debt_type"`
 }
 
-// List handles GET /v1/gifts
 func (h *GiftsAPI) List(c *echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
@@ -54,7 +52,6 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
-// Create handles POST /v1/gifts
 func (h *GiftsAPI) Create(c *echo.Context) error {
 	var req giftRequest
 	if err := c.Bind(&req); err != nil {
@@ -92,7 +89,6 @@ func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	return ok(c, g)
 }
 
-// Update handles PUT /v1/gifts/:id
 func (h *GiftsAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -114,7 +110,6 @@ func (h *GiftsAPI) Update(c *echo.Context) error {
 	return ok(c, g)
 }
 
-// Delete handles DELETE /v1/gifts/:id
 func (h *GiftsAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

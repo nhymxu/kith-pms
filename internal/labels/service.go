@@ -88,7 +88,6 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// List returns all labels ordered by name (no usage counts).
 func (s *Service) List(ctx context.Context) ([]Label, error) {
 	return s.Labels.List(ctx)
 }
@@ -98,7 +97,6 @@ func (s *Service) ListWithCounts(ctx context.Context) ([]Label, error) {
 	return s.Labels.ListWithCounts(ctx)
 }
 
-// Get returns a single label by ID, or nil if not found.
 func (s *Service) Get(ctx context.Context, id int64) (*Label, error) {
 	return s.Labels.Get(ctx, id)
 }

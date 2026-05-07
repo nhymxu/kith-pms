@@ -11,7 +11,6 @@ import (
 
 // ---- RelationshipTypeRepo ---------------------------------------------------
 
-// RelationshipTypeRepo defines persistence for RelationshipType records.
 type RelationshipTypeRepo interface {
 	Create(ctx context.Context, name, reverseName string) (int64, error)
 	Update(ctx context.Context, id int64, name, reverseName string) error
@@ -24,7 +23,6 @@ type RelationshipTypeRepo interface {
 
 type sqlRelationshipTypeRepo struct{ db *sql.DB }
 
-// NewSQLRelationshipTypeRepo returns a RelationshipTypeRepo backed by db.
 func NewSQLRelationshipTypeRepo(db *sql.DB) RelationshipTypeRepo {
 	return &sqlRelationshipTypeRepo{db: db}
 }
@@ -133,7 +131,6 @@ func (r *sqlRelationshipTypeRepo) ListWithCounts(ctx context.Context) ([]Relatio
 
 // ---- PersonRelationshipRepo -------------------------------------------------
 
-// PersonRelationshipRepo defines persistence for person_relationship junction rows.
 type PersonRelationshipRepo interface {
 	Attach(ctx context.Context, fromID, toID, typeID int64, notes string) (int64, error)
 	Detach(ctx context.Context, id int64) error
@@ -151,7 +148,6 @@ type querier interface {
 
 type sqlPersonRelationshipRepo struct{ db querier }
 
-// NewSQLPersonRelationshipRepo returns a PersonRelationshipRepo backed by db.
 func NewSQLPersonRelationshipRepo(db *sql.DB) PersonRelationshipRepo {
 	return &sqlPersonRelationshipRepo{db: db}
 }

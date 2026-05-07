@@ -13,7 +13,6 @@ import (
 
 const defaultPageSize = 50
 
-// ListParams holds query parameters for listing people.
 type ListParams struct {
 	Query    string
 	Page     int
@@ -22,7 +21,6 @@ type ListParams struct {
 	Sort     string  // sort parameter: name, -name, last_contact, -last_contact
 }
 
-// Service provides business logic for managing people.
 type Service struct {
 	DB          *sql.DB
 	People      PersonRepo
@@ -42,7 +40,6 @@ type FileService interface {
 	DeleteAvatar(personID int64, path string) error
 }
 
-// NewService constructs a Service wired to db.
 func NewService(db *sql.DB) *Service {
 	return &Service{
 		DB:        db,
@@ -52,8 +49,6 @@ func NewService(db *sql.DB) *Service {
 	}
 }
 
-// Create inserts a new person with their contacts and locations in a single transaction.
-// Returns the new person ID.
 func (s *Service) Create(ctx context.Context, p Person, contacts []ContactInfo, locations []Location) (int64, error) {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -82,7 +77,6 @@ func (s *Service) Create(ctx context.Context, p Person, contacts []ContactInfo, 
 	return id, nil
 }
 
-// Update replaces a person's fields and all child rows in a single transaction.
 func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, locations []Location) error {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -109,8 +103,6 @@ func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, 
 	return nil
 }
 
-// Get returns a person by ID with their contacts and locations populated.
-// Returns nil, nil when not found.
 func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 	p, err := s.People.Get(ctx, id)
 	if err != nil {
@@ -134,7 +126,6 @@ func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 	return p, nil
 }
 
-// List returns a paginated, optionally filtered list of people (no child rows).
 func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error) {
 	pageSize := params.PageSize
 	if pageSize <= 0 {
@@ -176,7 +167,6 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 	return people, nil
 }
 
-// Delete removes a person and cascades to their contacts and locations.
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	var name string
 	if s.Audit != nil {
@@ -227,7 +217,6 @@ func (s *Service) SetSelf(ctx context.Context, personID int64) error {
 	return nil
 }
 
-// UploadAvatar saves a new avatar file and updates the person's avatar metadata.
 // If the person already has an avatar, the old file is deleted after the transaction commits.
 func (s *Service) UploadAvatar(ctx context.Context, personID int64, file multipart.File, header *multipart.FileHeader) error {
 	if s.FileService == nil {
@@ -279,7 +268,6 @@ func (s *Service) UploadAvatar(ctx context.Context, personID int64, file multipa
 	return nil
 }
 
-// DeleteAvatar removes the avatar file and clears the person's avatar metadata.
 func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	if s.FileService == nil {
 		return fmt.Errorf("file service not configured")
@@ -318,7 +306,6 @@ func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	return nil
 }
 
-// UpdateLastContact sets last_contact_at to the given time for a person.
 func (s *Service) UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error {
 	person, err := s.People.Get(ctx, personID)
 	if err != nil {

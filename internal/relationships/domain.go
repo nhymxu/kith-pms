@@ -13,7 +13,6 @@ type RelationshipType struct {
 	UsageCount    int // populated by ListWithCounts; 0 elsewhere
 }
 
-// PersonRelationship is a raw junction row between two people.
 type PersonRelationship struct {
 	ID                 int64
 	FromPersonID       int64
@@ -23,7 +22,6 @@ type PersonRelationship struct {
 	CreatedAt          time.Time
 }
 
-// RelationshipView is a denormalised read model used for rendering on the people detail page.
 type RelationshipView struct {
 	ID                int64
 	OtherPersonID     int64

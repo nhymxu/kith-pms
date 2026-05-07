@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// PersonRepo defines persistence operations for Person records.
 type PersonRepo interface {
 	List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error)
 	Get(ctx context.Context, id int64) (*Person, error)
@@ -24,14 +23,12 @@ type PersonRepo interface {
 	UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error
 }
 
-// ContactRepo defines persistence operations for ContactInfo records.
 type ContactRepo interface {
 	// ReplaceAll deletes all contacts for personID and inserts the new slice.
 	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, contacts []ContactInfo) error
 	ListByPerson(ctx context.Context, personID int64) ([]ContactInfo, error)
 }
 
-// LocationRepo defines persistence operations for Location records.
 type LocationRepo interface {
 	// ReplaceAll deletes all locations for personID and inserts the new slice.
 	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, locations []Location) error
@@ -42,7 +39,6 @@ type LocationRepo interface {
 
 type sqlPersonRepo struct{ db *sql.DB }
 
-// NewPersonRepo returns a PersonRepo backed by db.
 func NewPersonRepo(db *sql.DB) PersonRepo { return &sqlPersonRepo{db: db} }
 
 func (r *sqlPersonRepo) List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error) {
@@ -271,7 +267,6 @@ func (r *sqlPersonRepo) UpdateLastContact(ctx context.Context, tx *sql.Tx, perso
 
 type sqlContactRepo struct{ db *sql.DB }
 
-// NewContactRepo returns a ContactRepo backed by db.
 func NewContactRepo(db *sql.DB) ContactRepo { return &sqlContactRepo{db: db} }
 
 func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, contacts []ContactInfo) error {
@@ -316,7 +311,6 @@ func (r *sqlContactRepo) ListByPerson(ctx context.Context, personID int64) ([]Co
 
 type sqlLocationRepo struct{ db *sql.DB }
 
-// NewLocationRepo returns a LocationRepo backed by db.
 func NewLocationRepo(db *sql.DB) LocationRepo { return &sqlLocationRepo{db: db} }
 
 func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, locations []Location) error {

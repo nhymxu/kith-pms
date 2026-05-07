@@ -21,12 +21,12 @@
 
 ### Prerequisites
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Go | 1.26+ | build |
-| [templ](https://templ.guide) | v0.3.1001 | HTML component codegen |
-| [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) | v4.2+ | CSS build |
-| make | any | convenience targets |
+| Tool                                                            | Version   | Purpose                |
+|-----------------------------------------------------------------|-----------|------------------------|
+| Go                                                              | 1.26+     | build                  |
+| [templ](https://templ.guide)                                    | v0.3.1001 | HTML component codegen |
+| [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) | v4.2+     | CSS build              |
+| make                                                            | any       | convenience targets    |
 
 ```bash
 # Install templ
@@ -60,17 +60,17 @@ Open [http://localhost:8000](http://localhost:8000) and log in with the password
 
 All configuration is via environment variables or a `.env` file in the working directory.
 
-| Variable | Default | Required | Description |
-|----------|---------|----------|-------------|
-| `SESSION_SECRET` | — | **Yes** | Cookie signing secret, min 32 bytes |
-| `DB_PATH` | `data/kith.db` | No | Path to the SQLite database file |
-| `DB_AUTO_MIGRATE` | `true` | No | Run migrations automatically on startup |
-| `AVATAR_STORAGE_PATH` | `data/avatars` | No | Directory for storing avatar files |
-| `BEHIND_TLS` | `false` | No | Set `true` when serving behind TLS (marks cookies Secure) |
-| `SESSION_LIFETIME` | `720h` (30 days) | No | How long a login session stays valid |
-| `TOKEN_AUTH` | — | No | Bearer token for any future JSON API endpoints |
-| `DEBUG` | `false` | No | `true` → text logs + debug level |
-| `SENTRY_DSN` | — | No | Sentry DSN; omit to disable error reporting |
+| Variable              | Default          | Required | Description                                               |
+|-----------------------|------------------|----------|-----------------------------------------------------------|
+| `SESSION_SECRET`      | —                | **Yes**  | Cookie signing secret, min 32 bytes                       |
+| `DB_PATH`             | `data/kith.db`   | No       | Path to the SQLite database file                          |
+| `DB_AUTO_MIGRATE`     | `true`           | No       | Run migrations automatically on startup                   |
+| `AVATAR_STORAGE_PATH` | `data/avatars`   | No       | Directory for storing avatar files                        |
+| `BEHIND_TLS`          | `false`          | No       | Set `true` when serving behind TLS (marks cookies Secure) |
+| `SESSION_LIFETIME`    | `720h` (30 days) | No       | How long a login session stays valid                      |
+| `TOKEN_AUTH`          | —                | No       | Bearer token for any future JSON API endpoints            |
+| `DEBUG`               | `false`          | No       | `true` → text logs + debug level                          |
+| `SENTRY_DSN`          | —                | No       | Sentry DSN; omit to disable error reporting               |
 
 Environment variables take precedence over `.env` file values.
 
@@ -157,16 +157,16 @@ plans/              Implementation plans
 
 ## Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Language | Go 1.26, `CGO_ENABLED=0` |
-| HTTP | Echo v5 |
-| Database | SQLite (modernc.org/sqlite — pure Go) |
-| Templates | [templ](https://templ.guide) |
-| Interactivity | [htmx](https://htmx.org) |
-| Styling | Tailwind CSS v4 |
-| Auth | Argon2id password hash, signed cookie sessions |
-| Search | SQLite FTS5 |
+| Layer         | Technology                                     |
+|---------------|------------------------------------------------|
+| Language      | Go 1.26, `CGO_ENABLED=0`                       |
+| HTTP          | Echo v5                                        |
+| Database      | SQLite (modernc.org/sqlite — pure Go)          |
+| Templates     | [templ](https://templ.guide)                   |
+| Interactivity | [htmx](https://htmx.org)                       |
+| Styling       | Tailwind CSS v4                                |
+| Auth          | Argon2id password hash, signed cookie sessions |
+| Search        | SQLite FTS5                                    |
 
 ## Documentation
 

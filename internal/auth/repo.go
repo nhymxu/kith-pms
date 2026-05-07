@@ -8,13 +8,11 @@ import (
 	"time"
 )
 
-// UserRepo defines persistence operations for the single application user.
 type UserRepo interface {
 	GetUser(ctx context.Context) (*User, error)
 	UpsertUser(ctx context.Context, hash string) error
 }
 
-// SessionRepo defines persistence operations for login sessions.
 type SessionRepo interface {
 	CreateSession(ctx context.Context, s Session) error
 	GetSession(ctx context.Context, id string) (*Session, error)
@@ -27,7 +25,6 @@ type SessionRepo interface {
 // sqlUserRepo implements UserRepo using raw *sql.DB queries.
 type sqlUserRepo struct{ db *sql.DB }
 
-// NewUserRepo returns a UserRepo backed by db.
 func NewUserRepo(db *sql.DB) UserRepo { return &sqlUserRepo{db: db} }
 
 func (r *sqlUserRepo) GetUser(ctx context.Context) (*User, error) {
@@ -56,7 +53,6 @@ func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
 // sqlSessionRepo implements SessionRepo using raw *sql.DB queries.
 type sqlSessionRepo struct{ db *sql.DB }
 
-// NewSessionRepo returns a SessionRepo backed by db.
 func NewSessionRepo(db *sql.DB) SessionRepo { return &sqlSessionRepo{db: db} }
 
 func (r *sqlSessionRepo) CreateSession(ctx context.Context, s Session) error {

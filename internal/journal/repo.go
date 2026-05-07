@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// ActivityRepo defines persistence operations for Activity records.
 type ActivityRepo interface {
 	Create(ctx context.Context, tx *sql.Tx, a Activity) (int64, error)
 	Update(ctx context.Context, tx *sql.Tx, a Activity) error
@@ -18,7 +17,6 @@ type ActivityRepo interface {
 	List(ctx context.Context, params ListParams) ([]Activity, error)
 }
 
-// ActivityPersonRepo defines persistence operations for activity↔person links.
 type ActivityPersonRepo interface {
 	ReplaceAll(ctx context.Context, tx *sql.Tx, activityID int64, personIDs []int64) error
 	ListByActivity(ctx context.Context, activityID int64) ([]ActivityPerson, error)
@@ -28,7 +26,6 @@ type ActivityPersonRepo interface {
 
 type sqlActivityRepo struct{ db *sql.DB }
 
-// NewActivityRepo returns an ActivityRepo backed by db.
 func NewActivityRepo(db *sql.DB) ActivityRepo { return &sqlActivityRepo{db: db} }
 
 func (r *sqlActivityRepo) Create(ctx context.Context, tx *sql.Tx, a Activity) (int64, error) {
@@ -259,7 +256,6 @@ func parseTime(s string) time.Time {
 
 type sqlActivityPersonRepo struct{ db *sql.DB }
 
-// NewActivityPersonRepo returns an ActivityPersonRepo backed by db.
 func NewActivityPersonRepo(db *sql.DB) ActivityPersonRepo {
 	return &sqlActivityPersonRepo{db: db}
 }

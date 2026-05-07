@@ -10,7 +10,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 )
 
-// JournalAPI handles /v1/journal CRUD endpoints.
 type JournalAPI struct {
 	Svc *journal.Service
 }
@@ -24,7 +23,6 @@ type journalRequest struct {
 	PersonIDs      []int64 `json:"person_ids"`
 }
 
-// List handles GET /v1/journal
 func (h *JournalAPI) List(c *echo.Context) error {
 	q := c.QueryParam("q")
 
@@ -54,7 +52,6 @@ func (h *JournalAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
-// Get handles GET /v1/journal/:id
 func (h *JournalAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -72,7 +69,6 @@ func (h *JournalAPI) Get(c *echo.Context) error {
 	return ok(c, a)
 }
 
-// Create handles POST /v1/journal
 func (h *JournalAPI) Create(c *echo.Context) error {
 	var req journalRequest
 	if err := c.Bind(&req); err != nil {
@@ -98,7 +94,6 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
-// Update handles PUT /v1/journal/:id
 func (h *JournalAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -129,7 +124,6 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
-// Delete handles DELETE /v1/journal/:id
 func (h *JournalAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

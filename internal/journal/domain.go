@@ -2,7 +2,6 @@ package journal
 
 import "time"
 
-// Activity is a journal entry linked to zero or more people.
 type Activity struct {
 	ID             int64
 	Title          string
@@ -14,7 +13,6 @@ type Activity struct {
 	People         []ActivityPerson
 }
 
-// ActivityPerson is a person linked to an activity.
 type ActivityPerson struct {
 	PersonID int64
 	Name     string

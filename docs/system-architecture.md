@@ -19,7 +19,7 @@
 │  │  ├─ /              → Dashboard (home)                    │   │
 │  │  ├─ /auth/login    → Login form + session creation       │   │
 │  │  ├─ /people/*      → People CRUD                         │   │
-│  │  ├─ /settings/*    → Settings hub, labels, rel types     │   │
+│  │  ├─ /settings/*    → Settings hub, labels, rel types, security │   │
 │  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
 │  │  ├─ /dates         → Important dates & milestones        │   │
 │  │  ├─ /reminders/*   → Reminders & notifications           │   │
@@ -132,6 +132,8 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 /settings/labels/:id   → GET (detail), PUT (update), DELETE
 /settings/relationship-types → GET (list, with counts), POST (create)
 /settings/relationship-types/:id → GET (detail), POST (update), DELETE
+/settings/security     → GET (password change form), POST (change password)
+/settings/security/password → POST (process password change with rate limiting)
 /labels                → GET (302 redirect to /settings/labels)
 /journal               → GET (list + FTS5 search), POST (create)
 /journal/:id           → GET (detail), PUT (update), DELETE
@@ -166,7 +168,15 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
    - Verifies expiry time
    - Injects user context into request
    ↓
-6. Logout (POST /auth/logout):
+6. Password change (POST /settings/security/password):
+   - Verify current password
+   - Hash new password with Argon2id
+   - Update password in database
+   - Invalidate all sessions
+   - Re-issue new session for current request
+   - Rate limited: 5 attempts per 15 minutes
+   ↓
+7. Logout (POST /auth/logout):
    - Clear session in database
    - Clear session cookie
 ```

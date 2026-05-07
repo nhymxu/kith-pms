@@ -153,8 +153,13 @@ func Mount(e *echo.Echo, deps Deps) {
 		settingsH := &handlers.SettingsHandlers{
 			RelSvc:    deps.RelationshipsService,
 			LabelsSvc: deps.LabelsService,
+			AuthSvc:   deps.AuthService,
 		}
 		protected.GET("/settings", settingsH.GetHub)
+		protected.GET("/settings/security", settingsH.GetSecurity)
+		protected.POST("/settings/security/password", settingsH.PostChangePassword,
+			auth.RateLimitLogin(5, 15*time.Minute),
+		)
 		protected.GET("/settings/relationship-types", settingsH.GetRelationshipTypes)
 		protected.GET("/settings/relationship-types/:id/edit", settingsH.GetRelationshipTypeEdit)
 		protected.GET("/settings/relationship-types/:id/row", settingsH.GetRelationshipTypeRow)

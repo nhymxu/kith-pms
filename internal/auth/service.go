@@ -87,3 +87,40 @@ func (s *Service) LoadUser(ctx context.Context, token string) (*User, error) {
 	}
 	return user, nil
 }
+
+// ChangePassword verifies the current password and updates to a new password hash.
+// Returns ErrInvalidCredentials if currentPwd does not match the stored hash.
+func (s *Service) ChangePassword(ctx context.Context, currentPwd, newPwd string) error {
+	// Fetch current user
+	user, err := s.Users.GetUser(ctx)
+	if err != nil {
+		return fmt.Errorf("auth: change password get user: %w", err)
+	}
+	if user == nil {
+		return ErrInvalidCredentials
+	}
+
+	// Verify current password
+	ok, err := VerifyPassword(user.PasswordHash, currentPwd)
+	if err != nil {
+		return fmt.Errorf("auth: change password verify: %w", err)
+	}
+	if !ok {
+		slog.Warn("auth: failed password change attempt (wrong current password)", "user_id", user.ID)
+		return ErrInvalidCredentials
+	}
+
+	// Hash new password
+	newHash, err := HashPassword(newPwd)
+	if err != nil {
+		return fmt.Errorf("auth: change password hash: %w", err)
+	}
+
+	// Update password hash in database
+	if err := s.Users.UpsertUser(ctx, newHash); err != nil {
+		return fmt.Errorf("auth: change password update: %w", err)
+	}
+
+	slog.Info("auth: password changed successfully", "user_id", user.ID)
+	return nil
+}

@@ -22,7 +22,8 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, g *Gift) (int64, error) {
 	}
 
 	result, err := tx.ExecContext(ctx, `
-		INSERT INTO gift (person_id, title, direction, date, notes, amount_cents, currency, debt_type, image_path, image_mime_type)
+		INSERT INTO gift (person_id, title, direction, date, notes,
+			amount_cents, currency, debt_type, image_path, image_mime_type)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		g.PersonID, g.Title, string(g.Direction), dateVal, g.Notes,
 		g.AmountCents, g.Currency, string(g.DebtType), g.ImagePath, g.ImageMimeType,
@@ -113,7 +114,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 	if err != nil {
 		return nil, fmt.Errorf("query gifts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []GiftWithPerson
 

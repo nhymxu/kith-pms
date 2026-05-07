@@ -32,7 +32,7 @@ func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, dates []
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.ReplaceAll(ctx, tx, personID, dates); err != nil {
 		return err

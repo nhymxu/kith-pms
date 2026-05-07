@@ -101,7 +101,7 @@ func (r *sqlRelationshipTypeRepo) List(ctx context.Context) ([]RelationshipType,
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list types: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return collectRelationshipTypes(rows)
 }
@@ -118,7 +118,7 @@ func (r *sqlRelationshipTypeRepo) ListWithCounts(ctx context.Context) ([]Relatio
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list types with counts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var types []RelationshipType
 
@@ -253,7 +253,7 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list by person: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var views []RelationshipView
 

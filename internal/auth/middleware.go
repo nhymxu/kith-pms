@@ -76,8 +76,8 @@ func (l *ipRateLimiter) allow(ip string) bool {
 
 // RateLimitLogin returns middleware that limits login attempts to max requests
 // per window per remote IP. Excess requests receive 429 Too Many Requests.
-func RateLimitLogin(max int, window time.Duration) echo.MiddlewareFunc {
-	limiter := &ipRateLimiter{max: max, window: window}
+func RateLimitLogin(limit int, window time.Duration) echo.MiddlewareFunc {
+	limiter := &ipRateLimiter{max: limit, window: window}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {

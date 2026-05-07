@@ -239,6 +239,7 @@ func (s *Service) SetSelf(ctx context.Context, personID int64) error {
 	return nil
 }
 
+// UploadAvatar sets a new avatar for the person.
 // If the person already has an avatar, the old file is deleted after the transaction commits.
 func (s *Service) UploadAvatar(
 	ctx context.Context,
@@ -268,7 +269,7 @@ func (s *Service) UploadAvatar(
 
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
-		s.FileService.DeleteAvatar(personID, path)
+		_ = s.FileService.DeleteAvatar(personID, path)
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
@@ -278,12 +279,12 @@ func (s *Service) UploadAvatar(
 	uploadedAt := time.Now().UTC()
 
 	if err := s.People.UpdateAvatar(ctx, tx, personID, path, mimeType, size, uploadedAt); err != nil {
-		s.FileService.DeleteAvatar(personID, path)
+		_ = s.FileService.DeleteAvatar(personID, path)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		s.FileService.DeleteAvatar(personID, path)
+		_ = s.FileService.DeleteAvatar(personID, path)
 		return fmt.Errorf("commit: %w", err)
 	}
 

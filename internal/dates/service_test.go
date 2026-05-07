@@ -291,7 +291,8 @@ func TestService_OnThisDay(t *testing.T) {
 		t.Fatalf("OnThisDay: %v", err)
 	}
 
-	// Should match: Alice's birthday (recurring), Alice's met (yearless recurring), Bob's birthday (non-recurring exact match)
+	// Should match: Alice's birthday (recurring), Alice's met (yearless recurring),
+	// Bob's birthday (non-recurring exact match)
 	// Should NOT match: Bob's past event (non-recurring past date)
 	if len(items) != 3 {
 		t.Fatalf("got %d items, want 3", len(items))

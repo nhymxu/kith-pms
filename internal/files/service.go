@@ -100,20 +100,20 @@ func (s *LocalFileService) SaveAvatar(
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
 	}
-	defer dest.Close()
+	defer func() { _ = dest.Close() }()
 
 	if _, err := io.Copy(dest, file); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("write file: %w", err)
 	}
 
 	if err := dest.Sync(); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("sync file: %w", err)
 	}
 
 	if err := os.Rename(tempPath, destPath); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("rename file: %w", err)
 	}
 
@@ -142,7 +142,7 @@ func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {
 
 	entries, err := os.ReadDir(personDir)
 	if err == nil && len(entries) == 0 {
-		os.Remove(personDir)
+		_ = os.Remove(personDir)
 	}
 
 	return nil
@@ -209,20 +209,20 @@ func (s *LocalFileService) SaveGiftImage(
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
 	}
-	defer dest.Close()
+	defer func() { _ = dest.Close() }()
 
 	if _, err := io.Copy(dest, file); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("write file: %w", err)
 	}
 
 	if err := dest.Sync(); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("sync file: %w", err)
 	}
 
 	if err := os.Rename(tempPath, destPath); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return "", fmt.Errorf("rename file: %w", err)
 	}
 
@@ -247,7 +247,7 @@ func (s *LocalFileService) DeleteGiftImage(giftID int64, path string) error {
 
 	giftDir := filepath.Join(s.BaseDir, "gifts", fmt.Sprintf("%d", giftID))
 	if entries, err := os.ReadDir(giftDir); err == nil && len(entries) == 0 {
-		os.Remove(giftDir)
+		_ = os.Remove(giftDir)
 	}
 
 	return nil

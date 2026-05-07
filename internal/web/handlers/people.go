@@ -622,7 +622,7 @@ func (h *PeopleHandlers) PostQuickGift(c *echo.Context) error {
 	}
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
-		defer src.Close()
+		defer func() { _ = src.Close() }()
 
 		_ = h.GiftsSvc.UploadImage(c.Request().Context(), giftID, src, file)
 	}
@@ -768,7 +768,8 @@ func parsePersonForm(
 
 		canonicalStart, err := work_history.ParseWorkDate(startDate)
 		if err != nil {
-			return p, contacts, locations, importantDates, nil, "Invalid work history start date: " + startDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+			msg := "Invalid work history start date: " + startDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+			return p, contacts, locations, importantDates, nil, msg
 		}
 
 		endDate := strings.TrimSpace(forms.GetField(row, "end_date"))
@@ -777,7 +778,8 @@ func parsePersonForm(
 		if endDate != "" {
 			canonicalEnd, err = work_history.ParseWorkDate(endDate)
 			if err != nil {
-				return p, contacts, locations, importantDates, nil, "Invalid work history end date: " + endDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+				msg := "Invalid work history end date: " + endDate + " (use YYYY, YYYY-MM, or YYYY-MM-DD)"
+				return p, contacts, locations, importantDates, nil, msg
 			}
 		}
 
@@ -818,7 +820,7 @@ func (h *PeopleHandlers) PostUploadAvatar(c *echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Failed to open file")
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	if err := h.Svc.UploadAvatar(c.Request().Context(), personID, src, file); err != nil {
 		return c.String(http.StatusBadRequest, err.Error())
@@ -854,7 +856,7 @@ func (h *PeopleHandlers) GetAvatar(c *echo.Context) error {
 	if err != nil {
 		return echo.ErrNotFound
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	c.Response().Header().Set("Content-Type", p.AvatarMimeType)
 	c.Response().Header().Set("Cache-Control", "public, max-age=86400")

@@ -29,7 +29,7 @@ func (s *Service) Create(ctx context.Context, g *Gift) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	id, err := s.repo.Create(ctx, tx, g)
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *Service) Update(ctx context.Context, g *Gift) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.Update(ctx, tx, g); err != nil {
 		return err
@@ -92,7 +92,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.Delete(ctx, tx, id); err != nil {
 		return err
@@ -140,7 +140,7 @@ func (s *Service) UploadImage(
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.UpdateImage(ctx, tx, giftID, path, mimeType); err != nil {
 		return err
@@ -173,7 +173,7 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.UpdateImage(ctx, tx, giftID, "", ""); err != nil {
 		return err

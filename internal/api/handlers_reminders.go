@@ -26,7 +26,7 @@ type reminderRequest struct {
 	ImportantDateID *int64 `json:"important_date_id"`
 }
 
-// Query params: status (upcoming|overdue|default=all), days (default 30 for upcoming)
+// List handles reminder listing. Query params: status (upcoming|overdue|default=all), days (default 30 for upcoming).
 func (h *RemindersAPI) List(c *echo.Context) error {
 	status := c.QueryParam("status")
 

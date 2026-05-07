@@ -42,7 +42,7 @@ func monicaImportCommand() *cli.Command {
 			if err != nil {
 				return fmt.Errorf("monica-import: open %q: %w", fromPath, err)
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 
 			export, err := monica.Parse(f)
 			if err != nil {
@@ -59,7 +59,7 @@ func monicaImportCommand() *cli.Command {
 			if err != nil {
 				return fmt.Errorf("monica-import: open db: %w", err)
 			}
-			defer database.Close()
+			defer func() { _ = database.Close() }()
 
 			if err := internaldb.Up(database); err != nil {
 				return fmt.Errorf("monica-import: migrations: %w", err)

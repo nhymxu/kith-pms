@@ -63,7 +63,7 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	if err != nil {
 		return nil, fmt.Errorf("audit: list: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var entries []Entry
 

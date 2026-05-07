@@ -69,7 +69,7 @@ func Status(db *sql.DB) ([]MigrationStatus, error) {
 	if err != nil {
 		return nil, fmt.Errorf("migrations: query status: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	appliedMap := map[int]string{}
 
@@ -177,7 +177,7 @@ func appliedVersions(db *sql.DB) (map[int]bool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("migrations: query applied: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	m := map[int]bool{}
 

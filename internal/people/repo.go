@@ -93,7 +93,7 @@ func (r *sqlPersonRepo) List(
 	if err != nil {
 		return nil, fmt.Errorf("people: list query: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var people []Person
 
@@ -357,7 +357,7 @@ func (r *sqlContactRepo) ListByPerson(ctx context.Context, personID int64) ([]Co
 	if err != nil {
 		return nil, fmt.Errorf("people: list contacts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var contacts []ContactInfo
 
@@ -413,7 +413,7 @@ func (r *sqlLocationRepo) ListByPerson(ctx context.Context, personID int64) ([]L
 	if err != nil {
 		return nil, fmt.Errorf("people: list locations: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var locations []Location
 

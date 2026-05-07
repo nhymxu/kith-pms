@@ -27,7 +27,7 @@ func (s *Service) Create(ctx context.Context, rem *Reminder) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	id, err := s.repo.Create(ctx, tx, rem)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *Service) Update(ctx context.Context, rem *Reminder) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.Update(ctx, tx, rem); err != nil {
 		return err
@@ -84,7 +84,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.Delete(ctx, tx, id); err != nil {
 		return err
@@ -126,7 +126,7 @@ func (s *Service) MarkComplete(ctx context.Context, id int64) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.MarkComplete(ctx, tx, id, time.Now()); err != nil {
 		return err

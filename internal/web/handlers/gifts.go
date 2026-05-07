@@ -97,7 +97,7 @@ func (h *GiftsHandlers) PostCreate(c *echo.Context) error {
 	}
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
-		defer src.Close()
+		defer func() { _ = src.Close() }()
 
 		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
 	}
@@ -183,7 +183,7 @@ func (h *GiftsHandlers) PostUpdate(c *echo.Context) error {
 	}
 
 	if src, file, ferr := c.Request().FormFile("image"); ferr == nil {
-		defer src.Close()
+		defer func() { _ = src.Close() }()
 
 		_ = h.Svc.UploadImage(c.Request().Context(), id, src, file)
 	} else if c.FormValue("remove_image") == "1" {

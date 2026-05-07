@@ -39,8 +39,8 @@ The restore file is set to 0600 permissions after copy.`,
 
 			if !force {
 				return fmt.Errorf(
-					"restore: refusing to overwrite %q without --force flag.\n"+
-						"Stop the API server first, then re-run with --force.",
+					"restore: refusing to overwrite %q without --force flag; "+
+						"stop the API server first, then re-run with --force",
 					dst,
 				)
 			}
@@ -50,8 +50,8 @@ The restore file is set to 0600 permissions after copy.`,
 			if info, err := os.Stat(dst); err == nil {
 				if time.Since(info.ModTime()) < 30*time.Second {
 					return fmt.Errorf(
-						"restore: %q was modified within the last 30s — the API server may be running.\n"+
-							"Stop the server and retry.",
+						"restore: %q was modified within the last 30s — the API server may be running; "+
+							"stop the server and retry",
 						dst,
 					)
 				}
@@ -83,13 +83,13 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer func() { _ = in.Close() }()
 
 	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	if _, err := io.Copy(out, in); err != nil {
 		return err

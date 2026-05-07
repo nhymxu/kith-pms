@@ -39,7 +39,7 @@ The backup file contains all data including password hashes — store it securel
 			if err != nil {
 				return fmt.Errorf("backup: open db %q: %w", src, err)
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			if _, err := db.ExecContext(context.Background(), "VACUUM INTO ?", dst); err != nil {
 				return fmt.Errorf("backup: VACUUM INTO %q: %w", dst, err)

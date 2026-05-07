@@ -34,7 +34,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]Important
 	if err != nil {
 		return nil, fmt.Errorf("query dates: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var dates []ImportantDate
 
@@ -91,7 +91,7 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, da
 	if err != nil {
 		return fmt.Errorf("prepare insert: %w", err)
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	for _, d := range dates {
 		recurringInt := 0
@@ -133,7 +133,7 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 	if err != nil {
 		return nil, fmt.Errorf("query on this day: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var items []OnThisDayItem
 
@@ -205,7 +205,7 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query list all: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var items []OnThisDayItem
 

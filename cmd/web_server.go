@@ -111,7 +111,7 @@ Can scale later.`,
 			if err != nil {
 				return fmt.Errorf("api: open db: %w", err)
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			if config.ENV.DBAutoMigrate {
 				if err := internaldb.Up(db); err != nil {

@@ -54,7 +54,7 @@ it does not exist yet.`,
 			if err != nil {
 				return fmt.Errorf("set-password: open db: %w", err)
 			}
-			defer db.Close()
+			defer func() { _ = db.Close() }()
 
 			if err := internaldb.Up(db); err != nil {
 				return fmt.Errorf("set-password: migrate: %w", err)
@@ -65,7 +65,7 @@ it does not exist yet.`,
 				return fmt.Errorf("set-password: upsert user: %w", err)
 			}
 
-			fmt.Fprintln(os.Stdout, "Password updated successfully.")
+			_, _ = fmt.Fprintln(os.Stdout, "Password updated successfully.")
 
 			return nil
 		},

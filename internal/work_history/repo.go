@@ -33,7 +33,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]WorkEntry
 	if err != nil {
 		return nil, fmt.Errorf("query work history: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var entries []WorkEntry
 
@@ -88,7 +88,7 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, en
 	if err != nil {
 		return fmt.Errorf("prepare insert work history: %w", err)
 	}
-	defer stmt.Close()
+	defer func() { _ = stmt.Close() }()
 
 	for _, e := range entries {
 		_, err := stmt.ExecContext(

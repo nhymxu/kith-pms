@@ -195,7 +195,7 @@ func parseActivityTimestamp(date, timeStr string) (time.Time, error) {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
 }
 
-// Returns nil, nil when not found.
+// Get returns the activity with the given id, or nil, nil when not found.
 func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 	a, err := s.Activities.Get(ctx, id)
 	if err != nil {

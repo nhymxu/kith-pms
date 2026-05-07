@@ -95,7 +95,7 @@ func (r *sqlLabelRepo) List(ctx context.Context) ([]Label, error) {
 	if err != nil {
 		return nil, fmt.Errorf("labels: list: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return collectLabels(rows)
 }
@@ -111,7 +111,7 @@ func (r *sqlLabelRepo) ListWithCounts(ctx context.Context) ([]Label, error) {
 	if err != nil {
 		return nil, fmt.Errorf("labels: list with counts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var labels []Label
 
@@ -157,7 +157,7 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 	if err != nil {
 		return nil, fmt.Errorf("labels: list by person ids: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	result := make(map[int64][]Label)
 
@@ -220,7 +220,7 @@ func (r *sqlPersonLabelRepo) ListByPersonID(ctx context.Context, personID int64)
 	if err != nil {
 		return nil, fmt.Errorf("labels: list by person: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return collectLabels(rows)
 }

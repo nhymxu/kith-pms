@@ -166,7 +166,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	if err != nil {
 		return nil, fmt.Errorf("query reminders: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []ReminderWithPerson
 
@@ -220,7 +220,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 	if err != nil {
 		return nil, fmt.Errorf("query upcoming reminders: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []ReminderWithPerson
 
@@ -271,7 +271,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	if err != nil {
 		return nil, fmt.Errorf("query overdue reminders: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var results []ReminderWithPerson
 

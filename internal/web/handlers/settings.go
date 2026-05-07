@@ -122,7 +122,8 @@ func (h *SettingsHandlers) PostUpdateRelationshipType(c *echo.Context) error {
 	return templates.TypeRow(*rt, auth.CSRFToken(c)).Render(ctx, c.Response())
 }
 
-// GetRelationshipTypeRow handles GET /settings/relationship-types/:id/row — returns the display row (used by Cancel in inline edit).
+// GetRelationshipTypeRow handles GET /settings/relationship-types/:id/row.
+// Returns the display row (used by Cancel in inline edit).
 func (h *SettingsHandlers) GetRelationshipTypeRow(c *echo.Context) error {
 	ctx := c.Request().Context()
 

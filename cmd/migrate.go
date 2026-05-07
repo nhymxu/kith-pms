@@ -23,7 +23,7 @@ func migrateCommand() *cli.Command {
 					if err != nil {
 						return fmt.Errorf("migrate up: open db: %w", err)
 					}
-					defer db.Close()
+					defer func() { _ = db.Close() }()
 
 					before, err := internaldb.Status(db)
 					if err != nil {
@@ -55,7 +55,7 @@ func migrateCommand() *cli.Command {
 					if err != nil {
 						return fmt.Errorf("migrate status: open db: %w", err)
 					}
-					defer db.Close()
+					defer func() { _ = db.Close() }()
 
 					statuses, err := internaldb.Status(db)
 					if err != nil {

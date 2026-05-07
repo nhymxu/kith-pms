@@ -243,7 +243,7 @@ func Mount(e *echo.Echo, deps Deps) {
 
 // injectAuditActor copies the authenticated user ID from the Echo context into
 // the request context so service-layer audit calls have actor attribution.
-func injectAuditActor(deps Deps) echo.MiddlewareFunc {
+func injectAuditActor(_ Deps) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			if u := auth.UserFromContext(c); u != nil {

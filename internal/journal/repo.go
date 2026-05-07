@@ -136,7 +136,9 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 
 		where = append(
 			where,
-			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))",
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap"+
+				" JOIN person_label pl ON pl.person_id = ap.person_id"+
+				" WHERE pl.label_id IN ("+placeholders+"))",
 		)
 		for _, lid := range params.LabelIDs {
 			args = append(args, lid)
@@ -193,7 +195,7 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	if err != nil {
 		return nil, fmt.Errorf("journal: list query: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var list []Activity
 
@@ -335,7 +337,7 @@ func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID i
 	if err != nil {
 		return nil, fmt.Errorf("journal: list activity people: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var list []ActivityPerson
 

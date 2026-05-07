@@ -225,7 +225,10 @@ func TestMapContactFirstMetDate(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	json := `{"contacts":[{"id":"abc","first_name":"Alice","last_name":"Smith","information":{"birthdate":"","is_year_unknown":false,"first_met_date":""},"addresses":[],"contactInformation":[],"notes":[],"activities":[],"reminders":[],"tags":[]}]}`
+	json := `{"contacts":[{"id":"abc","first_name":"Alice","last_name":"Smith",` +
+		`"information":{"birthdate":"","is_year_unknown":false,"first_met_date":""},` +
+		`"addresses":[],"contactInformation":[],"notes":[],"activities":[],` +
+		`"reminders":[],"tags":[]}]}`
 
 	exp, err := Parse(strings.NewReader(json))
 	if err != nil {

@@ -78,6 +78,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - internal/web/templates/ui
 
 formatters:
   enable:

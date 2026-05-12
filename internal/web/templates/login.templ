@@ -1,5 +1,11 @@
 package templates
 
+import (
+	"github.com/nhymxu/kith-pms/internal/web/templates/ui/button"
+	"github.com/nhymxu/kith-pms/internal/web/templates/ui/input"
+	"github.com/nhymxu/kith-pms/internal/web/templates/ui/label"
+)
+
 // Login renders the login page with password form and CSRF protection.
 // csrfToken — value from auth.CSRFToken(c), embedded as hidden input.
 // next      — redirect destination after successful login (may be empty).
@@ -18,23 +24,19 @@ templ Login(csrfToken, next string, showError bool) {
 				if next != "" {
 					<input type="hidden" name="next" value={ next }/>
 				}
-				<div>
-					<label for="password" class="block text-sm font-medium text-olive-ink mb-1">Password</label>
-					<input
-						id="password"
-						type="password"
-						name="password"
-						required
-						autofocus
-						class="w-full border border-sage-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-deep-olive"
-					/>
+				<div class="space-y-1">
+					@label.Label(label.Props{For: "password"}) { Password }
+					@input.Input(input.Props{
+						ID:       "password",
+						Type:     input.TypePassword,
+						Name:     "password",
+						Required: true,
+						Attributes: templ.Attributes{"autofocus": true},
+					})
 				</div>
-				<button
-					type="submit"
-					class="w-full bg-deep-olive text-parchment rounded px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
-				>
+				@button.Button(button.Props{Type: button.TypeSubmit, FullWidth: true}) {
 					Sign in
-				</button>
+				}
 			</form>
 		</div>
 	}

@@ -1,0 +1,7 @@
+{
+  "componentsDir": "internal/web/templates/ui",
+  "utilsDir": "utils",
+  "moduleName": "github.com/nhymxu/kith-pms",
+  "jsDir": "internal/web/static/js",
+  "jsPublicPath": "/static/js"
+}

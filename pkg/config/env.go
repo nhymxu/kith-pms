@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/knadh/koanf/parsers/dotenv"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/env"
@@ -21,7 +22,7 @@ type EnvConfigMap struct {
 		DSN string `koanf:"DSN"`
 	} `koanf:"SENTRY"`
 
-	TokenAuth string `koanf:"TOKEN_AUTH"`
+	TokenAuth string `koanf:"TOKEN_AUTH" copier:"-"`
 
 	// Database
 	DBPath        string `koanf:"DB_PATH"`
@@ -31,10 +32,22 @@ type EnvConfigMap struct {
 	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
 
 	// Auth
-	SessionSecret   string        `koanf:"SESSION_SECRET"`
-	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH"`
+	SessionSecret   string        `koanf:"SESSION_SECRET" copier:"-"`
+	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH" copier:"-"`
 	BehindTLS       bool          `koanf:"BEHIND_TLS"`
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
+}
+
+func (c *EnvConfigMap) Sanitized() EnvConfigMap {
+	var cc EnvConfigMap
+
+	// Secrets excluded ❌
+	err := copier.Copy(&cc, &c)
+	if err != nil {
+		return EnvConfigMap{}
+	}
+
+	return cc
 }
 
 // ENV is global variable for using config in other place

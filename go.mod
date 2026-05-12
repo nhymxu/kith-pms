@@ -7,6 +7,7 @@ require (
 	github.com/a-h/templ v0.3.1020
 	github.com/getsentry/sentry-go v0.46.1
 	github.com/getsentry/sentry-go/echo v0.46.1
+	github.com/jinzhu/copier v0.4.0
 	github.com/knadh/koanf/parsers/dotenv v1.1.1
 	github.com/knadh/koanf/providers/confmap v1.0.0
 	github.com/knadh/koanf/providers/env v1.1.0

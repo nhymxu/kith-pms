@@ -152,7 +152,6 @@ internal/
 pkg/
   config/           Config loading via koanf
 docs/               Project documentation
-plans/              Implementation plans
 ```
 
 ## Stack
@@ -174,4 +173,3 @@ plans/              Implementation plans
 - [Codebase Summary](docs/codebase-summary.md)
 - [System Architecture](docs/system-architecture.md)
 - [Code Standards](docs/code-standards.md)
-- [Project Roadmap](docs/project-roadmap.md)

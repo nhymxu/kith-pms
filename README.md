@@ -173,3 +173,16 @@ docs/               Project documentation
 - [Codebase Summary](docs/codebase-summary.md)
 - [System Architecture](docs/system-architecture.md)
 - [Code Standards](docs/code-standards.md)
+
+## Contributing & Development
+
+### AI skills
+
+manage AI skills via [skill.fish](https://github.com/knoxgraeme/skillfish) and store bundle on `skillfish.json`
+
+`skill.fish` auto detect coding agent to install
+
+```shell
+mkdir -p .claude
+npx skillfish install
+```

@@ -1,7 +1,22 @@
 {
   "version": 1,
   "skills": [
+    "samber/cc-skills-golang/skills/golang-code-style",
+    "samber/cc-skills-golang/skills/golang-data-structures",
+    "samber/cc-skills-golang/skills/golang-database",
+    "samber/cc-skills-golang/skills/golang-design-patterns",
+    "samber/cc-skills-golang/skills/golang-documentation",
+    "samber/cc-skills-golang/skills/golang-error-handling",
+    "samber/cc-skills-golang/skills/golang-modernize",
+    "samber/cc-skills-golang/skills/golang-naming",
+    "samber/cc-skills-golang/skills/golang-safety",
+    "samber/cc-skills-golang/skills/golang-samber-lo",
+    "samber/cc-skills-golang/skills/golang-samber-slog",
+    "samber/cc-skills-golang/skills/golang-security",
+    "samber/cc-skills-golang/skills/golang-stretchr-testify",
+    "samber/cc-skills-golang/skills/golang-testing",
     "neoeinstein/claude-plugins/plugins/htmx-alpine/skills/htmx-alpine",
-    "xobotyi/cc-foundry/plugins/golang/skills/templ"
+    "xobotyi/cc-foundry/plugins/golang/skills/templ",
+    "gopherguides/gopher-ai/plugins/go-web/skills/templui"
   ]
 }

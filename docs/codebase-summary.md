@@ -75,41 +75,13 @@ kith-pms/
 │   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
 │   │   └── mapper_test.go        # Unit tests for Monica-to-domain mapping
 │   └── web/                      # HTTP handler layer
-│       ├── server.go             # Echo setup
-│       ├── route.go              # Echo dependency injection, route mounting
-│       ├── handlers/             # HTTP handlers for each domain
-│       │   ├── auth.go           # Login, logout, password change
-│       │   ├── home.go           # Dashboard (includes OnThisDay widget)
-│       │   ├── people.go         # CRUD handlers for People; PostQuickJournal, PostQuickGift, PostQuickRelationship, PostDeleteRelationship for inline HTMX forms
-│       │   ├── me.go             # Self-profile handlers (GetMe, GetSetup, PostSetup)
-│       │   ├── settings.go       # Settings hub + relationship types + labels CRUD handlers
-│       │   ├── journal.go        # CRUD handlers for Journal
-│       │   ├── dates.go          # Handlers for Important Dates
-│       │   ├── reminders.go      # Handlers for Reminders
-│       │   ├── gifts.go          # CRUD & image handlers for Gifts
-│       │   ├── audit.go          # Audit log list handler
-│       │   └── errors.go         # Error page handlers
-│       ├── templates/            # Templ HTML components (.templ files)
-│       │   ├── layout.templ      # Base layout with navbar, footer
-│       │   ├── login.templ       # Login form
-│       │   ├── home.templ        # Dashboard (includes OnThisDay widget)
-│       │   ├── people_list.templ, people_detail.templ, people_form.templ
-│       │   ├── people_partials.templ  # PersonRecentActivities, PersonQuickJournalForm, PersonQuickGiftForm
-│       │   ├── me_setup.templ    # Self-profile setup form
-│       │   ├── dates_list.templ  # Upcoming dates list
-│       │   ├── reminders_list.templ, reminders_form.templ
-│       │   ├── gifts_list.templ, gifts_detail.templ, gifts_form.templ, gifts_partials.templ
-│       │   ├── labels_list.templ, labels_partials.templ
-│       │   ├── journal_list.templ, journal_detail.templ, journal_form.templ
-│       │   ├── journal_partials.templ
-│       │   ├── settings_hub.templ, relationship_types_list.templ, relationship_types_partials.templ
-│   │   ├── error_404.templ, error_500.templ
-│       │   ├── styles.css        # Tailwind CSS output
-│       │   └── templates_stub.go # Templ code generation marker
-│       ├── forms/                # Form validation & binding
-│       │   └── forms.go          # Form struct definitions
-│       └── static/               # Embedded static assets
-│           └── htmx.min.js       # HTMX library for dynamic updates
+│       ├── server.go             # Echo setup (global middleware)
+│       ├── route.go              # Route mounting: /health, /v1/*, spa.Handler()
+│       ├── spa/                  # Embedded React SPA
+│       │   ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
+│       │   └── public/           # Populated by `make web` (gitignored except placeholder.txt)
+│       └── forms/                # Form utilities (pure Go, no templ dependency)
+│           └── forms.go          # ParseIndexed, IndexedName helpers
 ├── pkg/                          # Shared packages
 │   ├── config/                   # Configuration management
 │   │   ├── env.go                # LoadConfig(), EnvConfigMap, environment parsing
@@ -225,13 +197,12 @@ kith-pms/
 - **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate)
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
-### `internal/web` — HTTP & template layer
-- **server.go**: Creates Echo instance
-- **route.go**: Echo mounts static file server, registers route groups, injects service dependencies into handlers
-- **handlers/**: HTTP handler functions for each domain; auth.go (login/logout), home.go (dashboard), people.go (people CRUD + quick-add forms), me.go (self-profile), settings.go (labels & relationship types CRUD), journal.go (journal CRUD), other domain handlers; includes HTMX fragment endpoints (PostQuickJournal, PostQuickGift, PostQuickRelationship)
-- **templates/**: Templ HTML components (compiled to Go code); layouts, forms, detail pages, partials for HTMX swaps; includes inline forms (PersonQuickJournalForm, PersonQuickGiftForm) and me_setup.templ for self-profile
-- **forms/**: Form struct definitions for validation & binding
-- **static/**: Embedded htmx library and generated Tailwind CSS
+### `internal/web` — HTTP layer
+- **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
+- **route.go**: Mounts `/health`, API (`/v1/*` via `api.Mount`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
+- **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
+- **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
+- **forms/**: Pure Go form parsing utilities; `ParseIndexed` for multi-row form fields
 
 ### `pkg/config` — Configuration
 - **env.go**: LoadConfig() with three-layer merge (defaults → .env file → env vars); unmarshals to global ENV
@@ -245,21 +216,18 @@ kith-pms/
 | `labstack/echo/v5` | v5.1.0+ | HTTP framework |
 | `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
 | `modernc.org/sqlite` | latest | Pure Go SQLite (no CGO) |
-| `a-h/templ` | v0.3.1001+ | HTML component codegen |
 | `golang.org/x/crypto` | latest | Argon2id password hashing |
-| `golang.org/x/text` | latest | Text encoding utilities |
 | `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
 | `samber/slog-multi` | v1.8.0+ | slog fan-out to multiple handlers |
-| `samber/slog-sentry/v2` | v2.10.3+ | slog → Sentry integration |
 | `go.uber.org/automaxprocs` | v1.6.0+ | Auto GOMAXPROCS in containers |
 
 ## Module & Build
 
 - **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.2+
-- **Build**: CGO_ENABLED=0 for single static binary (no runtime dependencies)
+- **Build**: `make web` (pnpm build → copy SPA) then `CGO_ENABLED=0 go build` for single static binary
 - **Binary name**: `kith-pms` (compiled to `bin/kith-pms`)
-- **Asset generation**: `make assets` → runs templ + tailwindcss (must run before `make build`)
+- **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/web/spa/public/` for embedding
 
 ## Test Coverage
 

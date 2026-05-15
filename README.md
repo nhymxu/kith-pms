@@ -21,21 +21,18 @@
 
 ### Prerequisites
 
-| Tool                                                            | Version   | Purpose                |
-|-----------------------------------------------------------------|-----------|------------------------|
-| Go                                                              | 1.26+     | build                  |
-| [templ](https://templ.guide)                                    | v0.3.1001 | HTML component codegen |
-| [Tailwind CSS CLI](https://tailwindcss.com/blog/standalone-cli) | v4.2+     | CSS build              |
-| make                                                            | any       | convenience targets    |
+| Tool     | Version  | Purpose                      |
+|----------|----------|------------------------------|
+| Go       | 1.26+    | build                        |
+| Node.js  | 22 LTS   | React SPA build              |
+| pnpm     | 9+       | JS package manager           |
+| make     | any      | convenience targets          |
 
 ```bash
-# Install templ
-go install github.com/a-h/templ/cmd/templ@v0.3.1001
-
-# Download Tailwind standalone CLI (macOS/Linux x64 — adjust for your platform)
-curl -fsSLo tailwindcss \
-  https://github.com/tailwindlabs/tailwindcss/releases/download/v4.2.4/tailwindcss-macos-x64
-chmod +x tailwindcss && sudo mv tailwindcss /usr/local/bin/
+# Install pnpm (if not already installed)
+npm install -g pnpm
+# or via corepack (bundled with Node 22):
+corepack enable && corepack prepare pnpm@latest --activate
 ```
 
 ### Build and run
@@ -46,8 +43,9 @@ cd kith-pms
 
 cp .env.example .env          # edit SESSION_SECRET (min 32 chars) and other vars
 
-make assets                   # run templ generate + tailwind CSS build
+make web                      # pnpm install + pnpm build → copies SPA into internal/web/spa/public
 make build                    # CGO_ENABLED=0 go build -o bin/kith-pms ./cmd
+# (or just: make build — it runs make web automatically)
 
 ./bin/kith-pms migrate up     # create DB schema (data/kith.db by default)
 ./bin/kith-pms set-password   # set the login password interactively
@@ -121,15 +119,27 @@ The `docker-compose.yml` mounts a named volume (`kith-data`) at `/data` for data
 
 ```bash
 make deps          # download and tidy Go modules
-make assets        # templ generate + tailwind CSS build
-make build         # compile binary to bin/kith-pms
+make web           # pnpm build + copy SPA into internal/web/spa/public
+make build         # make web + CGO_ENABLED=0 go build (full build)
+make assets        # alias for make web + sqlc codegen
 make fmt           # gofmt all Go files
 make lint          # run golangci-lint
 make tests         # run all tests with race detector
 make test-coverage # generate coverage profile (HTML report)
 make tidy          # fmt + go mod tidy
+make clean         # remove web/dist and internal/web/spa/public
 make vuln-check    # scan for known vulnerabilities
 make gosec         # security static analysis
+```
+
+### Local dev (SPA + API separately)
+
+```bash
+# Terminal 1 — Go API server on :8000
+CGO_ENABLED=0 go run ./cmd serve
+
+# Terminal 2 — Vite dev server on :3000 (proxies /v1 to :8000)
+cd web && pnpm dev
 ```
 
 ### Project layout
@@ -146,26 +156,28 @@ internal/
   reminders/        Reminders & notifications
   files/            File storage service (avatar uploads)
   web/              Echo HTTP server
-    handlers/       HTTP handlers (auth, people, labels, journal, home, errors)
-    templates/      templ components + CSS
-    static/         Embedded static assets (htmx, compiled CSS)
+    spa/            Embedded React SPA (//go:embed public)
+    route.go        Route mounting: /health, /v1/*, SPA catch-all
 pkg/
   config/           Config loading via koanf
+web/                React SPA source (pnpm workspace)
+  src/              TanStack Router + Query + Form + shadcn/neobrutalism
+  public/           Static assets (favicon, manifest)
 docs/               Project documentation
 ```
 
 ## Stack
 
-| Layer         | Technology                                     |
-|---------------|------------------------------------------------|
-| Language      | Go 1.26, `CGO_ENABLED=0`                       |
-| HTTP          | Echo v5                                        |
-| Database      | SQLite (modernc.org/sqlite — pure Go)          |
-| Templates     | [templ](https://templ.guide)                   |
-| Interactivity | [htmx](https://htmx.org)                       |
-| Styling       | Tailwind CSS v4                                |
-| Auth          | Argon2id password hash, signed cookie sessions |
-| Search        | SQLite FTS5                                    |
+| Layer         | Technology                                            |
+|---------------|-------------------------------------------------------|
+| Language      | Go 1.26, `CGO_ENABLED=0`                              |
+| HTTP          | Echo v5                                               |
+| Database      | SQLite (modernc.org/sqlite — pure Go)                 |
+| Frontend      | React 19, TanStack Router/Query/Table/Form            |
+| UI            | shadcn/ui neobrutalism registry + Tailwind v4         |
+| Build         | Vite 6, pnpm, Biome (lint/format)                     |
+| Auth          | Argon2id password hash, signed cookie sessions + CSRF |
+| Search        | SQLite FTS5                                           |
 
 ## Documentation
 

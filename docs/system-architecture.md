@@ -15,16 +15,21 @@
 │  │  └─ restore --from   → replace database                 │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Web Layer (Echo v5 + Templ + HTMX)                       │   │
-│  │  ├─ /              → Dashboard (home)                    │   │
-│  │  ├─ /auth/login    → Login form + session creation       │   │
+│  │ Web Layer (Echo v5 + React SPA)                          │   │
+│  │  ├─ /health        → Liveness probe (no auth)            │   │
+│  │  ├─ /v1/*          → JSON REST API (Bearer or cookie)    │   │
+│  │  ├─ /assets/*      → Embedded SPA assets (1yr cache)     │   │
+│  │  └─ /*             → index.html catch-all (SPA shell)    │   │
+│  │                                                          │   │
+│  │  SPA routes (client-side, TanStack Router):              │   │
+│  │  ├─ /              → Dashboard                           │   │
 │  │  ├─ /people/*      → People CRUD                         │   │
-│  │  ├─ /settings/*    → Settings hub, labels, rel types, security │   │
-│  │  ├─ /journal/*     → Journal CRUD + FTS5 search          │   │
-│  │  ├─ /dates         → Important dates & milestones        │   │
-│  │  ├─ /reminders/*   → Reminders & notifications           │   │
-│  │  ├─ /gifts/*       → Gifts CRUD + image upload/delete    │   │
-│  │  └─ /audit         → Audit log with filter tabs          │   │
+│  │  ├─ /journal/*     → Journal                             │   │
+│  │  ├─ /gifts/*       → Gifts                               │   │
+│  │  ├─ /reminders/*   → Reminders                           │   │
+│  │  ├─ /dates         → Important dates                     │   │
+│  │  ├─ /audit         → Audit log                           │   │
+│  │  └─ /settings/*    → Labels, rel types, security         │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Service Layer (auth, people, labels, journal, dates,     │   │
@@ -109,74 +114,69 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 | `middleware.RequestLogger()` | Structured access logging via slog |
 | Sentry middleware | Auto-captures request errors → Sentry |
 
-### Routes (mounted in `internal/web/server.go`)
+### Routes (mounted in `internal/web/route.go`)
 
 ```
-/static/*              → Embedded assets (1-hour cache)
-/                      → GET (dashboard)
-/auth/login            → GET (form), POST (validate, create session)
-/auth/logout           → POST (destroy session)
-/people                → GET (list), POST (create)
-/people/:id            → GET (detail), PUT (update), DELETE
-/people/:id/edit       → GET (edit form)
-/people/:id/date-row   → POST (add/update important date)
-/people/:id/journal/quick → POST (quick-add journal entry, htmx fragment)
-/people/:id/gifts/quick → POST (quick-add gift, htmx fragment)
-/people/:id/avatar     → POST (upload), GET (retrieve)
-/people/:id/avatar/delete → POST (delete)
-/people/:id/last-contact → POST (update last contact timestamp to now)
-/me                    → GET (self profile or setup redirect)
-/me/setup              → GET (setup form), POST (set person as self)
-/settings              → GET (settings hub with tiles for labels and rel types)
-/settings/labels       → GET (list), POST (create)
-/settings/labels/:id   → GET (detail), PUT (update), DELETE
-/settings/relationship-types → GET (list, with counts), POST (create)
-/settings/relationship-types/:id → GET (detail), POST (update), DELETE
-/settings/security     → GET (password change form), POST (change password)
-/settings/security/password → POST (process password change with rate limiting)
-/labels                → GET (302 redirect to /settings/labels)
-/journal               → GET (list + FTS5 search), POST (create)
-/journal/:id           → GET (detail), PUT (update), DELETE
-/dates                 → GET (upcoming dates, ?days=N query param)
-/reminders             → GET (list), POST (create)
-/reminders/:id         → GET (detail), PUT (update), DELETE
-/reminders/:id/complete → POST (mark as completed)
-/audit                 → GET (paginated log, ?entity_type=X&page=N filters)
+/health                → GET (liveness probe, no auth)
+/v1/*                  → JSON REST API (see api package for full route list)
+/assets/*              → Embedded SPA hashed assets (1-year immutable cache)
+/favicon.*             → Embedded favicon files
+/*                     → index.html catch-all (200, no-cache) — SPA handles routing
+```
+
+#### JSON API routes (`/v1/*`)
+
+```
+POST   /v1/auth/login            → create session (rate limited 5/15min)
+POST   /v1/auth/logout           → destroy current session
+POST   /v1/auth/logout-all       → destroy all sessions for user
+GET    /v1/auth/me               → current user or 401
+POST   /v1/auth/password         → change password (requires current)
+GET    /v1/me                    → self profile person
+POST   /v1/me/setup              → set self person
+GET    /v1/people                → list + search
+POST   /v1/people                → create
+GET    /v1/people/:id            → detail
+PUT    /v1/people/:id            → update
+DELETE /v1/people/:id            → delete
+POST   /v1/people/:id/avatar     → upload avatar (multipart, max 5MB)
+GET    /v1/people/:id/avatar     → retrieve avatar binary
+DELETE /v1/people/:id/avatar     → delete avatar
+...   (journal, gifts, reminders, dates, labels, relationship-types, audit)
 ```
 
 ### Session & Auth Flow
 
 ```
-1. User submits login form (POST /auth/login)
+1. SPA calls POST /v1/auth/login with JSON {password}
    ↓
 2. Handler validates password (Argon2id verify vs users table)
    ↓
 3. Create session token:
    - Generate cryptographic session ID
-   - Store session in database (users.session_id, users.session_token, expires_at)
+   - Store session in database (user_sessions table, expires_at)
    - Sign session ID + user ID → HMAC-SHA256 token
    ↓
-4. Set session cookie (secure, httpOnly, SameSite=Strict)
+4. Set session cookie (httpOnly, SameSite=Lax; Secure when BEHIND_TLS=true)
+   - Name: kith_session
    - Value: signed HMAC token
    - Path: /
    - MaxAge: SESSION_LIFETIME
    ↓
-5. On subsequent requests:
-   - Middleware extracts session cookie
-   - Validates HMAC signature
-   - Looks up session in database
-   - Verifies expiry time
-   - Injects user context into request
+5. On subsequent /v1/* requests:
+   - SessionOrBearer middleware: accepts either cookie or Authorization: Bearer token
+   - Cookie path: validates HMAC, looks up session, verifies expiry, injects user context
+   - Bearer path: validates static TOKEN_AUTH value (machine clients only)
+   - State-changing calls (POST/PUT/PATCH/DELETE) require X-Requested-With: kith-spa
+     header when authenticated by cookie (CSRF protection via custom header)
    ↓
-6. Password change (POST /settings/security/password):
+6. Password change (POST /v1/auth/password):
    - Verify current password
    - Hash new password with Argon2id
-   - Update password in database
    - Invalidate all sessions
-   - Re-issue new session for current request
    - Rate limited: 5 attempts per 15 minutes
    ↓
-7. Logout (POST /auth/logout):
+7. Logout (POST /v1/auth/logout):
    - Clear session in database
    - Clear session cookie
 ```
@@ -313,13 +313,16 @@ gifts (1)
 ### Single Binary
 - Compiled with `CGO_ENABLED=0`
 - No runtime dependencies (everything bundled)
-- Embedded static files (htmx.min.js, tailwind.css)
+- Embedded React SPA (`//go:embed all:public` in `internal/web/spa/spa.go`)
 - Embedded migrations (SQL files compiled into binary)
+- Build pipeline: `make web` (pnpm build → copy to `internal/web/spa/public`) then `go build`
 
-### Container
-- Dockerfile present; sets `CGO_ENABLED=0` at build stage
+### Container (multi-stage Dockerfile)
+- Stage 1: `node:22-alpine` — `pnpm install --frozen-lockfile && pnpm build`
+- Stage 2: `golang:1.26.2-alpine` — copies SPA into embed path, runs `go build`
+- Stage 3: `gcr.io/distroless/static-debian12` — minimal runtime, non-root UID 65532
 - `go.uber.org/automaxprocs` auto-sets GOMAXPROCS to match container CPU quota
-- Database: Mount volume at `/app/data` for persistent storage
+- Database: Mount volume at `/data` for persistent storage
 
 ### Safety Features
 - Automatic migrations on startup (if DB_AUTO_MIGRATE=true)

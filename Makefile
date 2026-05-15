@@ -10,37 +10,38 @@ list: ## list Makefile targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: tools
-tools: ## Install pinned dev tools (sqlc, templ, tailwindcss standalone binary)
+tools: ## Install pinned dev tools (sqlc)
 	bash scripts/install-tools.sh
 
 .PHONY: sqlc
 sqlc: ## Generate sqlc query code
 	sqlc generate -f internal/db/sqlc.yaml
 
-.PHONY: templ
-templ: ## Generate templ components
-	rm -f internal/web/templates/templates_stub.go
-	templ generate ./internal/web/...
-
-.PHONY: tailwind
-tailwind: ## Build Tailwind CSS output
-	bin/tailwindcss -i internal/web/templates/styles.css -o internal/web/static/app.css --minify
+.PHONY: web
+web: ## Build the React SPA and copy output into internal/web/spa/public
+	cd web && pnpm install --frozen-lockfile && pnpm build
+	rm -rf internal/web/spa/public
+	mkdir -p internal/web/spa/public
+	cp -R web/dist/. internal/web/spa/public
 
 .PHONY: assets
-assets: sqlc templ tailwind ## Regenerate all generated assets (sqlc + templ + tailwind)
+assets: sqlc web ## Regenerate all generated assets (sqlc + SPA build)
 
 .PHONY: build
-build: assets ## Build the binary (CGO_ENABLED=0)
+build: web ## Build the binary (CGO_ENABLED=0); runs pnpm build first
 	CGO_ENABLED=0 go build -o bin/$(APP_NAME) ./cmd
+
+.PHONY: clean
+clean: ## Remove build artefacts (web/dist and internal/web/spa/public)
+	rm -rf web/dist internal/web/spa/public
 
 .PHONY: migrate
 migrate: ## Apply database migrations
 	./bin/$(APP_NAME) migrate up
 
 .PHONY: dev
-dev: ## Run development servers (templ watch + tailwind watch + go run)
-	templ generate --watch ./internal/web/... & \
-	bin/tailwindcss -i internal/web/templates/styles.css -o internal/web/static/app.css --watch & \
+dev: ## Run dev servers (pnpm dev + go run serve) — SPA proxies /v1 to :8000
+	pnpm --dir web dev &
 	CGO_ENABLED=0 go run ./cmd serve
 
 .PHONY: deps

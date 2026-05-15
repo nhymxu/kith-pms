@@ -155,9 +155,12 @@ Temporary Items
 /cover.out
 
 # Generated code — regenerate with `make assets`
-*_templ.go
 internal/db/queries/*.go
-internal/web/static/app.css
+
+# SPA build output — populated by `make web`; not committed
+web/dist/
+internal/web/spa/public/
+!internal/web/spa/public/placeholder.txt
 
 # Build output
 bin/

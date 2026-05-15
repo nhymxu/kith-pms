@@ -1,0 +1,55 @@
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import { listReminders } from "#/endpoints/reminders"
+import { keys } from "#/query-keys"
+import { RemindersTable } from "#/features/reminders/reminders-table"
+import { Button } from "#/components/ui/button"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
+import type { ReminderStatus } from "#/endpoints/reminders"
+
+export const Route = createFileRoute("/_authed/reminders/")({
+	component: RemindersPage,
+})
+
+function RemindersPage() {
+	const [tab, setTab] = useState<ReminderStatus>("upcoming")
+	const qc = useQueryClient()
+
+	const { data, isPending, isError } = useQuery({
+		queryKey: [...keys.reminders.list({ completed: tab === "all" ? undefined : tab === "upcoming" ? false : undefined }), tab],
+		queryFn: () => listReminders({ status: tab }),
+	})
+
+	if (isError) return <p className="text-sm font-base text-destructive">Failed to load reminders.</p>
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between">
+				<h1 className="text-2xl font-heading">Reminders</h1>
+				<Button asChild>
+					<Link to="/reminders/new">New Reminder</Link>
+				</Button>
+			</div>
+
+			<Tabs value={tab} onValueChange={(v) => setTab(v as ReminderStatus)}>
+				<TabsList>
+					<TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+					<TabsTrigger value="overdue">Overdue</TabsTrigger>
+					<TabsTrigger value="all">All</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value={tab}>
+					{isPending ? (
+						<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
+					) : (
+						<RemindersTable
+							data={data ?? []}
+							onCompleted={() => qc.invalidateQueries({ queryKey: keys.reminders.all })}
+						/>
+					)}
+				</TabsContent>
+			</Tabs>
+		</div>
+	)
+}

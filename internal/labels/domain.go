@@ -4,9 +4,9 @@ import "time"
 
 // Label represents a tag that can be attached to a person.
 type Label struct {
-	ID        int64
-	Name      string
-	Color     string
-	CreatedAt time.Time
-	Count     int // populated by ListWithCounts
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	CreatedAt time.Time `json:"created_at"`
+	Count     int       `json:"count"`
 }

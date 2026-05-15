@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/web"
-	"github.com/nhymxu/kith-pms/internal/web/handlers"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
@@ -133,7 +133,7 @@ Can scale later.`,
 
 			e := web.New()
 
-			e.HTTPErrorHandler = handlers.CustomHTTPErrorHandler
+			e.HTTPErrorHandler = jsonErrorHandler
 
 			peopleSvc := people.NewService(db)
 
@@ -192,8 +192,11 @@ Can scale later.`,
 				AuditService:         auditSvc,
 				GiftsService:         giftsSvc,
 				RelationshipsService: relsSvc,
+				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
 				APIToken:             apiToken,
+				SessionLifetime:      lifetime,
+				BehindTLS:            config.ENV.BehindTLS,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -234,6 +237,20 @@ func runSessionGC(ctx context.Context, repo auth.SessionRepo) {
 				slog.Debug("session GC: expired sessions deleted")
 			}
 		}
+	}
+}
+
+// jsonErrorHandler is a minimal Echo HTTPErrorHandler.
+// API paths (/v1/*) get a JSON error body; everything else gets a plain status
+// code and lets the SPA catch-all serve index.html via spa.Handler.
+func jsonErrorHandler(c *echo.Context, err error) {
+	code := http.StatusInternalServerError
+	if he, ok := err.(*echo.HTTPError); ok {
+		code = he.Code
+	}
+
+	if err2 := c.JSON(code, map[string]string{"error": http.StatusText(code)}); err2 != nil {
+		slog.Error("error handler: json response", "error", err2)
 	}
 }
 

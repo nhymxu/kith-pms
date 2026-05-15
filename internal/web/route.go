@@ -2,30 +2,25 @@ package web
 
 import (
 	"database/sql"
-	"embed"
-	"io/fs"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
 
 	"github.com/nhymxu/kith-pms/internal/api"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
-	"github.com/nhymxu/kith-pms/internal/web/handlers"
+	"github.com/nhymxu/kith-pms/internal/web/spa"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 )
-
-//go:embed static
-var staticFS embed.FS
 
 // Deps holds application-level dependencies passed into the web layer.
 type Deps struct {
@@ -40,205 +35,57 @@ type Deps struct {
 	AuditService         *audit.Service
 	GiftsService         *gifts.Service
 	RelationshipsService *relationships.Service
+	FileSvc              files.FileService
 	AvatarBasePath       string
 	APIToken             string
+	SessionLifetime      time.Duration
+	BehindTLS            bool
 }
 
-// Mount registers all UI routes and the /static/* file server onto e.
-// Call this after api.New() returns the Echo instance.
+// Mount registers all routes onto e.
+// Order matters: /v1/* and /health are mounted first; spa.Handler() is last (catch-all).
 func Mount(e *echo.Echo, deps Deps) {
-	// Serve static assets from the embedded FS with a 1-hour cache header.
-	sub, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		panic("web: failed to sub static FS: " + err.Error())
-	}
-
-	fileServer := http.FileServer(http.FS(sub))
-
-	e.GET("/static/*", func(c *echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
-		http.StripPrefix("/static", fileServer).ServeHTTP(c.Response(), c.Request())
-
-		return nil
+	// Health endpoint — no auth, no session overhead.
+	e.GET("/health", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "ok")
 	})
 
-	// CSRF middleware for all state-changing requests.
-	csrfMiddleware := middleware.CSRF()
-
-	// SessionLoader runs on every route — attaches *User to context if cookie valid.
+	// SessionLoader attaches *User to context when a valid session cookie is present.
 	sessionLoader := auth.SessionLoader(deps.AuthService)
 
-	// Public routes — no RequireAuth; CSRF still applied for POST forms.
-	public := e.Group("", sessionLoader, csrfMiddleware)
-	{
-		authH := &handlers.AuthHandlers{Svc: deps.AuthService}
-
-		public.GET("/login", authH.GetLogin)
-		public.POST("/login", authH.PostLogin,
-			auth.RateLimitLogin(5, 15*time.Minute),
-		)
-		public.GET("/health", func(c *echo.Context) error {
-			return c.String(http.StatusOK, "ok")
-		})
-	}
-
-	// Protected routes — RequireAuth redirects to /login when unauthenticated.
-	protected := e.Group("", sessionLoader, csrfMiddleware, auth.RequireAuth(), injectAuditActor(deps))
-	{
-		authH := &handlers.AuthHandlers{Svc: deps.AuthService}
-		protected.POST("/logout", authH.PostLogout)
-		protected.POST("/logout-all", authH.PostLogoutAll)
-
-		// Page routes
-		homeH := &handlers.HomeHandler{
-			DB:           deps.DB,
-			PeopleSvc:    deps.PeopleService,
-			LabelsSvc:    deps.LabelsService,
-			JournalSvc:   deps.JournalService,
-			DatesSvc:     deps.DatesService,
-			RemindersSvc: deps.RemindersService,
-		}
-		protected.GET("/", homeH.Get)
-
-		// Audit log route
-		auditH := &handlers.AuditHandlers{Svc: deps.AuditService}
-		protected.GET("/audit", auditH.GetList)
-
-		// Me routes
-		meH := &handlers.MeHandlers{PeopleSvc: deps.PeopleService}
-		protected.GET("/me", meH.GetMe)
-		protected.GET("/me/setup", meH.GetSetup)
-		protected.POST("/me/setup", meH.PostSetup)
-
-		// People routes
-		peopleH := &handlers.PeopleHandlers{
-			Svc:              deps.PeopleService,
-			LabelsSvc:        deps.LabelsService,
-			JournalSvc:       deps.JournalService,
-			DatesSvc:         deps.DatesService,
-			WorkHistorySvc:   deps.WorkHistoryService,
-			AuditSvc:         deps.AuditService,
-			GiftsSvc:         deps.GiftsService,
-			RelationshipsSvc: deps.RelationshipsService,
-			AvatarBasePath:   deps.AvatarBasePath,
-		}
-		protected.GET("/people", peopleH.GetList)
-		protected.GET("/people/new", peopleH.GetNew)
-		protected.POST("/people", peopleH.PostCreate)
-		protected.POST("/people/contact-row", peopleH.PostContactRow)
-		protected.POST("/people/location-row", peopleH.PostLocationRow)
-		protected.POST("/people/work-row", peopleH.PostWorkRow)
-		protected.POST("/people/:id/date-row", peopleH.PostDateRow)
-		protected.GET("/people/:id", peopleH.GetDetail)
-		protected.GET("/people/:id/edit", peopleH.GetEdit)
-		protected.POST("/people/:id", peopleH.PostUpdate)
-		protected.GET("/people/:id/delete-confirm", peopleH.GetDeleteConfirm)
-		protected.POST("/people/:id/delete", peopleH.PostDelete)
-		// Quick-add journal entry from person detail (htmx fragment)
-		protected.POST("/people/:id/journal/quick", peopleH.PostQuickJournal)
-		// Quick-add gift from person detail (htmx fragment)
-		protected.POST("/people/:id/gifts/quick", peopleH.PostQuickGift)
-		// Avatar routes
-		protected.POST("/people/:id/avatar", peopleH.PostUploadAvatar)
-		protected.GET("/people/:id/avatar", peopleH.GetAvatar)
-		protected.POST("/people/:id/avatar/delete", peopleH.PostDeleteAvatar)
-		// Last contact route
-		protected.POST("/people/:id/last-contact", peopleH.PostUpdateLastContact)
-		// Label attach/detach routes (htmx fragments)
-		protected.POST("/people/:id/labels/attach", peopleH.PostAttachLabel)
-		protected.POST("/people/:id/labels/:labelID/delete", peopleH.PostDetachLabel)
-		// Relationship routes (htmx fragments)
-		protected.POST("/people/:id/relationships/quick", peopleH.PostQuickRelationship)
-		protected.POST("/people/:id/relationships/:relID/delete", peopleH.PostDeleteRelationship)
-
-		// Settings routes
-		settingsH := &handlers.SettingsHandlers{
-			RelSvc:    deps.RelationshipsService,
-			LabelsSvc: deps.LabelsService,
-			AuthSvc:   deps.AuthService,
-		}
-		protected.GET("/settings", settingsH.GetHub)
-		protected.GET("/settings/security", settingsH.GetSecurity)
-		protected.POST("/settings/security/password", settingsH.PostChangePassword,
-			auth.RateLimitLogin(5, 15*time.Minute),
-		)
-		protected.GET("/settings/relationship-types", settingsH.GetRelationshipTypes)
-		protected.GET("/settings/relationship-types/:id/edit", settingsH.GetRelationshipTypeEdit)
-		protected.GET("/settings/relationship-types/:id/row", settingsH.GetRelationshipTypeRow)
-		protected.POST("/settings/relationship-types", settingsH.PostRelationshipType)
-		protected.POST("/settings/relationship-types/:id", settingsH.PostUpdateRelationshipType)
-		protected.POST("/settings/relationship-types/:id/delete", settingsH.PostDeleteRelationshipType)
-
-		// Labels routes (under settings)
-		protected.GET("/labels", func(c *echo.Context) error {
-			return c.Redirect(http.StatusFound, "/settings/labels")
-		})
-		protected.GET("/settings/labels", settingsH.GetLabels)
-		protected.POST("/settings/labels", settingsH.PostCreateLabel)
-		protected.GET("/settings/labels/:id/edit", settingsH.GetLabelEdit)
-		protected.POST("/settings/labels/:id", settingsH.PostUpdateLabel)
-		protected.POST("/settings/labels/:id/delete", settingsH.PostDeleteLabel)
-
-		// Journal routes — /journal/* must come before /journal/:id to avoid
-		// routing collisions with the static sub-paths.
-		journalH := &handlers.JournalHandlers{Svc: deps.JournalService, PeopleSvc: deps.PeopleService}
-		protected.GET("/journal", journalH.GetList)
-		protected.GET("/journal/new", journalH.GetNew)
-		protected.GET("/journal/people-search", journalH.GetPeopleSearch)
-		protected.POST("/journal", journalH.PostCreate)
-		protected.GET("/journal/:id", journalH.GetDetail)
-		protected.GET("/journal/:id/edit", journalH.GetEdit)
-		protected.GET("/journal/:id/delete-confirm", journalH.GetDeleteConfirm)
-		protected.POST("/journal/:id", journalH.PostUpdate)
-		protected.POST("/journal/:id/delete", journalH.PostDelete)
-
-		// Dates routes
-		datesH := &handlers.DatesHandlers{Svc: deps.DatesService}
-		protected.GET("/dates", datesH.GetUpcoming)
-
-		// Reminders routes
-		remindersH := &handlers.RemindersHandlers{
-			Svc:       deps.RemindersService,
-			PeopleSvc: deps.PeopleService,
-		}
-		protected.GET("/reminders", remindersH.GetList)
-		protected.GET("/reminders/new", remindersH.GetNew)
-		protected.POST("/reminders", remindersH.PostCreate)
-		protected.GET("/reminders/:id", remindersH.GetDetail)
-		protected.GET("/reminders/:id/edit", remindersH.GetEdit)
-		protected.POST("/reminders/:id", remindersH.PutUpdate)
-		protected.POST("/reminders/:id/delete", remindersH.Delete)
-		protected.POST("/reminders/:id/complete", remindersH.PostToggleComplete)
-
-		// Gifts routes
-		giftsH := &handlers.GiftsHandlers{
-			Svc:           deps.GiftsService,
-			PeopleSvc:     deps.PeopleService,
-			ImageBasePath: deps.AvatarBasePath,
-		}
-		protected.GET("/gifts", giftsH.GetList)
-		protected.GET("/gifts/new", giftsH.GetNew)
-		protected.POST("/gifts", giftsH.PostCreate)
-		protected.GET("/gifts/:id", giftsH.GetDetail)
-		protected.GET("/gifts/:id/edit", giftsH.GetEdit)
-		protected.POST("/gifts/:id", giftsH.PostUpdate)
-		protected.GET("/gifts/:id/delete-confirm", giftsH.GetDeleteConfirm)
-		protected.POST("/gifts/:id/delete", giftsH.PostDelete)
-		protected.GET("/gifts/:id/image", giftsH.GetImage)
-	}
+	// Shared rate limiter: 5 attempts per 15 minutes per IP.
+	loginLimiter := auth.RateLimitLogin(5, 15*time.Minute)
 
 	// Mount JSON REST API routes under /v1/.
-	api.Mount(e, api.Deps{
-		PeopleService:      deps.PeopleService,
-		LabelsService:      deps.LabelsService,
-		JournalService:     deps.JournalService,
-		RemindersService:   deps.RemindersService,
-		WorkHistoryService: deps.WorkHistoryService,
-		DatesService:       deps.DatesService,
-		AuditService:       deps.AuditService,
-		GiftsService:       deps.GiftsService,
-		APIToken:           deps.APIToken,
-	})
+	apiDeps := api.Deps{
+		PeopleService:        deps.PeopleService,
+		LabelsService:        deps.LabelsService,
+		JournalService:       deps.JournalService,
+		RemindersService:     deps.RemindersService,
+		WorkHistoryService:   deps.WorkHistoryService,
+		DatesService:         deps.DatesService,
+		AuditService:         deps.AuditService,
+		GiftsService:         deps.GiftsService,
+		RelationshipsService: deps.RelationshipsService,
+		AuthService:          deps.AuthService,
+		FileSvc:              deps.FileSvc,
+		APIToken:             deps.APIToken,
+		AvatarBasePath:       deps.AvatarBasePath,
+		SessionLifetime:      deps.SessionLifetime,
+		BehindTLS:            deps.BehindTLS,
+		LoginLimiter:         loginLimiter,
+	}
+
+	// Login must bypass SessionOrBearer — registered before Mount applies auth middleware.
+	api.MountAuthLogin(e, apiDeps)
+	api.Mount(e, apiDeps)
+
+	// Inject audit actor from session context for any remaining middleware-wrapped routes.
+	e.Use(sessionLoader, injectAuditActor(deps))
+
+	// SPA catch-all: serves index.html for all non-API GET paths.
+	// Must be mounted LAST.
+	spa.Handler(e)
 }
 
 // injectAuditActor copies the authenticated user ID from the Echo context into

@@ -22,24 +22,24 @@ const (
 )
 
 type Gift struct {
-	ID            int64
-	PersonID      int64
-	Title         string
-	Direction     Direction
-	Date          string
-	Notes         string
-	AmountCents   *int64
-	Currency      string
-	DebtType      DebtType
-	ImagePath     string
-	ImageMimeType string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            int64     `json:"id"`
+	PersonID      int64     `json:"person_id"`
+	Title         string    `json:"title"`
+	Direction     Direction `json:"direction"`
+	Date          string    `json:"date"`
+	Notes         string    `json:"notes"`
+	AmountCents   *int64    `json:"amount_cents"`
+	Currency      string    `json:"currency"`
+	DebtType      DebtType  `json:"debt_type"`
+	ImagePath     string    `json:"image_path"`
+	ImageMimeType string    `json:"image_mime_type"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 type GiftWithPerson struct {
 	Gift
-	PersonName string
+	PersonName string `json:"person_name"`
 }
 
 type ListParams struct {

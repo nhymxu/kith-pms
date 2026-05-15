@@ -3,17 +3,17 @@ package journal
 import "time"
 
 type Activity struct {
-	ID             int64
-	Title          string
-	OccurredAtDate string // "YYYY-MM-DD"
-	OccurredAtTime string // "HH:MM" or ""
-	Content        string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	People         []ActivityPerson
+	ID             int64            `json:"id"`
+	Title          string           `json:"title"`
+	OccurredAtDate string           `json:"occurred_at_date"`
+	OccurredAtTime string           `json:"occurred_at_time"`
+	Content        string           `json:"content"`
+	CreatedAt      time.Time        `json:"created_at"`
+	UpdatedAt      time.Time        `json:"updated_at"`
+	People         []ActivityPerson `json:"people"`
 }
 
 type ActivityPerson struct {
-	PersonID int64
-	Name     string
+	PersonID int64  `json:"person_id"`
+	Name     string `json:"name"`
 }

@@ -8,23 +8,23 @@ import (
 
 // Person represents a contact in the personal relationship manager.
 type Person struct {
-	ID               int64
-	Prefix           string
-	Name             string
-	Nickname         string
-	DateOfBirth      *time.Time // nullable
-	RelationshipType string
-	OtherNotes       string
-	AvatarPath       string
-	AvatarMimeType   string
-	AvatarSize       int64
-	AvatarUploadedAt *time.Time
-	LastContactAt    *time.Time // nullable
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Contacts         []ContactInfo  // populated by service.Get
-	Locations        []Location     // populated by service.Get
-	Labels           []labels.Label // populated by service.List
+	ID               int64          `json:"id"`
+	Prefix           string         `json:"prefix"`
+	Name             string         `json:"name"`
+	Nickname         string         `json:"nickname"`
+	DateOfBirth      *time.Time     `json:"date_of_birth"`
+	RelationshipType string         `json:"relationship_type"`
+	OtherNotes       string         `json:"other_notes"`
+	AvatarPath       string         `json:"avatar_path"`
+	AvatarMimeType   string         `json:"avatar_mime_type"`
+	AvatarSize       int64          `json:"avatar_size"`
+	AvatarUploadedAt *time.Time     `json:"avatar_uploaded_at"`
+	LastContactAt    *time.Time     `json:"last_contact_at"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	Contacts         []ContactInfo  `json:"contacts"`
+	Locations        []Location     `json:"locations"`
+	Labels           []labels.Label `json:"labels"`
 }
 
 // GetLastContactAt returns the last contact timestamp (for interface compatibility).
@@ -32,22 +32,22 @@ func (p *Person) GetLastContactAt() *time.Time { return p.LastContactAt }
 
 // ContactInfo represents a contact method (phone, email, social, etc.) for a Person.
 type ContactInfo struct {
-	ID       int64
-	PersonID int64
-	Type     string // phone | email | social | website | other
-	Value    string
-	Label    string // optional ("work", "home", etc.)
-	Position int    // ordering
+	ID       int64  `json:"id"`
+	PersonID int64  `json:"person_id"`
+	Type     string `json:"type"`
+	Value    string `json:"value"`
+	Label    string `json:"label"`
+	Position int    `json:"position"`
 }
 
 // Location represents a physical address associated with a Person.
 type Location struct {
-	ID         int64
-	PersonID   int64
-	Type       string // home | work | other
-	Address    string
-	City       string
-	Country    string
-	PostalCode string
-	Position   int
+	ID         int64  `json:"id"`
+	PersonID   int64  `json:"person_id"`
+	Type       string `json:"type"`
+	Address    string `json:"address"`
+	City       string `json:"city"`
+	Country    string `json:"country"`
+	PostalCode string `json:"postal_code"`
+	Position   int    `json:"position"`
 }

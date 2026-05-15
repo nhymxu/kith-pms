@@ -3,8 +3,6 @@ module github.com/nhymxu/kith-pms
 go 1.26.2
 
 require (
-	github.com/Oudwins/tailwind-merge-go v0.2.1
-	github.com/a-h/templ v0.3.1020
 	github.com/getsentry/sentry-go v0.46.1
 	github.com/getsentry/sentry-go/echo v0.46.1
 	github.com/jinzhu/copier v0.4.0

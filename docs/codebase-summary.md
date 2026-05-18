@@ -206,58 +206,67 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-### Dashboard Feature (`web/src/features/dashboard/`)
+**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, shadcn/ui (Linear/Stripe minimal design), Tailwind CSS v4, Biome 2.4.5, Vite 8, pnpm 11.
 
-**Interactive Relationship Dashboard** — Premium responsive PRM dashboard for daily use.
+**Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
-**Components:**
-- `dashboard-data.ts` — Pure data adapter; derives KPIs, chart points, action queue, activity feed, upcoming moments from API responses
-- `summary-cards.tsx` — KPI cards (people count, follow-ups, dates, gifts, journal activity) with refresh icons
-- `relationship-pulse-chart.tsx` — Recharts line chart with responsive container and custom tooltip
-- `action-queue.tsx` — Filterable list with pills, capped to 8 rows, Show more/less toggle
-- `recent-relationship-activity.tsx` — Recent activity capped to 6 entries
-- `upcoming-moments.tsx` — Upcoming moments capped to 5 entries
-- `dashboard-card.tsx` — Reusable card primitive with title, subtitle, Lucide icon, refresh action, loading/stale/error slots
-- `dashboard-filter-pill.tsx` — Filter pill with active/inactive/hover/focus states
-- `empty-state.tsx` — Empty state component for widgets with no data
-- `chart-theme.ts` — Chart color palette (indigo-600 primary, zinc surfaces, hairline borders)
+**Build Pipeline**: `pnpm build` → `web/dist/` → copied to `internal/web/spa/public/` via `make web` → embedded in binary via `//go:embed all:public`.
 
-**Design System (Linear/Stripe Minimal):**
-- **Accent**: Indigo-600 (#4f46e5) for primary actions and chart data
-- **Surfaces**: Zinc palette (white, #fafafa muted, #e4e4e7 borders) with no shadows
-- **Typography**: Inter primary font, JetBrains Mono for numerics, font-weight 600 for headings
-- **Borders**: Hairline (1px) zinc-200 borders; no box shadows
-- **Radius**: 0.375rem (compact, minimal rounding)
-- **Responsive grid**: 1280px+ desktop (4–5 KPI columns, 8/4 split main), tablet (2 columns), mobile (single column)
-- **Icons**: Lucide only; no emojis
-- **Hover states**: Subtle background shifts on cards/list rows; active filter pills highlighted with indigo underline
+### Directory Structure (`web/src/`)
+```
+components/ui/           # shadcn components (button, card, input, select, dialog, sheet, etc.)
+components/app-shell/    # Layout (topbar.tsx with responsive nav, app-layout.tsx)
+endpoints/               # API call functions (per-resource: people.ts, journal.ts, etc.)
+features/
+  dashboard/             # Dashboard widgets + chart theme
+  dates/                 # Date display components
+  gifts/                 # Gift form, list, detail
+  journal/               # Journal form, timeline, search
+  me/                    # User profile section
+  people/                # People table, detail sections, avatar uploader, quick actions
+  reminders/             # Reminder form, table
+  settings/              # Labels, relationship-types, security settings
+lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, etc.)
+routes/                  # TanStack Router file-based routes (_authed/, public/)
+schemas/                 # Zod-style TS type definitions (maintained by hand, not generated)
+styles.css               # Tailwind + design tokens (:root variables)
+```
 
-**Navigation:**
-- **Topbar** (h-14, sticky, border-b zinc-200): Horizontal navigation bar replacing desktop sidebar
-- **Desktop** (md+): Full nav items visible inline with active state underline (indigo)
-- **Mobile** (<md): Hamburger menu toggle; nav items in collapsible sidebar
-- **NavLink component**: Supports "topbar" variant with underline active state
+### Design System (Linear/Stripe Minimal)
+- **Accent**: Indigo-600 (#4f46e5) for primary actions, links, and chart data
+- **Surfaces**: Zinc palette — white (#ffffff), muted (#fafafa), borders (#e4e4e7)
+- **Typography**: Inter (primary), JetBrains Mono (numerics), font-weight 600 (headings)
+- **Borders**: Hairline (1px) zinc-200; no shadows (minimal aesthetic)
+- **Radius**: 0.375rem (compact aesthetic)
+- **Layout**: Horizontal topbar (h-14, sticky, border-b) replaces desktop sidebar
+- **Navigation**: TanStack Router with responsive mobile hamburger menu
+- **Icons**: Lucide React only; no emojis
 
-**Data Flow:**
-- Route: `web/src/routes/_authed/index.tsx`
-- TanStack Query fetches existing endpoints (people, journal, reminders, dates, gifts, audit, me)
-- Dashboard adapter derives metrics and shapes data for widgets
-- Per-card refresh invalidates relevant queries only
-- Handles empty data, partial failures, and last-known-value states
+### Key Features
+- **File-based Routing**: TanStack Router auto-loads `routes/**/*.tsx`; layout nesting via `_layout.tsx`
+- **Auth Context**: `lib/auth-context.tsx` stores session & redirects to login if unauthenticated
+- **Query Client**: `lib/query-client.ts` configures 5-minute stale time, 10-minute cache duration
+- **API Layer**: `endpoints/*.ts` exports fetch functions (POST/GET/PUT/DELETE); handles `X-Requested-With: kith-spa` CSRF header
+- **Validation**: Zod schemas in `schemas/` directory (hand-maintained, not generated)
+- **Responsive**: Mobile-first; media breakpoints via Tailwind (sm/md/lg/xl)
 
-**Dependencies:**
-- `recharts ^3.8.1` — Chart library
-- `@tanstack/react-query` — Data fetching and caching
-- `lucide-react` — Icon library
-- `tailwindcss` — Styling
+### Dashboard Feature
+- **Components**: summary-cards, relationship-pulse-chart, action-queue, recent-relationship-activity, upcoming-moments
+- **Data Adapter**: `dashboard-data.ts` derives KPIs and shapes API responses for widgets
+- **Per-card Refresh**: TanStack Query invalidation on refresh button click
+- **Chart Library**: Recharts v3.8.1 with custom indigo/zinc theme
 
 **Validation:**
 - Build: `pnpm --dir web build` ✅
-- Tests: `pnpm --dir web test` ✅ (10/10 passing)
-- Check: `pnpm --dir web check` ✅
+- Tests: `pnpm --dir web test` ✅
+- Check: `pnpm --dir web check` ✅ (Biome lint/format)
 - TypeScript: Clean, no errors
-- Biome: No linting issues
-- Browser: Responsive 1280px→mobile; all interactive states verified
+- Responsive: Verified 1280px→mobile
+
+### Authentication Bridge
+- **Cookie**: `kith_session` (HttpOnly, SameSite=Lax, Secure when `BEHIND_TLS=true`)
+- **CSRF Protection**: All POST/PUT/PATCH/DELETE require `X-Requested-With: kith-spa` header when authenticated by cookie
+- **Token Auth**: Server-side only (`TOKEN_AUTH` env var); for future API clients, not SPA
 
 ---
 - **env.go**: LoadConfig() with three-layer merge (defaults → .env file → env vars); unmarshals to global ENV
@@ -296,4 +305,6 @@ kith-pms/
 - `files`: avatar upload, MIME validation, path traversal prevention
 - `reminders`: CRUD, completion tracking, status filtering
 
-**Total**: 114 tests passing. Run all: `make tests` (includes race detector)
+**Total**: 159 Go tests passing. Run all: `make tests` (includes race detector)
+
+React frontend tests: Vitest + @testing-library/react; run via `pnpm --dir web test`

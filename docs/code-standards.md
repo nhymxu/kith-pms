@@ -13,7 +13,7 @@
 - Go standard: `snake_case.go` (e.g., `env.go`, `domain.go`, `service.go`, `repo.go`)
 - Purpose patterns: `domain.go` (structs), `service.go` (business logic), `repo.go` (data access)
 - Test files: `<name>_test.go` alongside the source file
-- Templ files: `<domain>.templ` (e.g., `people_list.templ`, `people_form.templ`)
+- React components: `kebab-case.tsx` or `PascalCase.tsx` (e.g., `topbar.tsx`, `AppShell.tsx`, `dashboard-card.tsx`)
 
 ### Database & SQL
 - Use raw `database/sql` (no ORM)
@@ -63,25 +63,31 @@ type Repo struct {
 - Add new config fields to `EnvConfigMap` in `pkg/config/env.go` and defaults in `pkg/config/default.go`
 
 ### HTTP Handlers (Echo v5)
-- Handlers live in `internal/web/handlers/` (one file per domain)
+- Handlers live in `internal/web/handlers/` (one file per domain, or API handlers in `internal/api/`)
 - Handler signatures: `func(c echo.Context) error` (Echo v5 pattern)
 - Return errors via `c.Error(err)` — let Echo's error handler format response
-- Use `c.Bind()` for form/query binding to typed structs
+- Use `c.Bind()` for JSON/form binding to typed structs
 - Use `c.QueryParam()`, `c.Param()` for individual values
-- Templ components in `internal/web/templates/` — receive context where needed
-- CSRF middleware applied globally in `internal/web/server.go`; extract token via `c.Get("csrf_token")`
+- Response: JSON REST API only (SPA handles all UI rendering)
+- CSRF middleware applied globally in `internal/web/server.go`; validates `X-Requested-With: kith-spa` header for state-changing calls
 
 ### Middleware & Auth
 - Register global middleware in `internal/web/server.go` (Recover, RequestID, Gzip, CSRF)
 - Auth middleware checks session cookie, validates HMAC token, injects `*auth.User` into context
 - Inject user into request: `c.Set("user", user)` — retrieve with `c.Get("user").(*auth.User)`
-- CSRF validation automatic for POST/PUT/DELETE via middleware
+- CSRF validation automatic for POST/PUT/PATCH/DELETE when authenticated by cookie
 
-### Templ Components
-- Extend base layout: `templ ComponentName(user *auth.User, data DataStruct) { ... }`
-- Pass `c.Response().Header()` to set HTTP headers from templates
-- Use htmx attributes: `hx-get`, `hx-post`, `hx-swap`, `hx-target` for dynamic updates
-- Partials: `templ PartialName(data) { ... }` — called from handlers for HTMX swaps
+### React/TypeScript Frontend
+- **Routing**: TanStack Router v1 file-based routing in `web/src/routes/`; `_authed.tsx` layout pattern for auth guard; responsive mobile hamburger menu via `topbar.tsx`
+- **Route Tree**: 28 routes including `/` (dashboard), `/login`, `/people/*`, `/journal/*`, `/gifts/*`, `/reminders/*`, `/dates`, `/audit`, `/me/*`, `/settings/*`
+- **Components**: Functional components with hooks; use `#/` path alias for imports (`import { Button } from '#/components/ui/button'` not `@/`)
+- **Data Fetching**: TanStack Query v5 with 5-minute stale time, 10-minute cache duration; define endpoints in `web/src/endpoints/*.ts` (e.g. `people.ts`, `journal.ts`, `gifts.ts`, `reminders.ts`); use `useQuery` / `useMutation` hooks
+- **Forms**: TanStack Form v0 with Zod validation; define schemas in `web/src/schemas/` (hand-maintained per-resource, not generated)
+- **Styling**: Tailwind CSS v4 with Linear/Stripe minimal design tokens; shadcn/ui components restyled for indigo-600 accent, zinc surfaces, hairline borders, no shadows; Recharts v3.8.1 for dashboard charts
+- **Auth Context**: Consume via `lib/auth-context.tsx`; redirects to login if unauthenticated; session stored in `kith_session` HttpOnly cookie
+- **Types**: Hand-maintained Zod schemas in `web/src/schemas/` (not generated); must align exactly with Go API domain types in case, field names, and optional fields
+- **CSRF Protection**: All POST/PUT/PATCH/DELETE requests automatically include `X-Requested-With: kith-spa` header (handled in `lib/api-client.ts`)
+- **Build**: Vite 8; output to `web/dist/`; `make web` copies dist to `internal/web/spa/public/`; embedded into Go binary via `//go:embed all:public`
 
 ### Imports
 - Group: stdlib → external → internal (separated by blank lines)
@@ -91,11 +97,17 @@ type Repo struct {
 
 ## Testing
 
-### Test Organization
+### Go Backend Tests
 - **Integration tests**: Use real SQLite database (e.g., `:memory:` or temp file)
 - **Service tests**: `internal/{domain}/service_test.go` — test business logic with real repo
 - **No mocks**: Prefer real dependencies over mocks for confidence in actual behavior
-- **Test files**: 9 test files across auth, people, labels, journal, dates, files, reminders
+- **Test files**: 10 test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts
+- **Total Go tests**: 159 tests passing with race detector enabled
+
+### React Frontend Tests
+- **Framework**: Vitest + @testing-library/react
+- **Run tests**: `pnpm --dir web test`
+- **Build checks**: `pnpm --dir web check` (Biome lint/format verification)
 
 ### Test Structure
 ```go
@@ -140,25 +152,26 @@ make test-coverage     # generate coverage report
 - Verified: `./scripts/find-cgo-pkg.sh` identifies any CGO dependencies
 
 ### Asset Generation
-- **Templ**: `templ generate` — compiles `.templ` files to Go code
-- **Tailwind**: `tailwindcss -i input.css -o styles.css` — builds CSS from template classes
-- Run before build: `make assets`
+- **SPA Build**: `pnpm --dir web build` — Vite compiles React + TypeScript to `web/dist/`
+- **CSS**: Tailwind CSS v4 (compiled via Vite plugin) using design tokens in `web/src/styles.css`
+- **Embedding**: `make web` copies `web/dist/` to `internal/web/spa/public/` for Go embed
 
 ### Makefile Targets
 
 | Target | Command | Purpose |
 |--------|---------|---------|
-| `assets` | `templ generate && tailwindcss build` | Generate templates & CSS |
-| `build` | `CGO_ENABLED=0 go build -o bin/kith-pms ./cmd` | Compile static binary |
-| `deps` | `go mod download && go mod tidy` | Download and tidy dependencies |
-| `fmt` | `gofmt -w .` | Auto-format all Go files |
-| `check-fmt` | `gofmt -l . \| grep .` | Verify formatting (fails if unformatted) |
-| `tidy` | `gofmt -w . && go mod tidy` | Format + tidy modules |
-| `lint` | `golangci-lint run ./...` | Run linter |
-| `tests` | `go test -race ./...` | Run tests with race detector |
-| `test-coverage` | `go test -race -cover ./...` | Coverage summary |
-| `vuln-check` | `govulncheck ./...` | Scan for known vulnerabilities |
-| `gosec` | `gosec ./...` | Security analysis |
+| `web` | `pnpm install && pnpm build && copy to internal/web/spa/public` | Build React SPA (Vite) and copy to embed dir |
+| `build` | `make web && CGO_ENABLED=0 go build -o bin/kith-pms ./cmd` | Full build (SPA + static Go binary) |
+| `dev` | `make dev` | Run `go run ./cmd` with file watching |
+| `deps` | `go mod download && go mod tidy` | Download and tidy Go dependencies |
+| `fmt` | `gofmt -w .` | Auto-format Go files |
+| `check-fmt` | `gofmt -l . \| grep .` | Verify Go formatting (fails if unformatted) |
+| `tidy` | `gofmt -w . && go mod tidy` | Format Go + tidy modules |
+| `lint` | `golangci-lint run ./...` | Run Go linter |
+| `tests` | `go test -race ./...` | Run all Go tests with race detector |
+| `test-coverage` | `go test -race -cover ./...` | Go test coverage summary |
+| `vuln-check` | `govulncheck ./...` | Scan Go for known vulnerabilities |
+| `gosec` | `gosec ./...` | Go security analysis |
 
 ## Pre-commit Checklist
 

@@ -20,12 +20,15 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Upload profile avatars (JPEG, PNG, GIF, WebP)
 - Important dates tracking (birthdays, anniversaries, milestones)
 - Reminders for follow-up and staying in touch
+- Many-to-many person-to-person relationships with customizable, optionally-paired types
+- Last contact timestamp tracking (manual & auto-update from journal entries)
 
 ### Life Journal / Log
 - Date-stamped entries with title and content
 - Link journal entries to multiple contacts
 - Full-text search via SQLite FTS5
 - Filter by date range and people
+- Auto-update last contact for participants when self-profile is involved
 
 ### Memory & Notes
 - Free-form journal entries tied to people
@@ -37,26 +40,43 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Reminder system with due dates and completion tracking
 - Link reminders to people or important dates
 
+### Gifts & Money Tracking
+- Track gifts given, received, and planned
+- Money tracking per gift
+- Gift photos/images with upload support
+- Debt type tracking (owed/owe)
+
+### Audit Log
+- Automatic change tracking for all entities
+- Timestamps and user attribution
+- Full historical record of edits and deletions
+
 ## Tech Stack (Implemented)
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
-| Language | Go 1.26, CGO_ENABLED=0 | Compiled binary, low overhead, easy self-hosting |
+| Language | Go 1.26.2, CGO_ENABLED=0 | Compiled binary, low overhead, easy self-hosting |
 | HTTP | Echo v5 | Lightweight HTTP framework, minimal magic |
 | Database | SQLite (modernc.org/sqlite) | Pure Go, no CGO, single-file database |
-| Templates | templ | Type-safe HTML components compiled to Go |
-| Interactivity | htmx | Dynamic UI without heavy JavaScript |
-| Styling | Tailwind CSS v4 | Utility-first CSS with standalone CLI |
+| Frontend | React 19, TanStack Router v1 | CSR SPA with file-based routing; full client-side interactivity |
+| Data Fetching | TanStack Query v5 | Cache-first data fetching, stale-while-revalidate, per-component refresh |
+| Forms | TanStack Form v0 | Uncontrolled form state with Zod validation |
+| Tables | TanStack Table v8 | Headless table library for data-heavy views |
+| UI Components | shadcn/ui (Linear/Stripe minimal, restyled) | Headless component library with Tailwind theming |
+| Styling | Tailwind CSS v4 | Utility-first CSS with design tokens |
+| Build | Vite 6 | Fast bundler; code splitting, lazy loading, HMR |
+| Linter/Formatter | Biome | Rust-based linter + formatter for JS/TS |
+| Package Manager | pnpm | Fast, disk-efficient workspaces |
 | CLI | urfave/cli v3 | Simple CLI scaffolding for subcommands |
 | Config | koanf | Layered config: defaults → .env file → env vars |
 | Logging | slog | Standard library structured logging (Go 1.21+) |
 | Error Monitoring | slog-sentry | Fan-out errors to Sentry without replacing slog |
-| Auth | Argon2id + HMAC sessions | Password hashing + signed cookie sessions |
+| Auth | Argon2id + HMAC sessions | Password hashing + signed HttpOnly cookie sessions |
 | Search | SQLite FTS5 | Full-text search with auto-update triggers |
 
 ## Design System
 
-Frontend follows a clean, minimal design: Tailwind CSS v4 for styling, htmx for interactivity, templ for type-safe HTML components.
+Linear/Stripe minimal aesthetic: indigo-600 accent, zinc surfaces, Inter + JetBrains Mono typography, hairline borders, no shadows, responsive horizontal topbar. Built with React 19 CSR SPA and shadcn/ui components, styled via Tailwind CSS v4 design tokens.
 
 ## Non-Goals
 

@@ -15,21 +15,29 @@
 │  │  └─ restore --from   → replace database                 │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Web Layer (Echo v5 + React SPA)                          │   │
+│  │ Web Layer (Echo v5 JSON API + React SPA)                 │   │
 │  │  ├─ /health        → Liveness probe (no auth)            │   │
-│  │  ├─ /v1/*          → JSON REST API (Bearer or cookie)    │   │
-│  │  ├─ /assets/*      → Embedded SPA assets (1yr cache)     │   │
+│  │  ├─ /v1/*          → JSON REST API (SessionOrBearer)     │   │
+│  │  ├─ /assets/*      → Embedded SPA hashed assets (1yr)    │   │
+│  │  ├─ /favicon.*     → Embedded favicon (1yr)              │   │
 │  │  └─ /*             → index.html catch-all (SPA shell)    │   │
 │  │                                                          │   │
-│  │  SPA routes (client-side, TanStack Router):              │   │
-│  │  ├─ /              → Dashboard                           │   │
-│  │  ├─ /people/*      → People CRUD                         │   │
-│  │  ├─ /journal/*     → Journal                             │   │
-│  │  ├─ /gifts/*       → Gifts                               │   │
-│  │  ├─ /reminders/*   → Reminders                           │   │
-│  │  ├─ /dates         → Important dates                     │   │
-│  │  ├─ /audit         → Audit log                           │   │
-│  │  └─ /settings/*    → Labels, rel types, security         │   │
+│  │  Frontend (React 19 SPA, TanStack Router file-based):     │   │
+│  │  ├─ /              → Dashboard (KPIs, charts, activity)  │   │
+│  │  ├─ /people/*      → People CRUD (table, detail form)    │   │
+│  │  ├─ /journal/*     → Journal (list, detail, search)      │   │
+│  │  ├─ /gifts/*       → Gifts (form, list)                  │   │
+│  │  ├─ /reminders/*   → Reminders (form, table)             │   │
+│  │  ├─ /dates         → Important dates (upcoming)          │   │
+│  │  ├─ /audit         → Audit log (list view)               │   │
+│  │  └─ /settings/*    → Labels, rel types, security (PWD)   │   │
+│  │                                                          │   │
+│  │  API Routes (all /v1, SessionOrBearer auth):              │   │
+│  │  ├─ POST /auth/login, logout, logout-all, /me, /password│   │
+│  │  ├─ GET/POST/PUT/DELETE /people(/avatar, /relationships)│   │
+│  │  ├─ GET/POST/PUT/DELETE /journal, /gifts, /reminders    │   │
+│  │  ├─ GET /dates/upcoming, /labels, /relationship-types   │   │
+│  │  └─ GET /audit, /me/setup                               │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Service Layer (auth, people, labels, journal, dates,     │   │
@@ -102,6 +110,104 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 
 Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above events.
 
+## Frontend Architecture (React 19 SPA)
+
+### Build Pipeline & Embedding
+
+```
+web/src/ (React + TypeScript)
+  ├─ pnpm build (Vite 8)
+  └─ web/dist/ (hashed assets: index.html, js/*, css/*)
+      └─ make web
+         └─ copy to internal/web/spa/public/
+            └─ go build (//go:embed all:public)
+               └─ static binary with SPA embedded
+```
+
+**Build Details**:
+- **Vite 8**: Fast bundler with code splitting, lazy loading, HMR
+- **Output**: `web/dist/` with hashed filenames for cache busting
+- **Embedding**: `internal/web/spa/spa.go` uses `//go:embed all:public`
+- **Asset Serving**: `/assets/*` served with 1-year immutable cache; `/` serves `index.html` (no-cache) for SPA shell
+
+### Routing & Layouts (TanStack Router v1)
+
+**File-based routing** in `web/src/routes/`:
+```
+routes/
+├── __root.tsx           # Root layout + outlet
+├── login.tsx            # Public login page
+└── _authed.tsx          # Auth-guarded layout with topbar
+    ├── index.tsx        # Dashboard (/)
+    ├── _authed/
+    │   ├── people/      # People CRUD (index, new, $personId, $personId.edit)
+    │   ├── journal/     # Journal (index, new, $entryId, $entryId.edit)
+    │   ├── gifts/       # Gifts (index, new, $giftId, $giftId.edit)
+    │   ├── reminders/   # Reminders (index, new, $reminderId, $reminderId.edit)
+    │   ├── dates/       # Important dates list
+    │   ├── audit/       # Audit log view
+    │   ├── me/          # User profile (index, setup)
+    │   └── settings/    # Settings hub (index, labels, relationship-types, security)
+```
+
+**Layout Pattern**: `_authed.tsx` acts as auth guard with shared topbar; all routes under it require authentication.
+
+### Components & Styling
+
+**Component Library**: shadcn/ui primitives (Button, Card, Input, Select, Dialog, Sheet, Table, etc.) restyled for Linear/Stripe minimal:
+- **Accent**: Indigo-600 (#4f46e5)
+- **Surfaces**: Zinc palette (white, #fafafa muted, #e4e4e7 borders)
+- **Borders**: Hairline (1px) zinc-200; no box shadows
+- **Radius**: 0.375rem (compact aesthetic)
+- **Typography**: Inter primary, JetBrains Mono for numerics; font-weight 600 headings
+
+**Navigation**: `topbar.tsx` sticky header (h-14, border-b):
+- Desktop (md+): Full nav inline with indigo underline active state
+- Mobile (<md): Hamburger menu toggle; nav items in collapsible sidebar
+
+**Charts**: Recharts v3.8.1 with custom indigo/zinc theme for dashboard visualizations
+
+### Data Layer (TanStack Query v5)
+
+**Configuration**: 5-minute stale time, 10-minute cache duration
+**Endpoints**: API functions in `web/src/endpoints/*.ts` per resource:
+- `audit.ts`, `auth.ts`, `dates.ts`, `gifts.ts`, `journal.ts`, `labels.ts`, `me.ts`, `people.ts`, `relationship-types.ts`, `reminders.ts`
+
+**API Client**: `lib/api-client.ts` shared fetch wrapper:
+- Attaches `X-Requested-With: kith-spa` CSRF header for POST/PUT/PATCH/DELETE
+- Handles cookie-based auth automatically
+- Supports Bearer token auth (for future programmatic access)
+
+**Auth Context**: `lib/auth-context.tsx` manages session state:
+- Stores user info in React context
+- Redirects to login if unauthenticated
+- Provides `useAuth()` hook for component consumption
+
+### Validation & Forms (TanStack Form v0 + Zod)
+
+**Schema Location**: `web/src/schemas/*.ts` (hand-maintained, not generated):
+- `audit.ts`, `auth.ts`, `date.ts`, `gift.ts`, `journal.ts`, `label.ts`, `person.ts`, `relationship-type.ts`, `reminder.ts`
+- Must exactly match Go API types: case-sensitive field names, optional fields, enum values
+
+**Form Pattern** (example):
+```typescript
+// schemas/person.ts
+export const PersonSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  dateOfBirth: z.date().nullable(),
+  labels: z.array(z.object({ id: z.number(), name: z.string() }))
+});
+
+// Component
+export function PersonForm() {
+  const form = useForm({ defaultValues, onSubmit: (values) => savePerson(values) });
+  return <form onSubmit={form.handleSubmit}>...</form>;
+}
+```
+
+---
+
 ## HTTP Server (Echo v5)
 
 ### Global Middleware Stack (applied in order)
@@ -118,32 +224,42 @@ Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above eve
 
 ```
 /health                → GET (liveness probe, no auth)
-/v1/*                  → JSON REST API (see api package for full route list)
-/assets/*              → Embedded SPA hashed assets (1-year immutable cache)
-/favicon.*             → Embedded favicon files
-/*                     → index.html catch-all (200, no-cache) — SPA handles routing
+/v1/*                  → JSON REST API (see api package)
+/assets/*              → Embedded SPA hashed assets (1-year cache, immutable)
+/favicon.*             → Embedded favicon (1-year cache)
+/*                     → index.html catch-all (200, no-cache, CSP headers) — SPA handles all routing
 ```
 
-#### JSON API routes (`/v1/*`)
+#### JSON API Routes (`/v1/*`)
 
-```
-POST   /v1/auth/login            → create session (rate limited 5/15min)
-POST   /v1/auth/logout           → destroy current session
-POST   /v1/auth/logout-all       → destroy all sessions for user
-GET    /v1/auth/me               → current user or 401
-POST   /v1/auth/password         → change password (requires current)
-GET    /v1/me                    → self profile person
-POST   /v1/me/setup              → set self person
-GET    /v1/people                → list + search
-POST   /v1/people                → create
-GET    /v1/people/:id            → detail
-PUT    /v1/people/:id            → update
-DELETE /v1/people/:id            → delete
-POST   /v1/people/:id/avatar     → upload avatar (multipart, max 5MB)
-GET    /v1/people/:id/avatar     → retrieve avatar binary
-DELETE /v1/people/:id/avatar     → delete avatar
-...   (journal, gifts, reminders, dates, labels, relationship-types, audit)
-```
+**Auth** (SessionOrBearer, rate-limited):
+- `POST /auth/login` — create session (5 attempts per 15 min)
+- `POST /auth/logout` — destroy current session
+- `POST /auth/logout-all` — destroy all sessions for user
+- `GET /auth/me` — current user or 401
+
+**User Profile**:
+- `GET /me` — self profile person
+- `POST /me/setup` — designate self person
+- `POST /auth/password` — change password (requires current)
+
+**People** (CRUD + relationships):
+- `GET /people`, `POST /people` (list/search + create)
+- `GET/PUT/DELETE /people/:id` (detail, update, delete)
+- `POST/GET/DELETE /people/:id/avatar` (upload, retrieve, delete)
+- `GET /people/:id/labels` — person's labels
+- `GET /people/:id/relationships` — person's relationships
+- `POST/DELETE /people/:id/relationships` — attach/detach relationships
+
+**Journal**, **Gifts**, **Reminders**, **Dates** — similar CRUD patterns
+
+**Labels** — CRUD
+
+**Relationships** — GET types, POST/DELETE type defs
+
+**Audit** — GET audit log entries
+
+All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
 
 ### Session & Auth Flow
 
@@ -157,28 +273,28 @@ DELETE /v1/people/:id/avatar     → delete avatar
    - Store session in database (user_sessions table, expires_at)
    - Sign session ID + user ID → HMAC-SHA256 token
    ↓
-4. Set session cookie (httpOnly, SameSite=Lax; Secure when BEHIND_TLS=true)
+4. Set session cookie (HttpOnly, SameSite=Lax; Secure when BEHIND_TLS=true)
    - Name: kith_session
-   - Value: signed HMAC token
+   - Value: HMAC-signed token
    - Path: /
-   - MaxAge: SESSION_LIFETIME
+   - MaxAge: SESSION_LIFETIME (default 720h = 30 days)
    ↓
 5. On subsequent /v1/* requests:
    - SessionOrBearer middleware: accepts either cookie or Authorization: Bearer token
-   - Cookie path: validates HMAC, looks up session, verifies expiry, injects user context
-   - Bearer path: validates static TOKEN_AUTH value (machine clients only)
-   - State-changing calls (POST/PUT/PATCH/DELETE) require X-Requested-With: kith-spa
-     header when authenticated by cookie (CSRF protection via custom header)
+   - **Cookie path**: validates HMAC, looks up session, verifies expiry, injects user context
+   - **Bearer path**: validates static TOKEN_AUTH value (future machine clients only)
+   - **CSRF check**: All state-changing calls (POST/PUT/PATCH/DELETE) require X-Requested-With: kith-spa
+     header when authenticated by cookie (protects against cross-site form submissions)
    ↓
 6. Password change (POST /v1/auth/password):
    - Verify current password
-   - Hash new password with Argon2id
-   - Invalidate all sessions
+   - Hash new password with Argon2id (golang.org/x/crypto/argon2)
+   - Invalidate all sessions for that user
    - Rate limited: 5 attempts per 15 minutes
    ↓
 7. Logout (POST /v1/auth/logout):
-   - Clear session in database
-   - Clear session cookie
+   - Clear session record in database
+   - Clear session cookie in response
 ```
 
 ## File Storage Layer
@@ -311,11 +427,14 @@ gifts (1)
 ## Deployment
 
 ### Single Binary
-- Compiled with `CGO_ENABLED=0`
-- No runtime dependencies (everything bundled)
+- Compiled with `CGO_ENABLED=0` → static binary, no libc or runtime dependencies
 - Embedded React SPA (`//go:embed all:public` in `internal/web/spa/spa.go`)
+  - Vite builds React 19 SPA to `web/dist/`
+  - `make web` copies `web/dist/` → `internal/web/spa/public/`
+  - `go embed` compiles all assets into binary (hashed filenames for cache busting)
 - Embedded migrations (SQL files compiled into binary)
-- Build pipeline: `make web` (pnpm build → copy to `internal/web/spa/public`) then `go build`
+- **Build pipeline**: `make web` (pnpm build → copy) → `make build` (CGO_ENABLED=0 go build)`
+- **Asset serving**: `/assets/*` served with 1-year cache headers; `/` serves index.html with no-cache + CSP headers
 
 ### Container (multi-stage Dockerfile)
 - Stage 1: `node:22-alpine` — `pnpm install --frozen-lockfile && pnpm build`

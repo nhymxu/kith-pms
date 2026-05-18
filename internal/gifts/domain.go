@@ -50,6 +50,13 @@ type ListParams struct {
 	Page      int
 }
 
+type GiftList struct {
+	Items    []GiftWithPerson `json:"items"`
+	Total    int              `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
+}
+
 func (g Gift) HasImage() bool { return g.ImagePath != "" }
 
 func (g Gift) IsMoney() bool {

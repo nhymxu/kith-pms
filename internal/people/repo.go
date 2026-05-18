@@ -11,6 +11,7 @@ import (
 
 type PersonRepo interface {
 	List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error)
+	Count(ctx context.Context, q string, labelIDs []int64) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error)
@@ -107,6 +108,38 @@ func (r *sqlPersonRepo) List(
 	}
 
 	return people, rows.Err()
+}
+
+func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (int, error) {
+	var (
+		where []string
+		args  []any
+	)
+
+	if q != "" {
+		where = append(where, "name_lower LIKE ?")
+		args = append(args, "%"+q+"%")
+	}
+
+	if len(labelIDs) > 0 {
+		sub := buildLabelIntersect(labelIDs)
+		where = append(where, "id IN ("+sub+")")
+		for _, id := range labelIDs {
+			args = append(args, id)
+		}
+	}
+
+	query := "SELECT COUNT(*) FROM person"
+	if len(where) > 0 {
+		query += " WHERE " + strings.Join(where, " AND ")
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("people: count query: %w", err)
+	}
+
+	return total, nil
 }
 
 // buildOrderBy returns the ORDER BY clause based on sort parameter.

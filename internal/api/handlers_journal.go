@@ -50,6 +50,7 @@ func (h *JournalAPI) List(c *echo.Context) error {
 	}
 
 	return ok(c, list)
+
 }
 
 func (h *JournalAPI) Get(c *echo.Context) error {

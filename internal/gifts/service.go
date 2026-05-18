@@ -51,8 +51,31 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*Gift, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *Service) List(ctx context.Context, params ListParams) ([]GiftWithPerson, error) {
-	return s.repo.List(ctx, params)
+func (s *Service) List(ctx context.Context, params ListParams) (*GiftList, error) {
+	if params.Page < 1 {
+		params.Page = 1
+	}
+
+	total, err := s.repo.Count(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := s.repo.List(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if items == nil {
+		items = []GiftWithPerson{}
+	}
+
+	return &GiftList{
+		Items:    items,
+		Total:    total,
+		Page:     params.Page,
+		PageSize: params.PageSize,
+	}, nil
 }
 
 func (s *Service) Update(ctx context.Context, g *Gift) error {

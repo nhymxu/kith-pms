@@ -14,6 +14,7 @@ export async function login(password: string): Promise<boolean> {
 	const res = await apiFetch<Envelope<unknown>>("/v1/auth/login", {
 		method: "POST",
 		body: JSON.stringify({ password }),
+		skipSessionLost: true,
 	})
 	const parsed = loginResponseSchema.parse(res.data)
 	return parsed.logged_in

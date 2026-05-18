@@ -2,34 +2,35 @@
 // Pattern: keys.<domain>.all → keys.<domain>.list(filters) → keys.<domain>.detail(id)
 
 export type PeopleFilters = {
-	q?: string
-	page?: number
-	page_size?: number
-	labels?: number[]
-}
+	q?: string;
+	page?: number;
+	page_size?: number;
+	labels?: number[];
+};
 
 export type JournalFilters = {
-	person_id?: number
-	page?: number
-	page_size?: number
-}
+	person_id?: number;
+	page?: number;
+	page_size?: number;
+};
 
 export type GiftFilters = {
-	person_id?: number
-	page?: number
-	page_size?: number
-}
+	person_id?: number;
+	page?: number;
+	page_size?: number;
+};
 
 export type ReminderFilters = {
-	person_id?: number
-	completed?: boolean
-}
+	person_id?: number;
+	completed?: boolean;
+	status?: "upcoming" | "overdue" | "all";
+};
 
 export type AuditFilters = {
-	entity_type?: string
-	entity_id?: number
-	page?: number
-}
+	entity_type?: string;
+	entity_id?: number;
+	page?: number;
+};
 
 export const keys = {
 	people: {
@@ -42,7 +43,8 @@ export const keys = {
 	},
 	journal: {
 		all: ["journal"] as const,
-		list: (filters: JournalFilters = {}) => ["journal", "list", filters] as const,
+		list: (filters: JournalFilters = {}) =>
+			["journal", "list", filters] as const,
 		detail: (id: number) => ["journal", "detail", id] as const,
 	},
 	gifts: {
@@ -52,7 +54,8 @@ export const keys = {
 	},
 	reminders: {
 		all: ["reminders"] as const,
-		list: (filters: ReminderFilters = {}) => ["reminders", "list", filters] as const,
+		list: (filters: ReminderFilters = {}) =>
+			["reminders", "list", filters] as const,
 		detail: (id: number) => ["reminders", "detail", id] as const,
 	},
 	dates: {
@@ -79,4 +82,4 @@ export const keys = {
 		profile: () => ["me", "profile"] as const,
 		auth: () => ["me", "auth"] as const,
 	},
-} as const
+} as const;

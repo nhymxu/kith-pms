@@ -130,13 +130,21 @@ func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 		return nil, err
 	}
 
+	if contacts == nil {
+		contacts = []ContactInfo{}
+	}
+
+	if locations == nil {
+		locations = []Location{}
+	}
+
 	p.Contacts = contacts
 	p.Locations = locations
 
 	return p, nil
 }
 
-func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error) {
+func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, error) {
 	pageSize := params.PageSize
 	if pageSize <= 0 {
 		pageSize = defaultPageSize
@@ -153,15 +161,24 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 
 	offset := (page - 1) * pageSize
 
-	people, err := s.People.List(ctx, params.Query, params.LabelIDs, pageSize, offset, params.Sort)
+	total, err := s.People.Count(ctx, params.Query, params.LabelIDs)
 	if err != nil {
 		return nil, err
 	}
 
+	items, err := s.People.List(ctx, params.Query, params.LabelIDs, pageSize, offset, params.Sort)
+	if err != nil {
+		return nil, err
+	}
+
+	if items == nil {
+		items = []Person{}
+	}
+
 	// Batch-load labels for all people
-	if s.LabelsSvc != nil && len(people) > 0 {
-		personIDs := make([]int64, len(people))
-		for i, p := range people {
+	if s.LabelsSvc != nil && len(items) > 0 {
+		personIDs := make([]int64, len(items))
+		for i, p := range items {
 			personIDs[i] = p.ID
 		}
 
@@ -170,14 +187,19 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Person, error)
 			return nil, fmt.Errorf("batch load labels: %w", err)
 		}
 
-		for i := range people {
-			if labels, ok := labelsMap[people[i].ID]; ok {
-				people[i].Labels = labels
+		for i := range items {
+			if labels, ok := labelsMap[items[i].ID]; ok {
+				items[i].Labels = labels
 			}
 		}
 	}
 
-	return people, nil
+	return &PersonList{
+		Items:    items,
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	}, nil
 }
 
 func (s *Service) Delete(ctx context.Context, id int64) error {

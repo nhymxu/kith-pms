@@ -1,27 +1,48 @@
-import { Link } from "@tanstack/react-router"
-import { cn } from "#/lib/utils"
-import type { LucideIcon } from "lucide-react"
+import { Link } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "#/lib/utils";
 
 interface NavLinkProps {
-	to: string
-	icon: LucideIcon
-	label: string
-	onClick?: () => void
+	to: string;
+	icon: LucideIcon;
+	label: string;
+	onClick?: () => void;
+	variant?: "sidebar" | "topbar";
 }
 
-export function NavLink({ to, icon: Icon, label, onClick }: NavLinkProps) {
+const navLinkStyles = {
+	sidebar: {
+		base: "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+		active:
+			"bg-sidebar-primary text-sidebar-primary-foreground font-heading shadow-shadow",
+	},
+	topbar: {
+		base: "text-foreground hover:bg-secondary-background hover:text-foreground",
+		active: "bg-main text-main-foreground font-heading shadow-shadow",
+	},
+} as const;
+
+export function NavLink({
+	to,
+	icon: Icon,
+	label,
+	onClick,
+	variant = "sidebar",
+}: NavLinkProps) {
+	const styles = navLinkStyles[variant];
+
 	return (
 		<Link
 			to={to}
 			onClick={onClick}
 			className={cn(
-				"flex items-center gap-3 px-3 py-2 rounded-base text-sm font-base border-2 border-transparent transition-all",
-				"hover:border-border hover:bg-main hover:text-main-foreground hover:shadow-shadow hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none",
+				"flex items-center gap-3 rounded-base px-3.5 py-2.5 text-sm font-base transition-all",
+				styles.base,
 			)}
-			activeProps={{ className: "border-border bg-main text-main-foreground font-heading" }}
+			activeProps={{ className: styles.active }}
 		>
 			<Icon className="size-4 shrink-0" />
 			<span>{label}</span>
 		</Link>
-	)
+	);
 }

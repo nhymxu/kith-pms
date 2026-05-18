@@ -168,7 +168,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	}
 	defer func() { _ = rows.Close() }()
 
-	var results []ReminderWithPerson
+	results := []ReminderWithPerson{}
 
 	for rows.Next() {
 		var (
@@ -222,7 +222,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 	}
 	defer func() { _ = rows.Close() }()
 
-	var results []ReminderWithPerson
+	results := []ReminderWithPerson{}
 
 	for rows.Next() {
 		var (
@@ -273,7 +273,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	}
 	defer func() { _ = rows.Close() }()
 
-	var results []ReminderWithPerson
+	results := []ReminderWithPerson{}
 
 	for rows.Next() {
 		var (

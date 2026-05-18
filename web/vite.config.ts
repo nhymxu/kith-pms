@@ -10,6 +10,14 @@ const viteConfig = defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })
 
 export default mergeConfig(

@@ -204,7 +204,51 @@ kith-pms/
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
 - **forms/**: Pure Go form parsing utilities; `ParseIndexed` for multi-row form fields
 
-### `pkg/config` — Configuration
+## React SPA Frontend (`web/` directory)
+
+### Dashboard Feature (`web/src/features/dashboard/`)
+
+**Interactive Relationship Dashboard** — Premium responsive PRM dashboard for daily use.
+
+**Components:**
+- `dashboard-data.ts` — Pure data adapter; derives KPIs, chart points, action queue, activity feed, upcoming moments from API responses
+- `summary-cards.tsx` — KPI cards (people count, follow-ups, dates, gifts, journal activity) with refresh icons
+- `relationship-pulse-chart.tsx` — Recharts line chart with responsive container and custom tooltip
+- `action-queue.tsx` — Filterable list with pills, capped to 8 rows, Show more/less toggle
+- `recent-relationship-activity.tsx` — Recent activity capped to 6 entries
+- `upcoming-moments.tsx` — Upcoming moments capped to 5 entries
+- `dashboard-card.tsx` — Reusable card primitive with title, subtitle, Lucide icon, refresh action, loading/stale/error slots
+- `dashboard-filter-pill.tsx` — Filter pill with active/inactive/hover/focus states
+- `empty-state.tsx` — Empty state component for widgets with no data
+
+**Design:**
+- Teal accent color with slate/white palette
+- Responsive grid: 1280px+ desktop (4–5 KPI columns, 8/4 split main), tablet (2 columns), mobile (single column)
+- Lucide icons only; no emojis
+- Hover states on cards/list rows; active filter pills visibly highlighted
+
+**Data Flow:**
+- Route: `web/src/routes/_authed/index.tsx`
+- TanStack Query fetches existing endpoints (people, journal, reminders, dates, gifts, audit, me)
+- Dashboard adapter derives metrics and shapes data for widgets
+- Per-card refresh invalidates relevant queries only
+- Handles empty data, partial failures, and last-known-value states
+
+**Dependencies:**
+- `recharts ^3.8.1` — Chart library
+- `@tanstack/react-query` — Data fetching and caching
+- `lucide-react` — Icon library
+- `tailwindcss` — Styling
+
+**Validation:**
+- Build: `pnpm --dir web build` ✅
+- Tests: `pnpm --dir web test` ✅ (10/10 passing)
+- Check: `pnpm --dir web check` ✅
+- TypeScript: Clean, no errors
+- Biome: No linting issues
+- Browser: Responsive 1280px→mobile; all interactive states verified
+
+---
 - **env.go**: LoadConfig() with three-layer merge (defaults → .env file → env vars); unmarshals to global ENV
 - **const.go**: Application constants (timezones, timeouts, etc.)
 - **default.go**: configDefaults map (lowest precedence layer)

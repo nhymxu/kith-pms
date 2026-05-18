@@ -17,3 +17,17 @@ type ActivityPerson struct {
 	PersonID int64  `json:"person_id"`
 	Name     string `json:"name"`
 }
+
+type ActivityList struct {
+	Items    []Activity `json:"items"`
+	Total    int        `json:"total"`
+	Page     int        `json:"page"`
+	PageSize int        `json:"page_size"`
+}
+
+type ActivityList struct {
+	Items    []Activity `json:"items"`
+	Total    int        `json:"total"`
+	Page     int        `json:"page"`
+	PageSize int        `json:"page_size"`
+}

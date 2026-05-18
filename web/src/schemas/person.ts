@@ -41,9 +41,9 @@ export const personSchema = z.object({
 	last_contact_at: z.string().nullable().optional(),
 	created_at: z.string(),
 	updated_at: z.string(),
-	contacts: z.array(contactInfoSchema).optional().default([]),
-	locations: z.array(locationSchema).optional().default([]),
-	labels: z.array(labelRefSchema).optional().default([]),
+	contacts: z.array(contactInfoSchema).nullable().optional().transform((v) => v ?? []),
+	locations: z.array(locationSchema).nullable().optional().transform((v) => v ?? []),
+	labels: z.array(labelRefSchema).nullable().optional().transform((v) => v ?? []),
 })
 
 export const personListSchema = z.object({

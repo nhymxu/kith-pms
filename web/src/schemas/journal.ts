@@ -13,7 +13,7 @@ export const journalActivitySchema = z.object({
 	content: z.string().optional().default(""),
 	created_at: z.string(),
 	updated_at: z.string(),
-	people: z.array(activityPersonSchema).optional().default([]),
+	people: z.array(activityPersonSchema).nullable().optional().transform((v) => v ?? []),
 })
 
 export const journalListSchema = z.object({

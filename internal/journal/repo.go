@@ -15,6 +15,7 @@ type ActivityRepo interface {
 	Get(ctx context.Context, id int64) (*Activity, error)
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context, params ListParams) ([]Activity, error)
+	Count(ctx context.Context, params ListParams) (int, error)
 }
 
 type ActivityPersonRepo interface {
@@ -97,6 +98,65 @@ func (r *sqlActivityRepo) Delete(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, error) {
+	var (
+		joins []string
+		where []string
+		args  []any
+	)
+
+	useFTS := strings.TrimSpace(params.Query) != ""
+	if useFTS {
+		joins = append(joins, "JOIN activity_fts ON activity_fts.rowid = activity.id")
+		where = append(where, "activity_fts MATCH ?")
+		args = append(args, sanitizeFTSQuery(params.Query))
+	}
+
+	if len(params.PersonIDs) > 0 {
+		placeholders := strings.Repeat("?,", len(params.PersonIDs))
+		placeholders = placeholders[:len(placeholders)-1]
+		where = append(where, "activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))")
+		for _, pid := range params.PersonIDs {
+			args = append(args, pid)
+		}
+	}
+
+	if len(params.LabelIDs) > 0 {
+		placeholders := strings.Repeat("?,", len(params.LabelIDs))
+		placeholders = placeholders[:len(placeholders)-1]
+		where = append(where, "activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))")
+		for _, lid := range params.LabelIDs {
+			args = append(args, lid)
+		}
+	}
+
+	if params.FromDate != "" && params.ToDate != "" {
+		where = append(where, "activity.occurred_at_date BETWEEN ? AND ?")
+		args = append(args, params.FromDate, params.ToDate)
+	} else if params.FromDate != "" {
+		where = append(where, "activity.occurred_at_date >= ?")
+		args = append(args, params.FromDate)
+	} else if params.ToDate != "" {
+		where = append(where, "activity.occurred_at_date <= ?")
+		args = append(args, params.ToDate)
+	}
+
+	query := "SELECT COUNT(*) FROM activity"
+	if len(joins) > 0 {
+		query += " " + strings.Join(joins, " ")
+	}
+	if len(where) > 0 {
+		query += " WHERE " + strings.Join(where, " AND ")
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("journal: count activities: %w", err)
+	}
+
+	return total, nil
 }
 
 // List builds a dynamic SQL query based on non-zero filter fields in params.

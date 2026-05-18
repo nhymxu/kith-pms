@@ -146,6 +146,33 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 	return results, rows.Err()
 }
 
+func (r *Repo) Count(ctx context.Context, params ListParams) (int, error) {
+	args := []any{}
+	query := `SELECT COUNT(*) FROM gift g WHERE 1=1`
+
+	if params.Direction != "" {
+		query += " AND g.direction = ?"
+		args = append(args, string(params.Direction))
+	}
+
+	if params.PersonID != nil {
+		query += " AND g.person_id = ?"
+		args = append(args, *params.PersonID)
+	}
+
+	if params.DebtType != "" {
+		query += " AND g.debt_type = ?"
+		args = append(args, string(params.DebtType))
+	}
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("count gifts: %w", err)
+	}
+
+	return total, nil
+}
+
 func (r *Repo) Update(ctx context.Context, tx *sql.Tx, g *Gift) error {
 	var dateVal *string
 	if g.Date != "" {

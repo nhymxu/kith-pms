@@ -33,8 +33,10 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ""
 
 export async function apiFetch<T = unknown>(
 	path: string,
-	init: RequestInit = {},
+	init: RequestInit & { skipSessionLost?: boolean } = {},
 ): Promise<T> {
+	const { skipSessionLost, ...fetchInit } = init
+	init = fetchInit
 	const method = (init.method ?? "GET").toUpperCase()
 	const isReadMethod = method === "GET" || method === "HEAD"
 
@@ -75,7 +77,7 @@ export async function apiFetch<T = unknown>(
 
 		const err = new ApiError(response.status, code, message)
 
-		if (response.status === 401) {
+		if (response.status === 401 && !skipSessionLost) {
 			fireSessionLost()
 		}
 

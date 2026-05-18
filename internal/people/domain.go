@@ -30,6 +30,13 @@ type Person struct {
 // GetLastContactAt returns the last contact timestamp (for interface compatibility).
 func (p *Person) GetLastContactAt() *time.Time { return p.LastContactAt }
 
+type PersonList struct {
+	Items    []Person `json:"items"`
+	Total    int      `json:"total"`
+	Page     int      `json:"page"`
+	PageSize int      `json:"page_size"`
+}
+
 // ContactInfo represents a contact method (phone, email, social, etc.) for a Person.
 type ContactInfo struct {
 	ID       int64  `json:"id"`

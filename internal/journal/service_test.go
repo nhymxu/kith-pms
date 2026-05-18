@@ -110,12 +110,12 @@ func TestCreate_FTSRoundtrip(t *testing.T) {
 		t.Fatalf("List: %v", err)
 	}
 
-	if len(list) != 1 {
-		t.Fatalf("expected 1 result, got %d", len(list))
+	if len(list.Items) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(list.Items))
 	}
 
-	if list[0].Title != "Beach day" {
-		t.Errorf("unexpected title %q", list[0].Title)
+	if list.Items[0].Title != "Beach day" {
+		t.Errorf("unexpected title %q", list.Items[0].Title)
 	}
 }
 
@@ -133,8 +133,8 @@ func TestUpdate_FTSUpdated(t *testing.T) {
 
 	// Search for original word — should be found.
 	list, _ := svc.List(ctx, journal.ListParams{Query: "quarterly"})
-	if len(list) != 1 {
-		t.Fatalf("pre-update: expected 1, got %d", len(list))
+	if len(list.Items) != 1 {
+		t.Fatalf("pre-update: expected 1, got %d", len(list.Items))
 	}
 
 	// Update: replace content entirely.
@@ -150,14 +150,14 @@ func TestUpdate_FTSUpdated(t *testing.T) {
 
 	// Old term should no longer match.
 	old, _ := svc.List(ctx, journal.ListParams{Query: "quarterly"})
-	if len(old) != 0 {
-		t.Errorf("post-update: old term should not match, got %d results", len(old))
+	if len(old.Items) != 0 {
+		t.Errorf("post-update: old term should not match, got %d results", len(old.Items))
 	}
 
 	// New term should match.
 	newList, _ := svc.List(ctx, journal.ListParams{Query: "launch"})
-	if len(newList) != 1 {
-		t.Errorf("post-update: expected 1 for new term, got %d", len(newList))
+	if len(newList.Items) != 1 {
+		t.Errorf("post-update: expected 1 for new term, got %d", len(newList.Items))
 	}
 }
 
@@ -173,8 +173,8 @@ func TestDelete_FTSGone(t *testing.T) {
 	}, nil)
 
 	list, _ := svc.List(ctx, journal.ListParams{Query: "summit"})
-	if len(list) != 1 {
-		t.Fatalf("pre-delete: expected 1, got %d", len(list))
+	if len(list.Items) != 1 {
+		t.Fatalf("pre-delete: expected 1, got %d", len(list.Items))
 	}
 
 	if err := svc.Delete(ctx, id); err != nil {
@@ -182,8 +182,8 @@ func TestDelete_FTSGone(t *testing.T) {
 	}
 
 	after, _ := svc.List(ctx, journal.ListParams{Query: "summit"})
-	if len(after) != 0 {
-		t.Errorf("post-delete: expected 0, got %d", len(after))
+	if len(after.Items) != 0 {
+		t.Errorf("post-delete: expected 0, got %d", len(after.Items))
 	}
 }
 
@@ -214,12 +214,12 @@ func TestFilter_PersonIDs(t *testing.T) {
 		t.Fatalf("List by personID: %v", err)
 	}
 
-	if len(list) != 1 {
-		t.Fatalf("expected 1 activity for Alice, got %d", len(list))
+	if len(list.Items) != 1 {
+		t.Fatalf("expected 1 activity for Alice, got %d", len(list.Items))
 	}
 
-	if list[0].ID != aID {
-		t.Errorf("unexpected activity ID %d", list[0].ID)
+	if list.Items[0].ID != aID {
+		t.Errorf("unexpected activity ID %d", list.Items[0].ID)
 	}
 }
 
@@ -266,12 +266,12 @@ func TestFilter_Combined(t *testing.T) {
 		t.Fatalf("List combined: %v", err)
 	}
 
-	if len(list) != 1 {
-		t.Fatalf("expected 1 combined result, got %d", len(list))
+	if len(list.Items) != 1 {
+		t.Fatalf("expected 1 combined result, got %d", len(list.Items))
 	}
 
-	if list[0].ID != targetID {
-		t.Errorf("wrong activity returned: ID %d", list[0].ID)
+	if list.Items[0].ID != targetID {
+		t.Errorf("wrong activity returned: ID %d", list.Items[0].ID)
 	}
 }
 

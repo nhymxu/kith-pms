@@ -173,8 +173,8 @@ func TestGiftsListFilters(t *testing.T) {
 		t.Fatalf("List all: %v", err)
 	}
 
-	if len(all) != 3 {
-		t.Errorf("List all: got %d, want 3", len(all))
+	if len(all.Items) != 3 {
+		t.Errorf("List all: got %d, want 3", len(all.Items))
 	}
 
 	given, err := svc.List(ctx, ListParams{Direction: DirectionGiven, PageSize: 50, Page: 1})
@@ -182,8 +182,8 @@ func TestGiftsListFilters(t *testing.T) {
 		t.Fatalf("List given: %v", err)
 	}
 
-	if len(given) != 1 {
-		t.Errorf("List direction=given: got %d, want 1", len(given))
+	if len(given.Items) != 1 {
+		t.Errorf("List direction=given: got %d, want 1", len(given.Items))
 	}
 
 	owe, err := svc.List(ctx, ListParams{DebtType: DebtIOwe, PageSize: 50, Page: 1})
@@ -191,8 +191,8 @@ func TestGiftsListFilters(t *testing.T) {
 		t.Fatalf("List i_owe: %v", err)
 	}
 
-	if len(owe) != 1 {
-		t.Errorf("List debt_type=i_owe: got %d, want 1", len(owe))
+	if len(owe.Items) != 1 {
+		t.Errorf("List debt_type=i_owe: got %d, want 1", len(owe.Items))
 	}
 }
 

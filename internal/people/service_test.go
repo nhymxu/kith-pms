@@ -266,8 +266,8 @@ func TestList_Search(t *testing.T) {
 		t.Fatalf("List search: %v", err)
 	}
 
-	if len(results) != 2 {
-		t.Errorf("List search 'alice': got %d results, want 2", len(results))
+	if len(results.Items) != 2 {
+		t.Errorf("List search 'alice': got %d results, want 2", len(results.Items))
 	}
 
 	// Empty query should return all.
@@ -276,8 +276,8 @@ func TestList_Search(t *testing.T) {
 		t.Fatalf("List all: %v", err)
 	}
 
-	if len(all) != 3 {
-		t.Errorf("List all: got %d results, want 3", len(all))
+	if len(all.Items) != 3 {
+		t.Errorf("List all: got %d results, want 3", len(all.Items))
 	}
 }
 
@@ -294,8 +294,8 @@ func TestList_Pagination(t *testing.T) {
 		t.Fatalf("List page 1: %v", err)
 	}
 
-	if len(page1) != 3 {
-		t.Errorf("page 1: got %d, want 3", len(page1))
+	if len(page1.Items) != 3 {
+		t.Errorf("page 1: got %d, want 3", len(page1.Items))
 	}
 
 	page2, err := svc.List(ctx, people.ListParams{Page: 2, PageSize: 3})
@@ -303,8 +303,8 @@ func TestList_Pagination(t *testing.T) {
 		t.Fatalf("List page 2: %v", err)
 	}
 
-	if len(page2) != 2 {
-		t.Errorf("page 2: got %d, want 2", len(page2))
+	if len(page2.Items) != 2 {
+		t.Errorf("page 2: got %d, want 2", len(page2.Items))
 	}
 }
 

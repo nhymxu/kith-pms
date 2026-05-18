@@ -211,6 +211,10 @@ func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 		return nil, err
 	}
 
+	if people == nil {
+		people = []ActivityPerson{}
+	}
+
 	a.People = people
 
 	return a, nil
@@ -237,7 +241,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *Service) List(ctx context.Context, params ListParams) ([]Activity, error) {
+func (s *Service) List(ctx context.Context, params ListParams) (*ActivityList, error) {
 	if params.PageSize <= 0 {
 		params.PageSize = defaultPageSize
 	}
@@ -250,5 +254,24 @@ func (s *Service) List(ctx context.Context, params ListParams) ([]Activity, erro
 		params.Page = 1
 	}
 
-	return s.Activities.List(ctx, params)
+	total, err := s.Activities.Count(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := s.Activities.List(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if items == nil {
+		items = []Activity{}
+	}
+
+	return &ActivityList{
+		Items:    items,
+		Total:    total,
+		Page:     params.Page,
+		PageSize: params.PageSize,
+	}, nil
 }

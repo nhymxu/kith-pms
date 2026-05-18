@@ -2,8 +2,10 @@ import { useForm } from "@tanstack/react-form"
 import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { z } from "zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { personRequestSchema, type Person, type PersonRequest } from "#/schemas/person"
 import { createPerson, updatePerson } from "#/endpoints/people"
+import { keys } from "#/query-keys"
 import { FormField } from "#/components/form/form-field"
 import { SubmitButton } from "#/components/form/submit-button"
 import { Alert, AlertDescription } from "#/components/ui/alert"
@@ -19,6 +21,7 @@ interface PersonFormProps {
 
 export function PersonForm({ mode, initial }: PersonFormProps) {
 	const navigate = useNavigate()
+	const qc = useQueryClient()
 	const [apiError, setApiError] = useState<string | null>(null)
 
 	const form = useForm({
@@ -58,6 +61,8 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 					navigate({ to: "/people/$personId", params: { personId: String(id) } })
 				} else if (initial) {
 					await updatePerson(initial.id, parsed)
+					await qc.invalidateQueries({ queryKey: keys.people.detail(initial.id) })
+					await qc.invalidateQueries({ queryKey: keys.people.all })
 					navigate({ to: "/people/$personId", params: { personId: String(initial.id) } })
 				}
 			} catch (err) {
@@ -83,7 +88,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 
 			{/* Identity */}
 			<div className="space-y-4">
-				<h2 className="text-sm font-heading uppercase tracking-wide text-foreground/60">Identity</h2>
+				<h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">Identity</h2>
 				<div className="grid grid-cols-2 gap-4">
 					<form.Field name="name">
 						{(f) => <FormField field={f} label="Name *" placeholder="Full name" />}

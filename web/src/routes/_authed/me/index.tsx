@@ -18,13 +18,13 @@ function MePage() {
 		retry: false,
 	})
 
-	if (isPending) return <p className="text-sm font-base text-foreground/60">Loading…</p>
+	if (isPending) return <p className="text-[13px] text-zinc-500">Loading…</p>
 
 	// 404 from getMe means Me is not set up yet
 	if (isError || !data) {
 		return (
 			<div className="space-y-4 max-w-md">
-				<h1 className="text-2xl font-heading">My Profile</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">My Profile</h1>
 				<Card>
 					<CardContent className="pt-6 space-y-3">
 						<p className="text-sm font-base">
@@ -41,10 +41,10 @@ function MePage() {
 
 	return (
 		<div className="space-y-4 max-w-md">
-			<h1 className="text-2xl font-heading">My Profile</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">My Profile</h1>
 			<Card>
 				<CardHeader className="flex flex-row items-center gap-4">
-					<div className="size-16 rounded-base border-2 border-border overflow-hidden bg-secondary-background flex items-center justify-center text-2xl font-heading shrink-0">
+					<div className="size-16 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center text-2xl font-medium text-zinc-700 shrink-0">
 						{data.avatar_path
 							? <img src={getAvatarUrl(data.id)} alt={data.name} className="size-full object-cover" />
 							: data.name.charAt(0).toUpperCase()
@@ -52,20 +52,20 @@ function MePage() {
 					</div>
 					<div>
 						<CardTitle>{data.name}</CardTitle>
-						{data.nickname && <p className="text-sm text-foreground/60">"{data.nickname}"</p>}
+						{data.nickname && <p className="text-[12px] text-zinc-500">"{data.nickname}"</p>}
 					</div>
 				</CardHeader>
-				<CardContent className="space-y-3 text-sm font-base">
+				<CardContent className="space-y-3 text-[13px]">
 					{data.relationship_type && (
 						<div className="flex gap-2">
-							<span className="text-foreground/60 w-32 shrink-0">Relationship</span>
-							<span>{data.relationship_type}</span>
+							<span className="text-zinc-500 w-32 shrink-0">Relationship</span>
+							<span className="text-zinc-900">{data.relationship_type}</span>
 						</div>
 					)}
 					{data.date_of_birth && (
 						<div className="flex gap-2">
-							<span className="text-foreground/60 w-32 shrink-0">Date of birth</span>
-							<span>{data.date_of_birth}</span>
+							<span className="text-zinc-500 w-32 shrink-0">Date of birth</span>
+							<span className="font-mono text-zinc-900">{data.date_of_birth}</span>
 						</div>
 					)}
 					{data.labels && data.labels.length > 0 && (

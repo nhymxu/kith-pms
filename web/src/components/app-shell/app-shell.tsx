@@ -20,23 +20,21 @@ function AppShellInner({ children }: AppShellProps) {
 	const [mobileOpen, setMobileOpen] = useState(false);
 
 	return (
-		<div className="flex h-screen overflow-hidden bg-background text-foreground">
+		<div className="flex flex-col min-h-screen bg-background text-foreground">
+			<Topbar onMenuClick={() => setMobileOpen(true)} />
+
 			<Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-				<SheetContent
-					side="left"
-					className="w-64 border-sidebar-border bg-sidebar p-0"
-				>
+				<SheetContent side="left" className="w-72 border-r border-zinc-200 bg-white p-0">
 					<SheetTitle className="sr-only">Navigation</SheetTitle>
 					<Sidebar onNavClick={() => setMobileOpen(false)} />
 				</SheetContent>
 			</Sheet>
 
-			<div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-				<Topbar onMenuClick={() => setMobileOpen(true)} />
-				<main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-					<div className="mx-auto w-full max-w-7xl">{children}</div>
-				</main>
-			</div>
+			<main className="flex-1 overflow-y-auto">
+				<div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 py-6 lg:py-8">
+					{children}
+				</div>
+			</main>
 		</div>
 	);
 }

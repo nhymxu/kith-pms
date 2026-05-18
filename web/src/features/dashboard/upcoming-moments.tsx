@@ -1,6 +1,5 @@
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
-import { Button } from "#/components/ui/button";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardMoment } from "./dashboard-data";
 import { EmptyState } from "./empty-state";
@@ -26,48 +25,39 @@ export function UpcomingMoments({
 			icon={CalendarDays}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
-			className="xl:col-span-5"
 		>
 			{isLoading ? (
-				<div className="space-y-2">
-					{["moment-1", "moment-2", "moment-3", "moment-4"].map((key) => (
-						<div
-							key={key}
-							className="h-16 rounded-base bg-slate-100 animate-pulse"
-						/>
+				<div className="space-y-px">
+					{["m1", "m2", "m3", "m4"].map((key) => (
+						<div key={key} className="h-12 bg-zinc-100 animate-pulse rounded" />
 					))}
 				</div>
 			) : visibleMoments.length ? (
-				<div className="space-y-2">
+				<div>
 					{visibleMoments.map((moment) => (
 						<div
 							key={moment.id}
-							className="rounded-base border-2 border-slate-100 bg-slate-50/70 p-3 transition-colors hover:border-teal-200 hover:bg-teal-50/60"
+							className="py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 -mx-4 px-4 transition-colors"
 						>
-							<div className="flex items-start justify-between gap-3">
+							<div className="flex items-center justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-sm font-heading text-slate-900">
-										{moment.personName}
-									</p>
-									<p className="mt-1 text-xs font-base text-slate-500">
+									<p className="truncate text-[13px] text-zinc-900">{moment.personName}</p>
+									<p className="text-[11px] text-zinc-500 mt-0.5">
 										{moment.label} · {moment.detail}
 									</p>
 								</div>
-								<span className="shrink-0 text-xs font-heading text-teal-700">
-									{moment.date}
-								</span>
+								<span className="shrink-0 font-mono text-[10px] text-zinc-500">{moment.date}</span>
 							</div>
 						</div>
 					))}
 					{moments.length > 5 ? (
-						<Button
+						<button
 							type="button"
-							variant="neutral"
-							className="w-full border-slate-200 bg-white text-slate-700 hover:bg-teal-50"
-							onClick={() => setExpanded((value) => !value)}
+							className="w-full py-2 text-[11px] text-zinc-600 hover:bg-zinc-50 border-t border-zinc-200 -mx-4 px-4 mt-1 transition-colors"
+							onClick={() => setExpanded((v) => !v)}
 						>
 							{expanded ? "Show less" : `Show ${moments.length - 5} more`}
-						</Button>
+						</button>
 					) : null}
 				</div>
 			) : (

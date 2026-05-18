@@ -8,13 +8,13 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
 		<CheckboxPrimitive.Root
 			data-slot="checkbox"
 			className={cn(
-				"peer size-4 shrink-0 outline-2 outline-border ring-offset-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-main data-[state=checked]:text-white",
+				"peer size-4 shrink-0 rounded-sm border border-zinc-300 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 data-[state=checked]:text-white",
 				className,
 			)}
 			{...props}
 		>
 			<CheckboxPrimitive.Indicator data-slot="checkbox-indicator" className={cn("flex items-center justify-center text-current")}>
-				<Check className="size-4 text-main-foreground" />
+				<Check className="size-3 text-white" />
 			</CheckboxPrimitive.Indicator>
 		</CheckboxPrimitive.Root>
 	)

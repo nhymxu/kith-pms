@@ -14,15 +14,10 @@ type Activity struct {
 }
 
 type ActivityPerson struct {
-	PersonID int64  `json:"person_id"`
-	Name     string `json:"name"`
-}
-
-type ActivityList struct {
-	Items    []Activity `json:"items"`
-	Total    int        `json:"total"`
-	Page     int        `json:"page"`
-	PageSize int        `json:"page_size"`
+	PersonID   int64  `json:"person_id"`
+	Name       string `json:"name"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatar_path"`
 }
 
 type ActivityList struct {

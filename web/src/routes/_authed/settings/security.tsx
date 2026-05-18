@@ -68,7 +68,7 @@ function ChangePasswordForm() {
 		return (
 			<div className="space-y-3">
 				<Alert>
-					<AlertDescription className="text-sm font-base">
+					<AlertDescription className="text-[13px]">
 						Password changed successfully. You may want to log out all other sessions.
 					</AlertDescription>
 				</Alert>
@@ -164,7 +164,7 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 			<Button variant="destructive" size="sm" onClick={handleLogoutAll} disabled={isPending}>
 				{isPending ? "Logging out…" : "Log out all sessions"}
 			</Button>
-			{err && <p className="text-xs text-destructive">{err}</p>}
+			{err && <p className="text-[11px] text-red-600">{err}</p>}
 		</div>
 	)
 }
@@ -172,12 +172,12 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 function SecurityPage() {
 	return (
 		<div className="space-y-6 max-w-md">
-			<h1 className="text-2xl font-heading">Security</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Security</h1>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-base">Change password</CardTitle>
-					<CardDescription>Update your login password.</CardDescription>
+					<CardTitle className="text-[14px] font-medium text-zinc-900">Change password</CardTitle>
+					<CardDescription className="text-[12px] text-zinc-500">Update your login password.</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<ChangePasswordForm />

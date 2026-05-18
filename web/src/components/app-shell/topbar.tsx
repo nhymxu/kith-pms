@@ -10,10 +10,10 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick }: TopbarProps) {
 	return (
-		<header className="flex h-16 items-center gap-4 border-b border-border/70 bg-background/80 px-4 backdrop-blur sm:px-6 lg:px-8">
+		<header className="sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-zinc-200 bg-white px-4 sm:px-6">
 			<div className="flex items-center gap-3">
 				<Button
-					variant="neutral"
+					variant="ghost"
 					size="icon"
 					className="md:hidden"
 					onClick={onMenuClick}
@@ -21,14 +21,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 				>
 					<Menu className="size-5" />
 				</Button>
-				<span className="whitespace-nowrap text-xl font-heading tracking-tight">
-					Kith PMS
-				</span>
+				<span className="text-[15px] font-semibold tracking-tight">Kith</span>
 			</div>
 
 			<nav
 				aria-label="Primary navigation"
-				className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex"
+				className="hidden md:flex items-center gap-1 text-[13px] flex-1"
 			>
 				{NAV_ITEMS.map((item) => (
 					<NavLink
@@ -41,7 +39,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 				))}
 			</nav>
 
-			<UserMenu />
+			<div className="ml-auto">
+				<UserMenu />
+			</div>
 		</header>
 	);
 }

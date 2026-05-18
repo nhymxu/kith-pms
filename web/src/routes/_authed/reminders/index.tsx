@@ -21,12 +21,12 @@ function RemindersPage() {
 		queryFn: () => listReminders({ status: tab }),
 	})
 
-	if (isError) return <p className="text-sm font-base text-destructive">Failed to load reminders.</p>
+	if (isError) return <p className="text-[13px] text-red-600">Failed to load reminders.</p>
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">Reminders</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Reminders</h1>
 				<Button asChild>
 					<Link to="/reminders/new">New Reminder</Link>
 				</Button>
@@ -41,7 +41,7 @@ function RemindersPage() {
 
 				<TabsContent value={tab}>
 					{isPending ? (
-						<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
+						<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
 					) : (
 						<RemindersTable
 							data={data ?? []}

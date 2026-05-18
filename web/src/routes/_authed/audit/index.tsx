@@ -26,33 +26,33 @@ function AuditPage() {
 		queryFn: () => listAudit({ page: search.page }),
 	})
 
-	if (isError) return <p className="text-sm font-base text-destructive">Failed to load audit log.</p>
+	if (isError) return <p className="text-[13px] text-red-600">Failed to load audit log.</p>
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">Audit Log</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Audit Log</h1>
 
 			<div className="flex flex-wrap gap-3 items-end">
 				<div className="space-y-1">
-					<label className="text-xs font-heading text-foreground/60">From</label>
+					<label className="text-[11px] font-medium text-zinc-500">From</label>
 					<input
 						type="date"
 						value={search.from_date ?? ""}
 						onChange={(e) =>
 							void navigate({ to: "/audit", search: { ...search, from_date: e.target.value || undefined, page: 1 } })
 						}
-						className="h-9 border-2 border-border rounded-base bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
 				<div className="space-y-1">
-					<label className="text-xs font-heading text-foreground/60">To</label>
+					<label className="text-[11px] font-medium text-zinc-500">To</label>
 					<input
 						type="date"
 						value={search.to_date ?? ""}
 						onChange={(e) =>
 							void navigate({ to: "/audit", search: { ...search, to_date: e.target.value || undefined, page: 1 } })
 						}
-						className="h-9 border-2 border-border rounded-base bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
 				{(search.from_date || search.to_date) && (
@@ -69,7 +69,7 @@ function AuditPage() {
 			</div>
 
 			{isPending ? (
-				<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
+				<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
 			) : (
 				<>
 					<AuditTable data={data?.data ?? []} />

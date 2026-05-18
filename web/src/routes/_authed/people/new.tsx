@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/people/new")({
 function NewPersonPage() {
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">New Person</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">New Person</h1>
 			<PersonForm mode="create" />
 		</div>
 	)

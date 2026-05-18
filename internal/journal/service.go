@@ -268,6 +268,17 @@ func (s *Service) List(ctx context.Context, params ListParams) (*ActivityList, e
 		items = []Activity{}
 	}
 
+	for i := range items {
+		people, err := s.Links.ListByActivity(ctx, items[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		if people == nil {
+			people = []ActivityPerson{}
+		}
+		items[i].People = people
+	}
+
 	return &ActivityList{
 		Items:    items,
 		Total:    total,

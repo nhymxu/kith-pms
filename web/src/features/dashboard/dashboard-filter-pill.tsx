@@ -1,5 +1,3 @@
-import { Button } from "#/components/ui/button";
-
 export function DashboardFilterPill({
 	label,
 	active,
@@ -10,18 +8,16 @@ export function DashboardFilterPill({
 	onClick: () => void;
 }) {
 	return (
-		<Button
+		<button
 			type="button"
-			variant={active ? "default" : "neutral"}
-			size="sm"
-			className={
+			className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors border ${
 				active
-					? "h-8 border-teal-700 bg-teal-600 px-3 text-xs text-white shadow-none hover:bg-teal-700"
-					: "h-8 border-slate-200 bg-white px-3 text-xs text-slate-600 shadow-none hover:bg-teal-50 hover:text-teal-700"
-			}
+					? "bg-zinc-900 text-white border-zinc-900"
+					: "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+			}`}
 			onClick={onClick}
 		>
 			{label}
-		</Button>
+		</button>
 	);
 }

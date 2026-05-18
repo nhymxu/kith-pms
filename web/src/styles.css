@@ -2,85 +2,77 @@
 @import 'tw-animate-css';
 @plugin '@tailwindcss/typography';
 
-/* Modern editorial design tokens */
 :root {
-  /* Core palette */
-  --background: #f7f3ec;
-  --foreground: #1f2933;
-  --main: #8b5cf6;
-  --main-foreground: #fff;
-  --secondary-background: #fffaf3;
-  --overlay: rgba(31, 41, 51, 0.45);
+  /* Surfaces */
+  --background: #ffffff;
+  --foreground: #18181b;
+  --muted: #fafafa;
+  --muted-foreground: #71717a;
 
-  /* Semantic tokens */
-  --border: #d8cfc1;
-  --input: #fffaf3;
-  --ring: #8b5cf6;
-  --radius: 0.875rem;
+  /* Borders / inputs */
+  --border: #e4e4e7;
+  --input: #ffffff;
+  --ring: #4f46e5;
+
+  /* Single accent (indigo-600) */
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+
+  /* Status */
   --destructive: #dc2626;
-  --destructive-foreground: #fff;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --warning: #d97706;
 
-  /* Shadow — soft elevated surface */
+  /* Radius */
+  --radius: 0.375rem;
+
+  /* No card shadows */
+  --shadow: none;
+  --shadow-sm: none;
+  --reverse-shadow: none;
   --shadow-x: 0;
-  --shadow-y: 10px;
-  --shadow: var(--shadow-x) var(--shadow-y) 28px 0 rgba(72, 52, 100, 0.12);
-
-  /* Reverse shadow for compatibility */
-  --reverse-shadow-x: 0;
-  --reverse-shadow-y: -2px;
+  --shadow-y: 0;
 
   /* Typography */
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-  --font-heading: 750;
+  --font-sans: 'Inter', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-heading: 600;
   --font-base: 400;
 
-  /* Sidebar */
-  --sidebar: #efe8dd;
-  --sidebar-foreground: #1f2933;
-  --sidebar-primary: #8b5cf6;
-  --sidebar-primary-foreground: #fff;
-  --sidebar-accent: #e5dcf7;
-  --sidebar-accent-foreground: #3f2f62;
-  --sidebar-border: #d8cfc1;
-  --sidebar-ring: #8b5cf6;
-
-  /* Charts (kept for compatibility) */
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Charts */
+  --chart-primary: #4f46e5;
+  --chart-secondary: #a1a1aa;
+  --chart-grid: #e4e4e7;
+  --chart-axis: #71717a;
 }
 
 @theme inline {
   --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-main: var(--main);
-  --color-main-foreground: var(--main-foreground);
-  --color-secondary-background: var(--secondary-background);
-  --color-overlay: var(--overlay);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --color-chart-primary: var(--chart-primary);
+  --color-chart-secondary: var(--chart-secondary);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -90,11 +82,8 @@
 
   --shadow-shadow: var(--shadow);
 
-  /* Box shadow translate helpers */
   --translate-x-box-shadow-x: var(--shadow-x);
   --translate-y-box-shadow-y: var(--shadow-y);
-  --translate-x-reverse-box-shadow-x: var(--reverse-shadow-x);
-  --translate-y-reverse-box-shadow-y: var(--reverse-shadow-y);
 }
 
 html,

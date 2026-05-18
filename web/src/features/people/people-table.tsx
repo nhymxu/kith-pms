@@ -37,7 +37,7 @@ const columns: ColumnDef<Person>[] = [
 			const p = row.original
 			const hasAvatar = Boolean(p.avatar_path)
 			return (
-				<div className="size-8 rounded-base border-2 border-border overflow-hidden shrink-0 bg-secondary-background flex items-center justify-center text-xs font-heading">
+				<div className="size-7 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[11px] font-medium text-zinc-700 font-mono">
 					{hasAvatar ? (
 						<img src={getAvatarUrl(p.id)} alt={p.name} className="size-full object-cover" />
 					) : (
@@ -54,13 +54,9 @@ const columns: ColumnDef<Person>[] = [
 		cell: ({ row }) => {
 			const p = row.original
 			return (
-				<Link
-					to="/people/$personId"
-					params={{ personId: String(p.id) }}
-					className="block hover:underline"
-				>
-					<p className="font-heading text-sm">{p.name}</p>
-					{p.nickname && <p className="text-xs font-base text-foreground/50">"{p.nickname}"</p>}
+				<Link to="/people/$personId" params={{ personId: String(p.id) }} className="block hover:underline">
+					<p className="text-[13px] text-zinc-900">{p.name}</p>
+					{p.nickname && <p className="text-[11px] text-zinc-500">"{p.nickname}"</p>}
 				</Link>
 			)
 		},
@@ -91,9 +87,9 @@ const columns: ColumnDef<Person>[] = [
 		cell: ({ getValue }) => {
 			const v = getValue<string | null>()
 			return v ? (
-				<span className="text-sm font-base">{new Date(v).toLocaleDateString()}</span>
+				<span className="font-mono text-[12px] text-zinc-500">{new Date(v).toLocaleDateString()}</span>
 			) : (
-				<span className="text-xs font-base text-foreground/40">—</span>
+				<span className="text-[12px] text-zinc-300">—</span>
 			)
 		},
 	},
@@ -139,7 +135,6 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 			}),
 	})
 
-	// Prefetch labels for filter chips (consumed by parent page if needed)
 	useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
 
 	const rows = data?.items ?? []

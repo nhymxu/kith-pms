@@ -10,10 +10,10 @@ export function EmptyState({
 	description: string;
 }) {
 	return (
-		<div className="rounded-base border-2 border-dashed border-slate-200 bg-slate-50/70 p-6 text-center">
-			<Icon className="mx-auto size-8 text-slate-400" />
-			<p className="mt-3 text-sm font-heading text-slate-800">{title}</p>
-			<p className="mt-1 text-sm font-base text-slate-500">{description}</p>
+		<div className="py-8 text-center">
+			<Icon className="size-5 text-zinc-400 mx-auto" />
+			<p className="text-[13px] text-zinc-700 mt-2">{title}</p>
+			<p className="text-[11px] text-zinc-500 mt-1">{description}</p>
 		</div>
 	);
 }

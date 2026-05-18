@@ -4,7 +4,6 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { listAudit } from "#/endpoints/audit";
 import { listUpcomingDates } from "#/endpoints/dates";
@@ -105,35 +104,18 @@ function DashboardPage() {
 	}
 
 	return (
-		<div className="space-y-6 bg-slate-50/40 text-slate-950">
-			<section className="overflow-hidden rounded-base border-2 border-slate-200 bg-white p-6 shadow-sm">
-				<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-					<div className="space-y-3">
-						<div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-heading text-teal-700">
-							<Sparkles className="size-3.5" />
-							Relationship command center
-						</div>
-						<div>
-							<h1 className="text-3xl font-heading tracking-tight text-slate-950">
-								Good to see you, {viewModel.meName}
-							</h1>
-							<p className="mt-2 max-w-2xl text-sm font-base text-slate-500">
-								Prioritize follow-ups, upcoming moments, and recent relationship
-								context from one focused workspace.
-							</p>
-						</div>
-					</div>
-					<div className="rounded-base border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-base text-slate-500">
-						Last refreshed{" "}
-						<span className="font-heading text-slate-900">
-							{formatTime(viewModel.lastUpdatedAt)}
-						</span>
-					</div>
-				</div>
-			</section>
+		<div className="space-y-4">
+			<header className="flex items-end justify-between">
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Dashboard
+				</h1>
+				<span className="font-mono text-[11px] text-zinc-500">
+					Last refreshed {formatTime(viewModel.lastUpdatedAt)}
+				</span>
+			</header>
 
 			{hasError ? (
-				<div className="rounded-base border-2 border-amber-200 bg-amber-50 px-4 py-3 text-sm font-base text-amber-800">
+				<div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800">
 					Some dashboard data could not load. Available sections are shown with
 					cached or empty data.
 				</div>
@@ -147,31 +129,34 @@ function DashboardPage() {
 				refreshingId={refreshingId as DashboardSummaryCard["id"] | undefined}
 			/>
 
-			<div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-				<RelationshipPulseChart
-					data={viewModel.pulse}
-					isLoading={journal.isLoading}
-					onRefresh={() => refresh("pulse")}
-					isRefreshing={refreshingId === "pulse"}
-				/>
+			<RelationshipPulseChart
+				data={viewModel.pulse}
+				isLoading={journal.isLoading}
+				onRefresh={() => refresh("pulse")}
+				isRefreshing={refreshingId === "pulse"}
+			/>
+
+			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 				<ActionQueue
 					actions={viewModel.actions}
 					isLoading={reminders.isLoading || gifts.isLoading}
 					onRefresh={() => refresh("actions")}
 					isRefreshing={refreshingId === "actions"}
 				/>
-				<RecentRelationshipActivity
-					activities={viewModel.activities}
-					isLoading={journal.isLoading}
-					onRefresh={() => refresh("activity")}
-					isRefreshing={refreshingId === "activity"}
-				/>
-				<UpcomingMoments
-					moments={viewModel.moments}
-					isLoading={dates.isLoading}
-					onRefresh={() => refresh("moments")}
-					isRefreshing={refreshingId === "moments"}
-				/>
+				<div className="space-y-4">
+					<RecentRelationshipActivity
+						activities={viewModel.activities}
+						isLoading={journal.isLoading}
+						onRefresh={() => refresh("activity")}
+						isRefreshing={refreshingId === "activity"}
+					/>
+					<UpcomingMoments
+						moments={viewModel.moments}
+						isLoading={dates.isLoading}
+						onRefresh={() => refresh("moments")}
+						isRefreshing={refreshingId === "moments"}
+					/>
+				</div>
 			</div>
 		</div>
 	);

@@ -30,7 +30,7 @@ function NewJournalPage() {
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">New Journal Entry</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">New Journal Entry</h1>
 			<JournalForm
 				onSubmit={(v) => mutation.mutateAsync(v)}
 				submitLabel="Create Entry"

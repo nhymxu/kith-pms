@@ -23,7 +23,7 @@ function NewGiftPage() {
 
 	return (
 		<div className="max-w-lg space-y-4">
-			<h1 className="text-2xl font-heading">New Gift</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">New Gift</h1>
 			<GiftForm onSubmit={(v) => mutation.mutateAsync(v)} submitLabel="Create Gift" />
 		</div>
 	)

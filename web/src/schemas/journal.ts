@@ -3,6 +3,8 @@ import { z } from "zod"
 export const activityPersonSchema = z.object({
 	person_id: z.number(),
 	name: z.string(),
+	nickname: z.string().optional().default(""),
+	avatar_path: z.string().optional().default(""),
 })
 
 export const journalActivitySchema = z.object({

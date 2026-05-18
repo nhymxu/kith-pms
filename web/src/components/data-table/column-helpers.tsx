@@ -10,10 +10,10 @@ export function sortableHeader<T>(label: string) {
 			<button
 				type="button"
 				onClick={() => column.toggleSorting(sorted === "asc")}
-				className="flex items-center gap-1 font-heading text-foreground hover:text-main transition-colors"
+				className="flex items-center gap-1 text-[11px] font-medium text-zinc-500 uppercase tracking-wider hover:text-zinc-900 transition-colors"
 			>
 				{label}
-				<span className="text-main">{arrow}</span>
+				<span className="text-indigo-600">{arrow}</span>
 			</button>
 		)
 	}

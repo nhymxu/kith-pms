@@ -73,7 +73,7 @@ export function AvatarUploader({ personId, hasAvatar }: AvatarUploaderProps) {
 				onDrop={handleDrop}
 				onDragOver={(e) => e.preventDefault()}
 				onClick={() => inputRef.current?.click()}
-				className="w-24 h-24 rounded-base border-2 border-dashed border-border cursor-pointer overflow-hidden bg-secondary-background flex items-center justify-center hover:border-main transition-colors"
+				className="w-24 h-24 rounded-md border border-dashed border-zinc-300 cursor-pointer overflow-hidden bg-secondary-background flex items-center justify-center hover:border-main transition-colors"
 			>
 				{currentSrc ? (
 					<img src={currentSrc} alt="Avatar" className="size-full object-cover" />

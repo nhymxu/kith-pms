@@ -12,9 +12,11 @@ interface AuditTableProps {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-	create: "bg-green-300 text-black border-black",
-	update: "bg-yellow-300 text-black border-black",
-	delete: "bg-red-300 text-black border-black",
+	create: "text-emerald-700",
+	update: "text-indigo-700",
+	delete: "text-red-700",
+	login: "text-zinc-600",
+	logout: "text-zinc-600",
 }
 
 export function AuditTable({ data, toolbarActions }: AuditTableProps) {
@@ -28,7 +30,7 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				cell: valueCell<AuditEntry, string>((val) => {
 					if (!val) return "—"
 					try {
-						return new Date(val).toLocaleString()
+						return <span className="font-mono text-[12px] text-zinc-500">{new Date(val).toLocaleString()}</span>
 					} catch {
 						return val
 					}
@@ -40,7 +42,7 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				header: sortableHeader<AuditEntry>("Action"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<Badge className={ACTION_COLORS[val] ?? ""}>{val}</Badge>
+					<span className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-zinc-600"}`}>{val}</span>
 				)),
 			},
 			{
@@ -49,7 +51,7 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				header: sortableHeader<AuditEntry>("Type"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className="text-xs font-base capitalize">{val.replace("_", " ")}</span>
+					<span className="text-[12px] text-zinc-500 capitalize">{val.replace("_", " ")}</span>
 				)),
 			},
 			{
@@ -57,7 +59,7 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				accessorKey: "entity_name",
 				header: "Target",
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className="text-sm font-base">{val || "—"}</span>
+					<span className="text-[13px] text-zinc-700">{val || "—"}</span>
 				)),
 			},
 		],

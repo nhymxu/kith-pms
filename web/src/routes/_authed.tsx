@@ -62,7 +62,7 @@ function AuthedErrorBoundary({ error }: { error: unknown }) {
 function AuthedNotFound() {
 	return (
 		<div className="flex flex-col items-center justify-center py-24 gap-4">
-			<h1 className="text-4xl font-heading">404</h1>
+			<h1 className="text-[32px] font-semibold text-zinc-900">404</h1>
 			<p className="text-sm font-base text-foreground/60">Page not found.</p>
 			<Button variant="neutral" asChild>
 				<a href="/">Go home</a>

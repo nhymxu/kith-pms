@@ -220,12 +220,23 @@ kith-pms/
 - `dashboard-card.tsx` — Reusable card primitive with title, subtitle, Lucide icon, refresh action, loading/stale/error slots
 - `dashboard-filter-pill.tsx` — Filter pill with active/inactive/hover/focus states
 - `empty-state.tsx` — Empty state component for widgets with no data
+- `chart-theme.ts` — Chart color palette (indigo-600 primary, zinc surfaces, hairline borders)
 
-**Design:**
-- Teal accent color with slate/white palette
-- Responsive grid: 1280px+ desktop (4–5 KPI columns, 8/4 split main), tablet (2 columns), mobile (single column)
-- Lucide icons only; no emojis
-- Hover states on cards/list rows; active filter pills visibly highlighted
+**Design System (Linear/Stripe Minimal):**
+- **Accent**: Indigo-600 (#4f46e5) for primary actions and chart data
+- **Surfaces**: Zinc palette (white, #fafafa muted, #e4e4e7 borders) with no shadows
+- **Typography**: Inter primary font, JetBrains Mono for numerics, font-weight 600 for headings
+- **Borders**: Hairline (1px) zinc-200 borders; no box shadows
+- **Radius**: 0.375rem (compact, minimal rounding)
+- **Responsive grid**: 1280px+ desktop (4–5 KPI columns, 8/4 split main), tablet (2 columns), mobile (single column)
+- **Icons**: Lucide only; no emojis
+- **Hover states**: Subtle background shifts on cards/list rows; active filter pills highlighted with indigo underline
+
+**Navigation:**
+- **Topbar** (h-14, sticky, border-b zinc-200): Horizontal navigation bar replacing desktop sidebar
+- **Desktop** (md+): Full nav items visible inline with active state underline (indigo)
+- **Mobile** (<md): Hamburger menu toggle; nav items in collapsible sidebar
+- **NavLink component**: Supports "topbar" variant with underline active state
 
 **Data Flow:**
 - Route: `web/src/routes/_authed/index.tsx`

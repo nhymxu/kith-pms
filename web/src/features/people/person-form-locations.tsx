@@ -32,19 +32,19 @@ export function PersonFormLocations({ value, onChange }: Props) {
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
-				<Label className="text-sm font-heading">Locations</Label>
+				<Label className="text-sm font-medium">Locations</Label>
 				<Button type="button" variant="neutral" size="sm" onClick={add}>
 					<Plus className="size-3" /> Add
 				</Button>
 			</div>
 			{value.length === 0 && (
-				<p className="text-xs font-base text-foreground/50">No locations yet.</p>
+				<p className="text-xs font-base text-zinc-400">No locations yet.</p>
 			)}
 			{value.map((row, i) => (
-				<div key={i} className="border-2 border-border rounded-base p-3 space-y-2">
+				<div key={i} className="border border-zinc-200 rounded-md p-3 space-y-2">
 					<div className="flex items-center justify-between">
 						<select
-							className="h-9 border-2 border-border rounded-base bg-background px-2 text-sm font-base"
+							className="h-9 border border-zinc-200 rounded-md bg-white px-2 text-sm font-base"
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>

@@ -43,9 +43,9 @@ function JournalEntryPage() {
 	if (isError || !data) return <p className="text-sm font-base text-destructive">Entry not found.</p>
 
 	return (
-		<div className="max-w-2xl space-y-4">
+		<div className="max-w-[760px] space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">{data.title}</h1>
+				<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
 						<Link to="/journal/$entryId/edit" params={{ entryId }}>Edit</Link>
@@ -56,25 +56,23 @@ function JournalEntryPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-base font-heading text-foreground/60">
+					<CardTitle className="font-mono text-[12px] text-zinc-500">
 						{new Date(data.occurred_at_date).toLocaleDateString()}
 						{data.occurred_at_time && ` at ${data.occurred_at_time}`}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{data.people.length > 0 && (
-						<div className="flex flex-wrap gap-1">
+						<div className="flex flex-wrap gap-2">
 							{data.people.map((p) => (
-								<Badge key={p.person_id} variant="neutral">
-									<Link to="/people/$personId" params={{ personId: String(p.person_id) }} className="hover:underline">
-										{p.name}
-									</Link>
-								</Badge>
+								<Link key={p.person_id} to="/people/$personId" params={{ personId: String(p.person_id) }} className="font-mono text-[12px] text-indigo-600 hover:underline">
+									@{p.name}
+								</Link>
 							))}
 						</div>
 					)}
 					{data.content && (
-						<p className="text-sm font-base whitespace-pre-wrap">{data.content}</p>
+						<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">{data.content}</p>
 					)}
 				</CardContent>
 			</Card>

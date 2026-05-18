@@ -15,13 +15,13 @@ function GiftsPage() {
 		queryFn: () => listGifts({}),
 	})
 
-	if (isPending) return <p className="text-sm font-base text-foreground/60">Loading gifts…</p>
-	if (isError) return <p className="text-sm font-base text-destructive">Failed to load gifts.</p>
+	if (isPending) return <p className="text-[13px] text-zinc-500">Loading gifts…</p>
+	if (isError) return <p className="text-[13px] text-red-600">Failed to load gifts.</p>
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">Gifts</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Gifts</h1>
 				<Button asChild>
 					<Link to="/gifts/new">New Gift</Link>
 				</Button>

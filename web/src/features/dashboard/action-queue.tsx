@@ -1,7 +1,5 @@
 import { Bell, Gift } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardAction } from "./dashboard-data";
 import { DashboardFilterPill } from "./dashboard-filter-pill";
@@ -41,9 +39,8 @@ export function ActionQueue({
 			icon={Bell}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
-			className="xl:col-span-5"
 		>
-			<div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+			<div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
 				{filters.map((item) => (
 					<DashboardFilterPill
 						key={item}
@@ -54,53 +51,40 @@ export function ActionQueue({
 				))}
 			</div>
 			{isLoading ? (
-				<div className="space-y-2">
-					{["action-1", "action-2", "action-3", "action-4", "action-5"].map(
-						(key) => (
-							<div
-								key={key}
-								className="h-16 rounded-base bg-slate-100 animate-pulse"
-							/>
-						),
-					)}
+				<div className="space-y-px">
+					{["a1", "a2", "a3", "a4", "a5"].map((key) => (
+						<div key={key} className="h-14 bg-zinc-100 animate-pulse rounded" />
+					))}
 				</div>
 			) : visibleActions.length ? (
-				<div className="space-y-2">
+				<div>
 					{visibleActions.map((action) => (
 						<div
 							key={action.id}
-							className="rounded-base border-2 border-slate-100 bg-slate-50/70 p-3 transition-colors hover:border-teal-200 hover:bg-teal-50/60"
+							className="px-0 py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 -mx-4 px-4 transition-colors"
 						>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-sm font-heading text-slate-900">
-										{action.label}
-									</p>
-									<p className="mt-1 line-clamp-1 text-xs font-base text-slate-500">
+									<p className="truncate text-[13px] text-zinc-900">{action.label}</p>
+									<p className="text-[11px] text-zinc-500 mt-0.5">
 										{action.personName ? `${action.personName} · ` : ""}
 										{action.detail}
 									</p>
 								</div>
-								<Badge variant="neutral" className={badgeClass(action.type)}>
+								<span className={`font-mono text-[10px] uppercase shrink-0 ${statusClass(action.type)}`}>
 									{itemLabel(action.type)}
-								</Badge>
+								</span>
 							</div>
-							<p className="mt-2 text-xs font-base text-slate-500">
-								{action.date}
-							</p>
 						</div>
 					))}
 					{filteredActions.length > 8 ? (
-						<Button
+						<button
 							type="button"
-							variant="neutral"
-							className="w-full border-slate-200 bg-white text-slate-700 hover:bg-teal-50"
-							onClick={() => setExpanded((value) => !value)}
+							className="w-full py-2 text-[11px] text-zinc-600 hover:bg-zinc-50 border-t border-zinc-200 -mx-4 px-4 mt-1 transition-colors"
+							onClick={() => setExpanded((v) => !v)}
 						>
-							{expanded
-								? "Show less"
-								: `Show ${filteredActions.length - 8} more`}
-						</Button>
+							{expanded ? "Show less" : `Show ${filteredActions.length - 8} more`}
+						</button>
 					) : null}
 				</div>
 			) : (
@@ -118,9 +102,9 @@ function itemLabel(value: ActionFilter | DashboardAction["type"]): string {
 	return value === "all" ? "All" : value[0].toUpperCase() + value.slice(1);
 }
 
-function badgeClass(type: DashboardAction["type"]): string {
-	if (type === "overdue") return "border-red-200 bg-red-50 text-red-700";
-	if (type === "today") return "border-teal-200 bg-teal-50 text-teal-700";
-	if (type === "gift") return "border-amber-200 bg-amber-50 text-amber-700";
-	return "border-slate-200 bg-white text-slate-600";
+function statusClass(type: DashboardAction["type"]): string {
+	if (type === "overdue") return "text-red-600";
+	if (type === "today") return "text-indigo-600";
+	if (type === "gift") return "text-amber-600";
+	return "text-zinc-500";
 }

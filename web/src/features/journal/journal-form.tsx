@@ -110,7 +110,7 @@ export function JournalForm({ initial, onSubmit, submitLabel = "Save Entry", def
 									value={searchQ}
 									onChange={(e) => setSearchQ(e.target.value)}
 									placeholder="Search people to add…"
-									className="h-9 w-full border-2 border-border rounded-base bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+									className="h-9 w-full border border-zinc-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 								/>
 								{unselected.length > 0 && (
 									<div className="flex flex-wrap gap-1 pt-1">
@@ -119,7 +119,7 @@ export function JournalForm({ initial, onSubmit, submitLabel = "Save Entry", def
 												key={p.id}
 												type="button"
 												onClick={() => f.handleChange([...selectedIds, p.id])}
-												className="flex items-center gap-1 text-xs border-2 border-dashed border-border rounded-base px-2 py-1 hover:border-main transition-colors"
+												className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
 											>
 												<Plus className="size-3" />{p.name}
 											</button>

@@ -45,7 +45,7 @@ function GiftDetailPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">{data.title}</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
 						<Link to="/gifts/$giftId/edit" params={{ giftId }}>Edit</Link>

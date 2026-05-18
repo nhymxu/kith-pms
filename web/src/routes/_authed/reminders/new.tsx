@@ -23,7 +23,7 @@ function NewReminderPage() {
 
 	return (
 		<div className="max-w-lg space-y-4">
-			<h1 className="text-2xl font-heading">New Reminder</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">New Reminder</h1>
 			<ReminderForm onSubmit={(v) => mutation.mutateAsync(v)} submitLabel="Create Reminder" />
 		</div>
 	)

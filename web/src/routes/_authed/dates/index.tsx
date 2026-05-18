@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/dates/")({
 function DatesPage() {
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">Upcoming Dates</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Upcoming Dates</h1>
 			<DatesList />
 		</div>
 	)

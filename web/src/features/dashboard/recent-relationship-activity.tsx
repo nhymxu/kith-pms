@@ -1,8 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "#/components/ui/badge";
-import { Button } from "#/components/ui/button";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardActivity } from "./dashboard-data";
 import { EmptyState } from "./empty-state";
@@ -28,73 +26,53 @@ export function RecentRelationshipActivity({
 			icon={BookOpen}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
-			className="xl:col-span-7"
 		>
 			{isLoading ? (
-				<div className="space-y-2">
-					{["activity-1", "activity-2", "activity-3", "activity-4"].map(
-						(key) => (
-							<div
-								key={key}
-								className="h-16 rounded-base bg-slate-100 animate-pulse"
-							/>
-						),
-					)}
+				<div className="space-y-px">
+					{["r1", "r2", "r3", "r4"].map((key) => (
+						<div key={key} className="h-14 bg-zinc-100 animate-pulse rounded" />
+					))}
 				</div>
 			) : visibleActivities.length ? (
-				<div className="space-y-2">
+				<div>
 					{visibleActivities.map((activity) => (
 						<Link
 							key={activity.id}
 							to="/journal/$entryId"
 							params={{ entryId: activity.id }}
-							className="block rounded-base border-2 border-slate-100 bg-slate-50/70 p-3 transition-colors hover:border-teal-200 hover:bg-teal-50/60"
+							className="block py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 -mx-4 px-4 transition-colors"
 						>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-sm font-heading text-slate-900">
-										{activity.title}
-									</p>
-									<p className="mt-1 line-clamp-1 text-xs font-base text-slate-500">
-										{activity.detail}
-									</p>
+									<p className="truncate text-[13px] text-zinc-900">{activity.title}</p>
+									<p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{activity.detail}</p>
 								</div>
-								<span className="shrink-0 text-xs font-base text-slate-500">
-									{activity.date}
-								</span>
+								<span className="shrink-0 font-mono text-[10px] text-zinc-500">{activity.date}</span>
 							</div>
 							{activity.people.length ? (
-								<div className="mt-2 flex flex-wrap gap-1">
+								<div className="mt-1.5 flex flex-wrap gap-1">
 									{activity.people.slice(0, 3).map((person) => (
-										<Badge
-											key={person}
-											variant="neutral"
-											className="border-slate-200 bg-white text-xs text-slate-600"
-										>
-											{person}
-										</Badge>
+										<span key={person} className="text-[10px] text-indigo-600">
+											@{person}
+										</span>
 									))}
 									{activity.people.length > 3 ? (
-										<Badge
-											variant="neutral"
-											className="border-slate-200 bg-white text-xs text-slate-600"
-										>
+										<span className="text-[10px] text-zinc-400">
 											+{activity.people.length - 3}
-										</Badge>
+										</span>
 									) : null}
 								</div>
 							) : null}
 						</Link>
 					))}
 					{activities.length > 6 ? (
-						<Button
+						<button
 							type="button"
-							variant="neutral"
-							className="w-full border-slate-200 bg-white text-slate-700 hover:bg-teal-50"
-							onClick={() => setExpanded((value) => !value)}
+							className="w-full py-2 text-[11px] text-zinc-600 hover:bg-zinc-50 border-t border-zinc-200 -mx-4 px-4 mt-1 transition-colors"
+							onClick={() => setExpanded((v) => !v)}
 						>
 							{expanded ? "Show less" : `Show ${activities.length - 6} more`}
-						</Button>
+						</button>
 					) : null}
 				</div>
 			) : (

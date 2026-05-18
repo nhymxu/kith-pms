@@ -25,12 +25,12 @@ interface SidebarProps {
 
 export function Sidebar({ onNavClick }: SidebarProps) {
 	return (
-		<div className="flex h-full flex-col text-sidebar-foreground">
-			<div className="flex h-16 items-center border-b border-sidebar-border px-5">
-				<span className="text-xl font-heading tracking-tight">Kith PMS</span>
+		<div className="flex h-full flex-col">
+			<div className="flex h-14 items-center border-b border-zinc-200 px-5">
+				<span className="text-[15px] font-semibold tracking-tight">Kith</span>
 			</div>
 
-			<nav className="flex-1 overflow-y-auto p-4 space-y-1.5">
+			<nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
 				{NAV_ITEMS.map((item) => (
 					<NavLink
 						key={item.to}

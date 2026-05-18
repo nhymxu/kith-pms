@@ -34,7 +34,7 @@ function EditJournalPage() {
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">Edit Entry</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Edit Entry</h1>
 			<JournalForm
 				initial={data}
 				onSubmit={(v) => mutation.mutateAsync(v)}

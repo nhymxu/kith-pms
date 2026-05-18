@@ -45,52 +45,49 @@ function LoginPage() {
 	})
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-background p-4">
-			<Card className="w-full max-w-sm">
-				<CardHeader>
-					<CardTitle className="text-xl">Kith PMS</CardTitle>
-					<CardDescription>Enter your password to continue</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form
-						onSubmit={(e) => {
-							e.preventDefault()
-							form.handleSubmit()
-						}}
-						className="space-y-4"
+		<div className="min-h-screen grid place-items-center bg-zinc-50 p-4">
+			<div className="w-full max-w-[360px]">
+				<h1 className="text-[28px] font-semibold text-center mb-8 tracking-tight">Kith</h1>
+				<form
+					onSubmit={(e) => {
+						e.preventDefault()
+						form.handleSubmit()
+					}}
+					className="border border-zinc-200 rounded-md bg-white p-6 space-y-4"
+				>
+					<p className="text-[15px] font-semibold text-zinc-900">Sign in</p>
+
+					{apiError && (
+						<Alert variant="destructive">
+							<AlertDescription>{apiError}</AlertDescription>
+						</Alert>
+					)}
+
+					<form.Field
+						name="password"
+						validators={{ onChange: ({ value }) => (!value ? "Password is required" : undefined) }}
 					>
-						{apiError && (
-							<Alert variant="destructive">
-								<AlertDescription>{apiError}</AlertDescription>
-							</Alert>
+						{(field) => (
+							<FormField
+								field={field}
+								label="Password"
+								type="password"
+								placeholder="••••••••"
+								autoComplete="current-password"
+								autoFocus
+							/>
 						)}
+					</form.Field>
 
-						<form.Field
-							name="password"
-							validators={{ onChange: ({ value }) => (!value ? "Password is required" : undefined) }}
-						>
-							{(field) => (
-								<FormField
-									field={field}
-									label="Password"
-									type="password"
-									placeholder="••••••••"
-									autoComplete="current-password"
-									autoFocus
-								/>
-							)}
-						</form.Field>
-
-						<form.Subscribe selector={(s) => s.isSubmitting}>
-							{(isSubmitting) => (
-								<SubmitButton isPending={isSubmitting} pendingLabel="Signing in…" className="w-full">
-									Sign in
-								</SubmitButton>
-							)}
-						</form.Subscribe>
-					</form>
-				</CardContent>
-			</Card>
+					<form.Subscribe selector={(s) => s.isSubmitting}>
+						{(isSubmitting) => (
+							<SubmitButton isPending={isSubmitting} pendingLabel="Signing in…" className="w-full">
+								Sign in
+							</SubmitButton>
+						)}
+					</form.Subscribe>
+				</form>
+			</div>
 		</div>
 	)
 }

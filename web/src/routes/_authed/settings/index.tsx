@@ -30,14 +30,14 @@ const SETTINGS_LINKS = [
 function SettingsPage() {
 	return (
 		<div className="space-y-4 max-w-xl">
-			<h1 className="text-2xl font-heading">Settings</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Settings</h1>
 			<div className="space-y-3">
 				{SETTINGS_LINKS.map(({ to, icon: Icon, title, description }) => (
 					<Link key={to} to={to} className="block">
-						<Card className="hover:border-main transition-colors cursor-pointer">
+						<Card className="hover:border-zinc-300 transition-colors cursor-pointer">
 							<CardHeader className="pb-2">
-								<CardTitle className="text-base flex items-center gap-2">
-									<Icon className="size-4" />
+								<CardTitle className="text-[14px] font-medium flex items-center gap-2 text-zinc-900">
+									<Icon className="size-4 text-zinc-400" />
 									{title}
 								</CardTitle>
 							</CardHeader>

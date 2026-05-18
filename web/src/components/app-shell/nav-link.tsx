@@ -10,18 +10,6 @@ interface NavLinkProps {
 	variant?: "sidebar" | "topbar";
 }
 
-const navLinkStyles = {
-	sidebar: {
-		base: "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-		active:
-			"bg-sidebar-primary text-sidebar-primary-foreground font-heading shadow-shadow",
-	},
-	topbar: {
-		base: "text-foreground hover:bg-secondary-background hover:text-foreground",
-		active: "bg-main text-main-foreground font-heading shadow-shadow",
-	},
-} as const;
-
 export function NavLink({
 	to,
 	icon: Icon,
@@ -29,17 +17,32 @@ export function NavLink({
 	onClick,
 	variant = "sidebar",
 }: NavLinkProps) {
-	const styles = navLinkStyles[variant];
+	if (variant === "topbar") {
+		return (
+			<Link
+				to={to}
+				onClick={onClick}
+				className="relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-zinc-500 hover:text-zinc-900 transition-colors"
+				activeProps={{
+					className:
+						"relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-zinc-900 after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:bg-indigo-600",
+				}}
+			>
+				<Icon className="size-3.5 shrink-0" />
+				<span>{label}</span>
+			</Link>
+		);
+	}
 
 	return (
 		<Link
 			to={to}
 			onClick={onClick}
-			className={cn(
-				"flex items-center gap-3 rounded-base px-3.5 py-2.5 text-sm font-base transition-all",
-				styles.base,
-			)}
-			activeProps={{ className: styles.active }}
+			className="flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-zinc-700 hover:bg-zinc-100 transition-colors"
+			activeProps={{
+				className:
+					"flex items-center gap-3 px-3 py-2 rounded-md text-[13px] bg-zinc-100 text-zinc-900 font-medium",
+			}}
 		>
 			<Icon className="size-4 shrink-0" />
 			<span>{label}</span>

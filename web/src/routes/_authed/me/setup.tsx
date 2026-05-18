@@ -38,9 +38,9 @@ function MeSetupPage() {
 	const selectedPerson = people.find((p) => p.id === selected)
 
 	return (
-		<div className="space-y-4 max-w-md">
-			<h1 className="text-2xl font-heading">Set Up My Profile</h1>
-			<p className="text-sm font-base text-foreground/60">
+		<div className="space-y-4 max-w-[480px]">
+			<h1 className="text-[24px] font-semibold tracking-tight text-zinc-900">Who are you?</h1>
+			<p className="text-[13px] text-zinc-500">
 				Select which person in your contacts represents you.
 			</p>
 
@@ -63,25 +63,25 @@ function MeSetupPage() {
 						type="button"
 						onClick={() => setSelected(p.id)}
 						className={[
-							"w-full text-left border-2 rounded-base p-3 transition-colors text-sm",
+							"w-full text-left border rounded-md px-3 py-2.5 transition-colors text-[13px]",
 							selected === p.id
-								? "border-main bg-main/10"
-								: "border-border hover:border-main/50",
+								? "border-indigo-600 bg-indigo-50 text-zinc-900"
+								: "border-zinc-200 hover:border-zinc-300 text-zinc-700",
 						].join(" ")}
 					>
-						<p className="font-heading">{p.name}</p>
-						{p.nickname && <p className="text-xs text-foreground/50">"{p.nickname}"</p>}
+						<p className="font-medium">{p.name}</p>
+						{p.nickname && <p className="text-[11px] text-zinc-400">"{p.nickname}"</p>}
 					</button>
 				))}
 				{people.length === 0 && (
-					<p className="text-sm text-foreground/50">No people found.</p>
+					<p className="text-[13px] text-zinc-500">No people found.</p>
 				)}
 			</div>
 
 			{selectedPerson && (
 				<Card>
 					<CardHeader className="pb-2">
-						<CardTitle className="text-sm font-heading">Selected: {selectedPerson.name}</CardTitle>
+						<CardTitle className="text-[13px] font-medium text-zinc-900">Selected: {selectedPerson.name}</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<Button

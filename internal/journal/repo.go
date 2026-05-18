@@ -387,7 +387,7 @@ func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, acti
 // ListByActivity returns all people linked to the given activity.
 func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID int64) ([]ActivityPerson, error) {
 	const q = `
-		SELECT ap.person_id, p.name
+		SELECT ap.person_id, p.name, COALESCE(p.nickname, ''), COALESCE(p.avatar_path, '')
 		FROM activity_person ap
 		JOIN person p ON p.id = ap.person_id
 		WHERE ap.activity_id = ?
@@ -403,7 +403,7 @@ func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID i
 
 	for rows.Next() {
 		var ap ActivityPerson
-		if err := rows.Scan(&ap.PersonID, &ap.Name); err != nil {
+		if err := rows.Scan(&ap.PersonID, &ap.Name, &ap.Nickname, &ap.AvatarPath); err != nil {
 			return nil, fmt.Errorf("journal: scan activity person: %w", err)
 		}
 

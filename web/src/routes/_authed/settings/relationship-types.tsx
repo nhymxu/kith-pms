@@ -112,39 +112,39 @@ function RelationshipTypesPage() {
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">Relationship Types</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Relationship Types</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
 					<Plus className="size-3 mr-1" /> New Type
 				</Button>
 			</div>
 
-			{isPending && <p className="text-sm text-foreground/60">Loading…</p>}
+			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
 
 			{data && data.length === 0 && (
-				<p className="text-sm text-foreground/50">No relationship types yet.</p>
+				<p className="text-[13px] text-zinc-500">No relationship types yet.</p>
 			)}
 
-			<div className="space-y-2">
+			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
 				{data?.map((rt) => (
-					<div key={rt.id} className="flex items-center gap-3 border-2 border-border rounded-base p-3 text-sm">
-						<span className="font-heading">{rt.name}</span>
+					<li key={rt.id} className="flex items-center gap-3 px-4 py-3 text-[13px]">
+						<span className="text-zinc-900 font-medium">{rt.name}</span>
 						{rt.reverse_name && (
-							<span className="text-foreground/50 font-base">↔ {rt.reverse_name}</span>
+							<span className="text-zinc-400 font-mono text-[11px]">↔ {rt.reverse_name}</span>
 						)}
 						{(rt.usage_count ?? 0) > 0 && (
-							<span className="text-xs text-foreground/40">{rt.usage_count} uses</span>
+							<span className="font-mono text-[11px] text-zinc-400">{rt.usage_count} uses</span>
 						)}
-						<div className="ml-auto flex gap-2">
-							<Button variant="ghost" size="sm" onClick={() => setDialog({ kind: "edit", relType: rt })}>
-								<Pencil className="size-3" />
+						<div className="ml-auto flex gap-1">
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "edit", relType: rt })}>
+								<Pencil className="size-3.5" />
 							</Button>
-							<Button variant="ghost" size="sm" onClick={() => setDialog({ kind: "delete", relType: rt })}>
-								<Trash2 className="size-3" />
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "delete", relType: rt })}>
+								<Trash2 className="size-3.5" />
 							</Button>
 						</div>
-					</div>
+					</li>
 				))}
-			</div>
+			</ul>
 
 			<Dialog
 				open={dialog?.kind === "create" || dialog?.kind === "edit"}

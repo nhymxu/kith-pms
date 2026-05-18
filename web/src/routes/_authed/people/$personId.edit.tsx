@@ -22,7 +22,7 @@ function EditPersonPage() {
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-2xl font-heading">Edit {data.name}</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Edit {data.name}</h1>
 			<PersonForm mode="edit" initial={data} />
 		</div>
 	)

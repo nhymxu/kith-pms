@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { z } from "zod"
 import { listJournal } from "#/endpoints/journal"
 import { keys } from "#/query-keys"
-import { JournalTable } from "#/features/journal/journal-table"
+import { JournalTimeline } from "#/features/journal/journal-timeline"
 import { Button } from "#/components/ui/button"
 
 const searchSchema = z.object({
@@ -33,7 +33,7 @@ function JournalPage() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">Journal</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Journal</h1>
 				<Button asChild>
 					<Link to="/journal/new">New Entry</Link>
 				</Button>
@@ -42,21 +42,21 @@ function JournalPage() {
 			{/* Date range filter */}
 			<div className="flex flex-wrap gap-3 items-end">
 				<div className="space-y-1">
-					<label className="text-xs font-heading text-foreground/60">From</label>
+					<label className="text-[11px] font-medium text-zinc-500">From</label>
 					<input
 						type="date"
 						value={search.from_date ?? ""}
 						onChange={(e) => void navigate({ to: "/journal", search: { ...search, from_date: e.target.value || undefined, page: 1 } })}
-						className="h-9 border-2 border-border rounded-base bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
 				<div className="space-y-1">
-					<label className="text-xs font-heading text-foreground/60">To</label>
+					<label className="text-[11px] font-medium text-zinc-500">To</label>
 					<input
 						type="date"
 						value={search.to_date ?? ""}
 						onChange={(e) => void navigate({ to: "/journal", search: { ...search, to_date: e.target.value || undefined, page: 1 } })}
-						className="h-9 border-2 border-border rounded-base bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
 				{(search.from_date || search.to_date) && (
@@ -73,7 +73,7 @@ function JournalPage() {
 			{isPending ? (
 				<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
 			) : (
-				<JournalTable data={data?.items ?? []} />
+				<JournalTimeline data={data?.items ?? []} />
 			)}
 		</div>
 	)

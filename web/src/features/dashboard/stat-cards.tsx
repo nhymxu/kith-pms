@@ -28,9 +28,9 @@ function StatCard({
 			</CardHeader>
 			<CardContent>
 				{isLoading ? (
-					<div className="h-8 w-16 bg-border/30 rounded-base animate-pulse" />
+					<div className="h-8 w-16 bg-zinc-100 rounded animate-pulse" />
 				) : (
-					<p className="text-3xl font-heading">{value ?? 0}</p>
+					<p className="font-mono text-2xl font-semibold text-zinc-900">{value ?? 0}</p>
 				)}
 			</CardContent>
 		</Card>

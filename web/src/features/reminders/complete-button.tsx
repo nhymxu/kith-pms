@@ -24,11 +24,11 @@ export function CompleteButton({ reminderId, onCompleted }: CompleteButtonProps)
 	return (
 		<Button
 			size="sm"
-			variant="neutral"
+			variant="default"
 			onClick={() => mutation.mutate()}
 			disabled={mutation.isPending}
 		>
-			{mutation.isPending ? "…" : "Complete"}
+			{mutation.isPending ? "…" : "Mark complete"}
 		</Button>
 	)
 }

@@ -1,7 +1,5 @@
 import { RefreshCw } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
-import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 
 export function DashboardCard({
 	title,
@@ -21,35 +19,29 @@ export function DashboardCard({
 	className?: string;
 }) {
 	return (
-		<Card
-			className={`border-slate-200 bg-white/95 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${className}`}
-		>
-			<CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
-				<div className="min-w-0 space-y-1">
-					<CardTitle className="flex items-center gap-2 text-sm font-heading text-slate-900">
-						{Icon ? <Icon className="size-4 text-teal-600" /> : null}
+		<div className={`border border-zinc-200 rounded-md bg-white ${className}`}>
+			<div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+				<div className="min-w-0">
+					<p className="flex items-center gap-2 text-[13px] font-medium text-zinc-900">
+						{Icon ? <Icon className="size-3.5 text-zinc-400 shrink-0" /> : null}
 						{title}
-					</CardTitle>
+					</p>
 					{subtitle ? (
-						<p className="text-xs font-base text-slate-500">{subtitle}</p>
+						<p className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</p>
 					) : null}
 				</div>
 				{onRefresh ? (
-					<Button
+					<button
 						type="button"
-						variant="neutral"
-						size="icon"
-						className="size-8 shrink-0 border-slate-200 bg-white text-slate-600 hover:bg-teal-50 hover:text-teal-700"
+						className="size-6 shrink-0 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700 transition-colors"
 						onClick={onRefresh}
 						aria-label={`Refresh ${title}`}
 					>
-						<RefreshCw
-							className={`size-4 ${isRefreshing ? "animate-spin" : ""}`}
-						/>
-					</Button>
+						<RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+					</button>
 				) : null}
-			</CardHeader>
-			<CardContent>{children}</CardContent>
-		</Card>
+			</div>
+			<div className="p-4">{children}</div>
+		</div>
 	);
 }

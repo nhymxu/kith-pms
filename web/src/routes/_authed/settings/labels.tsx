@@ -117,38 +117,37 @@ function LabelsPage() {
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-heading">Labels</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Labels</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
 					<Plus className="size-3 mr-1" /> New Label
 				</Button>
 			</div>
 
-			{isPending && <p className="text-sm text-foreground/60">Loading…</p>}
+			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
 
 			{data && data.length === 0 && (
-				<p className="text-sm text-foreground/50">No labels yet. Create one to start categorising people.</p>
+				<p className="text-[13px] text-zinc-500">No labels yet. Create one to start categorising people.</p>
 			)}
 
-			<div className="space-y-2">
+			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
 				{data?.map((label) => (
-					<div key={label.id} className="flex items-center gap-3 border-2 border-border rounded-base p-3">
-						<Badge style={{ borderColor: label.color, background: `${label.color}22` }}>
-							{label.name}
-						</Badge>
+					<li key={label.id} className="flex items-center gap-3 px-4 py-3">
+						<span className="size-3 rounded-full shrink-0" style={{ backgroundColor: label.color }} />
+						<span className="text-[13px] text-zinc-900">{label.name}</span>
 						{label.count !== undefined && label.count > 0 && (
-							<span className="text-xs text-foreground/50">{label.count} people</span>
+							<span className="font-mono text-[11px] text-zinc-400">{label.count} people</span>
 						)}
-						<div className="ml-auto flex gap-2">
-							<Button variant="ghost" size="sm" onClick={() => setDialog({ kind: "edit", label })}>
-								<Pencil className="size-3" />
+						<div className="ml-auto flex gap-1">
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "edit", label })}>
+								<Pencil className="size-3.5" />
 							</Button>
-							<Button variant="ghost" size="sm" onClick={() => setDialog({ kind: "delete", label })}>
-								<Trash2 className="size-3" />
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "delete", label })}>
+								<Trash2 className="size-3.5" />
 							</Button>
 						</div>
-					</div>
+					</li>
 				))}
-			</div>
+			</ul>
 
 			{/* Create / Edit dialog */}
 			<Dialog

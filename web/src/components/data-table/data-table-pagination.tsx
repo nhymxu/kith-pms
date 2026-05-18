@@ -8,19 +8,19 @@ interface DataTablePaginationProps<T> {
 
 export function DataTablePagination<T>({ table }: DataTablePaginationProps<T>) {
 	return (
-		<div className="flex items-center justify-between px-2 py-3 border-t-2 border-border">
-			<p className="text-sm font-base text-foreground/70">
+		<div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200">
+			<p className="font-mono text-[12px] text-zinc-500">
 				{table.getFilteredSelectedRowModel().rows.length} of{" "}
-				{table.getFilteredRowModel().rows.length} row(s) selected.
+				{table.getFilteredRowModel().rows.length} rows
 			</p>
 
 			<div className="flex items-center gap-2">
-				<p className="text-sm font-base">
+				<p className="font-mono text-[12px] text-zinc-500">
 					Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 				</p>
 				<div className="flex items-center gap-1">
 					<Button
-						variant="neutral"
+						variant="ghost"
 						size="icon"
 						onClick={() => table.setPageIndex(0)}
 						disabled={!table.getCanPreviousPage()}
@@ -29,7 +29,7 @@ export function DataTablePagination<T>({ table }: DataTablePaginationProps<T>) {
 						<ChevronsLeft className="size-4" />
 					</Button>
 					<Button
-						variant="neutral"
+						variant="ghost"
 						size="icon"
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
@@ -38,7 +38,7 @@ export function DataTablePagination<T>({ table }: DataTablePaginationProps<T>) {
 						<ChevronLeft className="size-4" />
 					</Button>
 					<Button
-						variant="neutral"
+						variant="ghost"
 						size="icon"
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
@@ -47,7 +47,7 @@ export function DataTablePagination<T>({ table }: DataTablePaginationProps<T>) {
 						<ChevronRight className="size-4" />
 					</Button>
 					<Button
-						variant="neutral"
+						variant="ghost"
 						size="icon"
 						onClick={() => table.setPageIndex(table.getPageCount() - 1)}
 						disabled={!table.getCanNextPage()}

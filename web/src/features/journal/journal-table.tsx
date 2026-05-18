@@ -3,9 +3,30 @@ import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
 import { Link } from "@tanstack/react-router"
 import { DataTable } from "#/components/data-table/data-table"
-import { Badge } from "#/components/ui/badge"
 import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
-import type { JournalActivity } from "#/schemas/journal"
+import { getAvatarUrl } from "#/endpoints/people"
+import type { ActivityPerson, JournalActivity } from "#/schemas/journal"
+
+function PersonChip({ p }: { p: ActivityPerson }) {
+	const hasAvatar = Boolean(p.avatar_path)
+	const display = p.nickname ? p.nickname : p.name
+	return (
+		<Link
+			to="/people/$personId"
+			params={{ personId: String(p.person_id) }}
+			className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5 hover:border-indigo-400 hover:bg-indigo-50 transition-colors"
+		>
+			<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+				{hasAvatar ? (
+					<img src={getAvatarUrl(p.person_id)} alt={p.name} className="size-full object-cover" />
+				) : (
+					p.name.charAt(0).toUpperCase()
+				)}
+			</span>
+			<span className="text-[11px] text-zinc-700 leading-none">{display}</span>
+		</Link>
+	)
+}
 
 interface JournalTableProps {
 	data: JournalActivity[]
@@ -21,7 +42,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				header: sortableHeader<JournalActivity>("Date"),
 				enableSorting: true,
 				cell: valueCell<JournalActivity, string>((val) =>
-					val ? new Date(val).toLocaleDateString() : "—",
+					val ? <span className="font-mono text-[12px] text-zinc-500">{new Date(val).toLocaleDateString()}</span> : <span className="text-zinc-300">—</span>,
 				),
 			},
 			{
@@ -33,7 +54,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 					<Link
 						to="/journal/$entryId"
 						params={{ entryId: String(row.id) }}
-						className="font-base underline hover:text-main"
+						className="text-[13px] text-zinc-900 hover:text-indigo-600 hover:underline"
 					>
 						{val}
 					</Link>
@@ -44,16 +65,14 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				header: "People",
 				cell: ({ row }) => {
 					const people = row.original.people ?? []
-					if (!people.length) return <span className="text-foreground/40 text-xs">—</span>
+					if (!people.length) return <span className="text-zinc-300 text-[12px]">—</span>
 					return (
-						<div className="flex flex-wrap gap-1">
+						<div className="flex flex-wrap gap-1.5">
 							{people.slice(0, 3).map((p) => (
-								<Badge key={p.person_id} variant="neutral" className="text-xs">
-									{p.name}
-								</Badge>
+								<PersonChip key={p.person_id} p={p} />
 							))}
 							{people.length > 3 && (
-								<Badge variant="neutral" className="text-xs">+{people.length - 3}</Badge>
+								<span className="text-[10px] text-zinc-400 self-center">+{people.length - 3}</span>
 							)}
 						</div>
 					)
@@ -65,7 +84,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				cell: ({ row }) => {
 					const content = row.original.content ?? ""
 					const preview = content.length > 80 ? `${content.slice(0, 80)}…` : content
-					return <span className="text-xs text-foreground/60 font-base">{preview || "—"}</span>
+					return <span className="text-[12px] text-zinc-500 line-clamp-2">{preview || "—"}</span>
 				},
 			},
 		],

@@ -34,7 +34,7 @@ function EditReminderPage() {
 
 	return (
 		<div className="max-w-lg space-y-4">
-			<h1 className="text-2xl font-heading">Edit Reminder</h1>
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Edit Reminder</h1>
 			<ReminderForm
 				initial={data}
 				onSubmit={(v) => mutation.mutateAsync(v)}

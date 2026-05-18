@@ -12,9 +12,9 @@ export function FormSection({ label, description, children, className }: FormSec
 	return (
 		<div className={cn("space-y-1.5", className)}>
 			<div>
-				<p className="text-sm font-heading">{label}</p>
+				<p className="text-[13px] font-semibold text-zinc-900 pb-2 border-b border-zinc-200">{label}</p>
 				{description && (
-					<p className="text-xs text-foreground/60 font-base mt-0.5">{description}</p>
+					<p className="text-[11px] text-zinc-500 mt-1">{description}</p>
 				)}
 			</div>
 			{children}

@@ -26,6 +26,7 @@ interface DataTableProps<T> {
 	pageSize?: number
 	emptyState?: ReactNode
 	toolbarActions?: ReactNode
+	rowClassName?: (row: { original: T }) => string
 }
 
 export function DataTable<T>({
@@ -34,6 +35,7 @@ export function DataTable<T>({
 	pageSize = 20,
 	emptyState,
 	toolbarActions,
+	rowClassName,
 }: DataTableProps<T>) {
 	const [sorting, setSorting] = useState<SortingState>([])
 	const [globalFilter, setGlobalFilter] = useState("")
@@ -54,7 +56,7 @@ export function DataTable<T>({
 	const rows = table.getRowModel().rows
 
 	return (
-		<div className="border-2 border-border rounded-base bg-background shadow-shadow">
+		<div className="border border-zinc-200 rounded-md bg-white">
 			<div className="px-4">
 				<DataTableToolbar
 					table={table}
@@ -83,7 +85,7 @@ export function DataTable<T>({
 				<TableBody>
 					{rows.length > 0 ? (
 						rows.map((row) => (
-							<TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
+							<TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined} className={rowClassName?.(row) ?? ""}>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell key={cell.id}>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}

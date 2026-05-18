@@ -29,20 +29,20 @@ export function PersonFormContacts({ value, onChange }: Props) {
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
-				<Label className="text-sm font-heading">Contacts</Label>
+				<Label className="text-sm font-medium">Contacts</Label>
 				<Button type="button" variant="neutral" size="sm" onClick={add}>
 					<Plus className="size-3" /> Add
 				</Button>
 			</div>
 			{value.length === 0 && (
-				<p className="text-xs font-base text-foreground/50">No contacts yet.</p>
+				<p className="text-xs font-base text-zinc-400">No contacts yet.</p>
 			)}
 			{value.map((row, i) => (
 				<div key={i} className="grid grid-cols-[100px_1fr_1fr_32px] gap-2 items-end">
 					<div>
 						<Label className="text-xs">Type</Label>
 						<select
-							className="w-full h-10 border-2 border-border rounded-base bg-background px-2 text-sm font-base"
+							className="w-full h-10 border border-zinc-200 rounded-md bg-white px-2 text-sm font-base"
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>

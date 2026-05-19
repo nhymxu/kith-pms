@@ -1,33 +1,33 @@
-import { useQuery } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
-import { useEffect, useRef, useState } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "#/components/data-table/data-table"
-import { Badge } from "#/components/ui/badge"
-import { Input } from "#/components/ui/input"
-import { Button } from "#/components/ui/button"
-import { keys } from "#/query-keys"
-import { listPeople, getAvatarUrl } from "#/endpoints/people"
-import { formatDate } from "#/lib/format-datetime"
-import { listLabels } from "#/endpoints/labels"
-import type { Person } from "#/schemas/person"
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useRef, useState } from "react";
+import { DataTable } from "#/components/data-table/data-table";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
+import { listLabels } from "#/endpoints/labels";
+import { getAvatarUrl, listPeople } from "#/endpoints/people";
+import { formatDate } from "#/lib/format-datetime";
+import { keys } from "#/query-keys";
+import type { Person } from "#/schemas/person";
 
 function useDebounce<T>(value: T, ms = 300): T {
-	const [debounced, setDebounced] = useState(value)
+	const [debounced, setDebounced] = useState(value);
 	useEffect(() => {
-		const t = setTimeout(() => setDebounced(value), ms)
-		return () => clearTimeout(t)
-	}, [value, ms])
-	return debounced
+		const t = setTimeout(() => setDebounced(value), ms);
+		return () => clearTimeout(t);
+	}, [value, ms]);
+	return debounced;
 }
 
 interface PeopleTableProps {
-	q?: string
-	labels?: number[]
-	page?: number
-	page_size?: number
-	onSearchChange: (q: string) => void
-	onLabelsChange: (labels: number[]) => void
+	q?: string;
+	labels?: number[];
+	page?: number;
+	page_size?: number;
+	onSearchChange: (q: string) => void;
+	onLabelsChange: (labels: number[]) => void;
 }
 
 const columns: ColumnDef<Person>[] = [
@@ -36,17 +36,21 @@ const columns: ColumnDef<Person>[] = [
 		header: "",
 		size: 48,
 		cell: ({ row }) => {
-			const p = row.original
-			const hasAvatar = Boolean(p.avatar_path)
+			const p = row.original;
+			const hasAvatar = Boolean(p.avatar_path);
 			return (
 				<div className="size-7 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[11px] font-medium text-zinc-700 font-mono">
 					{hasAvatar ? (
-						<img src={getAvatarUrl(p.id)} alt={p.name} className="size-full object-cover" />
+						<img
+							src={getAvatarUrl(p.id)}
+							alt={p.name}
+							className="size-full object-cover"
+						/>
 					) : (
 						<span>{p.name.charAt(0).toUpperCase()}</span>
 					)}
 				</div>
-			)
+			);
 		},
 	},
 	{
@@ -54,24 +58,34 @@ const columns: ColumnDef<Person>[] = [
 		header: "Name",
 		accessorKey: "name",
 		cell: ({ row }) => {
-			const p = row.original
+			const p = row.original;
 			return (
-				<Link to="/people/$personId" params={{ personId: String(p.id) }} className="block hover:underline">
+				<Link
+					to="/people/$personId"
+					params={{ personId: String(p.id) }}
+					className="block hover:underline"
+				>
 					<p className="text-[13px] text-zinc-900">{p.name}</p>
-					{p.nickname && <p className="text-[11px] text-zinc-500">"{p.nickname}"</p>}
+					{p.nickname && (
+						<p className="text-[11px] text-zinc-500">"{p.nickname}"</p>
+					)}
 				</Link>
-			)
+			);
 		},
 	},
 	{
 		id: "labels",
 		header: "Labels",
 		cell: ({ row }) => {
-			const labels = row.original.labels ?? []
+			const labels = row.original.labels ?? [];
 			return (
 				<div className="flex flex-wrap gap-1">
 					{labels.slice(0, 3).map((l) => (
-						<Badge key={l.id} variant="neutral" style={{ borderColor: l.color }}>
+						<Badge
+							key={l.id}
+							variant="neutral"
+							style={{ borderColor: l.color }}
+						>
 							{l.name}
 						</Badge>
 					))}
@@ -79,7 +93,7 @@ const columns: ColumnDef<Person>[] = [
 						<Badge variant="neutral">+{labels.length - 3}</Badge>
 					)}
 				</div>
-			)
+			);
 		},
 	},
 	{
@@ -87,12 +101,14 @@ const columns: ColumnDef<Person>[] = [
 		header: "Last contact",
 		accessorKey: "last_contact_at",
 		cell: ({ getValue }) => {
-			const v = getValue<string | null>()
+			const v = getValue<string | null>();
 			return v ? (
-				<span className="font-mono text-[12px] text-zinc-500">{formatDate(v)}</span>
+				<span className="font-mono text-[12px] text-zinc-500">
+					{formatDate(v)}
+				</span>
 			) : (
 				<span className="text-[12px] text-zinc-300">—</span>
-			)
+			);
 		},
 	},
 	{
@@ -101,25 +117,40 @@ const columns: ColumnDef<Person>[] = [
 		size: 80,
 		cell: ({ row }) => (
 			<Button variant="ghost" size="sm" asChild>
-				<Link to="/people/$personId/edit" params={{ personId: String(row.original.id) }}>
+				<Link
+					to="/people/$personId/edit"
+					params={{ personId: String(row.original.id) }}
+				>
 					Edit
 				</Link>
 			</Button>
 		),
 	},
-]
+];
 
-export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onSearchChange, onLabelsChange }: PeopleTableProps) {
-	const [localQ, setLocalQ] = useState(q)
-	const debouncedQ = useDebounce(localQ, 300)
-	const isFirst = useRef(true)
+export function PeopleTable({
+	q = "",
+	labels = [],
+	page = 1,
+	page_size = 20,
+	onSearchChange,
+	onLabelsChange,
+}: PeopleTableProps) {
+	const [localQ, setLocalQ] = useState(q);
+	const debouncedQ = useDebounce(localQ, 300);
+	const isFirst = useRef(true);
 
 	useEffect(() => {
-		if (isFirst.current) { isFirst.current = false; return }
-		onSearchChange(debouncedQ)
-	}, [debouncedQ, onSearchChange])
+		if (isFirst.current) {
+			isFirst.current = false;
+			return;
+		}
+		onSearchChange(debouncedQ);
+	}, [debouncedQ, onSearchChange]);
 
-	useEffect(() => { setLocalQ(q) }, [q])
+	useEffect(() => {
+		setLocalQ(q);
+	}, [q]);
 
 	const { data, isLoading } = useQuery({
 		queryKey: keys.people.list({
@@ -135,11 +166,14 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 				page,
 				page_size,
 			}),
-	})
+	});
 
-	const { data: allLabelsData } = useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
+	const { data: allLabelsData } = useQuery({
+		queryKey: keys.labels.list(),
+		queryFn: listLabels,
+	});
 
-	const rows = data?.items ?? []
+	const rows = data?.items ?? [];
 
 	return (
 		<div className="space-y-3">
@@ -152,24 +186,30 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 			{allLabelsData && allLabelsData.length > 0 && (
 				<div className="flex flex-wrap gap-2">
 					{allLabelsData.map((l) => {
-						const active = labels.includes(l.id)
+						const active = labels.includes(l.id);
 						return (
 							<button
 								key={l.id}
 								type="button"
 								onClick={() => {
-									const next = active ? labels.filter((id) => id !== l.id) : [...labels, l.id]
-									onLabelsChange(next)
+									const next = active
+										? labels.filter((id) => id !== l.id)
+										: [...labels, l.id];
+									onLabelsChange(next);
 								}}
 								className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
 								style={active ? { borderColor: l.color } : undefined}
 							>
 								{l.name}
 							</button>
-						)
+						);
 					})}
 					{labels.length > 0 && (
-						<button type="button" onClick={() => onLabelsChange([])} className="text-xs text-zinc-400 hover:text-zinc-700">
+						<button
+							type="button"
+							onClick={() => onLabelsChange([])}
+							className="text-xs text-zinc-400 hover:text-zinc-700"
+						>
 							Clear
 						</button>
 					)}
@@ -181,12 +221,16 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 				pageSize={page_size}
 				emptyState={
 					isLoading ? (
-						<span className="text-sm font-base text-foreground/50">Loading…</span>
+						<span className="text-sm font-base text-foreground/50">
+							Loading…
+						</span>
 					) : (
-						<span className="text-sm font-base text-foreground/50">No people found.</span>
+						<span className="text-sm font-base text-foreground/50">
+							No people found.
+						</span>
 					)
 				}
 			/>
 		</div>
-	)
+	);
 }

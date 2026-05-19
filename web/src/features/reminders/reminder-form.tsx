@@ -1,30 +1,44 @@
 // Reminder create/edit form — TanStack Form + Zod validation
-import { useForm } from "@tanstack/react-form"
-import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
-import { reminderRequestSchema, type ReminderRequest, type ReminderWithPerson } from "#/schemas/reminder"
-import { listPeople } from "#/endpoints/people"
-import { keys } from "#/query-keys"
-import { FormField } from "#/components/form/form-field"
-import { SubmitButton } from "#/components/form/submit-button"
-import { Label } from "#/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
-import { Textarea } from "#/components/ui/textarea"
-import { Alert, AlertDescription } from "#/components/ui/alert"
+import { useForm } from "@tanstack/react-form";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { FormField } from "#/components/form/form-field";
+import { SubmitButton } from "#/components/form/submit-button";
+import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Label } from "#/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
+import { Textarea } from "#/components/ui/textarea";
+import { listPeople } from "#/endpoints/people";
+import { keys } from "#/query-keys";
+import {
+	type ReminderRequest,
+	type ReminderWithPerson,
+	reminderRequestSchema,
+} from "#/schemas/reminder";
 
 interface ReminderFormProps {
-	initial?: Partial<ReminderWithPerson>
-	onSubmit: (values: ReminderRequest) => Promise<void>
-	submitLabel?: string
+	initial?: Partial<ReminderWithPerson>;
+	onSubmit: (values: ReminderRequest) => Promise<void>;
+	submitLabel?: string;
 }
 
-export function ReminderForm({ initial, onSubmit, submitLabel = "Save Reminder" }: ReminderFormProps) {
-	const [apiError, setApiError] = useState<string | null>(null)
+export function ReminderForm({
+	initial,
+	onSubmit,
+	submitLabel = "Save Reminder",
+}: ReminderFormProps) {
+	const [apiError, setApiError] = useState<string | null>(null);
 
 	const { data: peopleList } = useQuery({
 		queryKey: keys.people.list({}),
 		queryFn: () => listPeople({ page_size: 200 }),
-	})
+	});
 
 	const form = useForm({
 		defaultValues: {
@@ -36,28 +50,30 @@ export function ReminderForm({ initial, onSubmit, submitLabel = "Save Reminder" 
 		} satisfies ReminderRequest,
 		validators: {
 			onSubmit: ({ value }) => {
-				const result = reminderRequestSchema.safeParse(value)
+				const result = reminderRequestSchema.safeParse(value);
 				if (!result.success) {
-					return result.error.issues.map((i) => i.message).join(", ")
+					return result.error.issues.map((i) => i.message).join(", ");
 				}
-				return undefined
+				return undefined;
 			},
 		},
 		onSubmit: async ({ value }) => {
-			setApiError(null)
+			setApiError(null);
 			try {
-				await onSubmit(value as ReminderRequest)
+				await onSubmit(value as ReminderRequest);
 			} catch (err) {
-				setApiError(err instanceof Error ? err.message : "Failed to save reminder")
+				setApiError(
+					err instanceof Error ? err.message : "Failed to save reminder",
+				);
 			}
 		},
-	})
+	});
 
 	return (
 		<form
 			onSubmit={(e) => {
-				e.preventDefault()
-				form.handleSubmit()
+				e.preventDefault();
+				form.handleSubmit();
 			}}
 			className="space-y-4"
 		>
@@ -68,7 +84,9 @@ export function ReminderForm({ initial, onSubmit, submitLabel = "Save Reminder" 
 			)}
 
 			<form.Field name="title">
-				{(field) => <FormField field={field} label="Title" placeholder="Call dentist" />}
+				{(field) => (
+					<FormField field={field} label="Title" placeholder="Call dentist" />
+				)}
 			</form.Field>
 
 			<form.Field name="due_date">
@@ -124,5 +142,5 @@ export function ReminderForm({ initial, onSubmit, submitLabel = "Save Reminder" 
 				)}
 			</form.Subscribe>
 		</form>
-	)
+	);
 }

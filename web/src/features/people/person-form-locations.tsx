@@ -1,32 +1,41 @@
-import { Plus, Trash2 } from "lucide-react"
-import { Button } from "#/components/ui/button"
-import { Input } from "#/components/ui/input"
-import { Label } from "#/components/ui/label"
-import type { Location } from "#/schemas/person"
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import type { Location } from "#/schemas/person";
 
-type LocationRow = Omit<Location, "id" | "person_id">
+type LocationRow = Omit<Location, "id" | "person_id">;
 
 interface Props {
-	value: LocationRow[]
-	onChange: (rows: LocationRow[]) => void
+	value: LocationRow[];
+	onChange: (rows: LocationRow[]) => void;
 }
 
-const LOCATION_TYPES = ["home", "work", "other"]
+const LOCATION_TYPES = ["home", "work", "other"];
 
 export function PersonFormLocations({ value, onChange }: Props) {
 	function add() {
 		onChange([
 			...value,
-			{ type: "home", address: "", city: "", country: "", postal_code: "", position: value.length },
-		])
+			{
+				type: "home",
+				address: "",
+				city: "",
+				country: "",
+				postal_code: "",
+				position: value.length,
+			},
+		]);
 	}
 
 	function remove(i: number) {
-		onChange(value.filter((_, idx) => idx !== i))
+		onChange(value.filter((_, idx) => idx !== i));
 	}
 
 	function update(i: number, field: keyof LocationRow, v: string | number) {
-		onChange(value.map((row, idx) => (idx === i ? { ...row, [field]: v } : row)))
+		onChange(
+			value.map((row, idx) => (idx === i ? { ...row, [field]: v } : row)),
+		);
 	}
 
 	return (
@@ -41,7 +50,10 @@ export function PersonFormLocations({ value, onChange }: Props) {
 				<p className="text-xs font-base text-zinc-400">No locations yet.</p>
 			)}
 			{value.map((row, i) => (
-				<div key={i} className="border border-zinc-200 rounded-md p-3 space-y-2">
+				<div
+					key={i}
+					className="border border-zinc-200 rounded-md p-3 space-y-2"
+				>
 					<div className="flex items-center justify-between">
 						<select
 							className="h-9 border border-zinc-200 rounded-md bg-white px-2 text-sm font-base"
@@ -49,7 +61,9 @@ export function PersonFormLocations({ value, onChange }: Props) {
 							onChange={(e) => update(i, "type", e.target.value)}
 						>
 							{LOCATION_TYPES.map((t) => (
-								<option key={t} value={t}>{t}</option>
+								<option key={t} value={t}>
+									{t}
+								</option>
 							))}
 						</select>
 						<Button
@@ -86,5 +100,5 @@ export function PersonFormLocations({ value, onChange }: Props) {
 				</div>
 			))}
 		</div>
-	)
+	);
 }

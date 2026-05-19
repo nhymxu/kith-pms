@@ -1,60 +1,74 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { getJournalEntry, deleteJournalEntry } from "#/endpoints/journal"
-import { formatDate, formatTime } from "#/lib/format-datetime"
-import { keys } from "#/query-keys"
-import { Button } from "#/components/ui/button"
-import { Badge } from "#/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-} from "#/components/ui/dialog"
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import { deleteJournalEntry, getJournalEntry } from "#/endpoints/journal";
+import { formatDate, formatTime } from "#/lib/format-datetime";
+import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/journal/$entryId")({
 	component: JournalEntryPage,
-})
+});
 
 function JournalEntryPage() {
-	const { entryId } = Route.useParams()
-	const id = Number(entryId)
-	const navigate = useNavigate()
-	const qc = useQueryClient()
-	const [confirmOpen, setConfirmOpen] = useState(false)
+	const { entryId } = Route.useParams();
+	const id = Number(entryId);
+	const navigate = useNavigate();
+	const qc = useQueryClient();
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const { data, isPending, isError } = useQuery({
 		queryKey: keys.journal.detail(id),
 		queryFn: () => getJournalEntry(id),
-	})
+	});
 
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteJournalEntry(id),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.journal.all })
-			navigate({ to: "/journal" })
+			qc.invalidateQueries({ queryKey: keys.journal.all });
+			navigate({ to: "/journal" });
 		},
-	})
+	});
 
-	if (isPending) return <p className="text-sm font-base text-foreground/60">Loading…</p>
-	if (isError || !data) return <p className="text-sm font-base text-destructive">Entry not found.</p>
+	if (isPending)
+		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
+	if (isError || !data)
+		return (
+			<p className="text-sm font-base text-destructive">Entry not found.</p>
+		);
 
 	return (
 		<div className="max-w-[760px] space-y-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<Link to="/journal" className="text-[12px] text-zinc-400 hover:text-zinc-700">← Journal</Link>
-					<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
+					<Link
+						to="/journal"
+						className="text-[12px] text-zinc-400 hover:text-zinc-700"
+					>
+						← Journal
+					</Link>
+					<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+						{data.title}
+					</h1>
 				</div>
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
-						<Link to="/journal/$entryId/edit" params={{ entryId }}>Edit</Link>
+						<Link to="/journal/$entryId/edit" params={{ entryId }}>
+							Edit
+						</Link>
 					</Button>
-					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>Delete</Button>
+					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+						Delete
+					</Button>
 				</div>
 			</div>
 
@@ -62,16 +76,25 @@ function JournalEntryPage() {
 				<CardHeader>
 					<CardTitle className="font-mono text-[12px] text-zinc-500">
 						{formatDate(data.occurred_at_date)}
-						{data.occurred_at_time ? ` at ${formatTime(data.occurred_at_time)}` : ""}
+						{data.occurred_at_time
+							? ` at ${formatTime(data.occurred_at_time)}`
+							: ""}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					<div>
-						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">People</p>
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+							People
+						</p>
 						{data.people.length > 0 ? (
 							<div className="flex flex-wrap gap-2">
 								{data.people.map((p) => (
-									<Link key={p.person_id} to="/people/$personId" params={{ personId: String(p.person_id) }} className="font-mono text-[12px] text-indigo-600 hover:underline">
+									<Link
+										key={p.person_id}
+										to="/people/$personId"
+										params={{ personId: String(p.person_id) }}
+										className="font-mono text-[12px] text-indigo-600 hover:underline"
+									>
 										@{p.name}
 									</Link>
 								))}
@@ -81,9 +104,13 @@ function JournalEntryPage() {
 						)}
 					</div>
 					<div>
-						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">Notes</p>
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+							Notes
+						</p>
 						{data.content ? (
-							<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">{data.content}</p>
+							<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">
+								{data.content}
+							</p>
 						) : (
 							<p className="text-[13px] text-zinc-400">No notes.</p>
 						)}
@@ -96,11 +123,14 @@ function JournalEntryPage() {
 					<DialogHeader>
 						<DialogTitle>Delete journal entry?</DialogTitle>
 						<DialogDescription>
-							This will permanently delete "{data.title}". This action cannot be undone.
+							This will permanently delete "{data.title}". This action cannot be
+							undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>
+							Cancel
+						</Button>
 						<Button
 							variant="destructive"
 							onClick={() => deleteMutation.mutate()}
@@ -112,5 +142,5 @@ function JournalEntryPage() {
 				</DialogContent>
 			</Dialog>
 		</div>
-	)
+	);
 }

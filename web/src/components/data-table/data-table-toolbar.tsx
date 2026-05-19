@@ -1,13 +1,13 @@
-import type { Table } from "@tanstack/react-table"
-import { Search, X } from "lucide-react"
-import { Input } from "#/components/ui/input"
-import { Button } from "#/components/ui/button"
+import type { Table } from "@tanstack/react-table";
+import { Search, X } from "lucide-react";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
 
 interface DataTableToolbarProps<T> {
-	table: Table<T>
-	globalFilter: string
-	onGlobalFilterChange: (value: string) => void
-	children?: React.ReactNode
+	table: Table<T>;
+	globalFilter: string;
+	onGlobalFilterChange: (value: string) => void;
+	children?: React.ReactNode;
 }
 
 export function DataTableToolbar<T>({
@@ -16,7 +16,7 @@ export function DataTableToolbar<T>({
 	onGlobalFilterChange,
 	children,
 }: DataTableToolbarProps<T>) {
-	const hasFilter = globalFilter.length > 0
+	const hasFilter = globalFilter.length > 0;
 
 	return (
 		<div className="flex items-center justify-between gap-3 py-3">
@@ -42,5 +42,5 @@ export function DataTableToolbar<T>({
 			</div>
 			{children && <div className="flex items-center gap-2">{children}</div>}
 		</div>
-	)
+	);
 }

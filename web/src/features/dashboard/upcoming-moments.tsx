@@ -41,12 +41,16 @@ export function UpcomingMoments({
 						>
 							<div className="flex items-center justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-[13px] text-zinc-900">{moment.personName}</p>
+									<p className="truncate text-[13px] text-zinc-900">
+										{moment.personName}
+									</p>
 									<p className="text-[11px] text-zinc-500 mt-0.5">
 										{moment.label} · {moment.detail}
 									</p>
 								</div>
-								<span className="shrink-0 font-mono text-[10px] text-zinc-500">{moment.date}</span>
+								<span className="shrink-0 font-mono text-[10px] text-zinc-500">
+									{moment.date}
+								</span>
 							</div>
 						</div>
 					))}

@@ -21,14 +21,10 @@ export function SummaryCards({
 	cards,
 	isLoading,
 	isStale,
-	onRefresh,
-	refreshingId,
 }: {
 	cards: DashboardSummaryCard[];
 	isLoading: boolean;
 	isStale: boolean;
-	onRefresh: (id: DashboardSummaryCard["id"]) => void;
-	refreshingId?: DashboardSummaryCard["id"];
 }) {
 	return (
 		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-zinc-200 border border-zinc-200 rounded-md bg-white">
@@ -50,7 +46,9 @@ export function SummaryCards({
 								<p className="font-mono text-xl font-semibold text-zinc-900 mt-1">
 									{card.value}
 								</p>
-								<p className={`text-[11px] mt-0.5 ${accentClass[card.id]} ${isStale ? "text-zinc-400" : ""}`}>
+								<p
+									className={`text-[11px] mt-0.5 ${accentClass[card.id]} ${isStale ? "text-zinc-400" : ""}`}
+								>
 									{isStale ? "Cached" : card.detail}
 								</p>
 							</>

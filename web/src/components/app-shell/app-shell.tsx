@@ -24,7 +24,10 @@ function AppShellInner({ children }: AppShellProps) {
 			<Topbar onMenuClick={() => setMobileOpen(true)} />
 
 			<Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-				<SheetContent side="left" className="w-72 border-r border-zinc-200 bg-white p-0">
+				<SheetContent
+					side="left"
+					className="w-72 border-r border-zinc-200 bg-white p-0"
+				>
 					<SheetTitle className="sr-only">Navigation</SheetTitle>
 					<Sidebar onNavClick={() => setMobileOpen(false)} />
 				</SheetContent>

@@ -1,29 +1,34 @@
-import { Plus, Trash2 } from "lucide-react"
-import { Button } from "#/components/ui/button"
-import { Input } from "#/components/ui/input"
-import { Label } from "#/components/ui/label"
-import type { ContactInfo } from "#/schemas/person"
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import type { ContactInfo } from "#/schemas/person";
 
-type ContactRow = Omit<ContactInfo, "id" | "person_id">
+type ContactRow = Omit<ContactInfo, "id" | "person_id">;
 
 interface Props {
-	value: ContactRow[]
-	onChange: (rows: ContactRow[]) => void
+	value: ContactRow[];
+	onChange: (rows: ContactRow[]) => void;
 }
 
-const CONTACT_TYPES = ["phone", "email", "address", "social", "other"]
+const CONTACT_TYPES = ["phone", "email", "address", "social", "other"];
 
 export function PersonFormContacts({ value, onChange }: Props) {
 	function add() {
-		onChange([...value, { type: "phone", value: "", label: "", position: value.length }])
+		onChange([
+			...value,
+			{ type: "phone", value: "", label: "", position: value.length },
+		]);
 	}
 
 	function remove(i: number) {
-		onChange(value.filter((_, idx) => idx !== i))
+		onChange(value.filter((_, idx) => idx !== i));
 	}
 
 	function update(i: number, field: keyof ContactRow, v: string | number) {
-		onChange(value.map((row, idx) => (idx === i ? { ...row, [field]: v } : row)))
+		onChange(
+			value.map((row, idx) => (idx === i ? { ...row, [field]: v } : row)),
+		);
 	}
 
 	return (
@@ -38,7 +43,10 @@ export function PersonFormContacts({ value, onChange }: Props) {
 				<p className="text-xs font-base text-zinc-400">No contacts yet.</p>
 			)}
 			{value.map((row, i) => (
-				<div key={i} className="grid grid-cols-[100px_1fr_1fr_32px] gap-2 items-end">
+				<div
+					key={i}
+					className="grid grid-cols-[100px_1fr_1fr_32px] gap-2 items-end"
+				>
 					<div>
 						<Label className="text-xs">Type</Label>
 						<select
@@ -47,7 +55,9 @@ export function PersonFormContacts({ value, onChange }: Props) {
 							onChange={(e) => update(i, "type", e.target.value)}
 						>
 							{CONTACT_TYPES.map((t) => (
-								<option key={t} value={t}>{t}</option>
+								<option key={t} value={t}>
+									{t}
+								</option>
 							))}
 						</select>
 					</div>
@@ -79,5 +89,5 @@ export function PersonFormContacts({ value, onChange }: Props) {
 				</div>
 			))}
 		</div>
-	)
+	);
 }

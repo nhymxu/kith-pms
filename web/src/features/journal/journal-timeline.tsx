@@ -1,25 +1,25 @@
 // Journal timeline: groups entries by month/year, shows date dot, time, title, preview, people chips
-import { Link } from "@tanstack/react-router"
-import { getAvatarUrl } from "#/endpoints/people"
-import type { ActivityPerson, JournalActivity } from "#/schemas/journal"
+import { Link } from "@tanstack/react-router";
+import { getAvatarUrl } from "#/endpoints/people";
+import type { ActivityPerson, JournalActivity } from "#/schemas/journal";
 
 interface JournalTimelineProps {
-	data: JournalActivity[]
+	data: JournalActivity[];
 }
 
 function formatMonthYear(dateStr: string): string {
-	const d = new Date(dateStr)
-	return d.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+	const d = new Date(dateStr);
+	return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
 function formatDay(dateStr: string): string {
-	const d = new Date(dateStr)
-	return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })
+	const d = new Date(dateStr);
+	return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
 }
 
 function PersonChip({ p }: { p: ActivityPerson }) {
-	const hasAvatar = Boolean(p.avatar_path)
-	const display = p.nickname ? p.nickname : p.name
+	const hasAvatar = Boolean(p.avatar_path);
+	const display = p.nickname ? p.nickname : p.name;
 	return (
 		<Link
 			to="/people/$personId"
@@ -28,33 +28,43 @@ function PersonChip({ p }: { p: ActivityPerson }) {
 		>
 			<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
 				{hasAvatar ? (
-					<img src={getAvatarUrl(p.person_id)} alt={p.name} className="size-full object-cover" />
+					<img
+						src={getAvatarUrl(p.person_id)}
+						alt={p.name}
+						className="size-full object-cover"
+					/>
 				) : (
 					p.name.charAt(0).toUpperCase()
 				)}
 			</span>
 			<span className="text-[11px] text-zinc-700 leading-none">{display}</span>
 		</Link>
-	)
+	);
 }
 
-function groupByMonth(entries: JournalActivity[]): { label: string; items: JournalActivity[] }[] {
-	const map = new Map<string, JournalActivity[]>()
+function groupByMonth(
+	entries: JournalActivity[],
+): { label: string; items: JournalActivity[] }[] {
+	const map = new Map<string, JournalActivity[]>();
 	for (const entry of entries) {
-		const key = formatMonthYear(entry.occurred_at_date)
-		const group = map.get(key)
-		if (group) group.push(entry)
-		else map.set(key, [entry])
+		const key = formatMonthYear(entry.occurred_at_date);
+		const group = map.get(key);
+		if (group) group.push(entry);
+		else map.set(key, [entry]);
 	}
-	return Array.from(map.entries()).map(([label, items]) => ({ label, items }))
+	return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
 }
 
 export function JournalTimeline({ data }: JournalTimelineProps) {
 	if (!data.length) {
-		return <p className="text-sm text-foreground/50 py-8 text-center">No journal entries yet.</p>
+		return (
+			<p className="text-sm text-foreground/50 py-8 text-center">
+				No journal entries yet.
+			</p>
+		);
 	}
 
-	const groups = groupByMonth(data)
+	const groups = groupByMonth(data);
 
 	return (
 		<div className="space-y-8">
@@ -65,7 +75,10 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 					</h2>
 					<div className="relative">
 						{/* vertical line */}
-						<div className="absolute left-[7px] top-2 bottom-2 w-px bg-zinc-200" aria-hidden />
+						<div
+							className="absolute left-[7px] top-2 bottom-2 w-px bg-zinc-200"
+							aria-hidden
+						/>
 						<ul className="space-y-5">
 							{group.items.map((entry) => (
 								<li key={entry.id} className="flex gap-4 pl-6 relative">
@@ -76,7 +89,9 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 											<span className="font-mono text-[11px] text-zinc-400 shrink-0">
 												{formatDay(entry.occurred_at_date)}
 												{entry.occurred_at_time && (
-													<span className="ml-1 text-zinc-300">· {entry.occurred_at_time}</span>
+													<span className="ml-1 text-zinc-300">
+														· {entry.occurred_at_time}
+													</span>
 												)}
 											</span>
 										</div>
@@ -107,5 +122,5 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 				</div>
 			))}
 		</div>
-	)
+	);
 }

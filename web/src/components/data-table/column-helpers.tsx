@@ -1,11 +1,11 @@
-import type { Column, ColumnDef } from "@tanstack/react-table"
-import type { ReactNode } from "react"
+import type { Column, ColumnDef } from "@tanstack/react-table";
+import type { ReactNode } from "react";
 
 // Creates a sortable header cell — pass to `header` in your ColumnDef.
 export function sortableHeader<T>(label: string) {
 	return ({ column }: { column: Column<T, unknown> }) => {
-		const sorted = column.getIsSorted()
-		const arrow = sorted === "asc" ? " ↑" : sorted === "desc" ? " ↓" : ""
+		const sorted = column.getIsSorted();
+		const arrow = sorted === "asc" ? " ↑" : sorted === "desc" ? " ↓" : "";
 		return (
 			<button
 				type="button"
@@ -15,13 +15,15 @@ export function sortableHeader<T>(label: string) {
 				{label}
 				<span className="text-indigo-600">{arrow}</span>
 			</button>
-		)
-	}
+		);
+	};
 }
 
 // Wraps a render fn into a ColumnDef `cell` that receives the row value.
-export function valueCell<T, V>(render: (value: V, row: T) => ReactNode): ColumnDef<T>["cell"] {
-	return ({ getValue, row }) => render(getValue() as V, row.original)
+export function valueCell<T, V>(
+	render: (value: V, row: T) => ReactNode,
+): ColumnDef<T>["cell"] {
+	return ({ getValue, row }) => render(getValue() as V, row.original);
 }
 
 // A simple text column definition helper.
@@ -36,5 +38,5 @@ export function textColumn<T>(
 		header: sortableHeader<T>(label),
 		enableSorting: true,
 		...opts,
-	}
+	};
 }

@@ -1,32 +1,43 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { listReminders } from "#/endpoints/reminders"
-import { keys } from "#/query-keys"
-import { RemindersTable } from "#/features/reminders/reminders-table"
-import { Button } from "#/components/ui/button"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "#/components/ui/tabs"
-import type { ReminderStatus } from "#/endpoints/reminders"
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "#/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import type { ReminderStatus } from "#/endpoints/reminders";
+import { listReminders } from "#/endpoints/reminders";
+import { RemindersTable } from "#/features/reminders/reminders-table";
+import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/reminders/")({
 	component: RemindersPage,
-})
+});
 
 function RemindersPage() {
-	const [tab, setTab] = useState<ReminderStatus>("upcoming")
-	const qc = useQueryClient()
+	const [tab, setTab] = useState<ReminderStatus>("upcoming");
+	const qc = useQueryClient();
 
 	const { data, isPending, isError } = useQuery({
-		queryKey: [...keys.reminders.list({ completed: tab === "all" ? undefined : tab === "upcoming" ? false : undefined }), tab],
+		queryKey: [
+			...keys.reminders.list({
+				completed:
+					tab === "all" ? undefined : tab === "upcoming" ? false : undefined,
+			}),
+			tab,
+		],
 		queryFn: () => listReminders({ status: tab }),
-	})
+	});
 
-	if (isError) return <p className="text-[13px] text-red-600">Failed to load reminders.</p>
+	if (isError)
+		return (
+			<p className="text-[13px] text-red-600">Failed to load reminders.</p>
+		);
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Reminders</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Reminders
+				</h1>
 				<Button asChild>
 					<Link to="/reminders/new">New Reminder</Link>
 				</Button>
@@ -45,11 +56,13 @@ function RemindersPage() {
 					) : (
 						<RemindersTable
 							data={data ?? []}
-							onCompleted={() => qc.invalidateQueries({ queryKey: keys.reminders.all })}
+							onCompleted={() =>
+								qc.invalidateQueries({ queryKey: keys.reminders.all })
+							}
 						/>
 					)}
 				</TabsContent>
 			</Tabs>
 		</div>
-	)
+	);
 }

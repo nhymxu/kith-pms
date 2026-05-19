@@ -1,22 +1,40 @@
-import * as TabsPrimitive from "@radix-ui/react-tabs"
-import * as React from "react"
-import { cn } from "#/lib/utils"
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import type * as React from "react";
+import { cn } from "#/lib/utils";
 
-function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
-	return <TabsPrimitive.Root data-slot="tabs" className={cn("w-full", className)} {...props} />
+function Tabs({
+	className,
+	...props
+}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+	return (
+		<TabsPrimitive.Root
+			data-slot="tabs"
+			className={cn("w-full", className)}
+			{...props}
+		/>
+	);
 }
 
-function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
+function TabsList({
+	className,
+	...props
+}: React.ComponentProps<typeof TabsPrimitive.List>) {
 	return (
 		<TabsPrimitive.List
 			data-slot="tabs-list"
-			className={cn("flex items-center border-b border-zinc-200 gap-0", className)}
+			className={cn(
+				"flex items-center border-b border-zinc-200 gap-0",
+				className,
+			)}
 			{...props}
 		/>
-	)
+	);
 }
 
-function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({
+	className,
+	...props
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
 	return (
 		<TabsPrimitive.Trigger
 			data-slot="tabs-trigger"
@@ -26,17 +44,23 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
 			)}
 			{...props}
 		/>
-	)
+	);
 }
 
-function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+function TabsContent({
+	className,
+	...props
+}: React.ComponentProps<typeof TabsPrimitive.Content>) {
 	return (
 		<TabsPrimitive.Content
 			data-slot="tabs-content"
-			className={cn("mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600", className)}
+			className={cn(
+				"mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600",
+				className,
+			)}
 			{...props}
 		/>
-	)
+	);
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsContent, TabsList, TabsTrigger };

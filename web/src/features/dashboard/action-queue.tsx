@@ -65,13 +65,17 @@ export function ActionQueue({
 						>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-[13px] text-zinc-900">{action.label}</p>
+									<p className="truncate text-[13px] text-zinc-900">
+										{action.label}
+									</p>
 									<p className="text-[11px] text-zinc-500 mt-0.5">
 										{action.personName ? `${action.personName} · ` : ""}
 										{action.detail}
 									</p>
 								</div>
-								<span className={`font-mono text-[10px] uppercase shrink-0 ${statusClass(action.type)}`}>
+								<span
+									className={`font-mono text-[10px] uppercase shrink-0 ${statusClass(action.type)}`}
+								>
 									{itemLabel(action.type)}
 								</span>
 							</div>
@@ -83,7 +87,9 @@ export function ActionQueue({
 							className="w-full py-2 text-[11px] text-zinc-600 hover:bg-zinc-50 border-t border-zinc-200 -mx-4 px-4 mt-1 transition-colors"
 							onClick={() => setExpanded((v) => !v)}
 						>
-							{expanded ? "Show less" : `Show ${filteredActions.length - 8} more`}
+							{expanded
+								? "Show less"
+								: `Show ${filteredActions.length - 8} more`}
 						</button>
 					) : null}
 				</div>

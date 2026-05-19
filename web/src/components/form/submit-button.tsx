@@ -1,11 +1,11 @@
-import { Loader2 } from "lucide-react"
-import { Button } from "#/components/ui/button"
-import { cn } from "#/lib/utils"
-import type { ComponentProps } from "react"
+import { Loader2 } from "lucide-react";
+import type { ComponentProps } from "react";
+import { Button } from "#/components/ui/button";
+import { cn } from "#/lib/utils";
 
 interface SubmitButtonProps extends ComponentProps<typeof Button> {
-	isPending?: boolean
-	pendingLabel?: string
+	isPending?: boolean;
+	pendingLabel?: string;
 }
 
 export function SubmitButton({
@@ -26,5 +26,5 @@ export function SubmitButton({
 			{isPending && <Loader2 className="size-4 animate-spin" />}
 			{isPending ? pendingLabel : children}
 		</Button>
-	)
+	);
 }

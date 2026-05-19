@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const workEntrySchema = z.object({
 	id: z.number(),
@@ -11,7 +11,7 @@ export const workEntrySchema = z.object({
 	description: z.string().optional().default(""),
 	position: z.number().optional().default(0),
 	created_at: z.string(),
-})
+});
 
-export const workEntryListSchema = z.array(workEntrySchema)
-export type WorkEntry = z.infer<typeof workEntrySchema>
+export const workEntryListSchema = z.array(workEntrySchema);
+export type WorkEntry = z.infer<typeof workEntrySchema>;

@@ -1,14 +1,14 @@
 import {
+	type ColumnDef,
 	flexRender,
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	useReactTable,
-	type ColumnDef,
 	type SortingState,
-} from "@tanstack/react-table"
-import { useState, type ReactNode } from "react"
+	useReactTable,
+} from "@tanstack/react-table";
+import { type ReactNode, useState } from "react";
 import {
 	Table,
 	TableBody,
@@ -16,17 +16,17 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "#/components/ui/table"
-import { DataTableToolbar } from "./data-table-toolbar"
-import { DataTablePagination } from "./data-table-pagination"
+} from "#/components/ui/table";
+import { DataTablePagination } from "./data-table-pagination";
+import { DataTableToolbar } from "./data-table-toolbar";
 
 interface DataTableProps<T> {
-	columns: ColumnDef<T>[]
-	data: T[]
-	pageSize?: number
-	emptyState?: ReactNode
-	toolbarActions?: ReactNode
-	rowClassName?: (row: { original: T }) => string
+	columns: ColumnDef<T>[];
+	data: T[];
+	pageSize?: number;
+	emptyState?: ReactNode;
+	toolbarActions?: ReactNode;
+	rowClassName?: (row: { original: T }) => string;
 }
 
 export function DataTable<T>({
@@ -37,8 +37,8 @@ export function DataTable<T>({
 	toolbarActions,
 	rowClassName,
 }: DataTableProps<T>) {
-	const [sorting, setSorting] = useState<SortingState>([])
-	const [globalFilter, setGlobalFilter] = useState("")
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
 
 	const table = useReactTable({
 		data,
@@ -51,9 +51,9 @@ export function DataTable<T>({
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		initialState: { pagination: { pageSize } },
-	})
+	});
 
-	const rows = table.getRowModel().rows
+	const rows = table.getRowModel().rows;
 
 	return (
 		<div className="border border-zinc-200 rounded-md bg-white">
@@ -75,7 +75,10 @@ export function DataTable<T>({
 								<TableHead key={header.id} style={{ width: header.getSize() }}>
 									{header.isPlaceholder
 										? null
-										: flexRender(header.column.columnDef.header, header.getContext())}
+										: flexRender(
+												header.column.columnDef.header,
+												header.getContext(),
+											)}
 								</TableHead>
 							))}
 						</TableRow>
@@ -85,7 +88,11 @@ export function DataTable<T>({
 				<TableBody>
 					{rows.length > 0 ? (
 						rows.map((row) => (
-							<TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined} className={rowClassName?.(row) ?? ""}>
+							<TableRow
+								key={row.id}
+								data-state={row.getIsSelected() ? "selected" : undefined}
+								className={rowClassName?.(row) ?? ""}
+							>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell key={cell.id}>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -97,7 +104,9 @@ export function DataTable<T>({
 						<TableRow>
 							<TableCell colSpan={columns.length} className="h-32 text-center">
 								{emptyState ?? (
-									<span className="text-sm text-foreground/50">No results found.</span>
+									<span className="text-sm text-foreground/50">
+										No results found.
+									</span>
 								)}
 							</TableCell>
 						</TableRow>
@@ -107,5 +116,5 @@ export function DataTable<T>({
 
 			<DataTablePagination table={table} />
 		</div>
-	)
+	);
 }

@@ -65,7 +65,10 @@ export function RelationshipPulseChart({
 							/>
 							<Tooltip
 								content={<PulseTooltip />}
-								cursor={{ stroke: CHART_COLORS.primary, strokeDasharray: "4 4" }}
+								cursor={{
+									stroke: CHART_COLORS.primary,
+									strokeDasharray: "4 4",
+								}}
 							/>
 							<Line
 								type="monotone"
@@ -74,7 +77,12 @@ export function RelationshipPulseChart({
 								stroke={CHART_COLORS.primary}
 								strokeWidth={2}
 								dot={false}
-								activeDot={{ r: 4, fill: CHART_COLORS.primary, stroke: '#fff', strokeWidth: 2 }}
+								activeDot={{
+									r: 4,
+									fill: CHART_COLORS.primary,
+									stroke: "#fff",
+									strokeWidth: 2,
+								}}
 							/>
 							<Line
 								type="monotone"
@@ -83,7 +91,12 @@ export function RelationshipPulseChart({
 								stroke={CHART_COLORS.secondary}
 								strokeWidth={1.5}
 								dot={false}
-								activeDot={{ r: 3, fill: CHART_COLORS.secondary, stroke: '#fff', strokeWidth: 2 }}
+								activeDot={{
+									r: 3,
+									fill: CHART_COLORS.secondary,
+									stroke: "#fff",
+									strokeWidth: 2,
+								}}
 							/>
 						</LineChart>
 					</ResponsiveContainer>

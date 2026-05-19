@@ -44,10 +44,16 @@ export function RecentRelationshipActivity({
 						>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-[13px] text-zinc-900">{activity.title}</p>
-									<p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{activity.detail}</p>
+									<p className="truncate text-[13px] text-zinc-900">
+										{activity.title}
+									</p>
+									<p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">
+										{activity.detail}
+									</p>
 								</div>
-								<span className="shrink-0 font-mono text-[10px] text-zinc-500">{activity.date}</span>
+								<span className="shrink-0 font-mono text-[10px] text-zinc-500">
+									{activity.date}
+								</span>
 							</div>
 							{activity.people.length ? (
 								<div className="mt-1.5 flex flex-wrap gap-1">

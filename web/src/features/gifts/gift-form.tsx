@@ -122,12 +122,15 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftF
 				<Label>Debt type</Label>
 				<form.Field name="debt_type">
 					{(field) => (
-						<Select value={field.state.value ?? ""} onValueChange={(v) => field.handleChange(v as GiftRequest["debt_type"])}>
+						<Select
+								value={field.state.value === "" || field.state.value == null ? "none" : field.state.value}
+								onValueChange={(v) => field.handleChange((v === "none" ? "" : v) as GiftRequest["debt_type"])}
+							>
 							<SelectTrigger>
 								<SelectValue placeholder="None" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="">None</SelectItem>
+								<SelectItem value="none">None</SelectItem>
 								<SelectItem value="i_owe">I owe</SelectItem>
 								<SelectItem value="they_owe">They owe</SelectItem>
 							</SelectContent>

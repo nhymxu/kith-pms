@@ -2,11 +2,10 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
-import { listLabels, createLabel, updateLabel, deleteLabel } from "#/endpoints/labels"
-import { labelRequestSchema, type Label, type LabelRequest } from "#/schemas/label"
+import { listRelationshipTypes, createRelationshipType, updateRelationshipType, deleteRelationshipType } from "#/endpoints/relationship-types"
+import { relationshipTypeRequestSchema, type RelationshipType, type RelationshipTypeRequest } from "#/schemas/relationship-type"
 import { keys } from "#/query-keys"
 import { Button } from "#/components/ui/button"
-import { Badge } from "#/components/ui/badge"
 import { FormField } from "#/components/form/form-field"
 import { SubmitButton } from "#/components/form/submit-button"
 import { Alert, AlertDescription } from "#/components/ui/alert"
@@ -15,26 +14,26 @@ import {
 } from "#/components/ui/dialog"
 import { Pencil, Trash2, Plus } from "lucide-react"
 
-export const Route = createFileRoute("/_authed/settings/labels")({
-	component: LabelsPage,
+export const Route = createFileRoute("/_authed/settings/_layout/relationship-types")({
+	component: RelationshipTypesPage,
 })
 
-// ── Label form (shared by create and edit dialogs) ─────────────────────────
-
-interface LabelFormDialogProps {
-	initial?: Label
+interface RelTypeFormDialogProps {
+	initial?: RelationshipType
 	onClose: () => void
 }
 
-function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
+function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 	const qc = useQueryClient()
 	const [apiError, setApiError] = useState<string | null>(null)
 
 	const mutation = useMutation({
-		mutationFn: (body: LabelRequest) =>
-			initial ? updateLabel(initial.id, body) : createLabel(body).then(() => undefined),
+		mutationFn: (body: RelationshipTypeRequest) =>
+			initial
+				? updateRelationshipType(initial.id, body)
+				: createRelationshipType(body).then(() => undefined),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.labels.all })
+			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all })
 			onClose()
 		},
 		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
@@ -43,32 +42,32 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 	const form = useForm({
 		defaultValues: {
 			name: initial?.name ?? "",
-			color: initial?.color ?? "#a0c4ff",
-		} satisfies LabelRequest,
+			reverse_name: initial?.reverse_name ?? "",
+		} satisfies RelationshipTypeRequest,
 		validators: {
 			onSubmit: ({ value }) => {
-				const r = labelRequestSchema.safeParse(value)
+				const r = relationshipTypeRequestSchema.safeParse(value)
 				return r.success ? undefined : r.error.issues.map((i) => i.message).join(", ")
 			},
 		},
-		onSubmit: async ({ value }) => mutation.mutateAsync(value as LabelRequest),
+		onSubmit: async ({ value }) => mutation.mutateAsync(value as RelationshipTypeRequest),
 	})
 
 	return (
 		<form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-4">
 			{apiError && <Alert variant="destructive"><AlertDescription>{apiError}</AlertDescription></Alert>}
 			<form.Field name="name">
-				{(f) => <FormField field={f} label="Name *" placeholder="e.g. Family" />}
+				{(f) => <FormField field={f} label="Name *" placeholder="e.g. Friend" />}
 			</form.Field>
-			<form.Field name="color">
-				{(f) => <FormField field={f} label="Color (hex)" placeholder="#a0c4ff" type="color" />}
+			<form.Field name="reverse_name">
+				{(f) => <FormField field={f} label="Reverse name (optional)" placeholder="e.g. Friend of" />}
 			</form.Field>
 			<DialogFooter>
 				<Button type="button" variant="neutral" onClick={onClose}>Cancel</Button>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
 						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-							{initial ? "Save changes" : "Create label"}
+							{initial ? "Save changes" : "Create type"}
 						</SubmitButton>
 					)}
 				</form.Subscribe>
@@ -77,23 +76,21 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 	)
 }
 
-// ── Delete confirm dialog ──────────────────────────────────────────────────
-
-function DeleteLabelDialog({ label, onClose }: { label: Label; onClose: () => void }) {
+function DeleteRelTypeDialog({ relType, onClose }: { relType: RelationshipType; onClose: () => void }) {
 	const qc = useQueryClient()
 	const mutation = useMutation({
-		mutationFn: () => deleteLabel(label.id),
+		mutationFn: () => deleteRelationshipType(relType.id),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.labels.all })
+			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all })
 			onClose()
 		},
 	})
 	return (
 		<>
 			<DialogHeader>
-				<DialogTitle>Delete label?</DialogTitle>
+				<DialogTitle>Delete relationship type?</DialogTitle>
 				<DialogDescription>
-					Permanently delete "{label.name}"? People with this label will be unaffected (label detached).
+					Permanently delete "{relType.name}"? Existing relationships of this type will be affected.
 				</DialogDescription>
 			</DialogHeader>
 			<DialogFooter>
@@ -106,42 +103,42 @@ function DeleteLabelDialog({ label, onClose }: { label: Label; onClose: () => vo
 	)
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────
+type DialogMode = { kind: "create" } | { kind: "edit"; relType: RelationshipType } | { kind: "delete"; relType: RelationshipType } | null
 
-type DialogMode = { kind: "create" } | { kind: "edit"; label: Label } | { kind: "delete"; label: Label } | null
-
-function LabelsPage() {
+function RelationshipTypesPage() {
 	const [dialog, setDialog] = useState<DialogMode>(null)
-	const { data, isPending } = useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
+	const { data, isPending } = useQuery({ queryKey: keys.relationshipTypes.list(), queryFn: listRelationshipTypes })
 
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Labels</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Relationship Types</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Label
+					<Plus className="size-3 mr-1" /> New Type
 				</Button>
 			</div>
 
 			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
 
 			{data && data.length === 0 && (
-				<p className="text-[13px] text-zinc-500">No labels yet. Create one to start categorising people.</p>
+				<p className="text-[13px] text-zinc-500">No relationship types yet.</p>
 			)}
 
 			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
-				{data?.map((label) => (
-					<li key={label.id} className="flex items-center gap-3 px-4 py-3">
-						<span className="size-3 rounded-full shrink-0" style={{ backgroundColor: label.color }} />
-						<span className="text-[13px] text-zinc-900">{label.name}</span>
-						{label.count !== undefined && label.count > 0 && (
-							<span className="font-mono text-[11px] text-zinc-400">{label.count} people</span>
+				{data?.map((rt) => (
+					<li key={rt.id} className="flex items-center gap-3 px-4 py-3 text-[13px]">
+						<span className="text-zinc-900 font-medium">{rt.name}</span>
+						{rt.reverse_name && (
+							<span className="text-zinc-400 font-mono text-[11px]">↔ {rt.reverse_name}</span>
+						)}
+						{(rt.usage_count ?? 0) > 0 && (
+							<span className="font-mono text-[11px] text-zinc-400">{rt.usage_count} uses</span>
 						)}
 						<div className="ml-auto flex gap-1">
-							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "edit", label })}>
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "edit", relType: rt })}>
 								<Pencil className="size-3.5" />
 							</Button>
-							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "delete", label })}>
+							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "delete", relType: rt })}>
 								<Trash2 className="size-3.5" />
 							</Button>
 						</div>
@@ -149,27 +146,25 @@ function LabelsPage() {
 				))}
 			</ul>
 
-			{/* Create / Edit dialog */}
 			<Dialog
 				open={dialog?.kind === "create" || dialog?.kind === "edit"}
 				onOpenChange={(v) => !v && setDialog(null)}
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>{dialog?.kind === "edit" ? "Edit label" : "New label"}</DialogTitle>
+						<DialogTitle>{dialog?.kind === "edit" ? "Edit relationship type" : "New relationship type"}</DialogTitle>
 					</DialogHeader>
-					<LabelFormDialog
-						initial={dialog?.kind === "edit" ? dialog.label : undefined}
+					<RelTypeFormDialog
+						initial={dialog?.kind === "edit" ? dialog.relType : undefined}
 						onClose={() => setDialog(null)}
 					/>
 				</DialogContent>
 			</Dialog>
 
-			{/* Delete dialog */}
 			<Dialog open={dialog?.kind === "delete"} onOpenChange={(v) => !v && setDialog(null)}>
 				<DialogContent>
 					{dialog?.kind === "delete" && (
-						<DeleteLabelDialog label={dialog.label} onClose={() => setDialog(null)} />
+						<DeleteRelTypeDialog relType={dialog.relType} onClose={() => setDialog(null)} />
 					)}
 				</DialogContent>
 			</Dialog>

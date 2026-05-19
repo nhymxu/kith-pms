@@ -11,7 +11,7 @@ import { Button } from "#/components/ui/button"
 import { Alert, AlertDescription } from "#/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card"
 
-export const Route = createFileRoute("/_authed/settings/security")({
+export const Route = createFileRoute("/_authed/settings/_layout/security")({
 	component: SecurityPage,
 })
 

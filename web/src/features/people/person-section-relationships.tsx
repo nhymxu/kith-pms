@@ -64,7 +64,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		mutationFn: () =>
 			attachRelationship(personId, {
 				relationship_type_id: Number(typeId),
-				to_person_id: otherPersonId!,
+				to_person_id: otherPersonId ?? 0,
 				notes,
 			}),
 		onSuccess: () => {

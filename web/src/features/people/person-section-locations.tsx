@@ -161,7 +161,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 				{
 					id: 0,
 					person_id: person.id,
-					type: updated.type!,
+					type: updated.type ?? "",
 					address: updated.address ?? "",
 					city: updated.city ?? "",
 					country: updated.country ?? "",

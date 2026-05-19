@@ -68,8 +68,14 @@ function JournalPage() {
 			{/* Date range filter */}
 			<div className="flex flex-wrap gap-3 items-end">
 				<div className="space-y-1">
-					<label className="text-[11px] font-medium text-zinc-500">From</label>
+					<label
+						htmlFor="journal-from-date"
+						className="text-[11px] font-medium text-zinc-500"
+					>
+						From
+					</label>
 					<input
+						id="journal-from-date"
 						type="date"
 						value={search.from_date ?? ""}
 						onChange={(e) =>
@@ -86,8 +92,14 @@ function JournalPage() {
 					/>
 				</div>
 				<div className="space-y-1">
-					<label className="text-[11px] font-medium text-zinc-500">To</label>
+					<label
+						htmlFor="journal-to-date"
+						className="text-[11px] font-medium text-zinc-500"
+					>
+						To
+					</label>
 					<input
+						id="journal-to-date"
 						type="date"
 						value={search.to_date ?? ""}
 						onChange={(e) =>

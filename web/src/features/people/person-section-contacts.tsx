@@ -132,8 +132,8 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 				{
 					id: 0,
 					person_id: person.id,
-					type: updated.type!,
-					value: updated.value!,
+					type: updated.type ?? "",
+					value: updated.value ?? "",
 					label: updated.label ?? "",
 					position: person.contacts.length,
 				},

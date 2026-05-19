@@ -15,7 +15,7 @@ function NewReminderPage() {
 
 	const mutation = useMutation({
 		mutationFn: (body: ReminderRequest) =>
-			createReminder(body).then(() => undefined as void),
+			createReminder(body).then(() => undefined as undefined),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.reminders.all });
 			navigate({ to: "/reminders" });

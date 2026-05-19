@@ -39,8 +39,14 @@ function AuditPage() {
 
 			<div className="flex flex-wrap gap-3 items-end">
 				<div className="space-y-1">
-					<label className="text-[11px] font-medium text-zinc-500">From</label>
+					<label
+						htmlFor="from-date"
+						className="text-[11px] font-medium text-zinc-500"
+					>
+						From
+					</label>
 					<input
+						id="from-date"
 						type="date"
 						value={search.from_date ?? ""}
 						onChange={(e) =>
@@ -57,8 +63,14 @@ function AuditPage() {
 					/>
 				</div>
 				<div className="space-y-1">
-					<label className="text-[11px] font-medium text-zinc-500">To</label>
+					<label
+						htmlFor="to-date"
+						className="text-[11px] font-medium text-zinc-500"
+					>
+						To
+					</label>
 					<input
+						id="to-date"
 						type="date"
 						value={search.to_date ?? ""}
 						onChange={(e) =>

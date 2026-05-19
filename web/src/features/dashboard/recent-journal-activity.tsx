@@ -56,6 +56,7 @@ export function RecentJournalActivity() {
 				{isLoading &&
 					Array.from({ length: 3 }).map((_, i) => (
 						<div
+							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no reordering
 							key={i}
 							className="h-12 bg-zinc-100 animate-pulse rounded my-2"
 						/>

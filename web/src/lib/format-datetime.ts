@@ -61,7 +61,6 @@ export function formatDate(dateStr: string | null | undefined): string {
 			return `${m}/${d}/${y}`;
 		case "DD/MM/YYYY":
 			return `${d}/${m}/${y}`;
-		case "YYYY-MM-DD":
 		default:
 			return `${y}-${m}-${d}`;
 	}

@@ -16,6 +16,7 @@ var configDefaults = map[string]any{
 
 	// File Storage
 	"AVATAR_STORAGE_PATH": "data/avatars",
+	"GIFT_STORAGE_PATH":   "data/gifts",
 
 	// Auth — SESSION_SECRET must be set in production via environment (≥32 bytes)
 	"SESSION_SECRET":    "",

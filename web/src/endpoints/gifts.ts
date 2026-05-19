@@ -1,9 +1,9 @@
 // Gifts endpoints: list, get, create, update, delete
 import { apiFetch } from "../lib/api-client"
 import {
-	giftSchema,
+	giftWithPersonSchema,
 	giftListSchema,
-	type Gift,
+	type GiftWithPerson,
 	type GiftList,
 	type GiftRequest,
 } from "../schemas/gift"
@@ -27,9 +27,9 @@ export async function listGifts(params: GiftListParams = {}): Promise<GiftList> 
 	return giftListSchema.parse(res.data)
 }
 
-export async function getGift(id: number): Promise<Gift> {
+export async function getGift(id: number): Promise<GiftWithPerson> {
 	const res = await apiFetch<Envelope<unknown>>(`/v1/gifts/${id}`)
-	return giftSchema.parse(res.data)
+	return giftWithPersonSchema.parse(res.data)
 }
 
 export async function createGift(body: GiftRequest): Promise<number> {
@@ -49,4 +49,14 @@ export async function updateGift(id: number, body: GiftRequest): Promise<void> {
 
 export async function deleteGift(id: number): Promise<void> {
 	await apiFetch(`/v1/gifts/${id}`, { method: "DELETE" })
+}
+
+export async function uploadGiftImage(id: number, file: File): Promise<void> {
+	const form = new FormData()
+	form.append("image", file)
+	await apiFetch(`/v1/gifts/${id}/image`, { method: "POST", body: form })
+}
+
+export async function deleteGiftImage(id: number): Promise<void> {
+	await apiFetch(`/v1/gifts/${id}/image`, { method: "DELETE" })
 }

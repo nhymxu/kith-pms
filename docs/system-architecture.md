@@ -91,16 +91,17 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 
 ### Supported Environment Variables
 
-| Variable | Type | Default | Purpose |
-|----------|------|---------|---------|
-| `DB_PATH` | string | `data/kith.db` | SQLite database file path |
-| `DB_AUTO_MIGRATE` | bool | `true` | Apply pending migrations on server startup |
-| `SESSION_SECRET` | string | *(required)* | Cookie signing secret (min 32 bytes) |
-| `SESSION_LIFETIME` | duration | `720h` (30 days) | Session cookie expiry duration |
-| `BEHIND_TLS` | bool | `false` | Set `true` when behind TLS proxy (marks cookies Secure) |
-| `DEBUG` | bool | `false` | `true` → text logs + debug level |
-| `SENTRY_DSN` | string | *(empty)* | Sentry DSN; omit to disable error reporting |
-| `AVATAR_STORAGE_PATH` | string | `data/avatars` | Directory for storing avatar files |
+| Variable              | Type     | Default          | Purpose                                                 |
+|-----------------------|----------|------------------|---------------------------------------------------------|
+| `DB_PATH`             | string   | `data/kith.db`   | SQLite database file path                               |
+| `DB_AUTO_MIGRATE`     | bool     | `true`           | Apply pending migrations on server startup              |
+| `SESSION_SECRET`      | string   | *(required)*     | Cookie signing secret (min 32 bytes)                    |
+| `SESSION_LIFETIME`    | duration | `720h` (30 days) | Session cookie expiry duration                          |
+| `BEHIND_TLS`          | bool     | `false`          | Set `true` when behind TLS proxy (marks cookies Secure) |
+| `DEBUG`               | bool     | `false`          | `true` → text logs + debug level                        |
+| `SENTRY_DSN`          | string   | *(empty)*        | Sentry DSN; omit to disable error reporting             |
+| `AVATAR_STORAGE_PATH` | string   | `data/avatars`   | Directory for storing avatar files                      |
+| `GIFT_STORAGE_PATH`   | string   | `data/gifts`     | Directory for storing gift images                       |
 
 ## Logging
 
@@ -251,7 +252,13 @@ export function PersonForm() {
 - `GET /people/:id/relationships` — person's relationships
 - `POST/DELETE /people/:id/relationships` — attach/detach relationships
 
-**Journal**, **Gifts**, **Reminders**, **Dates** — similar CRUD patterns
+**Journal**, **Reminders**, **Dates** — similar CRUD patterns
+
+**Gifts** (CRUD + image storage):
+- `GET /gifts`, `POST /gifts` (list + create)
+- `GET/PUT/DELETE /gifts/:id` (detail, update, delete)
+- `POST/GET/DELETE /gifts/:id/image` (upload, retrieve, delete image; stored in `GIFT_STORAGE_PATH`)
+- `GET /people/:id/gifts` — person's gifts
 
 **Labels** — CRUD
 
@@ -328,6 +335,33 @@ The file storage layer handles avatar uploads with security and durability guara
 - On upload: saves file first, then updates DB in transaction; rolls back file on DB error
 - On delete: clears DB metadata, then removes file (best-effort cleanup)
 - On replace: saves new file, updates DB, then deletes old file (old file survives DB errors)
+
+### Gift Image Storage Architecture
+
+**Location**: `internal/api/handlers_gifts.go` (image endpoints)
+
+Gift images are stored separately from avatars with similar security patterns:
+
+**Storage Configuration**:
+- **Base directory**: Configured via `GIFT_STORAGE_PATH` (default: `data/gifts`)
+- **File naming**: Gift ID as filename (e.g., `123.jpg`); MIME type stored in database
+
+**Image Endpoints**:
+- `POST /v1/gifts/:id/image` — upload image (multipart form, max 5MB)
+- `GET /v1/gifts/:id/image` — retrieve image (served with 24-hour cache header)
+- `DELETE /v1/gifts/:id/image` — remove image and clear metadata
+
+**Security Controls**:
+- **MIME validation**: Magic number detection via `http.DetectContentType`
+- **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+- **Size limit**: 5MB per file
+- **Path traversal prevention**: Validates clean path stays within `GIFT_STORAGE_PATH`
+
+**Integration with Gifts Service**:
+- Service stores image metadata in database: `image_path`, `image_mime_type`
+- On upload: validates file, stores in `GIFT_STORAGE_PATH`, updates DB metadata
+- On delete: clears DB metadata, removes file from disk
+- On retrieve: serves from disk with cache headers
 
 ## Database Layer
 

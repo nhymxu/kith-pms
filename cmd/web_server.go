@@ -172,7 +172,16 @@ Can scale later.`,
 			// Wire gifts service.
 			giftsSvc := gifts.NewService(db)
 			giftsSvc.Audit = auditSvc
-			giftsSvc.FileSvc = fileSvc
+
+			giftStoragePath := config.ENV.GiftStoragePath
+			if giftStoragePath == "" {
+				giftStoragePath = "data/gifts"
+			}
+			if err := os.MkdirAll(giftStoragePath, 0o700); err != nil {
+				return fmt.Errorf("web-server: create gift dir: %w", err)
+			}
+			giftFileSvc := files.NewLocalFileService(giftStoragePath)
+			giftsSvc.FileSvc = giftFileSvc
 
 			// Wire relationships service.
 			relsSvc := relationships.NewService(db)
@@ -194,6 +203,7 @@ Can scale later.`,
 				RelationshipsService: relsSvc,
 				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
+				GiftStoragePath:      giftStoragePath,
 				APIToken:             apiToken,
 				SessionLifetime:      lifetime,
 				BehindTLS:            config.ENV.BehindTLS,

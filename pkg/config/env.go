@@ -30,6 +30,7 @@ type EnvConfigMap struct {
 
 	// File Storage
 	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
+	GiftStoragePath   string `koanf:"GIFT_STORAGE_PATH"`
 
 	// Auth
 	SessionSecret   string        `koanf:"SESSION_SECRET" copier:"-"`

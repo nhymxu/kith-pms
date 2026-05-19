@@ -15,7 +15,7 @@ import {
 	DialogFooter,
 } from "#/components/ui/dialog"
 
-export const Route = createFileRoute("/_authed/gifts/$giftId")({
+export const Route = createFileRoute("/_authed/gifts/$giftId/")({
 	component: GiftDetailPage,
 })
 
@@ -42,6 +42,14 @@ function GiftDetailPage() {
 	if (isPending) return <p className="text-sm font-base text-foreground/60">Loading…</p>
 	if (isError || !data) return <p className="text-sm font-base text-destructive">Gift not found.</p>
 
+	const debtLabel =
+		data.debt_type === "i_owe" ? "I owe" : data.debt_type === "they_owe" ? "They owe" : "—"
+
+	const amountLabel =
+		data.amount_cents != null
+			? `${data.currency || "USD"} ${(data.amount_cents / 100).toFixed(2)}`
+			: "—"
+
 	return (
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
@@ -60,31 +68,50 @@ function GiftDetailPage() {
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm font-base">
 					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Person</span>
+						<Link
+							to="/people/$personId"
+							params={{ personId: String(data.person_id) }}
+							className="text-indigo-600 hover:underline"
+						>
+							{data.person_name}
+						</Link>
+					</div>
+					<div className="flex gap-2">
 						<span className="text-foreground/60 w-28 shrink-0">Direction</span>
 						<Badge variant="neutral">{data.direction}</Badge>
 					</div>
-					{data.debt_type && (
-						<div className="flex gap-2">
-							<span className="text-foreground/60 w-28 shrink-0">Debt</span>
-							<span>{data.debt_type === "i_owe" ? "I owe" : "They owe"}</span>
-						</div>
-					)}
-					{data.date && (
-						<div className="flex gap-2">
-							<span className="text-foreground/60 w-28 shrink-0">Date</span>
-							<span>{new Date(data.date).toLocaleDateString()}</span>
-						</div>
-					)}
-					{data.notes && (
-						<div className="flex gap-2">
-							<span className="text-foreground/60 w-28 shrink-0">Notes</span>
-							<span className="whitespace-pre-wrap">{data.notes}</span>
-						</div>
-					)}
+					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Debt</span>
+						<span>{debtLabel}</span>
+					</div>
+					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Date</span>
+						<span>{data.date ? new Date(data.date).toLocaleDateString() : "—"}</span>
+					</div>
+					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Amount</span>
+						<span>{amountLabel}</span>
+					</div>
+					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Notes</span>
+						<span className="whitespace-pre-wrap">{data.notes || "—"}</span>
+					</div>
+					<div className="flex gap-2">
+						<span className="text-foreground/60 w-28 shrink-0">Image</span>
+						{data.image_path ? (
+							<img
+								src={`/v1/gifts/${data.id}/image`}
+								alt={data.title}
+								className="mt-1 rounded border border-zinc-200 max-h-64 object-contain"
+							/>
+						) : (
+							<span className="text-zinc-400">No image</span>
+						)}
+					</div>
 				</CardContent>
 			</Card>
 
-			{/* Delete confirm dialog */}
 			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 				<DialogContent>
 					<DialogHeader>

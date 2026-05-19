@@ -51,6 +51,10 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*Gift, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
+func (s *Service) GetByIDWithPerson(ctx context.Context, id int64) (*GiftWithPerson, error) {
+	return s.repo.GetByIDWithPerson(ctx, id)
+}
+
 func (s *Service) List(ctx context.Context, params ListParams) (*GiftList, error) {
 	if params.Page < 1 {
 		params.Page = 1

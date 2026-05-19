@@ -33,6 +33,7 @@ type Deps struct {
 	FileSvc              files.FileService
 	APIToken             string
 	AvatarBasePath       string
+	GiftStoragePath      string
 	SessionLifetime      time.Duration
 	BehindTLS            bool
 	// LoginLimiter is the rate-limiter middleware shared with the templ login route.
@@ -121,13 +122,16 @@ func mountAudit(g *echo.Group, deps Deps) {
 }
 
 func mountGifts(g *echo.Group, deps Deps) {
-	h := &GiftsAPI{Svc: deps.GiftsService}
+	h := &GiftsAPI{Svc: deps.GiftsService, GiftStoragePath: deps.GiftStoragePath}
 	g.GET("/gifts", h.List)
 	g.POST("/gifts", h.Create)
 	g.GET("/gifts/:id", h.GetByID)
 	g.PUT("/gifts/:id", h.Update)
 	g.DELETE("/gifts/:id", h.Delete)
 	g.GET("/people/:id/gifts", h.ListByPerson)
+	g.POST("/gifts/:id/image", h.UploadImage)
+	g.DELETE("/gifts/:id/image", h.DeleteImage)
+	g.GET("/gifts/:id/image", h.GetImage)
 }
 
 func mountAuth(g *echo.Group, deps Deps) {

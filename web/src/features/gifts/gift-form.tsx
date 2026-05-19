@@ -1,25 +1,31 @@
 // Gift create/edit form — TanStack Form + Zod validation
 import { useForm } from "@tanstack/react-form"
 import { useQuery } from "@tanstack/react-query"
-import { giftRequestSchema, type GiftRequest, type Gift } from "#/schemas/gift"
+import { useState } from "react"
+import { giftRequestSchema, type GiftRequest, type GiftWithPerson } from "#/schemas/gift"
 import { listPeople } from "#/endpoints/people"
 import { keys } from "#/query-keys"
+import { Button } from "#/components/ui/button"
 import { FormField } from "#/components/form/form-field"
 import { SubmitButton } from "#/components/form/submit-button"
 import { Label } from "#/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select"
 import { Textarea } from "#/components/ui/textarea"
 import { Alert, AlertDescription } from "#/components/ui/alert"
-import { useState } from "react"
+import { Input } from "#/components/ui/input"
 
 interface GiftFormProps {
-	initial?: Partial<Gift>
+	initial?: Partial<GiftWithPerson>
 	onSubmit: (values: GiftRequest) => Promise<void>
 	submitLabel?: string
+	onCancel?: () => void
 }
 
-export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftFormProps) {
+export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCancel }: GiftFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null)
+	const [personSearch, setPersonSearch] = useState("")
+	const [amountDisplay, setAmountDisplay] = useState(
+		initial?.amount_cents != null ? (initial.amount_cents / 100).toString() : "",
+	)
 
 	const { data: peopleList } = useQuery({
 		queryKey: keys.people.list({}),
@@ -56,6 +62,10 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftF
 		},
 	})
 
+	const filteredPeople = peopleList?.items.filter((p) =>
+		p.name.toLowerCase().includes(personSearch.toLowerCase()),
+	) ?? []
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -70,27 +80,44 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftF
 				</Alert>
 			)}
 
-			{/* Person selector */}
+			{/* Person search combobox */}
 			<div className="space-y-1.5">
 				<Label>Person</Label>
 				<form.Field name="person_id">
-					{(field) => (
-						<Select
-							value={field.state.value ? String(field.state.value) : ""}
-							onValueChange={(v) => field.handleChange(Number(v))}
-						>
-							<SelectTrigger>
-								<SelectValue placeholder="Select person…" />
-							</SelectTrigger>
-							<SelectContent>
-								{peopleList?.items.map((p) => (
-									<SelectItem key={p.id} value={String(p.id)}>
-										{p.name}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
+					{(field) => {
+						const selected = peopleList?.items.find((p) => p.id === field.state.value)
+						return (
+							<div className="space-y-1">
+								<Input
+									placeholder="Search person…"
+									value={personSearch !== "" ? personSearch : (selected ? selected.name : "")}
+									onChange={(e) => setPersonSearch(e.target.value)}
+									onFocus={() => setPersonSearch("")}
+								/>
+								{personSearch && (
+									<div className="border border-zinc-200 rounded-md bg-white shadow-sm max-h-48 overflow-y-auto">
+										{filteredPeople.length === 0 ? (
+											<p className="px-3 py-2 text-sm text-zinc-400">No results</p>
+										) : (
+											filteredPeople.map((p) => (
+												<button
+													key={p.id}
+													type="button"
+													className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
+													onClick={() => {
+														field.handleChange(p.id)
+														setPersonSearch("")
+													}}
+												>
+													{p.name}
+												</button>
+											))
+										)}
+									</div>
+								)}
+							</div>
+						)
+					}}
 				</form.Field>
 			</div>
 
@@ -98,51 +125,91 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftF
 				{(field) => <FormField field={field} label="Title / Occasion" placeholder="Birthday gift" />}
 			</form.Field>
 
-			{/* Direction */}
+			{/* Direction radio group */}
 			<div className="space-y-1.5">
 				<Label>Direction</Label>
 				<form.Field name="direction">
 					{(field) => (
-						<Select value={field.state.value} onValueChange={(v) => field.handleChange(v as GiftRequest["direction"])}>
-							<SelectTrigger>
-								<SelectValue placeholder="Select direction…" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="given">Given</SelectItem>
-								<SelectItem value="received">Received</SelectItem>
-								<SelectItem value="planned">Planned</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="flex gap-4">
+							{(["given", "received", "planned"] as const).map((v) => (
+								<label key={v} className="flex items-center gap-1.5 cursor-pointer">
+									<input
+										type="radio"
+										name="direction"
+										value={v}
+										checked={field.state.value === v}
+										onChange={() => field.handleChange(v)}
+									/>
+									<span className="capitalize text-sm">{v}</span>
+								</label>
+							))}
+						</div>
 					)}
 				</form.Field>
 			</div>
 
-			{/* Debt type */}
+			{/* Debt type radio group */}
 			<div className="space-y-1.5">
 				<Label>Debt type</Label>
 				<form.Field name="debt_type">
 					{(field) => (
-						<Select
-								value={field.state.value === "" || field.state.value == null ? "none" : field.state.value}
-								onValueChange={(v) => field.handleChange((v === "none" ? "" : v) as GiftRequest["debt_type"])}
-							>
-							<SelectTrigger>
-								<SelectValue placeholder="None" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="none">None</SelectItem>
-								<SelectItem value="i_owe">I owe</SelectItem>
-								<SelectItem value="they_owe">They owe</SelectItem>
-							</SelectContent>
-						</Select>
+						<div className="flex gap-4">
+							{([["", "None"], ["i_owe", "I owe"], ["they_owe", "They owe"]] as const).map(([v, label]) => (
+								<label key={v} className="flex items-center gap-1.5 cursor-pointer">
+									<input
+										type="radio"
+										name="debt_type"
+										value={v}
+										checked={(field.state.value ?? "") === v}
+										onChange={() => field.handleChange(v)}
+									/>
+									<span className="text-sm">{label}</span>
+								</label>
+							))}
+						</div>
 					)}
 				</form.Field>
 			</div>
 
+			{/* Amount + currency */}
+			<div className="flex gap-3">
+				<div className="flex-1 space-y-1.5">
+					<Label>Amount</Label>
+					<form.Field name="amount_cents">
+						{(field) => (
+							<input
+								type="number"
+								min="0"
+								step="0.01"
+								placeholder="0.00"
+								value={amountDisplay}
+								className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+								onChange={(e) => {
+									setAmountDisplay(e.target.value)
+									const cents = Math.round(parseFloat(e.target.value || "0") * 100)
+									field.handleChange(isNaN(cents) ? null : cents)
+								}}
+								onBlur={field.handleBlur}
+							/>
+						)}
+					</form.Field>
+				</div>
+				<div className="w-24 space-y-1.5">
+					<form.Field name="currency">
+						{(field) => (
+							<FormField
+								field={field}
+								label="Currency"
+								placeholder="USD"
+								maxLength={3}
+							/>
+						)}
+					</form.Field>
+				</div>
+			</div>
+
 			<form.Field name="date">
-				{(field) => (
-					<FormField field={field} label="Date" type="date" />
-				)}
+				{(field) => <FormField field={field} label="Date" type="date" />}
 			</form.Field>
 
 			{/* Notes */}
@@ -163,9 +230,16 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift" }: GiftF
 
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
-					<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-						{submitLabel}
-					</SubmitButton>
+					<div className="flex gap-2">
+						{onCancel && (
+							<Button type="button" variant="neutral" onClick={onCancel} disabled={isSubmitting}>
+								Cancel
+							</Button>
+						)}
+						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
+							{submitLabel}
+						</SubmitButton>
+					</div>
 				)}
 			</form.Subscribe>
 		</form>

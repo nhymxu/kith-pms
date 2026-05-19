@@ -31,11 +31,12 @@ import { Route as AuthedMeSetupRouteImport } from './routes/_authed/me/setup'
 import { Route as AuthedJournalNewRouteImport } from './routes/_authed/journal/new'
 import { Route as AuthedJournalEntryIdRouteImport } from './routes/_authed/journal/$entryId'
 import { Route as AuthedGiftsNewRouteImport } from './routes/_authed/gifts/new'
-import { Route as AuthedGiftsGiftIdRouteImport } from './routes/_authed/gifts/$giftId'
+import { Route as AuthedGiftsGiftIdRouteRouteImport } from './routes/_authed/gifts/$giftId/route'
+import { Route as AuthedGiftsGiftIdIndexRouteImport } from './routes/_authed/gifts/$giftId/index'
 import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
 import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
 import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId.edit'
-import { Route as AuthedGiftsGiftIdEditRouteImport } from './routes/_authed/gifts/$giftId.edit'
+import { Route as AuthedGiftsGiftIdEditRouteImport } from './routes/_authed/gifts/$giftId/edit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -148,10 +149,15 @@ const AuthedGiftsNewRoute = AuthedGiftsNewRouteImport.update({
   path: '/gifts/new',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedGiftsGiftIdRoute = AuthedGiftsGiftIdRouteImport.update({
+const AuthedGiftsGiftIdRouteRoute = AuthedGiftsGiftIdRouteRouteImport.update({
   id: '/gifts/$giftId',
   path: '/gifts/$giftId',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedGiftsGiftIdIndexRoute = AuthedGiftsGiftIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
 } as any)
 const AuthedRemindersReminderIdEditRoute =
   AuthedRemindersReminderIdEditRouteImport.update({
@@ -174,13 +180,13 @@ const AuthedJournalEntryIdEditRoute =
 const AuthedGiftsGiftIdEditRoute = AuthedGiftsGiftIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
-  getParentRoute: () => AuthedGiftsGiftIdRoute,
+  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
-  '/gifts/$giftId': typeof AuthedGiftsGiftIdRouteWithChildren
+  '/gifts/$giftId': typeof AuthedGiftsGiftIdRouteRouteWithChildren
   '/gifts/new': typeof AuthedGiftsNewRoute
   '/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/journal/new': typeof AuthedJournalNewRoute
@@ -204,11 +210,11 @@ export interface FileRoutesByFullPath {
   '/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthedIndexRoute
-  '/gifts/$giftId': typeof AuthedGiftsGiftIdRouteWithChildren
   '/gifts/new': typeof AuthedGiftsNewRoute
   '/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/journal/new': typeof AuthedJournalNewRoute
@@ -232,13 +238,14 @@ export interface FileRoutesByTo {
   '/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/gifts/$giftId': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authed/': typeof AuthedIndexRoute
-  '/_authed/gifts/$giftId': typeof AuthedGiftsGiftIdRouteWithChildren
+  '/_authed/gifts/$giftId': typeof AuthedGiftsGiftIdRouteRouteWithChildren
   '/_authed/gifts/new': typeof AuthedGiftsNewRoute
   '/_authed/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/_authed/journal/new': typeof AuthedJournalNewRoute
@@ -262,6 +269,7 @@ export interface FileRoutesById {
   '/_authed/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/_authed/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/_authed/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/_authed/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -292,11 +300,11 @@ export interface FileRouteTypes {
     | '/journal/$entryId/edit'
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
+    | '/gifts/$giftId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/'
-    | '/gifts/$giftId'
     | '/gifts/new'
     | '/journal/$entryId'
     | '/journal/new'
@@ -320,6 +328,7 @@ export interface FileRouteTypes {
     | '/journal/$entryId/edit'
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
+    | '/gifts/$giftId'
   id:
     | '__root__'
     | '/_authed'
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authed/journal/$entryId/edit'
     | '/_authed/people/$personId/edit'
     | '/_authed/reminders/$reminderId/edit'
+    | '/_authed/gifts/$giftId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -516,8 +526,15 @@ declare module '@tanstack/react-router' {
       id: '/_authed/gifts/$giftId'
       path: '/gifts/$giftId'
       fullPath: '/gifts/$giftId'
-      preLoaderRoute: typeof AuthedGiftsGiftIdRouteImport
+      preLoaderRoute: typeof AuthedGiftsGiftIdRouteRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/gifts/$giftId/': {
+      id: '/_authed/gifts/$giftId/'
+      path: '/'
+      fullPath: '/gifts/$giftId/'
+      preLoaderRoute: typeof AuthedGiftsGiftIdIndexRouteImport
+      parentRoute: typeof AuthedGiftsGiftIdRouteRoute
     }
     '/_authed/reminders/$reminderId/edit': {
       id: '/_authed/reminders/$reminderId/edit'
@@ -545,21 +562,26 @@ declare module '@tanstack/react-router' {
       path: '/edit'
       fullPath: '/gifts/$giftId/edit'
       preLoaderRoute: typeof AuthedGiftsGiftIdEditRouteImport
-      parentRoute: typeof AuthedGiftsGiftIdRoute
+      parentRoute: typeof AuthedGiftsGiftIdRouteRoute
     }
   }
 }
 
-interface AuthedGiftsGiftIdRouteChildren {
+interface AuthedGiftsGiftIdRouteRouteChildren {
   AuthedGiftsGiftIdEditRoute: typeof AuthedGiftsGiftIdEditRoute
+  AuthedGiftsGiftIdIndexRoute: typeof AuthedGiftsGiftIdIndexRoute
 }
 
-const AuthedGiftsGiftIdRouteChildren: AuthedGiftsGiftIdRouteChildren = {
-  AuthedGiftsGiftIdEditRoute: AuthedGiftsGiftIdEditRoute,
-}
+const AuthedGiftsGiftIdRouteRouteChildren: AuthedGiftsGiftIdRouteRouteChildren =
+  {
+    AuthedGiftsGiftIdEditRoute: AuthedGiftsGiftIdEditRoute,
+    AuthedGiftsGiftIdIndexRoute: AuthedGiftsGiftIdIndexRoute,
+  }
 
-const AuthedGiftsGiftIdRouteWithChildren =
-  AuthedGiftsGiftIdRoute._addFileChildren(AuthedGiftsGiftIdRouteChildren)
+const AuthedGiftsGiftIdRouteRouteWithChildren =
+  AuthedGiftsGiftIdRouteRoute._addFileChildren(
+    AuthedGiftsGiftIdRouteRouteChildren,
+  )
 
 interface AuthedJournalEntryIdRouteChildren {
   AuthedJournalEntryIdEditRoute: typeof AuthedJournalEntryIdEditRoute
@@ -599,7 +621,7 @@ const AuthedRemindersReminderIdRouteWithChildren =
 
 interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
-  AuthedGiftsGiftIdRoute: typeof AuthedGiftsGiftIdRouteWithChildren
+  AuthedGiftsGiftIdRouteRoute: typeof AuthedGiftsGiftIdRouteRouteWithChildren
   AuthedGiftsNewRoute: typeof AuthedGiftsNewRoute
   AuthedJournalEntryIdRoute: typeof AuthedJournalEntryIdRouteWithChildren
   AuthedJournalNewRoute: typeof AuthedJournalNewRoute
@@ -623,7 +645,7 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
-  AuthedGiftsGiftIdRoute: AuthedGiftsGiftIdRouteWithChildren,
+  AuthedGiftsGiftIdRouteRoute: AuthedGiftsGiftIdRouteRouteWithChildren,
   AuthedGiftsNewRoute: AuthedGiftsNewRoute,
   AuthedJournalEntryIdRoute: AuthedJournalEntryIdRouteWithChildren,
   AuthedJournalNewRoute: AuthedJournalNewRoute,

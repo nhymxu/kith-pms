@@ -69,6 +69,40 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Gift, error) {
 	return &g, nil
 }
 
+func (r *Repo) GetByIDWithPerson(ctx context.Context, id int64) (*GiftWithPerson, error) {
+	var (
+		g                    GiftWithPerson
+		dateVal              sql.NullString
+		createdAt, updatedAt string
+	)
+
+	err := r.db.QueryRowContext(ctx, `
+		SELECT g.id, g.person_id, g.title, g.direction, g.date, g.notes,
+		       g.amount_cents, g.currency, g.debt_type,
+		       g.image_path, g.image_mime_type, g.created_at, g.updated_at,
+		       p.name AS person_name
+		FROM gift g
+		JOIN person p ON p.id = g.person_id
+		WHERE g.id = ?`, id).Scan(
+		&g.ID, &g.PersonID, &g.Title, &g.Direction, &dateVal, &g.Notes,
+		&g.AmountCents, &g.Currency, &g.DebtType,
+		&g.ImagePath, &g.ImageMimeType, &createdAt, &updatedAt,
+		&g.PersonName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if dateVal.Valid {
+		g.Date = dateVal.String
+	}
+
+	g.CreatedAt, _ = parseTimestamp(createdAt)
+	g.UpdatedAt, _ = parseTimestamp(updatedAt)
+
+	return &g, nil
+}
+
 func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, error) {
 	args := []any{}
 	query := `

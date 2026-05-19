@@ -178,8 +178,8 @@ kith-pms/
 
 ### `internal/gifts` — Gift management & debt tracking
 - **domain.go**: Gift (title, description, direction, debt_type, person_id, image_path), GiftWithPerson; Direction and DebtType enums
-- **service.go**: CRUD for gifts; UploadImage/DeleteImage for gift photos; persists metadata (path, MIME type, size, upload timestamp)
-- **repo.go**: Queries for gifts with person joins; UpdateImage metadata updates
+- **service.go**: CRUD for gifts; UploadImage/DeleteImage for gift photos; persists metadata (path, MIME type, size, upload timestamp); GetByIDWithPerson returns gift with person_name
+- **repo.go**: Queries for gifts with person joins; UpdateImage metadata updates; GetByIDWithPerson for detail view
 - **service_test.go**: Integration tests for gift CRUD and image operations
 
 ### `internal/relationships` — Person-to-person relationships

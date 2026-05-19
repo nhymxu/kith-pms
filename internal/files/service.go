@@ -197,6 +197,7 @@ func (s *LocalFileService) SaveGiftImage(
 	sanitizedName := sanitizeFilename(strings.TrimSuffix(header.Filename, ext))
 	filename := fmt.Sprintf("%s-%s%s", hex.EncodeToString(randomBytes), sanitizedName, ext)
 
+	// TODO: s.BaseDir is gifts folder -> not need join -> duplicate nested dir path
 	giftDir := filepath.Join(s.BaseDir, "gifts", fmt.Sprintf("%d", giftID))
 	if err := os.MkdirAll(giftDir, 0755); err != nil {
 		return "", fmt.Errorf("create directory: %w", err)

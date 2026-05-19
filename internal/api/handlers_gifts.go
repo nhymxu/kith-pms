@@ -2,8 +2,11 @@ package api
 
 import (
 	"database/sql"
+	"io"
 	"math"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -13,7 +16,8 @@ import (
 )
 
 type GiftsAPI struct {
-	Svc *gifts.Service
+	Svc             *gifts.Service
+	GiftStoragePath string
 }
 
 type giftRequest struct {
@@ -88,7 +92,7 @@ func (h *GiftsAPI) GetByID(c *echo.Context) error {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
 
-	g, err := h.Svc.GetByID(c.Request().Context(), id)
+	g, err := h.Svc.GetByIDWithPerson(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
@@ -98,6 +102,119 @@ func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	}
 
 	return ok(c, g)
+}
+
+const maxGiftImageBytes = 5 * 1024 * 1024
+
+var giftImageAllowedTypes = map[string]bool{
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/webp": true,
+}
+
+// UploadImage handles POST /v1/gifts/:id/image
+func (h *GiftsAPI) UploadImage(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxGiftImageBytes+1024*1024)
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		if strings.Contains(err.Error(), "request body too large") {
+			return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+		}
+		return apiErr(c, http.StatusBadRequest, "no file uploaded")
+	}
+
+	if file.Size > maxGiftImageBytes {
+		return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "failed to open file")
+	}
+	defer func() { _ = src.Close() }()
+
+	detected, err := sniff512(src)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "failed to read file")
+	}
+	detected = strings.TrimSpace(strings.SplitN(detected, ";", 2)[0])
+	if !giftImageAllowedTypes[detected] {
+		return apiErr(c, http.StatusUnprocessableEntity, "unsupported file type: use jpeg, png, gif, or webp")
+	}
+
+	if err := h.Svc.UploadImage(c.Request().Context(), id, src, file); err != nil {
+		if strings.Contains(err.Error(), "file service not configured") {
+			return apiErr(c, http.StatusInternalServerError, "file storage not configured")
+		}
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, map[string]any{"uploaded": true})
+}
+
+// DeleteImage handles DELETE /v1/gifts/:id/image
+func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	if err := h.Svc.DeleteImage(c.Request().Context(), id); err != nil {
+		if err == sql.ErrNoRows {
+			return apiErr(c, http.StatusNotFound, "not found")
+		}
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return noContent(c)
+}
+
+// GetImage handles GET /v1/gifts/:id/image
+func (h *GiftsAPI) GetImage(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	g, err := h.Svc.GetByID(c.Request().Context(), id)
+	if err == sql.ErrNoRows {
+		return apiErr(c, http.StatusNotFound, "not found")
+	}
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if g.ImagePath == "" {
+		return apiErr(c, http.StatusNotFound, "no image")
+	}
+
+	fullPath := filepath.Join(h.GiftStoragePath, g.ImagePath)
+	cleanPath := filepath.Clean(fullPath)
+	if !strings.HasPrefix(cleanPath, filepath.Clean(h.GiftStoragePath)) {
+		return apiErr(c, http.StatusNotFound, "not found")
+	}
+
+	f, err := os.Open(cleanPath)
+	if err != nil {
+		return apiErr(c, http.StatusNotFound, "image file not found")
+	}
+	defer func() { _ = f.Close() }()
+
+	mt := g.ImageMimeType
+	if mt == "" {
+		mt = "application/octet-stream"
+	}
+	c.Response().Header().Set("Content-Type", mt)
+	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
+	_, err = io.Copy(c.Response(), f)
+	return err
 }
 
 func (h *GiftsAPI) Update(c *echo.Context) error {

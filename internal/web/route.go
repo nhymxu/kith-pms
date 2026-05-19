@@ -37,6 +37,7 @@ type Deps struct {
 	RelationshipsService *relationships.Service
 	FileSvc              files.FileService
 	AvatarBasePath       string
+	GiftStoragePath      string
 	APIToken             string
 	SessionLifetime      time.Duration
 	BehindTLS            bool
@@ -71,6 +72,7 @@ func Mount(e *echo.Echo, deps Deps) {
 		FileSvc:              deps.FileSvc,
 		APIToken:             deps.APIToken,
 		AvatarBasePath:       deps.AvatarBasePath,
+		GiftStoragePath:      deps.GiftStoragePath,
 		SessionLifetime:      deps.SessionLifetime,
 		BehindTLS:            deps.BehindTLS,
 		LoginLimiter:         loginLimiter,

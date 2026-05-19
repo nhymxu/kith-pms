@@ -7,11 +7,12 @@ on:
 
 jobs:
   actionlint:
-    name: actionlint
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run actionlint
-        uses: rhysd/actionlint@v1
+      - name: Check workflow files
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+        shell: bash

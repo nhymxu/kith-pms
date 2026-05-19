@@ -75,6 +75,9 @@ kith-pms/
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
+│   ├── metrics/                  # Prometheus metrics & observability
+│   │   ├── metrics.go            # Registry, HTTP middleware, collectors (DB size, sessions, build info)
+│   │   └── metrics_test.go       # Metrics unit tests
 │   ├── monica/                   # Monica PRM import package
 │   │   ├── parser.go             # Monica JSON export format unmarshaling
 │   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
@@ -227,6 +230,10 @@ kith-pms/
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
+
+### `internal/metrics` — Prometheus metrics & observability
+- **metrics.go**: Custom Registry with Go runtime + process collectors; HTTP middleware (request count + latency by method/route/status); GaugeFunc collectors for DB size (PRAGMA page_count) and active sessions; build info gauge; promhttp handler for `/metrics` endpoint
+- **metrics_test.go**: Unit tests for route-template label cardinality, unknown route handling, scrape format validation
 
 ### `internal/monica` — Monica PRM data import
 - **parser.go**: Unmarshals Monica JSON export format (contacts, activities, reminders, tags, etc.) into typed structs

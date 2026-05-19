@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kith
+  namespace: kith-pms
+  annotations:
+    # Fallback scrape annotations for clusters without Prometheus Operator.
+    # Use the service-monitor component instead when the operator is available.
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: /metrics
+spec:
+  selector:
+    app: kith
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP

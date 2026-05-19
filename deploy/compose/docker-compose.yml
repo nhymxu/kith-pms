@@ -1,0 +1,37 @@
+# Production Docker Compose for kith-pms
+# Usage: docker compose --env-file .env up -d
+#
+# /metrics is unauthenticated — bind port 8000 behind a reverse proxy in production.
+# Do NOT expose port 8000 directly to the internet without TLS termination.
+
+services:
+  kith:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${PORT:-8000}:8000"
+    volumes:
+      - kith-data:/data
+    environment:
+      DB_PATH: /data/kith.db
+      DB_AUTO_MIGRATE: "true"
+      SESSION_SECRET: "${SESSION_SECRET}"
+      TOKEN_AUTH: "${TOKEN_AUTH:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      DEBUG: "${DEBUG:-false}"
+      BEHIND_TLS: "${BEHIND_TLS:-false}"
+      SESSION_LIFETIME: "${SESSION_LIFETIME:-720h}"
+      AVATAR_STORAGE_PATH: /data/avatars
+      GIFT_STORAGE_PATH: /data/gifts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  kith-data:
+    driver: local

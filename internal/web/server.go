@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 
+	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
@@ -37,6 +38,7 @@ func newEchoApp() *echo.Echo {
 		middleware.RemoveTrailingSlashWithConfig(middleware.RemoveTrailingSlashConfig{
 			RedirectCode: http.StatusMovedPermanently,
 		}),
+		metrics.Middleware(),
 		middleware.Recover(),
 		middleware.RequestID(),
 		//middleware.Secure(),

@@ -277,12 +277,12 @@ func TestFilter_AndSemantics(t *testing.T) {
 		t.Fatalf("List with AND filter: %v", err)
 	}
 
-	if len(results) != 1 {
-		t.Fatalf("AND filter: got %d results, want 1", len(results))
+	if len(results.Items) != 1 {
+		t.Fatalf("AND filter: got %d results, want 1", len(results.Items))
 	}
 
-	if results[0].ID != personA {
-		t.Errorf("AND filter: got person %d, want %d (personA)", results[0].ID, personA)
+	if results.Items[0].ID != personA {
+		t.Errorf("AND filter: got person %d, want %d (personA)", results.Items[0].ID, personA)
 	}
 
 	// Filter by only X — both A and B should be returned.
@@ -294,8 +294,8 @@ func TestFilter_AndSemantics(t *testing.T) {
 		t.Fatalf("List with single label filter: %v", err)
 	}
 
-	if len(results) != 2 {
-		t.Errorf("single label filter: got %d results, want 2", len(results))
+	if len(results.Items) != 2 {
+		t.Errorf("single label filter: got %d results, want 2", len(results.Items))
 	}
 }
 

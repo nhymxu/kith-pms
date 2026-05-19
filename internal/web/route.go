@@ -15,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
+	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -52,6 +53,9 @@ func Mount(e *echo.Echo, deps Deps) {
 	e.GET("/health", func(c *echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	})
+
+	// Metrics endpoint — no auth; bind via reverse proxy in production.
+	e.GET("/metrics", metrics.Handler())
 
 	// SessionLoader attaches *User to context when a valid session cookie is present.
 	sessionLoader := auth.SessionLoader(deps.AuthService)

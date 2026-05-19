@@ -20,6 +20,7 @@ type SessionRepo interface {
 	DeleteSession(ctx context.Context, id string) error
 	DeleteAllSessions(ctx context.Context, userID int64) error
 	DeleteExpiredSessions(ctx context.Context) error
+	CountActiveSessions(ctx context.Context) (int64, error)
 }
 
 // sqlUserRepo implements UserRepo using raw *sql.DB queries.
@@ -127,6 +128,20 @@ func (r *sqlSessionRepo) DeleteExpiredSessions(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (r *sqlSessionRepo) CountActiveSessions(ctx context.Context) (int64, error) {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+
+	var n int64
+	err := r.db.QueryRowContext(ctx,
+		`SELECT count(*) FROM session WHERE expires_at > ?`, now,
+	).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("auth: count active sessions: %w", err)
+	}
+
+	return n, nil
 }
 
 // ---- scan helpers -----------------------------------------------------------

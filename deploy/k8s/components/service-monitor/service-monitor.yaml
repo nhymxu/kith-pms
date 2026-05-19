@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kith
+  namespace: kith-pms
+  labels:
+    app: kith
+spec:
+  selector:
+    matchLabels:
+      app: kith
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

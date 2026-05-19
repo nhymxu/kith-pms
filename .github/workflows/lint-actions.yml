@@ -1,0 +1,17 @@
+name: Lint Actions
+
+on:
+  push:
+    paths:
+      - .github/workflows/**
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@v1

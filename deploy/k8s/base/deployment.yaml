@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kith
+  namespace: kith-pms
+spec:
+  # CRITICAL: Must stay at 1. SQLite does not support concurrent writers.
+  # Scaling to 2+ replicas WILL corrupt the database.
+  replicas: 1
+  strategy:
+    type: Recreate  # ensures old pod is fully stopped before new one starts
+  selector:
+    matchLabels:
+      app: kith
+  template:
+    metadata:
+      labels:
+        app: kith
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kith
+          image: kith-pms:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DB_PATH
+              value: /data/kith.db
+            - name: DB_AUTO_MIGRATE
+              value: "true"
+            - name: AVATAR_STORAGE_PATH
+              value: /data/avatars
+            - name: GIFT_STORAGE_PATH
+              value: /data/gifts
+            - name: BEHIND_TLS
+              value: "true"
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: kith-secrets
+                  key: SESSION_SECRET
+            - name: APP_PASSWORD_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: kith-secrets
+                  key: APP_PASSWORD_HASH
+            - name: TOKEN_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: kith-secrets
+                  key: TOKEN_AUTH
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kith-data
+        - name: tmp
+          emptyDir:
+            medium: Memory

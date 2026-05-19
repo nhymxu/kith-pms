@@ -20,6 +20,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
+	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -135,6 +136,9 @@ Can scale later.`,
 			e := web.New()
 
 			e.HTTPErrorHandler = jsonErrorHandler
+
+			metrics.RegisterAppCollectors(db, authSvc.Sessions)
+			metrics.RegisterBuildInfo()
 
 			peopleSvc := people.NewService(db)
 

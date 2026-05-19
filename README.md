@@ -100,9 +100,13 @@ The `--force` flag is required as a safety confirmation. The restore command als
 
 ## Docker
 
+### Production
+
 ```bash
-# Build and start
-docker compose up -d
+cd deploy/compose
+cp .env.example .env
+# Edit .env — set SESSION_SECRET and APP_PASSWORD_HASH at minimum
+docker compose --env-file .env up -d
 
 # Set password (first run)
 docker compose exec kith /kith-pms set-password
@@ -111,7 +115,14 @@ docker compose exec kith /kith-pms set-password
 docker compose exec kith /kith-pms backup --to /data/backup.db
 ```
 
-The `docker-compose.yml` mounts a named volume (`kith-data`) at `/data` for database persistence. Set `SESSION_SECRET` in your environment or a `.env` file before starting.
+The production compose binds to `127.0.0.1` by default — put a TLS-terminating reverse proxy (nginx, Caddy) in front before exposing to the internet.
+
+### Local development
+
+```bash
+# From repo root
+docker compose -f docker-compose.dev.yml up -d
+```
 
 > **Note**: The Docker image runs as non-root (UID 65532). It uses `gcr.io/distroless/static-debian12` — no shell is available inside the container; use `docker logs` for debugging.
 

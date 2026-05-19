@@ -35,7 +35,9 @@ function EditJournalPage() {
 	return (
 		<div className="space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Edit Entry</h1>
+			{/* key forces form remount once data is loaded so defaultValues are populated */}
 			<JournalForm
+				key={data.id}
 				initial={data}
 				onSubmit={(v) => mutation.mutateAsync(v)}
 				submitLabel="Save Changes"

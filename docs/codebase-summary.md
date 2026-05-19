@@ -263,8 +263,8 @@ features/
   me/                    # User profile section
   people/                # People table, detail sections, avatar uploader, quick actions
   reminders/             # Reminder form, table
-  settings/              # Labels, relationship-types, security settings
-lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, etc.)
+  settings/              # Two-panel layout (sidebar nav + detail panel); General settings for date/time format + timezone
+lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, format-datetime.ts, etc.)
 routes/                  # TanStack Router file-based routes (_authed/, public/)
 schemas/                 # Zod-style TS type definitions (maintained by hand, not generated)
 styles.css               # Tailwind + design tokens (:root variables)
@@ -287,6 +287,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **API Layer**: `endpoints/*.ts` exports fetch functions (POST/GET/PUT/DELETE); handles `X-Requested-With: kith-spa` CSRF header
 - **Validation**: Zod schemas in `schemas/` directory (hand-maintained, not generated)
 - **Responsive**: Mobile-first; media breakpoints via Tailwind (sm/md/lg/xl)
+- **Date/Time Formatting**: `lib/format-datetime.ts` utility converts UTC backend times to user's locale/timezone; settings stored in localStorage (date format, timezone)
 
 ### Dashboard Feature
 - **Components**: summary-cards, relationship-pulse-chart, action-queue, recent-relationship-activity, upcoming-moments

@@ -84,6 +84,7 @@ function JournalPage() {
 					<div className="flex flex-wrap gap-2">
 						{allPeople.items.map((p) => {
 							const active = (search.people ?? []).includes(p.id)
+							const base = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ""
 							return (
 								<button
 									key={p.id}
@@ -94,8 +95,15 @@ function JournalPage() {
 											: [...(search.people ?? []), p.id]
 										void navigate({ to: "/journal", search: { ...search, people: next.length ? next : undefined, page: 1 } })
 									}}
-									className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-zinc-200 hover:border-zinc-400"}`}
+									className={`flex items-center gap-1.5 text-xs border rounded-full px-2 py-0.5 transition-colors ${active ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-zinc-200 hover:border-zinc-400"}`}
 								>
+									<span className="size-4 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+										{p.avatar_path ? (
+											<img src={`${base}/v1/people/${p.id}/avatar`} alt={p.name} className="size-full object-cover" />
+										) : (
+											p.name.charAt(0).toUpperCase()
+										)}
+									</span>
 									{p.name}
 								</button>
 							)

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useState } from "react"
-import { Trash2, Plus, Link2, X } from "lucide-react"
+import { Trash2, Plus, Link2, X, Search } from "lucide-react"
 import { Badge } from "#/components/ui/badge"
 import { Button } from "#/components/ui/button"
 import {
@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "#/components/ui/alert"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { keys } from "#/query-keys"
-import { getPerson, listRelationships, attachRelationship, detachRelationship, attachLabel, detachLabel, listWorkHistory } from "#/endpoints/people"
+import { getPerson, listPeople, listRelationships, attachRelationship, detachRelationship, attachLabel, detachLabel, listWorkHistory } from "#/endpoints/people"
 import { listJournal } from "#/endpoints/journal"
 import { listLabels } from "#/endpoints/labels"
 import { listRelationshipTypes } from "#/endpoints/relationship-types"
@@ -101,11 +101,17 @@ function LabelsSection({ person }: { person: Person }) {
 
 	const attach = useMutation({
 		mutationFn: (labelId: number) => attachLabel(person.id, labelId),
-		onSuccess: () => qc.invalidateQueries({ queryKey: keys.people.detail(person.id) }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) })
+			qc.invalidateQueries({ queryKey: keys.labels.all })
+		},
 	})
 	const detach = useMutation({
 		mutationFn: (labelId: number) => detachLabel(person.id, labelId),
-		onSuccess: () => qc.invalidateQueries({ queryKey: keys.people.detail(person.id) }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) })
+			qc.invalidateQueries({ queryKey: keys.labels.all })
+		},
 	})
 
 	const available = allLabels?.filter((l) => !attachedIds.has(l.id)) ?? []
@@ -148,9 +154,12 @@ function RelationshipsSection({ personId }: { personId: number }) {
 	const qc = useQueryClient()
 	const [addOpen, setAddOpen] = useState(false)
 	const [typeId, setTypeId] = useState<number | "">("")
-	const [otherId, setOtherId] = useState("")
+	const [otherPersonId, setOtherPersonId] = useState<number | null>(null)
+	const [otherPersonName, setOtherPersonName] = useState("")
+	const [personSearch, setPersonSearch] = useState("")
 	const [notes, setNotes] = useState("")
 	const [err, setErr] = useState<string | null>(null)
+	const [confirmRelId, setConfirmRelId] = useState<number | null>(null)
 
 	const { data: rels } = useQuery({
 		queryKey: keys.people.relationships(personId),
@@ -160,24 +169,34 @@ function RelationshipsSection({ personId }: { personId: number }) {
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
 	})
+	const { data: personResults } = useQuery({
+		queryKey: keys.people.list({ q: personSearch || undefined }),
+		queryFn: () => listPeople({ q: personSearch || undefined, page_size: 10 }),
+		enabled: personSearch.length > 0,
+	})
 
 	const attach = useMutation({
 		mutationFn: () => attachRelationship(personId, {
 			relationship_type_id: Number(typeId),
-			to_person_id: Number(otherId),
+			to_person_id: otherPersonId!,
 			notes,
 		}),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.people.relationships(personId) })
-			setAddOpen(false); setTypeId(""); setOtherId(""); setNotes("")
+			setAddOpen(false); setTypeId(""); setOtherPersonId(null); setOtherPersonName(""); setPersonSearch(""); setNotes("")
 		},
 		onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
 	})
 
 	const detach = useMutation({
 		mutationFn: (relId: number) => detachRelationship(personId, relId),
-		onSuccess: () => qc.invalidateQueries({ queryKey: keys.people.relationships(personId) }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.relationships(personId) })
+			setConfirmRelId(null)
+		},
 	})
+
+	const confirmRel = rels?.find((r) => r.id === confirmRelId)
 
 	return (
 		<div>
@@ -198,7 +217,7 @@ function RelationshipsSection({ personId }: { personId: number }) {
 								{r.other_person_name}
 							</Link>
 							{r.notes && <span className="text-zinc-400 text-xs">{r.notes}</span>}
-							<button type="button" onClick={() => detach.mutate(r.id)} className="text-foreground/40 hover:text-destructive">
+							<button type="button" onClick={() => setConfirmRelId(r.id)} className="text-foreground/40 hover:text-destructive">
 								<Trash2 className="size-3" />
 							</button>
 						</div>
@@ -206,6 +225,7 @@ function RelationshipsSection({ personId }: { personId: number }) {
 				</div>
 			)}
 
+			{/* Add relationship dialog */}
 			<Dialog open={addOpen} onOpenChange={(v) => !v && setAddOpen(false)}>
 				<DialogContent>
 					<DialogHeader><DialogTitle>Add relationship</DialogTitle></DialogHeader>
@@ -222,12 +242,75 @@ function RelationshipsSection({ personId }: { personId: number }) {
 								{types?.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
 							</select>
 						</div>
-						<div><Label>Other person ID</Label><Input value={otherId} onChange={(e) => setOtherId(e.target.value)} placeholder="Person ID" /></div>
+						<div className="space-y-1">
+							<Label>Person</Label>
+							{otherPersonId ? (
+								<div className="flex items-center gap-2 border border-zinc-200 rounded-md px-3 py-2 text-sm">
+									<span className="flex-1 font-medium">{otherPersonName}</span>
+									<button type="button" onClick={() => { setOtherPersonId(null); setOtherPersonName(""); setPersonSearch("") }} className="text-zinc-400 hover:text-destructive">
+										<X className="size-3" />
+									</button>
+								</div>
+							) : (
+								<div className="space-y-1">
+									<div className="relative">
+										<Search className="absolute left-2.5 top-2.5 size-3.5 text-zinc-400" />
+										<input
+											type="text"
+											value={personSearch}
+											onChange={(e) => setPersonSearch(e.target.value)}
+											placeholder="Search by name…"
+											className="h-9 w-full border border-zinc-200 rounded-md bg-white pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+										/>
+									</div>
+									{personResults?.items && personResults.items.length > 0 && (
+										<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100 max-h-40 overflow-y-auto">
+											{personResults.items
+												.filter((p) => p.id !== personId)
+												.map((p) => (
+													<button
+														key={p.id}
+														type="button"
+														onClick={() => { setOtherPersonId(p.id); setOtherPersonName(p.name); setPersonSearch("") }}
+														className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
+													>
+														{p.name}
+													</button>
+												))}
+										</div>
+									)}
+								</div>
+							)}
+						</div>
 						<div><Label>Notes</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" /></div>
 					</div>
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setAddOpen(false)}>Cancel</Button>
-						<Button disabled={attach.isPending || !typeId || !otherId} onClick={() => attach.mutate()}>Save</Button>
+						<Button disabled={attach.isPending || !typeId || !otherPersonId} onClick={() => attach.mutate()}>Save</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Confirm remove dialog */}
+			<Dialog open={confirmRelId !== null} onOpenChange={(v) => !v && setConfirmRelId(null)}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Remove relationship?</DialogTitle>
+					</DialogHeader>
+					{confirmRel && (
+						<p className="text-[13px] text-zinc-600">
+							Remove the <span className="font-medium">{confirmRel.type_name}</span> relationship with <span className="font-medium">{confirmRel.other_person_name}</span>?
+						</p>
+					)}
+					<DialogFooter>
+						<Button variant="neutral" onClick={() => setConfirmRelId(null)}>Cancel</Button>
+						<Button
+							variant="destructive"
+							disabled={detach.isPending}
+							onClick={() => confirmRelId !== null && detach.mutate(confirmRelId)}
+						>
+							{detach.isPending ? "Removing…" : "Remove"}
+						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

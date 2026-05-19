@@ -23,6 +23,7 @@ import { Route as AuthedAuditIndexRouteImport } from './routes/_authed/audit/ind
 import { Route as AuthedSettingsSecurityRouteImport } from './routes/_authed/settings/security'
 import { Route as AuthedSettingsRelationshipTypesRouteImport } from './routes/_authed/settings/relationship-types'
 import { Route as AuthedSettingsLabelsRouteImport } from './routes/_authed/settings/labels'
+import { Route as AuthedSettingsLayoutRouteImport } from './routes/_authed/settings/_layout'
 import { Route as AuthedRemindersNewRouteImport } from './routes/_authed/reminders/new'
 import { Route as AuthedRemindersReminderIdRouteImport } from './routes/_authed/reminders/$reminderId'
 import { Route as AuthedPeopleNewRouteImport } from './routes/_authed/people/new'
@@ -33,6 +34,7 @@ import { Route as AuthedJournalEntryIdRouteImport } from './routes/_authed/journ
 import { Route as AuthedGiftsNewRouteImport } from './routes/_authed/gifts/new'
 import { Route as AuthedGiftsGiftIdRouteRouteImport } from './routes/_authed/gifts/$giftId/route'
 import { Route as AuthedGiftsGiftIdIndexRouteImport } from './routes/_authed/gifts/$giftId/index'
+import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
 import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
 import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
 import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId.edit'
@@ -108,6 +110,11 @@ const AuthedSettingsLabelsRoute = AuthedSettingsLabelsRouteImport.update({
   path: '/settings/labels',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsLayoutRoute = AuthedSettingsLayoutRouteImport.update({
+  id: '/settings/_layout',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedRemindersNewRoute = AuthedRemindersNewRouteImport.update({
   id: '/reminders/new',
   path: '/reminders/new',
@@ -159,6 +166,12 @@ const AuthedGiftsGiftIdIndexRoute = AuthedGiftsGiftIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
 } as any)
+const AuthedSettingsLayoutGeneralRoute =
+  AuthedSettingsLayoutGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
 const AuthedRemindersReminderIdEditRoute =
   AuthedRemindersReminderIdEditRouteImport.update({
     id: '/edit',
@@ -195,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/people/new': typeof AuthedPeopleNewRoute
   '/reminders/$reminderId': typeof AuthedRemindersReminderIdRouteWithChildren
   '/reminders/new': typeof AuthedRemindersNewRoute
+  '/settings': typeof AuthedSettingsLayoutRouteWithChildren
   '/settings/labels': typeof AuthedSettingsLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsSecurityRoute
@@ -210,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -223,6 +238,7 @@ export interface FileRoutesByTo {
   '/people/new': typeof AuthedPeopleNewRoute
   '/reminders/$reminderId': typeof AuthedRemindersReminderIdRouteWithChildren
   '/reminders/new': typeof AuthedRemindersNewRoute
+  '/settings': typeof AuthedSettingsIndexRoute
   '/settings/labels': typeof AuthedSettingsLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsSecurityRoute
@@ -233,11 +249,11 @@ export interface FileRoutesByTo {
   '/me': typeof AuthedMeIndexRoute
   '/people': typeof AuthedPeopleIndexRoute
   '/reminders': typeof AuthedRemindersIndexRoute
-  '/settings': typeof AuthedSettingsIndexRoute
   '/gifts/$giftId/edit': typeof AuthedGiftsGiftIdEditRoute
   '/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/gifts/$giftId': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRoutesById {
@@ -254,6 +270,7 @@ export interface FileRoutesById {
   '/_authed/people/new': typeof AuthedPeopleNewRoute
   '/_authed/reminders/$reminderId': typeof AuthedRemindersReminderIdRouteWithChildren
   '/_authed/reminders/new': typeof AuthedRemindersNewRoute
+  '/_authed/settings/_layout': typeof AuthedSettingsLayoutRouteWithChildren
   '/_authed/settings/labels': typeof AuthedSettingsLabelsRoute
   '/_authed/settings/relationship-types': typeof AuthedSettingsRelationshipTypesRoute
   '/_authed/settings/security': typeof AuthedSettingsSecurityRoute
@@ -269,6 +286,7 @@ export interface FileRoutesById {
   '/_authed/journal/$entryId/edit': typeof AuthedJournalEntryIdEditRoute
   '/_authed/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/_authed/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
+  '/_authed/settings/_layout/general': typeof AuthedSettingsLayoutGeneralRoute
   '/_authed/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -285,6 +303,7 @@ export interface FileRouteTypes {
     | '/people/new'
     | '/reminders/$reminderId'
     | '/reminders/new'
+    | '/settings'
     | '/settings/labels'
     | '/settings/relationship-types'
     | '/settings/security'
@@ -300,6 +319,7 @@ export interface FileRouteTypes {
     | '/journal/$entryId/edit'
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
+    | '/settings/general'
     | '/gifts/$giftId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -313,6 +333,7 @@ export interface FileRouteTypes {
     | '/people/new'
     | '/reminders/$reminderId'
     | '/reminders/new'
+    | '/settings'
     | '/settings/labels'
     | '/settings/relationship-types'
     | '/settings/security'
@@ -323,11 +344,11 @@ export interface FileRouteTypes {
     | '/me'
     | '/people'
     | '/reminders'
-    | '/settings'
     | '/gifts/$giftId/edit'
     | '/journal/$entryId/edit'
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
+    | '/settings/general'
     | '/gifts/$giftId'
   id:
     | '__root__'
@@ -343,6 +364,7 @@ export interface FileRouteTypes {
     | '/_authed/people/new'
     | '/_authed/reminders/$reminderId'
     | '/_authed/reminders/new'
+    | '/_authed/settings/_layout'
     | '/_authed/settings/labels'
     | '/_authed/settings/relationship-types'
     | '/_authed/settings/security'
@@ -358,6 +380,7 @@ export interface FileRouteTypes {
     | '/_authed/journal/$entryId/edit'
     | '/_authed/people/$personId/edit'
     | '/_authed/reminders/$reminderId/edit'
+    | '/_authed/settings/_layout/general'
     | '/_authed/gifts/$giftId/'
   fileRoutesById: FileRoutesById
 }
@@ -466,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsLabelsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings/_layout': {
+      id: '/_authed/settings/_layout'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsLayoutRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/reminders/new': {
       id: '/_authed/reminders/new'
       path: '/reminders/new'
@@ -535,6 +565,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gifts/$giftId/'
       preLoaderRoute: typeof AuthedGiftsGiftIdIndexRouteImport
       parentRoute: typeof AuthedGiftsGiftIdRouteRoute
+    }
+    '/_authed/settings/_layout/general': {
+      id: '/_authed/settings/_layout/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof AuthedSettingsLayoutGeneralRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
     }
     '/_authed/reminders/$reminderId/edit': {
       id: '/_authed/reminders/$reminderId/edit'
@@ -619,6 +656,17 @@ const AuthedRemindersReminderIdRouteWithChildren =
     AuthedRemindersReminderIdRouteChildren,
   )
 
+interface AuthedSettingsLayoutRouteChildren {
+  AuthedSettingsLayoutGeneralRoute: typeof AuthedSettingsLayoutGeneralRoute
+}
+
+const AuthedSettingsLayoutRouteChildren: AuthedSettingsLayoutRouteChildren = {
+  AuthedSettingsLayoutGeneralRoute: AuthedSettingsLayoutGeneralRoute,
+}
+
+const AuthedSettingsLayoutRouteWithChildren =
+  AuthedSettingsLayoutRoute._addFileChildren(AuthedSettingsLayoutRouteChildren)
+
 interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedGiftsGiftIdRouteRoute: typeof AuthedGiftsGiftIdRouteRouteWithChildren
@@ -630,6 +678,7 @@ interface AuthedRouteChildren {
   AuthedPeopleNewRoute: typeof AuthedPeopleNewRoute
   AuthedRemindersReminderIdRoute: typeof AuthedRemindersReminderIdRouteWithChildren
   AuthedRemindersNewRoute: typeof AuthedRemindersNewRoute
+  AuthedSettingsLayoutRoute: typeof AuthedSettingsLayoutRouteWithChildren
   AuthedSettingsLabelsRoute: typeof AuthedSettingsLabelsRoute
   AuthedSettingsRelationshipTypesRoute: typeof AuthedSettingsRelationshipTypesRoute
   AuthedSettingsSecurityRoute: typeof AuthedSettingsSecurityRoute
@@ -654,6 +703,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedPeopleNewRoute: AuthedPeopleNewRoute,
   AuthedRemindersReminderIdRoute: AuthedRemindersReminderIdRouteWithChildren,
   AuthedRemindersNewRoute: AuthedRemindersNewRoute,
+  AuthedSettingsLayoutRoute: AuthedSettingsLayoutRouteWithChildren,
   AuthedSettingsLabelsRoute: AuthedSettingsLabelsRoute,
   AuthedSettingsRelationshipTypesRoute: AuthedSettingsRelationshipTypesRoute,
   AuthedSettingsSecurityRoute: AuthedSettingsSecurityRoute,

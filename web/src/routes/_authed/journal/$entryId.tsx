@@ -45,7 +45,10 @@ function JournalEntryPage() {
 	return (
 		<div className="max-w-[760px] space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
+				<div className="flex items-center gap-3">
+					<Link to="/journal" className="text-[12px] text-zinc-400 hover:text-zinc-700">← Journal</Link>
+					<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
+				</div>
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
 						<Link to="/journal/$entryId/edit" params={{ entryId }}>Edit</Link>
@@ -58,22 +61,32 @@ function JournalEntryPage() {
 				<CardHeader>
 					<CardTitle className="font-mono text-[12px] text-zinc-500">
 						{new Date(data.occurred_at_date).toLocaleDateString()}
-						{data.occurred_at_time && ` at ${data.occurred_at_time}`}
+						{data.occurred_at_time ? ` at ${data.occurred_at_time}` : ""}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
-					{data.people.length > 0 && (
-						<div className="flex flex-wrap gap-2">
-							{data.people.map((p) => (
-								<Link key={p.person_id} to="/people/$personId" params={{ personId: String(p.person_id) }} className="font-mono text-[12px] text-indigo-600 hover:underline">
-									@{p.name}
-								</Link>
-							))}
-						</div>
-					)}
-					{data.content && (
-						<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">{data.content}</p>
-					)}
+					<div>
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">People</p>
+						{data.people.length > 0 ? (
+							<div className="flex flex-wrap gap-2">
+								{data.people.map((p) => (
+									<Link key={p.person_id} to="/people/$personId" params={{ personId: String(p.person_id) }} className="font-mono text-[12px] text-indigo-600 hover:underline">
+										@{p.name}
+									</Link>
+								))}
+							</div>
+						) : (
+							<p className="text-[13px] text-zinc-400">No people linked.</p>
+						)}
+					</div>
+					<div>
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">Notes</p>
+						{data.content ? (
+							<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">{data.content}</p>
+						) : (
+							<p className="text-[13px] text-zinc-400">No notes.</p>
+						)}
+					</div>
 				</CardContent>
 			</Card>
 

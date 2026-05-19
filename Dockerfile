@@ -1,5 +1,5 @@
 # Stage 1: Build the React SPA
-FROM node:24-alpine AS spa-builder
+FROM node:26-alpine AS spa-builder
 
 WORKDIR /app/web
 

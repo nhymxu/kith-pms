@@ -171,3 +171,6 @@ data/
 
 # AI folder
 .claude/settings.local.json
+
+# MkDocs build output
+/site/

@@ -1,0 +1,43 @@
+site_name: kith-pms
+site_description: Personal Relationship Manager — self-hosted, single-binary, SQLite
+repo_url: https://github.com/nhymxu/kith-pms
+repo_name: nhymxu/kith-pms
+edit_uri: edit/main/docs/
+
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - User Guide:
+      - People: user-guide/people.md
+      - Journal: user-guide/journal.md
+      - Labels: user-guide/labels.md
+      - Reminders: user-guide/reminders.md
+      - Important Dates: user-guide/important-dates.md
+  - Self-hosting:
+      - Docker Compose: self-hosting/docker-compose.md
+      - Kubernetes: self-hosting/kubernetes.md
+      - Backup & Restore: self-hosting/backup-restore.md
+      - Metrics: self-hosting/metrics.md
+  - Reference:
+      - Project Overview: project-overview-pdr.md
+      - Architecture: system-architecture.md
+      - Roadmap: project-roadmap.md
+      - Changelog: project-changelog.md
+  - Contributing:
+      - Code Standards: code-standards.md
+      - Codebase Summary: codebase-summary.md

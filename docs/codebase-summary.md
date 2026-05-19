@@ -326,16 +326,16 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Key Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `labstack/echo/v5` | v5.1.1+ | HTTP framework |
-| `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
-| `modernc.org/sqlite` | v1.50.0+ | Pure Go SQLite (no CGO) |
-| `golang.org/x/crypto` | latest | bcrypt password hashing |
-| `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
-| `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
-| `samber/slog-multi` | v1.8.0+ | slog fan-out to multiple handlers |
-| `go.uber.org/automaxprocs` | v1.6.0+ | Auto GOMAXPROCS in containers |
+| Package                    | Version  | Purpose                           |
+|----------------------------|----------|-----------------------------------|
+| `labstack/echo/v5`         | v5.1.1+  | HTTP framework                    |
+| `urfave/cli/v3`            | v3.8.0+  | CLI subcommands                   |
+| `modernc.org/sqlite`       | v1.50.0+ | Pure Go SQLite (no CGO)           |
+| `golang.org/x/crypto`      | latest   | bcrypt password hashing           |
+| `knadh/koanf/v2`           | v2.3.4+  | Layered config loading            |
+| `getsentry/sentry-go`      | v0.46.1+ | Error monitoring (optional)       |
+| `samber/slog-multi`        | v1.8.0+  | slog fan-out to multiple handlers |
+| `go.uber.org/automaxprocs` | v1.6.0+  | Auto GOMAXPROCS in containers     |
 
 ## Module & Build
 

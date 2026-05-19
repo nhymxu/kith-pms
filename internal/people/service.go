@@ -141,6 +141,18 @@ func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 	p.Contacts = contacts
 	p.Locations = locations
 
+	if s.LabelsSvc != nil {
+		labelsMap, err := s.LabelsSvc.ListByPersonIDs(ctx, []int64{id})
+		if err != nil {
+			return nil, fmt.Errorf("load labels: %w", err)
+		}
+		if lbls, ok := labelsMap[id]; ok {
+			p.Labels = lbls
+		} else {
+			p.Labels = []labels.Label{}
+		}
+	}
+
 	return p, nil
 }
 

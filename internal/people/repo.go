@@ -80,7 +80,7 @@ func (r *sqlPersonRepo) List(
 
 	query := `SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 	                 other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-	                 last_contact_at, created_at, updated_at
+	                 last_contact_at, created_at, updated_at, is_self
 	          FROM person`
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
@@ -174,7 +174,7 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        last_contact_at, created_at, updated_at
+		        last_contact_at, created_at, updated_at, is_self
 		 FROM person WHERE id = ?`,
 		id,
 	)
@@ -195,7 +195,7 @@ func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        last_contact_at, created_at, updated_at
+		        last_contact_at, created_at, updated_at, is_self
 		 FROM person WHERE is_self = 1 LIMIT 1`,
 	)
 
@@ -486,12 +486,14 @@ func scanPerson(row rowScanner) (Person, error) {
 		createdAt, updatedAt string
 	)
 
+	var isSelf int64
 	err := row.Scan(
 		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
 		&dobStr, &p.RelationshipType, &p.OtherNotes,
 		&p.AvatarPath, &p.AvatarMimeType, &p.AvatarSize, &avatarUploadedAtStr,
-		&lastContactAtStr, &createdAt, &updatedAt,
+		&lastContactAtStr, &createdAt, &updatedAt, &isSelf,
 	)
+	p.IsSelf = isSelf == 1
 	if err != nil {
 		return Person{}, fmt.Errorf("people: scan person: %w", err)
 	}

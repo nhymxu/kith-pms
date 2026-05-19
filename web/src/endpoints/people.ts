@@ -100,6 +100,23 @@ export async function listWorkHistory(personId: number): Promise<WorkEntry[]> {
 	return workEntryListSchema.parse(res.data)
 }
 
+export interface WorkEntryRequest {
+	company: string
+	title: string
+	start_date: string
+	end_date: string
+	location: string
+	description: string
+	position: number
+}
+
+export async function replaceWorkHistory(personId: number, body: { entries: WorkEntryRequest[] }): Promise<void> {
+	await apiFetch(`/v1/people/${personId}/work-history`, {
+		method: "PUT",
+		body: JSON.stringify(body),
+	})
+}
+
 // Label attach/detach
 
 export async function attachLabel(personId: number, labelId: number): Promise<void> {

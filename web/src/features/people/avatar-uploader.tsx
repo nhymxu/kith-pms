@@ -12,9 +12,10 @@ const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"]
 interface AvatarUploaderProps {
 	personId: number
 	hasAvatar: boolean
+	showControls?: boolean
 }
 
-export function AvatarUploader({ personId, hasAvatar }: AvatarUploaderProps) {
+export function AvatarUploader({ personId, hasAvatar, showControls = true }: AvatarUploaderProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const [preview, setPreview] = useState<string | null>(null)
 	const [clientError, setClientError] = useState<string | null>(null)
@@ -72,8 +73,8 @@ export function AvatarUploader({ personId, hasAvatar }: AvatarUploaderProps) {
 			<div
 				onDrop={handleDrop}
 				onDragOver={(e) => e.preventDefault()}
-				onClick={() => inputRef.current?.click()}
-				className="w-24 h-24 rounded-md border border-dashed border-zinc-300 cursor-pointer overflow-hidden bg-secondary-background flex items-center justify-center hover:border-main transition-colors"
+				onClick={() => showControls && inputRef.current?.click()}
+				className={`w-24 h-24 rounded-md border border-dashed border-zinc-300 overflow-hidden bg-secondary-background flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-main" : "cursor-default"}`}
 			>
 				{currentSrc ? (
 					<img src={currentSrc} alt="Avatar" className="size-full object-cover" />
@@ -90,29 +91,31 @@ export function AvatarUploader({ personId, hasAvatar }: AvatarUploaderProps) {
 				onChange={handleChange}
 			/>
 
-			<div className="flex gap-2">
-				<Button
-					type="button"
-					variant="neutral"
-					size="sm"
-					disabled={isPending}
-					onClick={() => inputRef.current?.click()}
-				>
-					<Upload className="size-3" />
-					{hasAvatar || preview ? "Replace" : "Upload"}
-				</Button>
-				{(hasAvatar || preview) && (
+			{showControls && (
+				<div className="flex gap-2">
 					<Button
 						type="button"
-						variant="destructive"
+						variant="neutral"
 						size="sm"
 						disabled={isPending}
-						onClick={() => deleteMutation.mutate()}
+						onClick={() => inputRef.current?.click()}
 					>
-						<Trash2 className="size-3" /> Remove
+						<Upload className="size-3" />
+						{hasAvatar || preview ? "Replace" : "Upload"}
 					</Button>
-				)}
-			</div>
+					{(hasAvatar || preview) && (
+						<Button
+							type="button"
+							variant="destructive"
+							size="sm"
+							disabled={isPending}
+							onClick={() => deleteMutation.mutate()}
+						>
+							<Trash2 className="size-3" /> Remove
+						</Button>
+					)}
+				</div>
+			)}
 
 			{(clientError ?? uploadMutation.error) && (
 				<Alert variant="destructive">

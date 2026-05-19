@@ -20,6 +20,7 @@ type Person struct {
 	AvatarSize       int64          `json:"avatar_size"`
 	AvatarUploadedAt *time.Time     `json:"avatar_uploaded_at"`
 	LastContactAt    *time.Time     `json:"last_contact_at"`
+	IsSelf           bool           `json:"is_self"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
 	Contacts         []ContactInfo  `json:"contacts"`

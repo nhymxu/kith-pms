@@ -28,6 +28,7 @@ export const labelRefSchema = z.object({
 
 export const personSchema = z.object({
 	id: z.number(),
+	is_self: z.boolean().optional().default(false),
 	prefix: z.string().optional().default(""),
 	name: z.string(),
 	nickname: z.string().optional().default(""),

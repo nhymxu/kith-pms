@@ -15,8 +15,7 @@ interface QuickActionsProps {
 	personId: number
 }
 
-// Quick journal dialog
-function QuickJournalDialog({ personId, open, onClose }: { personId: number; open: boolean; onClose: () => void }) {
+export function QuickJournalDialog({ personId, open, onClose }: { personId: number; open: boolean; onClose: () => void }) {
 	const [title, setTitle] = useState("")
 	const [content, setContent] = useState("")
 	const [error, setError] = useState<string | null>(null)
@@ -54,8 +53,7 @@ function QuickJournalDialog({ personId, open, onClose }: { personId: number; ope
 	)
 }
 
-// Quick gift dialog
-function QuickGiftDialog({ personId, open, onClose }: { personId: number; open: boolean; onClose: () => void }) {
+export function QuickGiftDialog({ personId, open, onClose }: { personId: number; open: boolean; onClose: () => void }) {
 	const [title, setTitle] = useState("")
 	const [error, setError] = useState<string | null>(null)
 	const qc = useQueryClient()

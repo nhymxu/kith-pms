@@ -9,16 +9,16 @@ import (
 
 // WorkEntry represents a single work history record for a person.
 type WorkEntry struct {
-	ID          int64
-	PersonID    int64
-	Company     string
-	Title       string
-	StartDate   string // "YYYY", "YYYY-MM", or "YYYY-MM-DD" — required
-	EndDate     string // same formats OR "" (= Present)
-	Location    string
-	Description string
-	Position    int
-	CreatedAt   time.Time
+	ID          int64     `json:"id"`
+	PersonID    int64     `json:"person_id"`
+	Company     string    `json:"company"`
+	Title       string    `json:"title"`
+	StartDate   string    `json:"start_date"` // "YYYY", "YYYY-MM", or "YYYY-MM-DD" — required
+	EndDate     string    `json:"end_date"`   // same formats OR "" (= Present)
+	Location    string    `json:"location"`
+	Description string    `json:"description"`
+	Position    int       `json:"position"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 var workDateRe = regexp.MustCompile(`^\d{4}(-\d{2}(-\d{2})?)?$`)

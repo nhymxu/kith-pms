@@ -8,6 +8,7 @@ import {
 	type PersonRequest,
 } from "../schemas/person"
 import { relationshipViewListSchema, type RelationshipViewList, type AttachRelationshipRequest } from "../schemas/relationship-type"
+import { workEntryListSchema, type WorkEntry } from "../schemas/work-history"
 
 type Envelope<T> = { data: T }
 
@@ -90,6 +91,13 @@ export async function attachRelationship(personId: number, body: AttachRelations
 
 export async function detachRelationship(personId: number, relId: number): Promise<void> {
 	await apiFetch(`/v1/people/${personId}/relationships/${relId}`, { method: "DELETE" })
+}
+
+// Work history
+
+export async function listWorkHistory(personId: number): Promise<WorkEntry[]> {
+	const res = await apiFetch<{ data: unknown }>(`/v1/people/${personId}/work-history`)
+	return workEntryListSchema.parse(res.data)
 }
 
 // Label attach/detach

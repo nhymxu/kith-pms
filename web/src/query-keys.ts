@@ -10,6 +10,7 @@ export type PeopleFilters = {
 
 export type JournalFilters = {
 	person_id?: number;
+	person_ids?: number[];
 	page?: number;
 	page_size?: number;
 };
@@ -40,6 +41,7 @@ export const keys = {
 		avatar: (id: number) => ["people", "avatar", id] as const,
 		relationships: (id: number) => ["people", "relationships", id] as const,
 		labels: (id: number) => ["people", "labels", id] as const,
+		workHistory: (id: number) => ["people", "work-history", id] as const,
 	},
 	journal: {
 		all: ["journal"] as const,

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { z } from "zod"
 import { listJournal } from "#/endpoints/journal"
+import { listPeople } from "#/endpoints/people"
 import { keys } from "#/query-keys"
 import { JournalTimeline } from "#/features/journal/journal-timeline"
 import { Button } from "#/components/ui/button"
@@ -12,6 +13,7 @@ const searchSchema = z.object({
 	page_size: z.coerce.number().min(1).max(100).optional().default(20),
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
+	people: z.array(z.coerce.number()).optional(),
 })
 
 export const Route = createFileRoute("/_authed/journal/")({
@@ -24,8 +26,13 @@ function JournalPage() {
 	const search = Route.useSearch()
 
 	const { data, isPending, isError } = useQuery({
-		queryKey: keys.journal.list({ page: search.page, page_size: search.page_size }),
-		queryFn: () => listJournal({ q: search.q, page: search.page, page_size: search.page_size, from_date: search.from_date, to_date: search.to_date }),
+		queryKey: keys.journal.list({ page: search.page, page_size: search.page_size, person_ids: search.people }),
+		queryFn: () => listJournal({ q: search.q, page: search.page, page_size: search.page_size, from_date: search.from_date, to_date: search.to_date, person_ids: search.people }),
+	})
+
+	const { data: allPeople } = useQuery({
+		queryKey: keys.people.list({ page_size: 200 }),
+		queryFn: () => listPeople({ page_size: 200 }),
 	})
 
 	if (isError) return <p className="text-sm font-base text-destructive">Failed to load journal.</p>
@@ -69,6 +76,42 @@ function JournalPage() {
 					</Button>
 				)}
 			</div>
+
+			{/* People filter */}
+			{allPeople?.items && allPeople.items.length > 0 && (
+				<div className="space-y-1">
+					<p className="text-[11px] font-medium text-zinc-500">Filter by person</p>
+					<div className="flex flex-wrap gap-2">
+						{allPeople.items.map((p) => {
+							const active = (search.people ?? []).includes(p.id)
+							return (
+								<button
+									key={p.id}
+									type="button"
+									onClick={() => {
+										const next = active
+											? (search.people ?? []).filter((id) => id !== p.id)
+											: [...(search.people ?? []), p.id]
+										void navigate({ to: "/journal", search: { ...search, people: next.length ? next : undefined, page: 1 } })
+									}}
+									className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-zinc-200 hover:border-zinc-400"}`}
+								>
+									{p.name}
+								</button>
+							)
+						})}
+						{(search.people?.length ?? 0) > 0 && (
+							<button
+								type="button"
+								onClick={() => void navigate({ to: "/journal", search: { ...search, people: undefined, page: 1 } })}
+								className="text-xs text-zinc-400 hover:text-zinc-700"
+							>
+								Clear
+							</button>
+						)}
+					</div>
+				</div>
+			)}
 
 			{isPending ? (
 				<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>

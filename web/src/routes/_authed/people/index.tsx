@@ -23,6 +23,10 @@ function PeoplePage() {
 		void navigate({ to: "/people", search: { ...search, q: q || undefined, page: 1 } })
 	}
 
+	function handleLabelsChange(labels: number[]) {
+		void navigate({ to: "/people", search: { ...search, labels: labels.length ? labels : undefined, page: 1 } })
+	}
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
@@ -37,6 +41,7 @@ function PeoplePage() {
 				page={search.page}
 				page_size={search.page_size}
 				onSearchChange={handleSearchChange}
+				onLabelsChange={handleLabelsChange}
 			/>
 		</div>
 	)

@@ -11,10 +11,12 @@ import { Alert, AlertDescription } from "#/components/ui/alert"
 import { Input } from "#/components/ui/input"
 import { Label } from "#/components/ui/label"
 import { keys } from "#/query-keys"
-import { getPerson, listRelationships, attachRelationship, detachRelationship, attachLabel, detachLabel } from "#/endpoints/people"
+import { getPerson, listRelationships, attachRelationship, detachRelationship, attachLabel, detachLabel, listWorkHistory } from "#/endpoints/people"
 import { listJournal } from "#/endpoints/journal"
 import { listLabels } from "#/endpoints/labels"
 import { listRelationshipTypes } from "#/endpoints/relationship-types"
+import { listDatesByPerson } from "#/endpoints/dates"
+import { listGifts } from "#/endpoints/gifts"
 import type { Person } from "#/schemas/person"
 import { AvatarUploader } from "./avatar-uploader"
 import { QuickActions } from "./quick-actions"
@@ -233,6 +235,88 @@ function RelationshipsSection({ personId }: { personId: number }) {
 	)
 }
 
+function WorkHistorySection({ personId }: { personId: number }) {
+	const { data } = useQuery({
+		queryKey: keys.people.workHistory(personId),
+		queryFn: () => listWorkHistory(personId),
+	})
+
+	return (
+		<div>
+			<SectionHeading>Work History</SectionHeading>
+			{!data?.length ? (
+				<p className="text-sm text-zinc-400">No work history.</p>
+			) : (
+				<div className="space-y-3">
+					{data.map((e) => (
+						<div key={e.id} className="text-sm border border-zinc-200 rounded-md p-3 space-y-1">
+							<p className="font-medium">{e.company}{e.title ? ` · ${e.title}` : ""}</p>
+							<p className="font-mono text-[12px] text-zinc-500">
+								{e.start_date} → {e.end_date || "Present"}
+							</p>
+							{e.location && <p className="text-zinc-500">{e.location}</p>}
+							{e.description && <p className="text-zinc-600 whitespace-pre-wrap">{e.description}</p>}
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	)
+}
+
+function ImportantDatesSection({ personId }: { personId: number }) {
+	const { data } = useQuery({
+		queryKey: keys.dates.list(personId),
+		queryFn: () => listDatesByPerson(personId),
+	})
+
+	return (
+		<div>
+			<SectionHeading>Important Dates</SectionHeading>
+			{!data?.length ? (
+				<p className="text-sm text-zinc-400">No important dates.</p>
+			) : (
+				<div className="space-y-2">
+					{data.map((d) => (
+						<div key={d.id} className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2">
+							<Badge variant="neutral">{d.kind}</Badge>
+							{d.label && <span className="text-zinc-500">{d.label}</span>}
+							<span className="font-mono text-[12px] text-zinc-500 flex-1">{d.date_value}</span>
+							{d.recurring && <span className="text-zinc-400 text-xs">↻</span>}
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	)
+}
+
+function GiftsSection({ personId }: { personId: number }) {
+	const { data } = useQuery({
+		queryKey: keys.gifts.list({ person_id: personId, page_size: 10 }),
+		queryFn: () => listGifts({ person_id: personId, page_size: 10 }),
+	})
+
+	return (
+		<div>
+			<SectionHeading>Gifts</SectionHeading>
+			{!data?.items?.length ? (
+				<p className="text-sm text-zinc-400">No gifts.</p>
+			) : (
+				<div className="space-y-2">
+					{data.items.map((g) => (
+						<Link key={g.id} to="/gifts/$giftId" params={{ giftId: String(g.id) }} className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2 hover:bg-zinc-50">
+							<span className="font-medium flex-1">{g.title}</span>
+							<Badge variant="neutral">{g.direction}</Badge>
+							{g.date && <span className="font-mono text-[12px] text-zinc-500">{g.date}</span>}
+						</Link>
+					))}
+				</div>
+			)}
+		</div>
+	)
+}
+
 function JournalSection({ personId }: { personId: number }) {
 	const { data } = useQuery({
 		queryKey: ["journal", "byPerson", personId],
@@ -307,6 +391,12 @@ export function PersonDetailSections({ personId, onClose }: PersonDetailSections
 			<RelationshipsSection personId={personId} />
 			<div className="border-t border-zinc-100" />
 			<JournalSection personId={personId} />
+			<div className="border-t border-zinc-100" />
+			<WorkHistorySection personId={personId} />
+			<div className="border-t border-zinc-100" />
+			<ImportantDatesSection personId={personId} />
+			<div className="border-t border-zinc-100" />
+			<GiftsSection personId={personId} />
 		</div>
 	)
 }

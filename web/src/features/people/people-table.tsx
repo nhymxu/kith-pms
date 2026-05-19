@@ -26,6 +26,7 @@ interface PeopleTableProps {
 	page?: number
 	page_size?: number
 	onSearchChange: (q: string) => void
+	onLabelsChange: (labels: number[]) => void
 }
 
 const columns: ColumnDef<Person>[] = [
@@ -107,7 +108,7 @@ const columns: ColumnDef<Person>[] = [
 	},
 ]
 
-export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onSearchChange }: PeopleTableProps) {
+export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onSearchChange, onLabelsChange }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q)
 	const debouncedQ = useDebounce(localQ, 300)
 	const isFirst = useRef(true)
@@ -135,7 +136,7 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 			}),
 	})
 
-	useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
+	const { data: allLabelsData } = useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
 
 	const rows = data?.items ?? []
 
@@ -147,6 +148,32 @@ export function PeopleTable({ q = "", labels = [], page = 1, page_size = 20, onS
 				onChange={(e) => setLocalQ(e.target.value)}
 				className="max-w-xs"
 			/>
+			{allLabelsData && allLabelsData.length > 0 && (
+				<div className="flex flex-wrap gap-2">
+					{allLabelsData.map((l) => {
+						const active = labels.includes(l.id)
+						return (
+							<button
+								key={l.id}
+								type="button"
+								onClick={() => {
+									const next = active ? labels.filter((id) => id !== l.id) : [...labels, l.id]
+									onLabelsChange(next)
+								}}
+								className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+								style={active ? { borderColor: l.color } : undefined}
+							>
+								{l.name}
+							</button>
+						)
+					})}
+					{labels.length > 0 && (
+						<button type="button" onClick={() => onLabelsChange([])} className="text-xs text-zinc-400 hover:text-zinc-700">
+							Clear
+						</button>
+					)}
+				</div>
+			)}
 			<DataTable
 				columns={columns}
 				data={rows}

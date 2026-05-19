@@ -44,6 +44,15 @@ func (h *JournalAPI) List(c *echo.Context) error {
 		ToDate:   c.QueryParam("to_date"),
 	}
 
+	if raw := c.QueryParam("person_ids"); raw != "" {
+		for _, s := range strings.Split(raw, ",") {
+			id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
+			if err == nil && id > 0 {
+				params.PersonIDs = append(params.PersonIDs, id)
+			}
+		}
+	}
+
 	list, err := h.Svc.List(c.Request().Context(), params)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")

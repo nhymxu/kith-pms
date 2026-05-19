@@ -16,6 +16,7 @@ export interface JournalListParams {
 	page_size?: number
 	from_date?: string
 	to_date?: string
+	person_ids?: number[]
 }
 
 export async function listJournal(params: JournalListParams = {}): Promise<JournalList> {
@@ -25,6 +26,7 @@ export async function listJournal(params: JournalListParams = {}): Promise<Journ
 	if (params.page_size) qs.set("page_size", String(params.page_size))
 	if (params.from_date) qs.set("from_date", params.from_date)
 	if (params.to_date) qs.set("to_date", params.to_date)
+	if (params.person_ids?.length) qs.set("person_ids", params.person_ids.join(","))
 
 	const query = qs.toString()
 	const res = await apiFetch<Envelope<unknown>>(`/v1/journal${query ? `?${query}` : ""}`)

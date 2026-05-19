@@ -68,6 +68,10 @@ kith-pms/
 │   │   ├── service.go            # CreateType/UpdateType/DeleteType; AttachRelationship/DetachRelationship/ListByPerson
 │   │   ├── repo.go               # sqlRelationshipTypeRepo + sqlPersonRelationshipRepo; paired tx writes
 │   │   └── service_test.go       # 10 integration tests (paired rows, self-loop guard, FK restrict)
+│   ├── settings/                 # User settings & preferences
+│   │   ├── domain.go             # UserSettings struct (date_format, time_format, timezone) + Defaults
+│   │   ├── service.go            # Get/Update business logic with validation
+│   │   └── repo.go               # Key/value store queries (GetAll, Set)
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
@@ -215,6 +219,11 @@ kith-pms/
 - **repo.go**: sqlRelationshipTypeRepo and sqlPersonRelationshipRepo; paired transaction writes for bidirectional relationships; FindPair for locating inverse rows
 - **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
 
+### `internal/settings` — User settings & preferences
+- **domain.go**: UserSettings (date_format, time_format, timezone) with Defaults constant
+- **service.go**: Get/Update business logic with validation for format/timezone values
+- **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
+
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
@@ -233,6 +242,7 @@ kith-pms/
 - **handlers_dates.go**: GET /upcoming (30-day window)
 - **handlers_labels.go**: CRUD with usage counts
 - **handlers_relationships.go**: CRUD with usage counts
+- **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone)
 - **handlers_audit.go**: GET with entity_type/entity_id filter, paginated
 - **handlers_me.go**: GET profile, POST setup
 

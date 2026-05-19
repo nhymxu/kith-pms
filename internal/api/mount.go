@@ -15,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
+	"github.com/nhymxu/kith-pms/internal/settings"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
@@ -29,6 +30,7 @@ type Deps struct {
 	AuditService         *audit.Service
 	GiftsService         *gifts.Service
 	RelationshipsService *relationships.Service
+	SettingsService      *settings.Service
 	AuthService          *auth.Service
 	FileSvc              files.FileService
 	APIToken             string
@@ -64,6 +66,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountPeopleLabels(v1, deps)
 	mountPeopleAvatars(v1, deps)
 	mountPeopleQuick(v1, deps)
+	mountSettings(v1, deps)
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
@@ -199,6 +202,12 @@ func mountPeopleAvatars(g *echo.Group, deps Deps) {
 	g.POST("/people/:id/avatar", h.Upload)
 	g.DELETE("/people/:id/avatar", h.Delete)
 	g.GET("/people/:id/avatar", h.Get)
+}
+
+func mountSettings(g *echo.Group, deps Deps) {
+	h := &SettingsAPI{Svc: deps.SettingsService}
+	g.GET("/settings", h.Get)
+	g.PUT("/settings", h.Update)
 }
 
 func mountPeopleQuick(g *echo.Group, deps Deps) {

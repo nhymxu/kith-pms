@@ -18,6 +18,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
+	"github.com/nhymxu/kith-pms/internal/settings"
 	"github.com/nhymxu/kith-pms/internal/web/spa"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 )
@@ -35,6 +36,7 @@ type Deps struct {
 	AuditService         *audit.Service
 	GiftsService         *gifts.Service
 	RelationshipsService *relationships.Service
+	SettingsService      *settings.Service
 	FileSvc              files.FileService
 	AvatarBasePath       string
 	GiftStoragePath      string
@@ -68,6 +70,7 @@ func Mount(e *echo.Echo, deps Deps) {
 		AuditService:         deps.AuditService,
 		GiftsService:         deps.GiftsService,
 		RelationshipsService: deps.RelationshipsService,
+		SettingsService:      deps.SettingsService,
 		AuthService:          deps.AuthService,
 		FileSvc:              deps.FileSvc,
 		APIToken:             deps.APIToken,

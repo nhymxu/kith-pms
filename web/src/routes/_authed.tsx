@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-
 import { useEffect } from "react"
 import { AppShell } from "#/components/app-shell/app-shell"
 import { onSessionLost } from "#/lib/api-client"
+import { syncSettingsFromApi } from "#/lib/format-datetime"
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
 import { Button } from "#/components/ui/button"
 
@@ -32,6 +33,11 @@ function AuthedLayout() {
 		})
 		return unsub
 	}, [navigate])
+
+	// Seed localStorage from DB on every authenticated mount.
+	useEffect(() => {
+		syncSettingsFromApi()
+	}, [])
 
 	return (
 		<AppShell>

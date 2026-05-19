@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getUserPrefs, saveUserPrefs, type DateFormat, type TimeFormat } from "#/lib/format-datetime"
+import { getSettings, updateSettings } from "#/endpoints/settings"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "#/components/ui/card"
 import { Label } from "#/components/ui/label"
 import { Button } from "#/components/ui/button"
@@ -20,7 +22,6 @@ const TIME_FORMAT_OPTIONS: { value: TimeFormat; label: string; example: string }
 	{ value: "12h", label: "12-hour", example: "2:30 PM" },
 ]
 
-// Common IANA timezones for the datalist
 const COMMON_TIMEZONES = [
 	"UTC",
 	"America/New_York",
@@ -45,14 +46,58 @@ const COMMON_TIMEZONES = [
 ]
 
 function GeneralSettingsPage() {
-	const [prefs, setPrefs] = useState(getUserPrefs)
-	const [saved, setSaved] = useState(false)
+	const queryClient = useQueryClient()
 
-	function handleSave() {
-		saveUserPrefs(prefs)
-		setSaved(true)
-		setTimeout(() => setSaved(false), 2000)
+	const { data: apiSettings } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+		// Seed local state from localStorage while the query loads.
+		placeholderData: () => {
+			const p = getUserPrefs()
+			return { date_format: p.dateFormat, time_format: p.timeFormat, timezone: p.timezone } as const
+		},
+	})
+
+	const [prefs, setPrefs] = useState<{ dateFormat: DateFormat; timeFormat: TimeFormat; timezone: string }>(
+		() => {
+			if (apiSettings) {
+				return {
+					dateFormat: apiSettings.date_format as DateFormat,
+					timeFormat: apiSettings.time_format as TimeFormat,
+					timezone: apiSettings.timezone,
+				}
+			}
+			return getUserPrefs()
+		}
+	)
+
+	// Keep local form state in sync when the query resolves.
+	const [synced, setSynced] = useState(false)
+	if (apiSettings && !synced) {
+		setPrefs({
+			dateFormat: apiSettings.date_format as DateFormat,
+			timeFormat: apiSettings.time_format as TimeFormat,
+			timezone: apiSettings.timezone,
+		})
+		setSynced(true)
 	}
+
+	const mutation = useMutation({
+		mutationFn: () =>
+			updateSettings({
+				date_format: prefs.dateFormat,
+				time_format: prefs.timeFormat,
+				timezone: prefs.timezone,
+			}),
+		onSuccess: (updated) => {
+			saveUserPrefs({
+				dateFormat: updated.date_format as DateFormat,
+				timeFormat: updated.time_format as TimeFormat,
+				timezone: updated.timezone,
+			})
+			queryClient.setQueryData(["settings"], updated)
+		},
+	})
 
 	return (
 		<div className="space-y-6 max-w-md">
@@ -124,9 +169,12 @@ function GeneralSettingsPage() {
 						<p className="text-[11px] text-zinc-400">Used for display only. Default: UTC.</p>
 					</div>
 
-					<Button onClick={handleSave} size="sm">
-						{saved ? "Saved!" : "Save preferences"}
+					<Button onClick={() => mutation.mutate()} size="sm" disabled={mutation.isPending}>
+						{mutation.isPending ? "Saving…" : mutation.isSuccess ? "Saved!" : "Save preferences"}
 					</Button>
+					{mutation.isError && (
+						<p className="text-[12px] text-red-500">Failed to save. Please try again.</p>
+					)}
 				</CardContent>
 			</Card>
 		</div>

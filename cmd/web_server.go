@@ -23,6 +23,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
+	"github.com/nhymxu/kith-pms/internal/settings"
 	"github.com/nhymxu/kith-pms/internal/web"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
@@ -187,6 +188,8 @@ Can scale later.`,
 			relsSvc := relationships.NewService(db)
 			relsSvc.Audit = auditSvc
 
+			settingsSvc := settings.NewService(db)
+
 			apiToken := os.Getenv("API_TOKEN")
 
 			web.Mount(e, web.Deps{
@@ -201,6 +204,7 @@ Can scale later.`,
 				AuditService:         auditSvc,
 				GiftsService:         giftsSvc,
 				RelationshipsService: relsSvc,
+				SettingsService:      settingsSvc,
 				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
 				GiftStoragePath:      giftStoragePath,

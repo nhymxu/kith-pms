@@ -1,4 +1,5 @@
 // Date/time formatting utilities that respect user preferences stored in localStorage.
+// localStorage is a write-through cache; the DB (via /v1/settings) is the source of truth.
 
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"
 export type TimeFormat = "12h" | "24h"
@@ -30,6 +31,21 @@ export function getUserPrefs(): UserPrefs {
 export function saveUserPrefs(prefs: Partial<UserPrefs>): void {
 	const current = getUserPrefs()
 	localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }))
+}
+
+// Fetch settings from the API and seed localStorage. Called once on authenticated app load.
+export async function syncSettingsFromApi(): Promise<void> {
+	try {
+		const { getSettings } = await import("#/endpoints/settings")
+		const s = await getSettings()
+		saveUserPrefs({
+			dateFormat: s.date_format as DateFormat,
+			timeFormat: s.time_format as TimeFormat,
+			timezone: s.timezone,
+		})
+	} catch {
+		// Non-fatal: fall back to whatever is already in localStorage / defaults.
+	}
 }
 
 // Format a date string (YYYY-MM-DD or ISO) according to user prefs.

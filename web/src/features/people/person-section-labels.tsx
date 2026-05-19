@@ -1,45 +1,58 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { Trash2, Plus } from "lucide-react"
-import { Badge } from "#/components/ui/badge"
-import { Button } from "#/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "#/components/ui/dialog"
-import { keys } from "#/query-keys"
-import { attachLabel, detachLabel } from "#/endpoints/people"
-import { listLabels } from "#/endpoints/labels"
-import type { Person } from "#/schemas/person"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import { listLabels } from "#/endpoints/labels";
+import { attachLabel, detachLabel } from "#/endpoints/people";
+import { keys } from "#/query-keys";
+import type { Person } from "#/schemas/person";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">{children}</h2>
+	return (
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+			{children}
+		</h2>
+	);
 }
 
 interface LabelsSectionProps {
-	person: Person
+	person: Person;
 }
 
 export function LabelsSection({ person }: LabelsSectionProps) {
-	const qc = useQueryClient()
-	const [confirmDetachId, setConfirmDetachId] = useState<number | null>(null)
-	const { data: allLabels } = useQuery({ queryKey: keys.labels.list(), queryFn: listLabels })
-	const attached = person.labels ?? []
-	const attachedIds = new Set(attached.map((l) => l.id))
+	const qc = useQueryClient();
+	const [confirmDetachId, setConfirmDetachId] = useState<number | null>(null);
+	const { data: allLabels } = useQuery({
+		queryKey: keys.labels.list(),
+		queryFn: listLabels,
+	});
+	const attached = person.labels ?? [];
+	const attachedIds = new Set(attached.map((l) => l.id));
 
 	const attach = useMutation({
 		mutationFn: (labelId: number) => attachLabel(person.id, labelId),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) })
-			qc.invalidateQueries({ queryKey: keys.labels.all })
+			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) });
+			qc.invalidateQueries({ queryKey: keys.labels.all });
 		},
-	})
+	});
 	const detach = useMutation({
 		mutationFn: (labelId: number) => detachLabel(person.id, labelId),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) })
-			qc.invalidateQueries({ queryKey: keys.labels.all })
+			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) });
+			qc.invalidateQueries({ queryKey: keys.labels.all });
 		},
-	})
+	});
 
-	const available = allLabels?.filter((l) => !attachedIds.has(l.id)) ?? []
+	const available = allLabels?.filter((l) => !attachedIds.has(l.id)) ?? [];
 
 	return (
 		<div>
@@ -51,12 +64,18 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 						{attached.map((l) => (
 							<div key={l.id} className="flex items-center gap-1">
 								<Badge style={{ borderColor: l.color }}>{l.name}</Badge>
-								<button type="button" className="text-foreground/40 hover:text-destructive" onClick={() => setConfirmDetachId(l.id)}>
+								<button
+									type="button"
+									className="text-foreground/40 hover:text-destructive"
+									onClick={() => setConfirmDetachId(l.id)}
+								>
 									<Trash2 className="size-3" />
 								</button>
 							</div>
 						))}
-						{attached.length === 0 && <p className="text-sm text-zinc-400">None attached.</p>}
+						{attached.length === 0 && (
+							<p className="text-sm text-zinc-400">None attached.</p>
+						)}
 					</div>
 				</div>
 				{available.length > 0 && (
@@ -70,30 +89,43 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 									onClick={() => attach.mutate(l.id)}
 									className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
 								>
-									<Plus className="size-3" />{l.name}
+									<Plus className="size-3" />
+									{l.name}
 								</button>
 							))}
 						</div>
 					</div>
 				)}
 			</div>
-			<Dialog open={confirmDetachId !== null} onOpenChange={(v) => !v && setConfirmDetachId(null)}>
+			<Dialog
+				open={confirmDetachId !== null}
+				onOpenChange={(v) => !v && setConfirmDetachId(null)}
+			>
 				<DialogContent>
-					<DialogHeader><DialogTitle>Remove label?</DialogTitle></DialogHeader>
+					<DialogHeader>
+						<DialogTitle>Remove label?</DialogTitle>
+					</DialogHeader>
 					{(() => {
-						const l = attached.find((l) => l.id === confirmDetachId)
+						const l = attached.find((l) => l.id === confirmDetachId);
 						return l ? (
 							<p className="text-[13px] text-zinc-600">
 								Remove the label <span className="font-medium">{l.name}</span>?
 							</p>
-						) : null
+						) : null;
 					})()}
 					<DialogFooter>
-						<Button variant="neutral" onClick={() => setConfirmDetachId(null)}>Cancel</Button>
+						<Button variant="neutral" onClick={() => setConfirmDetachId(null)}>
+							Cancel
+						</Button>
 						<Button
 							variant="destructive"
 							disabled={detach.isPending}
-							onClick={() => { if (confirmDetachId !== null) { detach.mutate(confirmDetachId); setConfirmDetachId(null) } }}
+							onClick={() => {
+								if (confirmDetachId !== null) {
+									detach.mutate(confirmDetachId);
+									setConfirmDetachId(null);
+								}
+							}}
 						>
 							{detach.isPending ? "Removing…" : "Remove"}
 						</Button>
@@ -101,5 +133,5 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 				</DialogContent>
 			</Dialog>
 		</div>
-	)
+	);
 }

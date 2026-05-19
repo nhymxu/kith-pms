@@ -57,7 +57,9 @@ describe("buildDashboardViewModel", () => {
 						occurred_at_time: "09:00",
 						created_at: "2026-05-17T09:00:00Z",
 						updated_at: "2026-05-17T09:00:00Z",
-						people: [{ person_id: 1, name: "Alex Kim", nickname: "", avatar_path: "" }],
+						people: [
+							{ person_id: 1, name: "Alex Kim", nickname: "", avatar_path: "" },
+						],
 					},
 				],
 				total: 1,

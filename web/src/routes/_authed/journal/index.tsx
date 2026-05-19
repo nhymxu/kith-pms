@@ -1,11 +1,11 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useQuery } from "@tanstack/react-query"
-import { z } from "zod"
-import { listJournal } from "#/endpoints/journal"
-import { listPeople } from "#/endpoints/people"
-import { keys } from "#/query-keys"
-import { JournalTimeline } from "#/features/journal/journal-timeline"
-import { Button } from "#/components/ui/button"
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { Button } from "#/components/ui/button";
+import { listJournal } from "#/endpoints/journal";
+import { listPeople } from "#/endpoints/people";
+import { JournalTimeline } from "#/features/journal/journal-timeline";
+import { keys } from "#/query-keys";
 
 const searchSchema = z.object({
 	q: z.string().optional(),
@@ -14,33 +14,52 @@ const searchSchema = z.object({
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
 	people: z.array(z.coerce.number()).optional(),
-})
+});
 
 export const Route = createFileRoute("/_authed/journal/")({
 	validateSearch: searchSchema,
 	component: JournalPage,
-})
+});
 
 function JournalPage() {
-	const navigate = useNavigate()
-	const search = Route.useSearch()
+	const navigate = useNavigate();
+	const search = Route.useSearch();
 
 	const { data, isPending, isError } = useQuery({
-		queryKey: keys.journal.list({ page: search.page, page_size: search.page_size, person_ids: search.people }),
-		queryFn: () => listJournal({ q: search.q, page: search.page, page_size: search.page_size, from_date: search.from_date, to_date: search.to_date, person_ids: search.people }),
-	})
+		queryKey: keys.journal.list({
+			page: search.page,
+			page_size: search.page_size,
+			person_ids: search.people,
+		}),
+		queryFn: () =>
+			listJournal({
+				q: search.q,
+				page: search.page,
+				page_size: search.page_size,
+				from_date: search.from_date,
+				to_date: search.to_date,
+				person_ids: search.people,
+			}),
+	});
 
 	const { data: allPeople } = useQuery({
 		queryKey: keys.people.list({ page_size: 200 }),
 		queryFn: () => listPeople({ page_size: 200 }),
-	})
+	});
 
-	if (isError) return <p className="text-sm font-base text-destructive">Failed to load journal.</p>
+	if (isError)
+		return (
+			<p className="text-sm font-base text-destructive">
+				Failed to load journal.
+			</p>
+		);
 
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Journal</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Journal
+				</h1>
 				<Button asChild>
 					<Link to="/journal/new">New Entry</Link>
 				</Button>
@@ -53,7 +72,16 @@ function JournalPage() {
 					<input
 						type="date"
 						value={search.from_date ?? ""}
-						onChange={(e) => void navigate({ to: "/journal", search: { ...search, from_date: e.target.value || undefined, page: 1 } })}
+						onChange={(e) =>
+							void navigate({
+								to: "/journal",
+								search: {
+									...search,
+									from_date: e.target.value || undefined,
+									page: 1,
+								},
+							})
+						}
 						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
@@ -62,7 +90,16 @@ function JournalPage() {
 					<input
 						type="date"
 						value={search.to_date ?? ""}
-						onChange={(e) => void navigate({ to: "/journal", search: { ...search, to_date: e.target.value || undefined, page: 1 } })}
+						onChange={(e) =>
+							void navigate({
+								to: "/journal",
+								search: {
+									...search,
+									to_date: e.target.value || undefined,
+									page: 1,
+								},
+							})
+						}
 						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
 					/>
 				</div>
@@ -70,7 +107,17 @@ function JournalPage() {
 					<Button
 						variant="neutral"
 						size="sm"
-						onClick={() => void navigate({ to: "/journal", search: { ...search, from_date: undefined, to_date: undefined, page: 1 } })}
+						onClick={() =>
+							void navigate({
+								to: "/journal",
+								search: {
+									...search,
+									from_date: undefined,
+									to_date: undefined,
+									page: 1,
+								},
+							})
+						}
 					>
 						Clear dates
 					</Button>
@@ -80,11 +127,14 @@ function JournalPage() {
 			{/* People filter */}
 			{allPeople?.items && allPeople.items.length > 0 && (
 				<div className="space-y-1">
-					<p className="text-[11px] font-medium text-zinc-500">Filter by person</p>
+					<p className="text-[11px] font-medium text-zinc-500">
+						Filter by person
+					</p>
 					<div className="flex flex-wrap gap-2">
 						{allPeople.items.map((p) => {
-							const active = (search.people ?? []).includes(p.id)
-							const base = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ""
+							const active = (search.people ?? []).includes(p.id);
+							const base =
+								(import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 							return (
 								<button
 									key={p.id}
@@ -92,26 +142,42 @@ function JournalPage() {
 									onClick={() => {
 										const next = active
 											? (search.people ?? []).filter((id) => id !== p.id)
-											: [...(search.people ?? []), p.id]
-										void navigate({ to: "/journal", search: { ...search, people: next.length ? next : undefined, page: 1 } })
+											: [...(search.people ?? []), p.id];
+										void navigate({
+											to: "/journal",
+											search: {
+												...search,
+												people: next.length ? next : undefined,
+												page: 1,
+											},
+										});
 									}}
 									className={`flex items-center gap-1.5 text-xs border rounded-full px-2 py-0.5 transition-colors ${active ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-zinc-200 hover:border-zinc-400"}`}
 								>
 									<span className="size-4 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
 										{p.avatar_path ? (
-											<img src={`${base}/v1/people/${p.id}/avatar`} alt={p.name} className="size-full object-cover" />
+											<img
+												src={`${base}/v1/people/${p.id}/avatar`}
+												alt={p.name}
+												className="size-full object-cover"
+											/>
 										) : (
 											p.name.charAt(0).toUpperCase()
 										)}
 									</span>
 									{p.name}
 								</button>
-							)
+							);
 						})}
 						{(search.people?.length ?? 0) > 0 && (
 							<button
 								type="button"
-								onClick={() => void navigate({ to: "/journal", search: { ...search, people: undefined, page: 1 } })}
+								onClick={() =>
+									void navigate({
+										to: "/journal",
+										search: { ...search, people: undefined, page: 1 },
+									})
+								}
 								className="text-xs text-zinc-400 hover:text-zinc-700"
 							>
 								Clear
@@ -127,5 +193,5 @@ function JournalPage() {
 				<JournalTimeline data={data?.items ?? []} />
 			)}
 		</div>
-	)
+	);
 }

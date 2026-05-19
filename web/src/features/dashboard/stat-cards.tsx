@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query"
-import { Users, BookOpen, Bell, Calendar } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
-import { keys } from "#/query-keys"
-import { listPeople } from "#/endpoints/people"
-import { listJournal } from "#/endpoints/journal"
-import { listReminders } from "#/endpoints/reminders"
-import { listUpcomingDates } from "#/endpoints/dates"
+import { useQuery } from "@tanstack/react-query";
+import { Bell, BookOpen, Calendar, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { listUpcomingDates } from "#/endpoints/dates";
+import { listJournal } from "#/endpoints/journal";
+import { listPeople } from "#/endpoints/people";
+import { listReminders } from "#/endpoints/reminders";
+import { keys } from "#/query-keys";
 
 function StatCard({
 	icon: Icon,
@@ -13,10 +13,10 @@ function StatCard({
 	value,
 	isLoading,
 }: {
-	icon: React.ElementType
-	label: string
-	value: number | undefined
-	isLoading: boolean
+	icon: React.ElementType;
+	label: string;
+	value: number | undefined;
+	isLoading: boolean;
 }) {
 	return (
 		<Card>
@@ -30,33 +30,35 @@ function StatCard({
 				{isLoading ? (
 					<div className="h-8 w-16 bg-zinc-100 rounded animate-pulse" />
 				) : (
-					<p className="font-mono text-2xl font-semibold text-zinc-900">{value ?? 0}</p>
+					<p className="font-mono text-2xl font-semibold text-zinc-900">
+						{value ?? 0}
+					</p>
 				)}
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 export function StatCards() {
 	const people = useQuery({
 		queryKey: keys.people.list(),
 		queryFn: () => listPeople({ page_size: 1 }),
-	})
+	});
 
 	const journal = useQuery({
 		queryKey: keys.journal.list({ page_size: 1 }),
 		queryFn: () => listJournal({ page_size: 1 }),
-	})
+	});
 
 	const reminders = useQuery({
 		queryKey: keys.reminders.list({ status: "upcoming" } as never),
 		queryFn: () => listReminders({ status: "upcoming" }),
-	})
+	});
 
 	const dates = useQuery({
 		queryKey: keys.dates.upcoming(),
 		queryFn: () => listUpcomingDates(30),
-	})
+	});
 
 	return (
 		<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -85,5 +87,5 @@ export function StatCards() {
 				isLoading={dates.isLoading}
 			/>
 		</div>
-	)
+	);
 }

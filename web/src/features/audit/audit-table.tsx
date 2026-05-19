@@ -1,15 +1,18 @@
 // Audit log table: read-only, columns for timestamp, actor, action, target
-import { useMemo } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { DataTable } from "#/components/data-table/data-table"
-import { Badge } from "#/components/ui/badge"
-import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
-import type { AuditEntry } from "#/schemas/audit"
-import { formatDateTime } from "#/lib/format-datetime"
+
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
+import {
+	sortableHeader,
+	valueCell,
+} from "#/components/data-table/column-helpers";
+import { DataTable } from "#/components/data-table/data-table";
+import { formatDateTime } from "#/lib/format-datetime";
+import type { AuditEntry } from "#/schemas/audit";
 
 interface AuditTableProps {
-	data: AuditEntry[]
-	toolbarActions?: React.ReactNode
+	data: AuditEntry[];
+	toolbarActions?: React.ReactNode;
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -18,7 +21,7 @@ const ACTION_COLORS: Record<string, string> = {
 	delete: "text-red-700",
 	login: "text-zinc-600",
 	logout: "text-zinc-600",
-}
+};
 
 export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 	const columns = useMemo<ColumnDef<AuditEntry>[]>(
@@ -29,11 +32,15 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				header: sortableHeader<AuditEntry>("Timestamp"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => {
-					if (!val) return "—"
+					if (!val) return "—";
 					try {
-						return <span className="font-mono text-[12px] text-zinc-500">{formatDateTime(val)}</span>
+						return (
+							<span className="font-mono text-[12px] text-zinc-500">
+								{formatDateTime(val)}
+							</span>
+						);
 					} catch {
-						return val
+						return val;
 					}
 				}),
 			},
@@ -43,7 +50,11 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				header: sortableHeader<AuditEntry>("Action"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-zinc-600"}`}>{val}</span>
+					<span
+						className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-zinc-600"}`}
+					>
+						{val}
+					</span>
 				)),
 			},
 			{
@@ -52,7 +63,9 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				header: sortableHeader<AuditEntry>("Type"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className="text-[12px] text-zinc-500 capitalize">{val.replace("_", " ")}</span>
+					<span className="text-[12px] text-zinc-500 capitalize">
+						{val.replace("_", " ")}
+					</span>
 				)),
 			},
 			{
@@ -65,14 +78,16 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 			},
 		],
 		[],
-	)
+	);
 
 	return (
 		<DataTable
 			columns={columns}
 			data={data}
 			toolbarActions={toolbarActions}
-			emptyState={<span className="text-sm text-foreground/50">No audit entries.</span>}
+			emptyState={
+				<span className="text-sm text-foreground/50">No audit entries.</span>
+			}
 		/>
-	)
+	);
 }

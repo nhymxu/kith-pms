@@ -1,29 +1,53 @@
 // Reminders table: columns for title, person, due date, status
-import { useMemo } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { Link } from "@tanstack/react-router"
-import { DataTable } from "#/components/data-table/data-table"
-import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
-import type { ReminderWithPerson } from "#/schemas/reminder"
-import { CompleteButton } from "./complete-button"
-import { formatDate } from "#/lib/format-datetime"
+
+import { Link } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
+import {
+	sortableHeader,
+	valueCell,
+} from "#/components/data-table/column-helpers";
+import { DataTable } from "#/components/data-table/data-table";
+import { formatDate } from "#/lib/format-datetime";
+import type { ReminderWithPerson } from "#/schemas/reminder";
+import { CompleteButton } from "./complete-button";
 
 interface RemindersTableProps {
-	data: ReminderWithPerson[]
-	toolbarActions?: React.ReactNode
-	onCompleted?: () => void
+	data: ReminderWithPerson[];
+	toolbarActions?: React.ReactNode;
+	onCompleted?: () => void;
 }
 
-function StatusBadge({ completed, dueDate }: { completed: boolean; dueDate: string }) {
-	if (completed) return <span className="font-mono text-[10px] uppercase text-zinc-400 line-through">Done</span>
-	const isOverdue = dueDate ? new Date(dueDate) < new Date() : false
-	return isOverdue
-		? <span className="font-mono text-[10px] uppercase text-red-600">Overdue</span>
-		: <span className="font-mono text-[10px] uppercase text-indigo-600">Upcoming</span>
+function StatusBadge({
+	completed,
+	dueDate,
+}: {
+	completed: boolean;
+	dueDate: string;
+}) {
+	if (completed)
+		return (
+			<span className="font-mono text-[10px] uppercase text-zinc-400 line-through">
+				Done
+			</span>
+		);
+	const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
+	return isOverdue ? (
+		<span className="font-mono text-[10px] uppercase text-red-600">
+			Overdue
+		</span>
+	) : (
+		<span className="font-mono text-[10px] uppercase text-indigo-600">
+			Upcoming
+		</span>
+	);
 }
 
-
-export function RemindersTable({ data, toolbarActions, onCompleted }: RemindersTableProps) {
+export function RemindersTable({
+	data,
+	toolbarActions,
+	onCompleted,
+}: RemindersTableProps) {
 	const columns = useMemo<ColumnDef<ReminderWithPerson>[]>(
 		() => [
 			{
@@ -54,14 +78,23 @@ export function RemindersTable({ data, toolbarActions, onCompleted }: RemindersT
 				header: sortableHeader<ReminderWithPerson>("Due Date"),
 				enableSorting: true,
 				cell: valueCell<ReminderWithPerson, string>((val) =>
-					val ? <span className="font-mono text-[12px] text-zinc-500">{formatDate(val)}</span> : <span className="text-zinc-300">—</span>
+					val ? (
+						<span className="font-mono text-[12px] text-zinc-500">
+							{formatDate(val)}
+						</span>
+					) : (
+						<span className="text-zinc-300">—</span>
+					),
 				),
 			},
 			{
 				id: "status",
 				header: "Status",
 				cell: ({ row }) => (
-					<StatusBadge completed={row.original.completed ?? false} dueDate={row.original.due_date} />
+					<StatusBadge
+						completed={row.original.completed ?? false}
+						dueDate={row.original.due_date}
+					/>
 				),
 			},
 			{
@@ -69,19 +102,24 @@ export function RemindersTable({ data, toolbarActions, onCompleted }: RemindersT
 				header: "",
 				cell: ({ row }) =>
 					!row.original.completed ? (
-						<CompleteButton reminderId={row.original.id} onCompleted={onCompleted} />
+						<CompleteButton
+							reminderId={row.original.id}
+							onCompleted={onCompleted}
+						/>
 					) : null,
 			},
 		],
 		[onCompleted],
-	)
+	);
 
 	return (
 		<DataTable
 			columns={columns}
 			data={data}
 			toolbarActions={toolbarActions}
-			emptyState={<span className="text-sm text-foreground/50">No reminders found.</span>}
+			emptyState={
+				<span className="text-sm text-foreground/50">No reminders found.</span>
+			}
 		/>
-	)
+	);
 }

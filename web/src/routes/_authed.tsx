@@ -1,58 +1,66 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router"
-import { useEffect } from "react"
-import { AppShell } from "#/components/app-shell/app-shell"
-import { onSessionLost } from "#/lib/api-client"
-import { syncSettingsFromApi } from "#/lib/format-datetime"
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
-import { Button } from "#/components/ui/button"
+import {
+	createFileRoute,
+	Outlet,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
+import { AppShell } from "#/components/app-shell/app-shell";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { onSessionLost } from "#/lib/api-client";
+import { syncSettingsFromApi } from "#/lib/format-datetime";
 
 export const Route = createFileRoute("/_authed")({
 	beforeLoad({ context, location }) {
 		// Only redirect if auth has resolved and there is no user.
 		// During loading we let the component handle it (RequireAuth inside AppShell does it).
-		if (context.auth.isLoading) return
+		if (context.auth.isLoading) return;
 		if (!context.auth.user) {
 			throw redirect({
 				to: "/login",
 				search: { redirect: location.href },
-			})
+			});
 		}
 	},
 	errorComponent: AuthedErrorBoundary,
 	notFoundComponent: AuthedNotFound,
 	component: AuthedLayout,
-})
+});
 
 function AuthedLayout() {
-	const navigate = useNavigate()
+	const navigate = useNavigate();
 
 	// Subscribe to 401 session-lost events (fires when apiFetch gets a 401 after initial load).
 	useEffect(() => {
 		const unsub = onSessionLost(() => {
-			navigate({ to: "/login", search: { redirect: window.location.href } })
-		})
-		return unsub
-	}, [navigate])
+			navigate({ to: "/login", search: { redirect: window.location.href } });
+		});
+		return unsub;
+	}, [navigate]);
 
 	// Seed localStorage from DB on every authenticated mount.
 	useEffect(() => {
-		syncSettingsFromApi()
-	}, [])
+		syncSettingsFromApi();
+	}, []);
 
 	return (
 		<AppShell>
 			<Outlet />
 		</AppShell>
-	)
+	);
 }
 
 function AuthedErrorBoundary({ error }: { error: unknown }) {
-	const message = error instanceof Error ? error.message : "An unexpected error occurred."
+	const message =
+		error instanceof Error ? error.message : "An unexpected error occurred.";
 	return (
 		<div className="flex items-center justify-center min-h-screen p-4 bg-background">
 			<Card className="max-w-md w-full">
 				<CardHeader>
-					<CardTitle className="text-destructive">Something went wrong</CardTitle>
+					<CardTitle className="text-destructive">
+						Something went wrong
+					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<p className="text-sm font-base">{message}</p>
@@ -62,7 +70,7 @@ function AuthedErrorBoundary({ error }: { error: unknown }) {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }
 
 function AuthedNotFound() {
@@ -74,5 +82,5 @@ function AuthedNotFound() {
 				<a href="/">Go home</a>
 			</Button>
 		</div>
-	)
+	);
 }

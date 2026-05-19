@@ -1,6 +1,5 @@
-import { useNavigate } from "@tanstack/react-router"
-import { LogOut, Settings, Shield, Tag, Users } from "lucide-react"
-import { useAuth } from "#/lib/auth-context"
+import { useNavigate } from "@tanstack/react-router";
+import { LogOut, Settings, Tag } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,19 +7,20 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu"
+} from "#/components/ui/dropdown-menu";
+import { useAuth } from "#/lib/auth-context";
 
 export function UserMenu() {
-	const { user, logout } = useAuth()
-	const navigate = useNavigate()
+	const { user, logout } = useAuth();
+	const navigate = useNavigate();
 
 	const handleLogout = async () => {
-		await logout()
-	}
+		await logout();
+	};
 
-	const go = (path: string) => navigate({ to: path as "/" })
+	const go = (path: string) => navigate({ to: path as "/" });
 
-	const initials = user ? `U${user.id}` : "?"
+	const initials = user ? `U${user.id}` : "?";
 
 	return (
 		<DropdownMenu>
@@ -56,5 +56,5 @@ export function UserMenu() {
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
-	)
+	);
 }

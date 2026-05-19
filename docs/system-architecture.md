@@ -482,8 +482,8 @@ person_relationship (N)
 - **Asset serving**: `/assets/*` served with 1-year cache headers; `/` serves index.html with no-cache + CSP headers
 
 ### Container (multi-stage Dockerfile)
-- Stage 1: `node:22-alpine` — `pnpm install --frozen-lockfile && pnpm build`
-- Stage 2: `golang:1.26.2-alpine` — copies SPA into embed path, runs `go build`
+- Stage 1: `node:24-alpine` — `pnpm install --frozen-lockfile && pnpm build`
+- Stage 2: `golang:1.26.3-alpine` — copies SPA into embed path, runs `go build`
 - Stage 3: `gcr.io/distroless/static-debian12` — minimal runtime, non-root UID 65532
 - `go.uber.org/automaxprocs` auto-sets GOMAXPROCS to match container CPU quota
 - Database: Mount volume at `/data` for persistent storage

@@ -1,11 +1,11 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const activityPersonSchema = z.object({
 	person_id: z.number(),
 	name: z.string(),
 	nickname: z.string().optional().default(""),
 	avatar_path: z.string().optional().default(""),
-})
+});
 
 export const journalActivitySchema = z.object({
 	id: z.number(),
@@ -15,19 +15,23 @@ export const journalActivitySchema = z.object({
 	content: z.string().optional().default(""),
 	created_at: z.string(),
 	updated_at: z.string(),
-	people: z.array(activityPersonSchema).nullable().optional().transform((v) => v ?? []),
-})
+	people: z
+		.array(activityPersonSchema)
+		.nullable()
+		.optional()
+		.transform((v) => v ?? []),
+});
 
 export const journalListSchema = z.object({
 	items: z.array(journalActivitySchema),
 	total: z.number(),
 	page: z.number(),
 	page_size: z.number(),
-})
+});
 
-export type ActivityPerson = z.infer<typeof activityPersonSchema>
-export type JournalActivity = z.infer<typeof journalActivitySchema>
-export type JournalList = z.infer<typeof journalListSchema>
+export type ActivityPerson = z.infer<typeof activityPersonSchema>;
+export type JournalActivity = z.infer<typeof journalActivitySchema>;
+export type JournalList = z.infer<typeof journalListSchema>;
 
 export const journalRequestSchema = z.object({
 	title: z.string().min(1),
@@ -35,6 +39,6 @@ export const journalRequestSchema = z.object({
 	occurred_at_date: z.string(),
 	occurred_at_time: z.string().optional().default(""),
 	person_ids: z.array(z.number()).optional().default([]),
-})
+});
 
-export type JournalRequest = z.infer<typeof journalRequestSchema>
+export type JournalRequest = z.infer<typeof journalRequestSchema>;

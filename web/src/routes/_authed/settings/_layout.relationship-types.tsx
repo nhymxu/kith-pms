@@ -1,31 +1,47 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { useForm } from "@tanstack/react-form"
-import { listRelationshipTypes, createRelationshipType, updateRelationshipType, deleteRelationshipType } from "#/endpoints/relationship-types"
-import { relationshipTypeRequestSchema, type RelationshipType, type RelationshipTypeRequest } from "#/schemas/relationship-type"
-import { keys } from "#/query-keys"
-import { Button } from "#/components/ui/button"
-import { FormField } from "#/components/form/form-field"
-import { SubmitButton } from "#/components/form/submit-button"
-import { Alert, AlertDescription } from "#/components/ui/alert"
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { FormField } from "#/components/form/form-field";
+import { SubmitButton } from "#/components/form/submit-button";
+import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
 import {
-	Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "#/components/ui/dialog"
-import { Pencil, Trash2, Plus } from "lucide-react"
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import {
+	createRelationshipType,
+	deleteRelationshipType,
+	listRelationshipTypes,
+	updateRelationshipType,
+} from "#/endpoints/relationship-types";
+import { keys } from "#/query-keys";
+import {
+	type RelationshipType,
+	type RelationshipTypeRequest,
+	relationshipTypeRequestSchema,
+} from "#/schemas/relationship-type";
 
-export const Route = createFileRoute("/_authed/settings/_layout/relationship-types")({
+export const Route = createFileRoute(
+	"/_authed/settings/_layout/relationship-types",
+)({
 	component: RelationshipTypesPage,
-})
+});
 
 interface RelTypeFormDialogProps {
-	initial?: RelationshipType
-	onClose: () => void
+	initial?: RelationshipType;
+	onClose: () => void;
 }
 
 function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
-	const qc = useQueryClient()
-	const [apiError, setApiError] = useState<string | null>(null)
+	const qc = useQueryClient();
+	const [apiError, setApiError] = useState<string | null>(null);
 
 	const mutation = useMutation({
 		mutationFn: (body: RelationshipTypeRequest) =>
@@ -33,11 +49,11 @@ function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 				? updateRelationshipType(initial.id, body)
 				: createRelationshipType(body).then(() => undefined),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all })
-			onClose()
+			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all });
+			onClose();
 		},
 		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
-	})
+	});
 
 	const form = useForm({
 		defaultValues: {
@@ -46,24 +62,47 @@ function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 		} satisfies RelationshipTypeRequest,
 		validators: {
 			onSubmit: ({ value }) => {
-				const r = relationshipTypeRequestSchema.safeParse(value)
-				return r.success ? undefined : r.error.issues.map((i) => i.message).join(", ")
+				const r = relationshipTypeRequestSchema.safeParse(value);
+				return r.success
+					? undefined
+					: r.error.issues.map((i) => i.message).join(", ");
 			},
 		},
-		onSubmit: async ({ value }) => mutation.mutateAsync(value as RelationshipTypeRequest),
-	})
+		onSubmit: async ({ value }) =>
+			mutation.mutateAsync(value as RelationshipTypeRequest),
+	});
 
 	return (
-		<form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-4">
-			{apiError && <Alert variant="destructive"><AlertDescription>{apiError}</AlertDescription></Alert>}
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				form.handleSubmit();
+			}}
+			className="space-y-4"
+		>
+			{apiError && (
+				<Alert variant="destructive">
+					<AlertDescription>{apiError}</AlertDescription>
+				</Alert>
+			)}
 			<form.Field name="name">
-				{(f) => <FormField field={f} label="Name *" placeholder="e.g. Friend" />}
+				{(f) => (
+					<FormField field={f} label="Name *" placeholder="e.g. Friend" />
+				)}
 			</form.Field>
 			<form.Field name="reverse_name">
-				{(f) => <FormField field={f} label="Reverse name (optional)" placeholder="e.g. Friend of" />}
+				{(f) => (
+					<FormField
+						field={f}
+						label="Reverse name (optional)"
+						placeholder="e.g. Friend of"
+					/>
+				)}
 			</form.Field>
 			<DialogFooter>
-				<Button type="button" variant="neutral" onClick={onClose}>Cancel</Button>
+				<Button type="button" variant="neutral" onClick={onClose}>
+					Cancel
+				</Button>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
 						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
@@ -73,46 +112,68 @@ function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 				</form.Subscribe>
 			</DialogFooter>
 		</form>
-	)
+	);
 }
 
-function DeleteRelTypeDialog({ relType, onClose }: { relType: RelationshipType; onClose: () => void }) {
-	const qc = useQueryClient()
+function DeleteRelTypeDialog({
+	relType,
+	onClose,
+}: {
+	relType: RelationshipType;
+	onClose: () => void;
+}) {
+	const qc = useQueryClient();
 	const mutation = useMutation({
 		mutationFn: () => deleteRelationshipType(relType.id),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all })
-			onClose()
+			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all });
+			onClose();
 		},
-	})
+	});
 	return (
 		<>
 			<DialogHeader>
 				<DialogTitle>Delete relationship type?</DialogTitle>
 				<DialogDescription>
-					Permanently delete "{relType.name}"? Existing relationships of this type will be affected.
+					Permanently delete "{relType.name}"? Existing relationships of this
+					type will be affected.
 				</DialogDescription>
 			</DialogHeader>
 			<DialogFooter>
-				<Button variant="neutral" onClick={onClose}>Cancel</Button>
-				<Button variant="destructive" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+				<Button variant="neutral" onClick={onClose}>
+					Cancel
+				</Button>
+				<Button
+					variant="destructive"
+					onClick={() => mutation.mutate()}
+					disabled={mutation.isPending}
+				>
 					{mutation.isPending ? "Deleting…" : "Delete"}
 				</Button>
 			</DialogFooter>
 		</>
-	)
+	);
 }
 
-type DialogMode = { kind: "create" } | { kind: "edit"; relType: RelationshipType } | { kind: "delete"; relType: RelationshipType } | null
+type DialogMode =
+	| { kind: "create" }
+	| { kind: "edit"; relType: RelationshipType }
+	| { kind: "delete"; relType: RelationshipType }
+	| null;
 
 function RelationshipTypesPage() {
-	const [dialog, setDialog] = useState<DialogMode>(null)
-	const { data, isPending } = useQuery({ queryKey: keys.relationshipTypes.list(), queryFn: listRelationshipTypes })
+	const [dialog, setDialog] = useState<DialogMode>(null);
+	const { data, isPending } = useQuery({
+		queryKey: keys.relationshipTypes.list(),
+		queryFn: listRelationshipTypes,
+	});
 
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">Relationship Types</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Relationship Types
+				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
 					<Plus className="size-3 mr-1" /> New Type
 				</Button>
@@ -126,19 +187,34 @@ function RelationshipTypesPage() {
 
 			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
 				{data?.map((rt) => (
-					<li key={rt.id} className="flex items-center gap-3 px-4 py-3 text-[13px]">
+					<li
+						key={rt.id}
+						className="flex items-center gap-3 px-4 py-3 text-[13px]"
+					>
 						<span className="text-zinc-900 font-medium">{rt.name}</span>
 						{rt.reverse_name && (
-							<span className="text-zinc-400 font-mono text-[11px]">↔ {rt.reverse_name}</span>
+							<span className="text-zinc-400 font-mono text-[11px]">
+								↔ {rt.reverse_name}
+							</span>
 						)}
 						{(rt.usage_count ?? 0) > 0 && (
-							<span className="font-mono text-[11px] text-zinc-400">{rt.usage_count} uses</span>
+							<span className="font-mono text-[11px] text-zinc-400">
+								{rt.usage_count} uses
+							</span>
 						)}
 						<div className="ml-auto flex gap-1">
-							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "edit", relType: rt })}>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => setDialog({ kind: "edit", relType: rt })}
+							>
 								<Pencil className="size-3.5" />
 							</Button>
-							<Button variant="ghost" size="icon" onClick={() => setDialog({ kind: "delete", relType: rt })}>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => setDialog({ kind: "delete", relType: rt })}
+							>
 								<Trash2 className="size-3.5" />
 							</Button>
 						</div>
@@ -152,7 +228,11 @@ function RelationshipTypesPage() {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>{dialog?.kind === "edit" ? "Edit relationship type" : "New relationship type"}</DialogTitle>
+						<DialogTitle>
+							{dialog?.kind === "edit"
+								? "Edit relationship type"
+								: "New relationship type"}
+						</DialogTitle>
 					</DialogHeader>
 					<RelTypeFormDialog
 						initial={dialog?.kind === "edit" ? dialog.relType : undefined}
@@ -161,13 +241,19 @@ function RelationshipTypesPage() {
 				</DialogContent>
 			</Dialog>
 
-			<Dialog open={dialog?.kind === "delete"} onOpenChange={(v) => !v && setDialog(null)}>
+			<Dialog
+				open={dialog?.kind === "delete"}
+				onOpenChange={(v) => !v && setDialog(null)}
+			>
 				<DialogContent>
 					{dialog?.kind === "delete" && (
-						<DeleteRelTypeDialog relType={dialog.relType} onClose={() => setDialog(null)} />
+						<DeleteRelTypeDialog
+							relType={dialog.relType}
+							onClose={() => setDialog(null)}
+						/>
 					)}
 				</DialogContent>
 			</Dialog>
 		</div>
-	)
+	);
 }

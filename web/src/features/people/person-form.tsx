@@ -1,28 +1,32 @@
-import { useForm } from "@tanstack/react-form"
-import { useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
-import { z } from "zod"
-import { useQueryClient } from "@tanstack/react-query"
-import { personRequestSchema, type Person, type PersonRequest } from "#/schemas/person"
-import { createPerson, updatePerson } from "#/endpoints/people"
-import { keys } from "#/query-keys"
-import { FormField } from "#/components/form/form-field"
-import { SubmitButton } from "#/components/form/submit-button"
-import { Alert, AlertDescription } from "#/components/ui/alert"
-import { Textarea } from "#/components/ui/textarea"
-import { Label } from "#/components/ui/label"
-import { PersonFormContacts } from "./person-form-contacts"
-import { PersonFormLocations } from "./person-form-locations"
+import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { z } from "zod";
+import { FormField } from "#/components/form/form-field";
+import { SubmitButton } from "#/components/form/submit-button";
+import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Label } from "#/components/ui/label";
+import { Textarea } from "#/components/ui/textarea";
+import { createPerson, updatePerson } from "#/endpoints/people";
+import { keys } from "#/query-keys";
+import {
+	type Person,
+	type PersonRequest,
+	personRequestSchema,
+} from "#/schemas/person";
+import { PersonFormContacts } from "./person-form-contacts";
+import { PersonFormLocations } from "./person-form-locations";
 
 interface PersonFormProps {
-	mode: "create" | "edit"
-	initial?: Person
+	mode: "create" | "edit";
+	initial?: Person;
 }
 
 export function PersonForm({ mode, initial }: PersonFormProps) {
-	const navigate = useNavigate()
-	const qc = useQueryClient()
-	const [apiError, setApiError] = useState<string | null>(null)
+	const navigate = useNavigate();
+	const qc = useQueryClient();
+	const [apiError, setApiError] = useState<string | null>(null);
 
 	const form = useForm({
 		defaultValues: {
@@ -48,36 +52,49 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 		} satisfies PersonRequest,
 		validators: {
 			onSubmit: ({ value }) => {
-				const r = personRequestSchema.safeParse(value)
-				return r.success ? undefined : r.error.issues.map((i) => i.message).join(", ")
+				const r = personRequestSchema.safeParse(value);
+				return r.success
+					? undefined
+					: r.error.issues.map((i) => i.message).join(", ");
 			},
 		},
 		onSubmit: async ({ value }) => {
-			setApiError(null)
+			setApiError(null);
 			try {
-				const parsed = personRequestSchema.parse(value)
+				const parsed = personRequestSchema.parse(value);
 				if (mode === "create") {
-					const id = await createPerson(parsed)
-					navigate({ to: "/people/$personId", params: { personId: String(id) } })
+					const id = await createPerson(parsed);
+					navigate({
+						to: "/people/$personId",
+						params: { personId: String(id) },
+					});
 				} else if (initial) {
-					await updatePerson(initial.id, parsed)
-					await qc.invalidateQueries({ queryKey: keys.people.detail(initial.id) })
-					await qc.invalidateQueries({ queryKey: keys.people.all })
-					navigate({ to: "/people/$personId", params: { personId: String(initial.id) } })
+					await updatePerson(initial.id, parsed);
+					await qc.invalidateQueries({
+						queryKey: keys.people.detail(initial.id),
+					});
+					await qc.invalidateQueries({ queryKey: keys.people.all });
+					navigate({
+						to: "/people/$personId",
+						params: { personId: String(initial.id) },
+					});
 				}
 			} catch (err) {
 				if (err instanceof z.ZodError) {
-					setApiError(err.issues.map((i) => i.message).join(", "))
+					setApiError(err.issues.map((i) => i.message).join(", "));
 				} else {
-					setApiError(err instanceof Error ? err.message : "Save failed")
+					setApiError(err instanceof Error ? err.message : "Save failed");
 				}
 			}
 		},
-	})
+	});
 
 	return (
 		<form
-			onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}
+			onSubmit={(e) => {
+				e.preventDefault();
+				form.handleSubmit();
+			}}
 			className="space-y-6 max-w-2xl"
 		>
 			{apiError && (
@@ -88,18 +105,30 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 
 			{/* Identity */}
 			<div className="space-y-4">
-				<h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">Identity</h2>
+				<h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+					Identity
+				</h2>
 				<div className="grid grid-cols-2 gap-4">
 					<form.Field name="name">
-						{(f) => <FormField field={f} label="Name *" placeholder="Full name" />}
+						{(f) => (
+							<FormField field={f} label="Name *" placeholder="Full name" />
+						)}
 					</form.Field>
 					<form.Field name="nickname">
-						{(f) => <FormField field={f} label="Nickname" placeholder="Goes by…" />}
+						{(f) => (
+							<FormField field={f} label="Nickname" placeholder="Goes by…" />
+						)}
 					</form.Field>
 				</div>
 				<div className="grid grid-cols-2 gap-4">
 					<form.Field name="relationship_type">
-						{(f) => <FormField field={f} label="Relationship type" placeholder="e.g. Friend" />}
+						{(f) => (
+							<FormField
+								field={f}
+								label="Relationship type"
+								placeholder="e.g. Friend"
+							/>
+						)}
 					</form.Field>
 					<form.Field name="date_of_birth">
 						{(f) => <FormField field={f} label="Date of birth" type="date" />}
@@ -150,5 +179,5 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				)}
 			</form.Subscribe>
 		</form>
-	)
+	);
 }

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const contactInfoSchema = z.object({
 	id: z.number(),
@@ -7,7 +7,7 @@ export const contactInfoSchema = z.object({
 	value: z.string(),
 	label: z.string(),
 	position: z.number(),
-})
+});
 
 export const locationSchema = z.object({
 	id: z.number(),
@@ -18,13 +18,13 @@ export const locationSchema = z.object({
 	country: z.string(),
 	postal_code: z.string(),
 	position: z.number(),
-})
+});
 
 export const labelRefSchema = z.object({
 	id: z.number(),
 	name: z.string(),
 	color: z.string(),
-})
+});
 
 export const personSchema = z.object({
 	id: z.number(),
@@ -42,23 +42,35 @@ export const personSchema = z.object({
 	last_contact_at: z.string().nullable().optional(),
 	created_at: z.string(),
 	updated_at: z.string(),
-	contacts: z.array(contactInfoSchema).nullable().optional().transform((v) => v ?? []),
-	locations: z.array(locationSchema).nullable().optional().transform((v) => v ?? []),
-	labels: z.array(labelRefSchema).nullable().optional().transform((v) => v ?? []),
-})
+	contacts: z
+		.array(contactInfoSchema)
+		.nullable()
+		.optional()
+		.transform((v) => v ?? []),
+	locations: z
+		.array(locationSchema)
+		.nullable()
+		.optional()
+		.transform((v) => v ?? []),
+	labels: z
+		.array(labelRefSchema)
+		.nullable()
+		.optional()
+		.transform((v) => v ?? []),
+});
 
 export const personListSchema = z.object({
 	items: z.array(personSchema),
 	total: z.number(),
 	page: z.number(),
 	page_size: z.number(),
-})
+});
 
-export type ContactInfo = z.infer<typeof contactInfoSchema>
-export type Location = z.infer<typeof locationSchema>
-export type LabelRef = z.infer<typeof labelRefSchema>
-export type Person = z.infer<typeof personSchema>
-export type PersonList = z.infer<typeof personListSchema>
+export type ContactInfo = z.infer<typeof contactInfoSchema>;
+export type Location = z.infer<typeof locationSchema>;
+export type LabelRef = z.infer<typeof labelRefSchema>;
+export type Person = z.infer<typeof personSchema>;
+export type PersonList = z.infer<typeof personListSchema>;
 
 // Request shapes
 export const personRequestSchema = z.object({
@@ -91,6 +103,6 @@ export const personRequestSchema = z.object({
 		)
 		.optional()
 		.default([]),
-})
+});
 
-export type PersonRequest = z.infer<typeof personRequestSchema>
+export type PersonRequest = z.infer<typeof personRequestSchema>;

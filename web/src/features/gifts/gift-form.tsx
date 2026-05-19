@@ -1,37 +1,49 @@
 // Gift create/edit form — TanStack Form + Zod validation
-import { useForm } from "@tanstack/react-form"
-import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
-import { giftRequestSchema, type GiftRequest, type GiftWithPerson } from "#/schemas/gift"
-import { listPeople } from "#/endpoints/people"
-import { keys } from "#/query-keys"
-import { Button } from "#/components/ui/button"
-import { FormField } from "#/components/form/form-field"
-import { SubmitButton } from "#/components/form/submit-button"
-import { Label } from "#/components/ui/label"
-import { Textarea } from "#/components/ui/textarea"
-import { Alert, AlertDescription } from "#/components/ui/alert"
-import { Input } from "#/components/ui/input"
+import { useForm } from "@tanstack/react-form";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { FormField } from "#/components/form/form-field";
+import { SubmitButton } from "#/components/form/submit-button";
+import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import { Textarea } from "#/components/ui/textarea";
+import { listPeople } from "#/endpoints/people";
+import { keys } from "#/query-keys";
+import {
+	type GiftRequest,
+	type GiftWithPerson,
+	giftRequestSchema,
+} from "#/schemas/gift";
 
 interface GiftFormProps {
-	initial?: Partial<GiftWithPerson>
-	onSubmit: (values: GiftRequest) => Promise<void>
-	submitLabel?: string
-	onCancel?: () => void
-	onImageChange?: (file: File | null) => void
+	initial?: Partial<GiftWithPerson>;
+	onSubmit: (values: GiftRequest) => Promise<void>;
+	submitLabel?: string;
+	onCancel?: () => void;
+	onImageChange?: (file: File | null) => void;
 }
 
-export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCancel, onImageChange }: GiftFormProps) {
-	const [apiError, setApiError] = useState<string | null>(null)
-	const [personSearch, setPersonSearch] = useState("")
+export function GiftForm({
+	initial,
+	onSubmit,
+	submitLabel = "Save Gift",
+	onCancel,
+	onImageChange,
+}: GiftFormProps) {
+	const [apiError, setApiError] = useState<string | null>(null);
+	const [personSearch, setPersonSearch] = useState("");
 	const [amountDisplay, setAmountDisplay] = useState(
-		initial?.amount_cents != null ? (initial.amount_cents / 100).toString() : "",
-	)
+		initial?.amount_cents != null
+			? (initial.amount_cents / 100).toString()
+			: "",
+	);
 
 	const { data: peopleList } = useQuery({
 		queryKey: keys.people.list({}),
 		queryFn: () => listPeople({ page_size: 200 }),
-	})
+	});
 
 	const form = useForm({
 		defaultValues: {
@@ -46,32 +58,33 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 		} satisfies GiftRequest,
 		validators: {
 			onSubmit: ({ value }) => {
-				const result = giftRequestSchema.safeParse(value)
+				const result = giftRequestSchema.safeParse(value);
 				if (!result.success) {
-					return result.error.issues.map((i) => i.message).join(", ")
+					return result.error.issues.map((i) => i.message).join(", ");
 				}
-				return undefined
+				return undefined;
 			},
 		},
 		onSubmit: async ({ value }) => {
-			setApiError(null)
+			setApiError(null);
 			try {
-				await onSubmit(value as GiftRequest)
+				await onSubmit(value as GiftRequest);
 			} catch (err) {
-				setApiError(err instanceof Error ? err.message : "Failed to save gift")
+				setApiError(err instanceof Error ? err.message : "Failed to save gift");
 			}
 		},
-	})
+	});
 
-	const filteredPeople = peopleList?.items.filter((p) =>
-		p.name.toLowerCase().includes(personSearch.toLowerCase()),
-	) ?? []
+	const filteredPeople =
+		peopleList?.items.filter((p) =>
+			p.name.toLowerCase().includes(personSearch.toLowerCase()),
+		) ?? [];
 
 	return (
 		<form
 			onSubmit={(e) => {
-				e.preventDefault()
-				form.handleSubmit()
+				e.preventDefault();
+				form.handleSubmit();
 			}}
 			className="space-y-4"
 		>
@@ -86,19 +99,29 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 				<Label>Person</Label>
 				<form.Field name="person_id">
 					{(field) => {
-						const selected = peopleList?.items.find((p) => p.id === field.state.value)
+						const selected = peopleList?.items.find(
+							(p) => p.id === field.state.value,
+						);
 						return (
 							<div className="space-y-1">
 								<Input
 									placeholder="Search person…"
-									value={personSearch !== "" ? personSearch : (selected ? selected.name : "")}
+									value={
+										personSearch !== ""
+											? personSearch
+											: selected
+												? selected.name
+												: ""
+									}
 									onChange={(e) => setPersonSearch(e.target.value)}
 									onFocus={() => setPersonSearch("")}
 								/>
 								{personSearch && (
 									<div className="border border-zinc-200 rounded-md bg-white shadow-sm max-h-48 overflow-y-auto">
 										{filteredPeople.length === 0 ? (
-											<p className="px-3 py-2 text-sm text-zinc-400">No results</p>
+											<p className="px-3 py-2 text-sm text-zinc-400">
+												No results
+											</p>
 										) : (
 											filteredPeople.map((p) => (
 												<button
@@ -106,8 +129,8 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 													type="button"
 													className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
 													onClick={() => {
-														field.handleChange(p.id)
-														setPersonSearch("")
+														field.handleChange(p.id);
+														setPersonSearch("");
 													}}
 												>
 													{p.name}
@@ -117,13 +140,19 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 									</div>
 								)}
 							</div>
-						)
+						);
 					}}
 				</form.Field>
 			</div>
 
 			<form.Field name="title">
-				{(field) => <FormField field={field} label="Title / Occasion" placeholder="Birthday gift" />}
+				{(field) => (
+					<FormField
+						field={field}
+						label="Title / Occasion"
+						placeholder="Birthday gift"
+					/>
+				)}
 			</form.Field>
 
 			{/* Direction radio group */}
@@ -133,7 +162,10 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 					{(field) => (
 						<div className="flex gap-4">
 							{(["given", "received", "planned"] as const).map((v) => (
-								<label key={v} className="flex items-center gap-1.5 cursor-pointer">
+								<label
+									key={v}
+									className="flex items-center gap-1.5 cursor-pointer"
+								>
 									<input
 										type="radio"
 										name="direction"
@@ -155,8 +187,17 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 				<form.Field name="debt_type">
 					{(field) => (
 						<div className="flex gap-4">
-							{([["", "None"], ["i_owe", "I owe"], ["they_owe", "They owe"]] as const).map(([v, label]) => (
-								<label key={v} className="flex items-center gap-1.5 cursor-pointer">
+							{(
+								[
+									["", "None"],
+									["i_owe", "I owe"],
+									["they_owe", "They owe"],
+								] as const
+							).map(([v, label]) => (
+								<label
+									key={v}
+									className="flex items-center gap-1.5 cursor-pointer"
+								>
 									<input
 										type="radio"
 										name="debt_type"
@@ -186,9 +227,11 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 								value={amountDisplay}
 								className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 								onChange={(e) => {
-									setAmountDisplay(e.target.value)
-									const cents = Math.round(parseFloat(e.target.value || "0") * 100)
-									field.handleChange(isNaN(cents) ? null : cents)
+									setAmountDisplay(e.target.value);
+									const cents = Math.round(
+										parseFloat(e.target.value || "0") * 100,
+									);
+									field.handleChange(isNaN(cents) ? null : cents);
 								}}
 								onBlur={field.handleBlur}
 							/>
@@ -245,7 +288,12 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 				{(isSubmitting) => (
 					<div className="flex gap-2">
 						{onCancel && (
-							<Button type="button" variant="neutral" onClick={onCancel} disabled={isSubmitting}>
+							<Button
+								type="button"
+								variant="neutral"
+								onClick={onCancel}
+								disabled={isSubmitting}
+							>
 								Cancel
 							</Button>
 						)}
@@ -256,5 +304,5 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 				)}
 			</form.Subscribe>
 		</form>
-	)
+	);
 }

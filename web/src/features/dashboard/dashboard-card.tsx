@@ -37,7 +37,9 @@ export function DashboardCard({
 						onClick={onRefresh}
 						aria-label={`Refresh ${title}`}
 					>
-						<RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+						<RefreshCw
+							className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+						/>
 					</button>
 				) : null}
 			</div>

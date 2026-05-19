@@ -125,8 +125,6 @@ function DashboardPage() {
 				cards={viewModel.summaryCards}
 				isLoading={isLoading}
 				isStale={isStale}
-				onRefresh={refresh}
-				refreshingId={refreshingId as DashboardSummaryCard["id"] | undefined}
 			/>
 
 			<RelationshipPulseChart

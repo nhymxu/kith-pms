@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { cn } from "#/lib/utils";
 
 interface NavLinkProps {
 	to: string;

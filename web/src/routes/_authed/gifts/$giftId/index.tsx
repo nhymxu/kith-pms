@@ -1,65 +1,79 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
-import { getGift, deleteGift } from "#/endpoints/gifts"
-import { formatDate } from "#/lib/format-datetime"
-import { keys } from "#/query-keys"
-import { Button } from "#/components/ui/button"
-import { Badge } from "#/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-} from "#/components/ui/dialog"
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import { deleteGift, getGift } from "#/endpoints/gifts";
+import { formatDate } from "#/lib/format-datetime";
+import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/gifts/$giftId/")({
 	component: GiftDetailPage,
-})
+});
 
 function GiftDetailPage() {
-	const { giftId } = Route.useParams()
-	const id = Number(giftId)
-	const navigate = useNavigate()
-	const qc = useQueryClient()
-	const [confirmOpen, setConfirmOpen] = useState(false)
+	const { giftId } = Route.useParams();
+	const id = Number(giftId);
+	const navigate = useNavigate();
+	const qc = useQueryClient();
+	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const { data, isPending, isError } = useQuery({
 		queryKey: keys.gifts.detail(id),
 		queryFn: () => getGift(id),
-	})
+	});
 
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteGift(id),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.gifts.all })
-			navigate({ to: "/gifts" })
+			qc.invalidateQueries({ queryKey: keys.gifts.all });
+			navigate({ to: "/gifts" });
 		},
-	})
+	});
 
-	if (isPending) return <p className="text-sm font-base text-foreground/60">Loading…</p>
-	if (isError || !data) return <p className="text-sm font-base text-destructive">Gift not found.</p>
+	if (isPending)
+		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
+	if (isError || !data)
+		return (
+			<p className="text-sm font-base text-destructive">Gift not found.</p>
+		);
 
 	const debtLabel =
-		data.debt_type === "i_owe" ? "I owe" : data.debt_type === "they_owe" ? "They owe" : "—"
+		data.debt_type === "i_owe"
+			? "I owe"
+			: data.debt_type === "they_owe"
+				? "They owe"
+				: "—";
 
 	const amountLabel =
 		data.amount_cents != null
 			? `${data.currency || "USD"} ${(data.amount_cents / 100).toFixed(2)}`
-			: "—"
+			: "—";
 
 	return (
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">{data.title}</h1>
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					{data.title}
+				</h1>
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
-						<Link to="/gifts/$giftId/edit" params={{ giftId }}>Edit</Link>
+						<Link to="/gifts/$giftId/edit" params={{ giftId }}>
+							Edit
+						</Link>
 					</Button>
-					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>Delete</Button>
+					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+						Delete
+					</Button>
 				</div>
 			</div>
 
@@ -118,11 +132,14 @@ function GiftDetailPage() {
 					<DialogHeader>
 						<DialogTitle>Delete gift?</DialogTitle>
 						<DialogDescription>
-							This will permanently delete "{data.title}". This action cannot be undone.
+							This will permanently delete "{data.title}". This action cannot be
+							undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>Cancel</Button>
+						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>
+							Cancel
+						</Button>
 						<Button
 							variant="destructive"
 							onClick={() => deleteMutation.mutate()}
@@ -134,5 +151,5 @@ function GiftDetailPage() {
 				</DialogContent>
 			</Dialog>
 		</div>
-	)
+	);
 }

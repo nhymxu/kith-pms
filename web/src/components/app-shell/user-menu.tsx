@@ -40,22 +40,14 @@ export function UserMenu() {
 			<DropdownMenuContent align="end" className="w-48">
 				<DropdownMenuLabel>Settings</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={() => go("/settings/labels")}>
+				<DropdownMenuItem onSelect={() => go("/settings")}>
 					<Tag className="size-4" />
-					Labels
-				</DropdownMenuItem>
-				<DropdownMenuItem onSelect={() => go("/settings/relationship-types")}>
-					<Users className="size-4" />
-					Relationship Types
+					Setting
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onSelect={() => go("/me")}>
 					<Settings className="size-4" />
 					Self Profile
-				</DropdownMenuItem>
-				<DropdownMenuItem onSelect={() => go("/settings/security")}>
-					<Shield className="size-4" />
-					Security
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onSelect={handleLogout}>

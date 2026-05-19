@@ -15,8 +15,6 @@
     "samber/cc-skills-golang/skills/golang-security",
     "samber/cc-skills-golang/skills/golang-stretchr-testify",
     "samber/cc-skills-golang/skills/golang-testing",
-    "neoeinstein/claude-plugins/plugins/htmx-alpine/skills/htmx-alpine",
-    "xobotyi/cc-foundry/plugins/golang/skills/templ",
-    "gopherguides/gopher-ai/plugins/go-web/skills/templui"
+    "vercel-labs/agent-skills/skills/react-best-practices"
   ]
 }

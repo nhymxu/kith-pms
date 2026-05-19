@@ -56,27 +56,84 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
 | Language | Go 1.26.2, CGO_ENABLED=0 | Compiled binary, low overhead, easy self-hosting |
-| HTTP | Echo v5 | Lightweight HTTP framework, minimal magic |
-| Database | SQLite (modernc.org/sqlite) | Pure Go, no CGO, single-file database |
+| HTTP | Echo v5.1.1 | Lightweight HTTP framework, minimal magic |
+| Database | SQLite (modernc.org/sqlite v1.50.0) | Pure Go, no CGO, single-file database, WAL mode |
 | Frontend | React 19, TanStack Router v1 | CSR SPA with file-based routing; full client-side interactivity |
 | Data Fetching | TanStack Query v5 | Cache-first data fetching, stale-while-revalidate, per-component refresh |
 | Forms | TanStack Form v0 | Uncontrolled form state with Zod validation |
 | Tables | TanStack Table v8 | Headless table library for data-heavy views |
 | UI Components | shadcn/ui (Linear/Stripe minimal, restyled) | Headless component library with Tailwind theming |
 | Styling | Tailwind CSS v4 | Utility-first CSS with design tokens |
-| Build | Vite 6 | Fast bundler; code splitting, lazy loading, HMR |
-| Linter/Formatter | Biome | Rust-based linter + formatter for JS/TS |
-| Package Manager | pnpm | Fast, disk-efficient workspaces |
+| Build | Vite 8 | Fast bundler; code splitting, lazy loading, HMR |
+| Linter/Formatter | Biome 2.4.5 | Rust-based linter + formatter for JS/TS |
+| Package Manager | pnpm 11 | Fast, disk-efficient workspaces |
 | CLI | urfave/cli v3 | Simple CLI scaffolding for subcommands |
-| Config | koanf | Layered config: defaults → .env file → env vars |
+| Config | koanf v2 | Layered config: defaults → .env file → env vars |
 | Logging | slog | Standard library structured logging (Go 1.21+) |
 | Error Monitoring | slog-sentry | Fan-out errors to Sentry without replacing slog |
-| Auth | Argon2id + HMAC sessions | Password hashing + signed HttpOnly cookie sessions |
+| Auth | bcrypt + HMAC sessions | Password hashing + signed HttpOnly cookie sessions |
 | Search | SQLite FTS5 | Full-text search with auto-update triggers |
+| Charts | Recharts v3.8.1 | Interactive dashboard visualizations |
 
 ## Design System
 
-Linear/Stripe minimal aesthetic: indigo-600 accent, zinc surfaces, Inter + JetBrains Mono typography, hairline borders, no shadows, responsive horizontal topbar. Built with React 19 CSR SPA and shadcn/ui components, styled via Tailwind CSS v4 design tokens.
+Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Inter + JetBrains Mono typography, hairline borders, no shadows, responsive horizontal topbar. Built with React 19 CSR SPA and shadcn/ui components, styled via Tailwind CSS v4 design tokens.
+
+## Deployment & Self-Hosting
+
+### Single Static Binary
+- Compiled with `CGO_ENABLED=0` — no runtime dependencies, runs on any Linux/macOS/Windows
+- Embedded React SPA (Vite build output compiled into binary)
+- Embedded SQL migrations (0001–0015)
+- All assets (CSS, JS, images) bundled; no external file dependencies
+
+### Docker Deployment
+- Multi-stage Dockerfile: Node.js (build SPA) → Go (compile binary) → distroless (runtime)
+- `docker-compose.yml` for local self-hosting with volume mounts for data persistence
+- Automatic migrations on startup (configurable via `DB_AUTO_MIGRATE`)
+
+### Data Storage
+- SQLite database: `data/kith.db` (configurable via `DB_PATH`)
+- Avatar storage: `data/avatars/` (configurable via `AVATAR_STORAGE_PATH`)
+- Gift images: `data/gifts/` (configurable via `GIFT_STORAGE_PATH`)
+- All paths support relative or absolute paths
+
+### Backup & Restore
+- `kith-pms backup --to <path>` — SQLite VACUUM INTO (safe while server running)
+- `kith-pms restore --from <path>` — restore from backup with safety checks
+- No external backup services required
+
+## Security Model
+
+### Authentication
+- Single-user password-based authentication (bcrypt hashing)
+- HMAC-SHA256 session tokens stored server-side
+- HttpOnly SameSite=Lax cookies (Secure when behind TLS)
+- Session lifetime: 30 days (configurable via `SESSION_LIFETIME`)
+
+### CSRF Protection
+- All state-changing requests (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header
+- Automatic validation in middleware
+
+### Rate Limiting
+- Login attempts: 5 per 15 minutes per IP
+- Password changes: 5 per 15 minutes per user
+
+### Data Privacy
+- No external services required (self-hosted only)
+- Optional Sentry integration for error monitoring (configurable via `SENTRY_DSN`)
+- All data remains on user's infrastructure
+
+## Monitoring & Observability
+
+### Logging
+- Structured logging via Go's `log/slog` (text or JSON format)
+- Request ID tracking for correlation
+- Optional Sentry integration for error reporting
+
+### Health Checks
+- `GET /health` endpoint (no authentication required)
+- Suitable for container orchestration and monitoring
 
 ## Non-Goals
 

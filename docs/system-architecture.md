@@ -15,18 +15,18 @@
 │  │  └─ restore --from   → replace database                 │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Web Layer (Echo v5 JSON API + React SPA)                 │   │
+│  │ Web Layer (Echo v5.1.1 JSON API + React 19 SPA)          │   │
 │  │  ├─ /health        → Liveness probe (no auth)            │   │
 │  │  ├─ /v1/*          → JSON REST API (SessionOrBearer)     │   │
 │  │  ├─ /assets/*      → Embedded SPA hashed assets (1yr)    │   │
 │  │  ├─ /favicon.*     → Embedded favicon (1yr)              │   │
 │  │  └─ /*             → index.html catch-all (SPA shell)    │   │
 │  │                                                          │   │
-│  │  Frontend (React 19 SPA, TanStack Router file-based):     │   │
+│  │  Frontend (React 19 SPA, TanStack Router v1 file-based): │   │
 │  │  ├─ /              → Dashboard (KPIs, charts, activity)  │   │
 │  │  ├─ /people/*      → People CRUD (table, detail form)    │   │
 │  │  ├─ /journal/*     → Journal (list, detail, search)      │   │
-│  │  ├─ /gifts/*       → Gifts (form, list)                  │   │
+│  │  ├─ /gifts/*       → Gifts (form, list, detail)          │   │
 │  │  ├─ /reminders/*   → Reminders (form, table)             │   │
 │  │  ├─ /dates         → Important dates (upcoming)          │   │
 │  │  ├─ /audit         → Audit log (list view)               │   │
@@ -73,7 +73,7 @@ Subcommands after dependency init:
 |---------|---------|
 | `serve` | Start HTTP server on port from `HOST:PORT` (default :8000) |
 | `migrate` | Schema management: `migrate up` (apply pending), `migrate down` (rollback latest) |
-| `set-password` | Interactive password setup/change (stores Argon2id hash in users table) |
+| `set-password` | Interactive password setup/change (stores bcrypt hash in users table) |
 | `backup --to PATH` | SQLite VACUUM INTO PATH; safe to run while server is running |
 | `restore --from PATH` | Replace live database with backup; refuses if server modified DB in last 30s |
 
@@ -102,6 +102,7 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 | `SENTRY_DSN`          | string   | *(empty)*        | Sentry DSN; omit to disable error reporting             |
 | `AVATAR_STORAGE_PATH` | string   | `data/avatars`   | Directory for storing avatar files                      |
 | `GIFT_STORAGE_PATH`   | string   | `data/gifts`     | Directory for storing gift images                       |
+| `TOKEN_AUTH`          | string   | *(empty)*        | Static bearer token for API clients (optional)          |
 
 ## Logging
 
@@ -140,15 +141,14 @@ routes/
 ├── login.tsx            # Public login page
 └── _authed.tsx          # Auth-guarded layout with topbar
     ├── index.tsx        # Dashboard (/)
-    ├── _authed/
-    │   ├── people/      # People CRUD (index, new, $personId, $personId.edit)
-    │   ├── journal/     # Journal (index, new, $entryId, $entryId.edit)
-    │   ├── gifts/       # Gifts (index, new, $giftId, $giftId.edit)
-    │   ├── reminders/   # Reminders (index, new, $reminderId, $reminderId.edit)
-    │   ├── dates/       # Important dates list
-    │   ├── audit/       # Audit log view
-    │   ├── me/          # User profile (index, setup)
-    │   └── settings/    # Settings hub (index, labels, relationship-types, security)
+    ├── people/          # People CRUD (index, new, $personId, $personId.edit)
+    ├── journal/         # Journal (index, new, $entryId, $entryId.edit)
+    ├── gifts/           # Gifts (index, new, $giftId, $giftId.edit)
+    ├── reminders/       # Reminders (index, new, $reminderId, $reminderId.edit)
+    ├── dates/           # Important dates list
+    ├── audit/           # Audit log view
+    ├── me/              # User profile (index, setup)
+    └── settings/        # Settings hub (index, labels, relationship-types, security)
 ```
 
 **Layout Pattern**: `_authed.tsx` acts as auth guard with shared topbar; all routes under it require authentication.
@@ -209,7 +209,7 @@ export function PersonForm() {
 
 ---
 
-## HTTP Server (Echo v5)
+## HTTP Server (Echo v5.1.1)
 
 ### Global Middleware Stack (applied in order)
 
@@ -273,7 +273,7 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
 ```
 1. SPA calls POST /v1/auth/login with JSON {password}
    ↓
-2. Handler validates password (Argon2id verify vs users table)
+2. Handler validates password (bcrypt verify vs users table)
    ↓
 3. Create session token:
    - Generate cryptographic session ID
@@ -295,7 +295,7 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
    ↓
 6. Password change (POST /v1/auth/password):
    - Verify current password
-   - Hash new password with Argon2id (golang.org/x/crypto/argon2)
+   - Hash new password with bcrypt (golang.org/x/crypto/bcrypt)
    - Invalidate all sessions for that user
    - Rate limited: 5 attempts per 15 minutes
    ↓
@@ -391,6 +391,7 @@ Connection settings:
 | `0007_important_date.sql` | important_date table with virtual month_day column for date queries |
 | `0008_reminder.sql` | reminders table with person/date associations and completion tracking |
 | `0009_person_avatar.sql` | avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at columns on person table |
+| `0010_work_history.sql` | work history table |
 | `0011_audit_log.sql` | audit_log table for entity change tracking (entity_type, entity_id, entity_name, action, actor_id, created_at) |
 | `0012_gift.sql` | gift table with direction (gave/received), debt_type (owed/owe), person association, and image storage metadata |
 | `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
@@ -441,6 +442,7 @@ people (1)
   ├─ (1:N) gifts (gift records with direction + debt tracking)
   ├─ (N:M) labels (via label_assignments)
   ├─ (N:M) activities (via activity_links)
+  ├─ (N:M) person_relationship (bidirectional relationships)
   └─ (0:1) self profile (is_self flag, unique constraint)
 
 labels (1)
@@ -456,6 +458,15 @@ reminders (1)
 
 gifts (1)
   └─ (N:1) people (FK to person who gave/received gift)
+
+relationship_type (1)
+  ├─ (0:1) self-referential inverse_type_id
+  └─ (1:N) person_relationship (FK)
+
+person_relationship (N)
+  ├─ (N:1) from_person_id (FK to people)
+  ├─ (N:1) to_person_id (FK to people)
+  └─ (N:1) relationship_type_id (FK to relationship_type)
 ```
 
 ## Deployment

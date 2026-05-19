@@ -15,10 +15,11 @@ kith-pms/
 ├── internal/                     # Private application code
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite connection with WAL + ForeignKeys PRAGMAs
-│   │   └── migrations.go         # SQL migration loader and executor
+│   │   ├── migrations.go         # SQL migration loader and executor
+│   │   └── migrations/           # SQL schema files (0001-0015)
 │   ├── auth/                     # Authentication & session management
 │   │   ├── domain.go             # User, Session, CSRF token data structures
-│   │   ├── password.go           # Argon2id hashing & verification
+│   │   ├── password.go           # bcrypt hashing & verification
 │   │   ├── sessions.go           # HMAC token generation & validation
 │   │   ├── csrf.go               # CSRF token generation & validation
 │   │   ├── middleware.go         # Echo middleware for auth/session checks
@@ -74,20 +75,29 @@ kith-pms/
 │   │   ├── parser.go             # Monica JSON export format unmarshaling
 │   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
 │   │   └── mapper_test.go        # Unit tests for Monica-to-domain mapping
-│   └── web/                      # HTTP handler layer
+│   ├── api/                      # HTTP API handlers
+│   │   ├── handlers_auth.go      # Authentication endpoints
+│   │   ├── handlers_people.go    # People CRUD endpoints
+│   │   ├── handlers_journal.go   # Journal endpoints
+│   │   ├── handlers_gifts.go     # Gift endpoints with image upload
+│   │   ├── handlers_reminders.go # Reminder endpoints
+│   │   ├── handlers_dates.go     # Important dates endpoints
+│   │   ├── handlers_labels.go    # Label endpoints
+│   │   ├── handlers_relationships.go # Relationship type endpoints
+│   │   ├── handlers_audit.go     # Audit log endpoints
+│   │   └── handlers_me.go        # User profile endpoints
+│   └── web/                      # HTTP server & SPA embedding
 │       ├── server.go             # Echo setup (global middleware)
 │       ├── route.go              # Route mounting: /health, /v1/*, spa.Handler()
-│       ├── spa/                  # Embedded React SPA
-│       │   ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
-│       │   └── public/           # Populated by `make web` (gitignored except placeholder.txt)
-│       └── forms/                # Form utilities (pure Go, no templ dependency)
-│           └── forms.go          # ParseIndexed, IndexedName helpers
+│       └── spa/                  # Embedded React SPA
+│           ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
+│           └── public/           # Populated by `make web` (gitignored except placeholder.txt)
 ├── pkg/                          # Shared packages
 │   ├── config/                   # Configuration management
 │   │   ├── env.go                # LoadConfig(), EnvConfigMap, environment parsing
 │   │   ├── const.go              # Application constants
 │   │   └── default.go            # Default config values
-│   └── errors/                   # Custom error types (planned)
+│   └── errors/                   # Custom error types
 ├── internal/db/migrations/       # SQL schema files
 │   ├── 0001_init.sql             # Initial schema (users, people, labels)
 │   ├── 0002_user_session.sql     # Session tokens table
@@ -108,11 +118,28 @@ kith-pms/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
 │   └── find-cgo-pkg.sh           # Identifies CGO dependencies
+├── web/                          # React SPA source (pnpm workspace)
+│   ├── src/
+│   │   ├── components/           # UI components (app-shell, data-table, form, ui)
+│   │   ├── endpoints/            # API client functions (8 domains)
+│   │   ├── features/             # Feature components (9 areas)
+│   │   ├── lib/                  # api-client.ts, auth-context.tsx, query-client.ts, utils.ts
+│   │   ├── routes/               # File-based routing (TanStack Router)
+│   │   ├── schemas/              # Zod validation schemas (10 domains)
+│   │   ├── query-keys.ts         # Centralized query key factory
+│   │   └── styles.css            # Tailwind + design tokens
+│   ├── public/                   # Static assets
+│   ├── package.json              # pnpm workspace config
+│   └── vite.config.ts            # Vite build configuration
+├── data/                         # Runtime data (gitignored)
+│   ├── kith.db                   # SQLite database
+│   ├── avatars/                  # Avatar files
+│   └── gifts/                    # Gift images
 ├── docs/                         # Project documentation
 ├── Dockerfile                    # Multi-stage container build
+├── docker-compose.yml            # Local development setup
 ├── Makefile                      # Dev workflow targets
 ├── go.mod / go.sum               # Module definition and lockfile
-├── templ.iml                     # Templ IDE config (optional)
 └── .env.example                  # Example environment variables
 ```
 
@@ -132,7 +159,7 @@ kith-pms/
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
-- **password.go**: Argon2id hashing (via golang.org/x/crypto) with verification
+- **password.go**: bcrypt hashing (via golang.org/x/crypto) with verification
 - **sessions.go**: HMAC-SHA256 token generation (server-signed); validates session ID from DB against signed token
 - **csrf.go**: Per-request CSRF token generation & validation
 - **middleware.go**: Echo middleware for session validation and CSRF checks
@@ -197,12 +224,23 @@ kith-pms/
 - **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate)
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
+### `internal/api` — HTTP API handlers
+- **handlers_auth.go**: POST /login, /logout, /logout-all, GET /me, POST /password
+- **handlers_people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
+- **handlers_journal.go**: CRUD with multi-person tagging, search, date range filter
+- **handlers_gifts.go**: CRUD + image upload/delete/get, filterable by person/direction/debt_type
+- **handlers_reminders.go**: CRUD + PATCH complete, filterable upcoming/overdue/all
+- **handlers_dates.go**: GET /upcoming (30-day window)
+- **handlers_labels.go**: CRUD with usage counts
+- **handlers_relationships.go**: CRUD with usage counts
+- **handlers_audit.go**: GET with entity_type/entity_id filter, paginated
+- **handlers_me.go**: GET profile, POST setup
+
 ### `internal/web` — HTTP layer
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
 - **route.go**: Mounts `/health`, API (`/v1/*` via `api.Mount`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
 - **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
-- **forms/**: Pure Go form parsing utilities; `ParseIndexed` for multi-row form fields
 
 ## React SPA Frontend (`web/` directory)
 
@@ -268,19 +306,14 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **CSRF Protection**: All POST/PUT/PATCH/DELETE require `X-Requested-With: kith-spa` header when authenticated by cookie
 - **Token Auth**: Server-side only (`TOKEN_AUTH` env var); for future API clients, not SPA
 
----
-- **env.go**: LoadConfig() with three-layer merge (defaults → .env file → env vars); unmarshals to global ENV
-- **const.go**: Application constants (timezones, timeouts, etc.)
-- **default.go**: configDefaults map (lowest precedence layer)
-
 ## Key Dependencies
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `labstack/echo/v5` | v5.1.0+ | HTTP framework |
+| `labstack/echo/v5` | v5.1.1+ | HTTP framework |
 | `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
-| `modernc.org/sqlite` | latest | Pure Go SQLite (no CGO) |
-| `golang.org/x/crypto` | latest | Argon2id password hashing |
+| `modernc.org/sqlite` | v1.50.0+ | Pure Go SQLite (no CGO) |
+| `golang.org/x/crypto` | latest | bcrypt password hashing |
 | `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
 | `samber/slog-multi` | v1.8.0+ | slog fan-out to multiple handlers |
@@ -295,7 +328,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Test Coverage
 
-10 test files across:
+15 test files across:
 - `auth`: password hashing, session tokens, CSRF token generation
 - `audit`: logging behavior, list queries, actor attribution
 - `people`: CRUD, search, label associations
@@ -304,6 +337,8 @@ styles.css               # Tailwind + design tokens (:root variables)
 - `dates`: important dates, OnThisDay queries, recurring logic
 - `files`: avatar upload, MIME validation, path traversal prevention
 - `reminders`: CRUD, completion tracking, status filtering
+- `gifts`: CRUD, image operations, debt tracking
+- `relationships`: paired rows, self-loop guards, FK constraints
 
 **Total**: 159 Go tests passing. Run all: `make tests` (includes race detector)
 

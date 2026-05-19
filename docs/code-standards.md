@@ -6,7 +6,7 @@
 - Lowercase, single word: `config`, `auth`, `audit`, `people`, `labels`, `journal`
 - No underscores or mixed case in package names
 - Package name matches directory name
-- Domain packages under `internal/` (auth, audit, people, labels, journal, dates, reminders, files, db, web)
+- Domain packages under `internal/` (auth, audit, people, labels, journal, dates, reminders, files, db, web, api)
 - Shared packages under `pkg/` (config)
 
 ### File Naming
@@ -18,8 +18,9 @@
 ### Database & SQL
 - Use raw `database/sql` (no ORM)
 - Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0011)
+- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0015)
 - Load migrations programmatically in `internal/db/migrations.go`
+- Transactions: Use `sql.Tx` for multi-statement operations; always defer rollback
 
 ### Struct Organization (Domain Models)
 ```go
@@ -63,7 +64,7 @@ type Repo struct {
 - Add new config fields to `EnvConfigMap` in `pkg/config/env.go` and defaults in `pkg/config/default.go`
 
 ### HTTP Handlers (Echo v5)
-- Handlers live in `internal/web/handlers/` (one file per domain, or API handlers in `internal/api/`)
+- Handlers live in `internal/api/` (one file per domain)
 - Handler signatures: `func(c echo.Context) error` (Echo v5 pattern)
 - Return errors via `c.Error(err)` — let Echo's error handler format response
 - Use `c.Bind()` for JSON/form binding to typed structs
@@ -77,22 +78,101 @@ type Repo struct {
 - Inject user into request: `c.Set("user", user)` — retrieve with `c.Get("user").(*auth.User)`
 - CSRF validation automatic for POST/PUT/PATCH/DELETE when authenticated by cookie
 
-### React/TypeScript Frontend
-- **Routing**: TanStack Router v1 file-based routing in `web/src/routes/`; `_authed.tsx` layout pattern for auth guard; responsive mobile hamburger menu via `topbar.tsx`
-- **Route Tree**: 28 routes including `/` (dashboard), `/login`, `/people/*`, `/journal/*`, `/gifts/*`, `/reminders/*`, `/dates`, `/audit`, `/me/*`, `/settings/*`
-- **Components**: Functional components with hooks; use `#/` path alias for imports (`import { Button } from '#/components/ui/button'` not `@/`)
-- **Data Fetching**: TanStack Query v5 with 5-minute stale time, 10-minute cache duration; define endpoints in `web/src/endpoints/*.ts` (e.g. `people.ts`, `journal.ts`, `gifts.ts`, `reminders.ts`); use `useQuery` / `useMutation` hooks
-- **Forms**: TanStack Form v0 with Zod validation; define schemas in `web/src/schemas/` (hand-maintained per-resource, not generated)
-- **Styling**: Tailwind CSS v4 with Linear/Stripe minimal design tokens; shadcn/ui components restyled for indigo-600 accent, zinc surfaces, hairline borders, no shadows; Recharts v3.8.1 for dashboard charts
-- **Auth Context**: Consume via `lib/auth-context.tsx`; redirects to login if unauthenticated; session stored in `kith_session` HttpOnly cookie
-- **Types**: Hand-maintained Zod schemas in `web/src/schemas/` (not generated); must align exactly with Go API domain types in case, field names, and optional fields
-- **CSRF Protection**: All POST/PUT/PATCH/DELETE requests automatically include `X-Requested-With: kith-spa` header (handled in `lib/api-client.ts`)
-- **Build**: Vite 8; output to `web/dist/`; `make web` copies dist to `internal/web/spa/public/`; embedded into Go binary via `//go:embed all:public`
+### API Versioning
+- All API routes prefixed with `/v1/` (e.g., `/v1/people`, `/v1/journal`)
+- No deprecation policy yet; breaking changes require major version bump
+- Health check at `/health` (no auth required)
+
+### Transaction Patterns
+```go
+// Begin transaction
+tx, err := db.BeginTx(ctx, nil)
+if err != nil {
+    return fmt.Errorf("begin tx: %w", err)
+}
+defer tx.Rollback() // Safe to call after Commit
+
+// Execute statements
+_, err = tx.ExecContext(ctx, "UPDATE ...", args...)
+if err != nil {
+    return fmt.Errorf("update failed: %w", err)
+}
+
+// Commit
+if err := tx.Commit(); err != nil {
+    return fmt.Errorf("commit failed: %w", err)
+}
+```
+
+## React/TypeScript Frontend
+
+### Routing
+- **TanStack Router v1** file-based routing in `web/src/routes/`
+- `_authed.tsx` layout pattern for auth guard
+- Responsive mobile hamburger menu via `topbar.tsx`
+- Route tree: 28 routes including `/` (dashboard), `/login`, `/people/*`, `/journal/*`, `/gifts/*`, `/reminders/*`, `/dates`, `/audit`, `/me/*`, `/settings/*`
+
+### Components
+- Functional components with hooks
+- Use `#/` path alias for imports: `import { Button } from '#/components/ui/button'` (not `@/`)
+- shadcn/ui primitives restyled for Linear/Stripe minimal aesthetic
+- Lucide React for icons only; no emojis
+
+### Data Fetching
+- **TanStack Query v5** with 5-minute stale time, 10-minute cache duration
+- Define endpoints in `web/src/endpoints/*.ts` (e.g. `people.ts`, `journal.ts`, `gifts.ts`, `reminders.ts`)
+- Use `useQuery` / `useMutation` hooks
+- Query keys centralized in `web/src/query-keys.ts`
+
+### Forms
+- **TanStack Form v0** with Zod validation
+- Define schemas in `web/src/schemas/` (hand-maintained per-resource, not generated)
+- Schemas must align exactly with Go API types: case-sensitive field names, optional fields, enum values
+- Example schema:
+```typescript
+export const PersonSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  dateOfBirth: z.date().nullable(),
+  labels: z.array(z.object({ id: z.number(), name: z.string() }))
+});
+```
+
+### Styling
+- **Tailwind CSS v4** with Linear/Stripe minimal design tokens
+- **shadcn/ui** components restyled for indigo-600 accent, zinc surfaces, hairline borders, no shadows
+- **Recharts v3.8.1** for dashboard charts
+- Design tokens in `web/src/styles.css` (:root CSS variables)
+
+### Authentication
+- Consume via `lib/auth-context.tsx`
+- Redirects to login if unauthenticated
+- Session stored in `kith_session` HttpOnly cookie
+
+### CSRF Protection
+- All POST/PUT/PATCH/DELETE requests automatically include `X-Requested-With: kith-spa` header
+- Handled in `lib/api-client.ts`
+
+### Build
+- **Vite 8** for bundling
+- Output to `web/dist/`
+- `make web` copies dist to `internal/web/spa/public/`
+- Embedded into Go binary via `//go:embed all:public`
+
+### TypeScript Strict Mode
+- Enable `strict: true` in `tsconfig.json`
+- No `any` types without explicit `// @ts-ignore` comment with justification
+- Use discriminated unions for type safety
+
+### Biome Configuration
+- Linter + formatter in `web/biome.json`
+- Run `pnpm check` to verify lint/format
+- Run `pnpm format` to auto-fix formatting issues
 
 ### Imports
 - Group: stdlib → external → internal (separated by blank lines)
-- Use the module path `github.com/nhymxu/kith-pms/...` for internal imports
-- Standard imports: `"database/sql"`, `"time"`, `"fmt"`, `"log/slog"`
+- Use the module path `github.com/nhymxu/kith-pms/...` for internal Go imports
+- Standard Go imports: `"database/sql"`, `"time"`, `"fmt"`, `"log/slog"`
 - External: `"github.com/labstack/echo/v5"`, `"golang.org/x/crypto/..."`
 
 ## Testing
@@ -101,7 +181,7 @@ type Repo struct {
 - **Integration tests**: Use real SQLite database (e.g., `:memory:` or temp file)
 - **Service tests**: `internal/{domain}/service_test.go` — test business logic with real repo
 - **No mocks**: Prefer real dependencies over mocks for confidence in actual behavior
-- **Test files**: 10 test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts
+- **Test files**: 15 test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts
 - **Total Go tests**: 159 tests passing with race detector enabled
 
 ### React Frontend Tests
@@ -196,14 +276,14 @@ Examples:
 - `fix: validate HMAC token before session lookup`
 - `refactor: extract person repository from service`
 - `test: add password hashing test vectors`
-- `chore: update dependencies, add templ v0.3.1001`
+- `chore: update dependencies, add Recharts v3.8.1`
 
 No AI references in commit messages.
 
 ## File Upload Patterns
 
 ### Avatar Upload Flow
-1. **Handler** (`internal/web/handlers/people.go`):
+1. **Handler** (`internal/api/handlers_people.go`):
    - Limit request body: `http.MaxBytesReader(w, r.Body, 6*1024*1024)` (5MB file + 1MB overhead)
    - Extract multipart file: `c.FormFile("avatar")`
    - Delegate to service: `h.Svc.UploadAvatar(ctx, personID, file, header)`
@@ -223,6 +303,11 @@ No AI references in commit messages.
    - Write to temp file, sync, rename (atomic write)
    - Return relative path: `{personID}/{randomStr}-{sanitized-name}.{ext}`
 
+### Gift Image Upload Flow
+- Similar to avatar flow but stored in `GIFT_STORAGE_PATH` (default: `data/gifts`)
+- File naming: Gift ID as filename (e.g., `123.jpg`)
+- Endpoints: `POST /v1/gifts/:id/image`, `GET /v1/gifts/:id/image`, `DELETE /v1/gifts/:id/image`
+
 ### Security Controls
 - **MIME validation**: Dual-check (HTTP header + magic number) prevents spoofed uploads
 - **Size limit**: 5MB enforced at handler + service layer
@@ -232,8 +317,8 @@ No AI references in commit messages.
 - **Metadata storage**: MIME type, size, upload timestamp stored in DB for audit trail
 
 ### Avatar Retrieval & Deletion
-- **GET /people/:id/avatar**: Validates path, sets Content-Type from DB, caches 24 hours
-- **POST /people/:id/avatar/delete**: Clears DB metadata, removes file (best-effort)
+- **GET /v1/people/:id/avatar**: Validates path, sets Content-Type from DB, caches 24 hours
+- **POST /v1/people/:id/avatar/delete**: Clears DB metadata, removes file (best-effort)
 
 ## Performance & Security Considerations
 
@@ -244,10 +329,10 @@ No AI references in commit messages.
 - **FTS5**: Full-text search via virtual table with auto-update triggers
 
 ### Auth & Security
-- **Password hashing**: Argon2id (golang.org/x/crypto/argon2)
+- **Password hashing**: bcrypt (golang.org/x/crypto/bcrypt)
 - **Session tokens**: HMAC-SHA256 signed; server-stored with expiry
 - **CSRF tokens**: Per-request tokens validated via middleware
-- **Cookies**: Secure, httpOnly, SameSite=Strict
+- **Cookies**: Secure, httpOnly, SameSite=Lax
 - **No secrets in logs**: Use structured logging with care for sensitive fields
 - **File uploads**: MIME validation (header + magic number), size limits, path traversal prevention
 
@@ -257,3 +342,4 @@ No AI references in commit messages.
 - **Backup safety**: VACUUM INTO is safe while server running
 - **Migration safety**: Auto-applied on startup with version tracking
 - **Avatar storage**: Configurable via AVATAR_STORAGE_PATH; ensure directory is writable and has sufficient disk space
+- **Gift storage**: Configurable via GIFT_STORAGE_PATH; ensure directory is writable and has sufficient disk space

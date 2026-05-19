@@ -51,10 +51,13 @@ func RegisterAppCollectors(db *sql.DB, sessions SessionCounter) {
 		}, func() float64 {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
+
 			var size float64
+
 			row := db.QueryRowContext(ctx,
 				`SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()`)
 			_ = row.Scan(&size)
+
 			return size
 		}),
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
@@ -63,7 +66,9 @@ func RegisterAppCollectors(db *sql.DB, sessions SessionCounter) {
 		}, func() float64 {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
+
 			n, _ := sessions.CountActiveSessions(ctx)
+
 			return float64(n)
 		}),
 	)
@@ -108,10 +113,12 @@ func Middleware() echo.MiddlewareFunc {
 			}
 
 			method := c.Request().Method
+
 			statusCode := 0
 			if r, ok := c.Response().(*echo.Response); ok {
 				statusCode = r.Status
 			}
+
 			status := strconv.Itoa(statusCode)
 			elapsed := time.Since(start).Seconds()
 
@@ -126,6 +133,7 @@ func Middleware() echo.MiddlewareFunc {
 // Handler returns an Echo handler that serves the Prometheus metrics page.
 func Handler() echo.HandlerFunc {
 	h := promhttp.HandlerFor(Registry, promhttp.HandlerOpts{})
+
 	return func(c *echo.Context) error {
 		h.ServeHTTP(c.Response(), c.Request())
 		return nil

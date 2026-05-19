@@ -146,6 +146,7 @@ func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 		if err != nil {
 			return nil, fmt.Errorf("load labels: %w", err)
 		}
+
 		if lbls, ok := labelsMap[id]; ok {
 			p.Labels = lbls
 		} else {

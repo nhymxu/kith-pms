@@ -6,16 +6,16 @@ import (
 	"fmt"
 )
 
-type SettingsRepo interface {
+type Repo interface {
 	GetAll(ctx context.Context) (map[string]string, error)
 	Set(ctx context.Context, key, value, updatedAt string) error
 }
 
-type sqlSettingsRepo struct{ db *sql.DB }
+type sqlRepo struct{ db *sql.DB }
 
-func NewSettingsRepo(db *sql.DB) SettingsRepo { return &sqlSettingsRepo{db: db} }
+func NewRepo(db *sql.DB) Repo { return &sqlRepo{db: db} }
 
-func (r *sqlSettingsRepo) GetAll(ctx context.Context) (map[string]string, error) {
+func (r *sqlRepo) GetAll(ctx context.Context) (map[string]string, error) {
 	rows, err := r.db.QueryContext(ctx, `SELECT key, value FROM user_setting`)
 	if err != nil {
 		return nil, fmt.Errorf("settings: get all: %w", err)
@@ -23,17 +23,20 @@ func (r *sqlSettingsRepo) GetAll(ctx context.Context) (map[string]string, error)
 	defer func() { _ = rows.Close() }()
 
 	result := make(map[string]string)
+
 	for rows.Next() {
 		var k, v string
 		if err := rows.Scan(&k, &v); err != nil {
 			return nil, fmt.Errorf("settings: scan: %w", err)
 		}
+
 		result[k] = v
 	}
+
 	return result, rows.Err()
 }
 
-func (r *sqlSettingsRepo) Set(ctx context.Context, key, value, updatedAt string) error {
+func (r *sqlRepo) Set(ctx context.Context, key, value, updatedAt string) error {
 	_, err := r.db.ExecContext(ctx,
 		`INSERT OR REPLACE INTO user_setting (key, value, updated_at) VALUES (?, ?, ?)`,
 		key, value, updatedAt,
@@ -41,5 +44,6 @@ func (r *sqlSettingsRepo) Set(ctx context.Context, key, value, updatedAt string)
 	if err != nil {
 		return fmt.Errorf("settings: set %s: %w", key, err)
 	}
+
 	return nil
 }

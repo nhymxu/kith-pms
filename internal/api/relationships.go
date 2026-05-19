@@ -125,7 +125,13 @@ func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 		return apiErr(c, http.StatusUnprocessableEntity, "relationship_type_id is required")
 	}
 
-	relID, err := h.Svc.AttachRelationship(c.Request().Context(), fromID, req.ToPersonID, req.RelationshipTypeID, req.Notes)
+	relID, err := h.Svc.AttachRelationship(
+		c.Request().Context(),
+		fromID,
+		req.ToPersonID,
+		req.RelationshipTypeID,
+		req.Notes,
+	)
 	if err != nil {
 		switch {
 		case errors.Is(err, relationships.ErrDuplicateRelationship):

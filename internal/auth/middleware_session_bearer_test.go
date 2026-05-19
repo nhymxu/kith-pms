@@ -30,7 +30,12 @@ func newTestSvc(t *testing.T) *auth.Service {
 
 func handlerOK(c *echo.Context) error { return c.String(http.StatusOK, "ok") }
 
-func applySessionOrBearer(e *echo.Echo, svc *auth.Service, apiToken string, req *http.Request) *httptest.ResponseRecorder {
+func applySessionOrBearer(
+	e *echo.Echo,
+	svc *auth.Service,
+	apiToken string,
+	req *http.Request,
+) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	mw := auth.SessionOrBearer(apiToken, svc)(handlerOK)

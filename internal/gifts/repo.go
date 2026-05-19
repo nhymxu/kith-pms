@@ -186,16 +186,19 @@ func (r *Repo) Count(ctx context.Context, params ListParams) (int, error) {
 
 	if params.Direction != "" {
 		query += " AND g.direction = ?"
+
 		args = append(args, string(params.Direction))
 	}
 
 	if params.PersonID != nil {
 		query += " AND g.person_id = ?"
+
 		args = append(args, *params.PersonID)
 	}
 
 	if params.DebtType != "" {
 		query += " AND g.debt_type = ?"
+
 		args = append(args, string(params.DebtType))
 	}
 

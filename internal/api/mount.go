@@ -162,10 +162,12 @@ func mountAuth(g *echo.Group, deps Deps) {
 // 5/15min bucket per IP across both login endpoints.
 func MountAuthLogin(e *echo.Echo, deps Deps) {
 	h := newAuthAPI(deps)
+
 	limiter := deps.LoginLimiter
 	if limiter == nil {
 		limiter = auth.RateLimitLogin(5, 15*time.Minute)
 	}
+
 	loginGroup := e.Group("/v1/auth", limiter)
 	loginGroup.POST("/login", h.Login)
 }

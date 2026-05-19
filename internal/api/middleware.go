@@ -14,6 +14,7 @@ func injectAPIActor() echo.MiddlewareFunc {
 			if u := auth.UserFromContext(c); u != nil {
 				actorID = u.ID
 			}
+
 			ctx := audit.WithActor(c.Request().Context(), actorID)
 			c.SetRequest(c.Request().WithContext(ctx))
 

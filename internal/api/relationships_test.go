@@ -118,7 +118,11 @@ func TestRelationshipsAttach_AuthFailure_Returns401(t *testing.T) {
 
 	// Handler itself returns 201 when valid — auth gate is at middleware layer.
 	if rec.Code != http.StatusCreated {
-		t.Fatalf("expected 201 from handler (auth enforced by middleware), got %d — body: %s", rec.Code, rec.Body.String())
+		t.Fatalf(
+			"expected 201 from handler (auth enforced by middleware), got %d — body: %s",
+			rec.Code,
+			rec.Body.String(),
+		)
 	}
 }
 

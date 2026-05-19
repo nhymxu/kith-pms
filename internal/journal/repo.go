@@ -117,7 +117,11 @@ func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, er
 	if len(params.PersonIDs) > 0 {
 		placeholders := strings.Repeat("?,", len(params.PersonIDs))
 		placeholders = placeholders[:len(placeholders)-1]
-		where = append(where, "activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))")
+
+		where = append(
+			where,
+			"activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))",
+		)
 		for _, pid := range params.PersonIDs {
 			args = append(args, pid)
 		}
@@ -126,7 +130,11 @@ func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, er
 	if len(params.LabelIDs) > 0 {
 		placeholders := strings.Repeat("?,", len(params.LabelIDs))
 		placeholders = placeholders[:len(placeholders)-1]
-		where = append(where, "activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))")
+
+		where = append(
+			where,
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))", //nolint:lll
+		)
 		for _, lid := range params.LabelIDs {
 			args = append(args, lid)
 		}
@@ -147,6 +155,7 @@ func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, er
 	if len(joins) > 0 {
 		query += " " + strings.Join(joins, " ")
 	}
+
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}

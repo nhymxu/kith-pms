@@ -112,6 +112,7 @@ func SessionOrBearer(apiToken string, svc *Service) echo.MiddlewareFunc {
 				t, ok := extractBearer(header)
 				if ok && apiToken != "" {
 					tb := []byte(t)
+
 					kb := []byte(apiToken)
 					if len(tb) == len(kb) && subtle.ConstantTimeCompare(tb, kb) == 1 {
 						// Machine client authenticated via Bearer — user stays nil.
@@ -129,14 +130,17 @@ func SessionOrBearer(apiToken string, svc *Service) echo.MiddlewareFunc {
 				if err == nil && user != nil {
 					c.Set(contextKey, user)
 					c.Set(cookieAuthedKey, true)
+
 					return next(c)
 				}
+
 				if err != nil {
 					slog.Warn("auth: session lookup error", "ip", c.RealIP(), "err", err)
 				}
 			}
 
 			slog.Warn("auth: unauthorized request", "ip", c.RealIP(), "path", c.Request().URL.Path)
+
 			return jsonErr(c, http.StatusUnauthorized, "unauthorized")
 		}
 	}

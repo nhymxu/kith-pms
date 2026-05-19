@@ -127,6 +127,7 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 		if strings.Contains(err.Error(), "request body too large") {
 			return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
 		}
+
 		return apiErr(c, http.StatusBadRequest, "no file uploaded")
 	}
 
@@ -144,6 +145,7 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "failed to read file")
 	}
+
 	detected = strings.TrimSpace(strings.SplitN(detected, ";", 2)[0])
 	if !giftImageAllowedTypes[detected] {
 		return apiErr(c, http.StatusUnprocessableEntity, "unsupported file type: use jpeg, png, gif, or webp")
@@ -153,6 +155,7 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 		if strings.Contains(err.Error(), "file service not configured") {
 			return apiErr(c, http.StatusInternalServerError, "file storage not configured")
 		}
+
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 
@@ -170,6 +173,7 @@ func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
 		if err == sql.ErrNoRows {
 			return apiErr(c, http.StatusNotFound, "not found")
 		}
+
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 
@@ -187,6 +191,7 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	if err == sql.ErrNoRows {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
+
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
@@ -196,6 +201,7 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	}
 
 	fullPath := filepath.Join(h.GiftStoragePath, g.ImagePath)
+
 	cleanPath := filepath.Clean(fullPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(h.GiftStoragePath)) {
 		return apiErr(c, http.StatusNotFound, "not found")
@@ -211,9 +217,11 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	if mt == "" {
 		mt = "application/octet-stream"
 	}
+
 	c.Response().Header().Set("Content-Type", mt)
 	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
 	_, err = io.Copy(c.Response(), f)
+
 	return err
 }
 

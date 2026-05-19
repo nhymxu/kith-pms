@@ -134,6 +134,7 @@ func (r *sqlSessionRepo) CountActiveSessions(ctx context.Context) (int64, error)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	var n int64
+
 	err := r.db.QueryRowContext(ctx,
 		`SELECT count(*) FROM session WHERE expires_at > ?`, now,
 	).Scan(&n)

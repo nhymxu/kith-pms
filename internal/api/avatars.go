@@ -17,14 +17,18 @@ import (
 // seeks back to the start. Returns http.DetectContentType result.
 func sniff512(r io.ReadSeeker) (string, error) {
 	buf := make([]byte, 512)
+
 	n, err := r.Read(buf)
 	if err != nil && err != io.EOF {
 		return "", err
 	}
+
 	detected := http.DetectContentType(buf[:n])
+
 	if _, seekErr := r.Seek(0, io.SeekStart); seekErr != nil {
 		return "", seekErr
 	}
+
 	return detected, nil
 }
 
@@ -81,6 +85,7 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 	}
 	// DetectContentType may append params (e.g. "image/png; charset=...") — strip them.
 	detected = strings.SplitN(detected, ";", 2)[0]
+
 	detected = strings.TrimSpace(detected)
 	if !avatarAllowedTypes[detected] {
 		return apiErr(c, http.StatusUnprocessableEntity, "unsupported file type: use jpeg, png, gif, or webp")
@@ -149,6 +154,7 @@ func (h *AvatarsAPI) Get(c *echo.Context) error {
 	if mt == "" {
 		mt = "application/octet-stream"
 	}
+
 	c.Response().Header().Set("Content-Type", mt)
 	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
 	_, err = io.Copy(c.Response(), f)

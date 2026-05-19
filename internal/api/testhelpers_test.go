@@ -93,7 +93,12 @@ func jsonRequest(method, path, body string) *http.Request {
 
 // execHandler runs a handler directly, setting named path params via Echo v5 PathValues.
 // params maps param name → value (e.g. {"id": "42"}).
-func execHandler(e *echo.Echo, req *http.Request, params map[string]string, handler echo.HandlerFunc) *httptest.ResponseRecorder {
+func execHandler(
+	e *echo.Echo,
+	req *http.Request,
+	params map[string]string,
+	handler echo.HandlerFunc,
+) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -112,7 +117,13 @@ func execHandler(e *echo.Echo, req *http.Request, params map[string]string, hand
 }
 
 // execHandlerWithUser is like execHandler but also sets a *auth.User on the context.
-func execHandlerWithUser(e *echo.Echo, req *http.Request, params map[string]string, user *auth.User, handler echo.HandlerFunc) *httptest.ResponseRecorder {
+func execHandlerWithUser(
+	e *echo.Echo,
+	req *http.Request,
+	params map[string]string,
+	user *auth.User,
+	handler echo.HandlerFunc,
+) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 

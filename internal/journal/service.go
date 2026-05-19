@@ -273,9 +273,11 @@ func (s *Service) List(ctx context.Context, params ListParams) (*ActivityList, e
 		if err != nil {
 			return nil, err
 		}
+
 		if people == nil {
 			people = []ActivityPerson{}
 		}
+
 		items[i].People = people
 	}
 

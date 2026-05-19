@@ -33,6 +33,7 @@ func TestAuthLogin_HappyPath(t *testing.T) {
 
 	// Session cookie must be set.
 	found := false
+
 	for _, c := range rec.Result().Cookies() {
 		if c.Name == "kith_session" && c.Value != "" {
 			found = true
@@ -92,6 +93,7 @@ func TestAuthLogout_HappyPath(t *testing.T) {
 
 	// Cookie must be cleared (MaxAge == -1).
 	cleared := false
+
 	for _, c := range rec.Result().Cookies() {
 		if c.Name == "kith_session" && c.MaxAge == -1 {
 			cleared = true

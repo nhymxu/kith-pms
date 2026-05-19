@@ -182,9 +182,11 @@ Can scale later.`,
 			if giftStoragePath == "" {
 				giftStoragePath = "data/gifts"
 			}
+
 			if err := os.MkdirAll(giftStoragePath, 0o700); err != nil {
 				return fmt.Errorf("web-server: create gift dir: %w", err)
 			}
+
 			giftFileSvc := files.NewLocalFileService(giftStoragePath)
 			giftsSvc.FileSvc = giftFileSvc
 

@@ -25,11 +25,11 @@ var validTimeFormats = map[string]bool{
 }
 
 type Service struct {
-	Repo SettingsRepo
+	Repo Repo
 }
 
 func NewService(db *sql.DB) *Service {
-	return &Service{Repo: NewSettingsRepo(db)}
+	return &Service{Repo: NewRepo(db)}
 }
 
 func (s *Service) Get(ctx context.Context) (UserSettings, error) {
@@ -42,12 +42,15 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 	if v, ok := rows[KeyDateFormat]; ok {
 		result.DateFormat = v
 	}
+
 	if v, ok := rows[KeyTimeFormat]; ok {
 		result.TimeFormat = v
 	}
+
 	if v, ok := rows[KeyTimezone]; ok {
 		result.Timezone = v
 	}
+
 	return result, nil
 }
 
@@ -55,9 +58,11 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 	if !validDateFormats[in.DateFormat] {
 		return UserSettings{}, ErrInvalidDateFormat
 	}
+
 	if !validTimeFormats[in.TimeFormat] {
 		return UserSettings{}, ErrInvalidTimeFormat
 	}
+
 	if in.Timezone == "" {
 		return UserSettings{}, ErrInvalidTimezone
 	}
@@ -72,5 +77,6 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 			return UserSettings{}, err
 		}
 	}
+
 	return in, nil
 }

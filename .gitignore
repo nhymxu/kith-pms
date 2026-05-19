@@ -159,8 +159,8 @@ internal/db/queries/*.go
 
 # SPA build output — populated by `make web`; not committed
 web/dist/
-internal/web/spa/public/
-!internal/web/spa/public/placeholder.txt
+internal/web/spa/public/*
+!internal/web/spa/public/.gitignore
 
 # Build output
 bin/
@@ -168,6 +168,3 @@ bin/
 
 # Runtime data
 data/
-
-# AI folder
-.claude/settings.local.json

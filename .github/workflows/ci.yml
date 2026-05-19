@@ -37,6 +37,9 @@ jobs:
     name: Web lint + build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./web
     steps:
       - uses: actions/checkout@v6
 
@@ -51,17 +54,13 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: ./web
         run: pnpm install --frozen-lockfile
 
       - name: Biome check
-        working-directory: ./web
         run: pnpm biome check
 
       - name: TypeScript check
-        working-directory: ./web
         run: pnpm tsc --noEmit
 
       - name: Build
-        working-directory: ./web
         run: pnpm build

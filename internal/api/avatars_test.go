@@ -23,7 +23,9 @@ func (s *stubFileService) SaveAvatar(_ int64, _ multipart.File, h *multipart.Fil
 	if s.saveErr != nil {
 		return "", s.saveErr
 	}
+
 	s.savedPath = "avatars/" + h.Filename
+
 	return s.savedPath, nil
 }
 
@@ -37,10 +39,15 @@ func (s *stubFileService) DeleteGiftImage(_ int64, _ string) error { return nil 
 // ---- helpers ----------------------------------------------------------------
 
 // buildMultipartRequest builds a multipart/form-data request with a single file field.
-func buildMultipartRequest(t *testing.T, fieldName, filename, contentType string, content []byte) *http.Request {
+func buildMultipartRequest( // nolint:unused
+	t *testing.T,
+	fieldName, filename, contentType string,
+	content []byte,
+) *http.Request {
 	t.Helper()
 
 	var buf bytes.Buffer
+
 	w := multipart.NewWriter(&buf)
 
 	part, err := w.CreateFormFile(fieldName, filename)
@@ -74,6 +81,7 @@ func buildMultipartRequestWithMIME(t *testing.T, fieldName, filename, mimeType s
 	t.Helper()
 
 	var buf bytes.Buffer
+
 	w := multipart.NewWriter(&buf)
 
 	h := make(map[string][]string)

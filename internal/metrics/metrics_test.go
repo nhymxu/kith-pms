@@ -14,6 +14,7 @@ import (
 func newTestEcho() *echo.Echo {
 	e := echo.New()
 	e.Use(metrics.Middleware())
+
 	return e
 }
 
@@ -49,6 +50,7 @@ func TestMiddleware_CountsRequests(t *testing.T) {
 	if strings.Contains(body, `route="/v1/people/42"`) {
 		t.Error("metrics must use route template /v1/people/:id, not raw path /v1/people/42")
 	}
+
 	if !strings.Contains(body, `route="/v1/people/:id"`) {
 		t.Error("expected route template /v1/people/:id in metrics output")
 	}
@@ -80,6 +82,7 @@ func TestHandler_Returns200(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
+
 	ct := rec.Header().Get("Content-Type")
 	if !strings.Contains(ct, "text/plain") {
 		t.Errorf("expected text/plain content-type, got %s", ct)
@@ -98,5 +101,6 @@ func scrapeMetrics(t *testing.T, e *echo.Echo) string {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("metrics endpoint returned %d", rec.Code)
 	}
+
 	return rec.Body.String()
 }

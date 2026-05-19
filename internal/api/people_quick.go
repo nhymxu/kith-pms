@@ -80,6 +80,7 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 	seen[personID] = true
 
 	personIDs := []int64{personID}
+
 	for _, id := range req.PersonIDs {
 		if !seen[id] {
 			seen[id] = true
@@ -153,6 +154,7 @@ func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 	}
 
 	var amountCents *int64
+
 	if amtStr := strings.TrimSpace(req.Amount); amtStr != "" {
 		if f, parseErr := strconv.ParseFloat(amtStr, 64); parseErr == nil && f >= 0 {
 			cents := int64(math.Round(f * 100))

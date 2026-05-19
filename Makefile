@@ -22,6 +22,7 @@ web: ## Build the React SPA and copy output into internal/web/spa/public
 	cd web && pnpm install --frozen-lockfile && pnpm build
 	rm -rf internal/web/spa/public
 	mkdir -p internal/web/spa/public
+	touch internal/web/spa/public/.gitignore
 	cp -R web/dist/. internal/web/spa/public
 
 .PHONY: assets

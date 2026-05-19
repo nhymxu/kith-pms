@@ -18,6 +18,7 @@ func (h *SettingsAPI) Get(c *echo.Context) error {
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
+
 	return ok(c, s)
 }
 
@@ -38,5 +39,6 @@ func (h *SettingsAPI) Update(c *echo.Context) error {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
 		}
 	}
+
 	return ok(c, updated)
 }

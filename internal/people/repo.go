@@ -123,6 +123,7 @@ func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (
 
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
+
 		where = append(where, "id IN ("+sub+")")
 		for _, id := range labelIDs {
 			args = append(args, id)
@@ -487,6 +488,7 @@ func scanPerson(row rowScanner) (Person, error) {
 	)
 
 	var isSelf int64
+
 	err := row.Scan(
 		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
 		&dobStr, &p.RelationshipType, &p.OtherNotes,
@@ -494,6 +496,7 @@ func scanPerson(row rowScanner) (Person, error) {
 		&lastContactAtStr, &createdAt, &updatedAt, &isSelf,
 	)
 	p.IsSelf = isSelf == 1
+
 	if err != nil {
 		return Person{}, fmt.Errorf("people: scan person: %w", err)
 	}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { getReminder, deleteReminder } from "#/endpoints/reminders"
+import { formatDate } from "#/lib/format-datetime"
 import { keys } from "#/query-keys"
 import { CompleteButton } from "#/features/reminders/complete-button"
 import { Button } from "#/components/ui/button"
@@ -73,7 +74,7 @@ function ReminderDetailPage() {
 					</div>
 					<div className="flex gap-2">
 						<span className="text-foreground/60 w-28 shrink-0">Due</span>
-						<span>{new Date(data.due_date).toLocaleDateString()}</span>
+						<span>{formatDate(data.due_date)}</span>
 					</div>
 					{data.person_name && (
 						<div className="flex gap-2">

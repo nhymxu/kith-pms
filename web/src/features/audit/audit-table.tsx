@@ -5,6 +5,7 @@ import { DataTable } from "#/components/data-table/data-table"
 import { Badge } from "#/components/ui/badge"
 import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
 import type { AuditEntry } from "#/schemas/audit"
+import { formatDateTime } from "#/lib/format-datetime"
 
 interface AuditTableProps {
 	data: AuditEntry[]
@@ -30,7 +31,7 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 				cell: valueCell<AuditEntry, string>((val) => {
 					if (!val) return "—"
 					try {
-						return <span className="font-mono text-[12px] text-zinc-500">{new Date(val).toLocaleString()}</span>
+						return <span className="font-mono text-[12px] text-zinc-500">{formatDateTime(val)}</span>
 					} catch {
 						return val
 					}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { getJournalEntry, deleteJournalEntry } from "#/endpoints/journal"
+import { formatDate, formatTime } from "#/lib/format-datetime"
 import { keys } from "#/query-keys"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -60,8 +61,8 @@ function JournalEntryPage() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="font-mono text-[12px] text-zinc-500">
-						{new Date(data.occurred_at_date).toLocaleDateString()}
-						{data.occurred_at_time ? ` at ${data.occurred_at_time}` : ""}
+						{formatDate(data.occurred_at_date)}
+						{data.occurred_at_time ? ` at ${formatTime(data.occurred_at_time)}` : ""}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">

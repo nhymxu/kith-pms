@@ -78,3 +78,43 @@ export function formatTime(timeStr: string | null | undefined): string {
 	}
 	return `${String(h).padStart(2, "0")}:${min}`
 }
+
+// Format an ISO datetime string according to user prefs (date + time).
+export function formatDateTime(isoStr: string | null | undefined): string {
+	if (!isoStr) return "—"
+	const d = new Date(isoStr)
+	if (Number.isNaN(d.getTime())) return isoStr
+	const prefs = getUserPrefs()
+	// Convert to user's timezone
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: prefs.timezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(d)
+	const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
+	const y = get("year"), m = get("month"), day = get("day")
+	const h = Number.parseInt(get("hour"), 10)
+	const min = get("minute")
+
+	let datePart: string
+	switch (prefs.dateFormat) {
+		case "MM/DD/YYYY": datePart = `${m}/${day}/${y}`; break
+		case "DD/MM/YYYY": datePart = `${day}/${m}/${y}`; break
+		default: datePart = `${y}-${m}-${day}`
+	}
+
+	let timePart: string
+	if (prefs.timeFormat === "12h") {
+		const period = h >= 12 ? "PM" : "AM"
+		const h12 = h % 12 || 12
+		timePart = `${h12}:${min} ${period}`
+	} else {
+		timePart = `${String(h).padStart(2, "0")}:${min}`
+	}
+
+	return `${datePart} ${timePart}`
+}

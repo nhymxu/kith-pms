@@ -6,6 +6,7 @@ import { DataTable } from "#/components/data-table/data-table"
 import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
 import type { ReminderWithPerson } from "#/schemas/reminder"
 import { CompleteButton } from "./complete-button"
+import { formatDate } from "#/lib/format-datetime"
 
 interface RemindersTableProps {
 	data: ReminderWithPerson[]
@@ -21,14 +22,6 @@ function StatusBadge({ completed, dueDate }: { completed: boolean; dueDate: stri
 		: <span className="font-mono text-[10px] uppercase text-indigo-600">Upcoming</span>
 }
 
-function formatDate(dateStr: string) {
-	if (!dateStr) return "—"
-	try {
-		return new Date(dateStr).toLocaleDateString()
-	} catch {
-		return dateStr
-	}
-}
 
 export function RemindersTable({ data, toolbarActions, onCompleted }: RemindersTableProps) {
 	const columns = useMemo<ColumnDef<ReminderWithPerson>[]>(

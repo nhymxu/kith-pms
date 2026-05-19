@@ -6,6 +6,7 @@ import { DataTable } from "#/components/data-table/data-table"
 import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
 import { getAvatarUrl } from "#/endpoints/people"
 import type { ActivityPerson, JournalActivity } from "#/schemas/journal"
+import { formatDate } from "#/lib/format-datetime"
 
 function PersonChip({ p }: { p: ActivityPerson }) {
 	const hasAvatar = Boolean(p.avatar_path)
@@ -42,7 +43,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				header: sortableHeader<JournalActivity>("Date"),
 				enableSorting: true,
 				cell: valueCell<JournalActivity, string>((val) =>
-					val ? <span className="font-mono text-[12px] text-zinc-500">{new Date(val).toLocaleDateString()}</span> : <span className="text-zinc-300">—</span>,
+					val ? <span className="font-mono text-[12px] text-zinc-500">{formatDate(val)}</span> : <span className="text-zinc-300">—</span>,
 				),
 			},
 			{

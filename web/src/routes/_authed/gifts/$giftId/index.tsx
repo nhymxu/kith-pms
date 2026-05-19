@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { getGift, deleteGift } from "#/endpoints/gifts"
+import { formatDate } from "#/lib/format-datetime"
 import { keys } from "#/query-keys"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
@@ -87,7 +88,7 @@ function GiftDetailPage() {
 					</div>
 					<div className="flex gap-2">
 						<span className="text-foreground/60 w-28 shrink-0">Date</span>
-						<span>{data.date ? new Date(data.date).toLocaleDateString() : "—"}</span>
+						<span>{formatDate(data.date)}</span>
 					</div>
 					<div className="flex gap-2">
 						<span className="text-foreground/60 w-28 shrink-0">Amount</span>

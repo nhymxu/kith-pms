@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router"
 import { DataTable } from "#/components/data-table/data-table"
 import { sortableHeader, valueCell } from "#/components/data-table/column-helpers"
 import type { GiftWithPerson } from "#/schemas/gift"
+import { formatDate } from "#/lib/format-datetime"
 
 interface GiftsTableProps {
 	data: GiftWithPerson[]
@@ -19,14 +20,6 @@ function DebtBadge({ debtType, direction }: { debtType: string; direction: strin
 	return <span className="font-mono text-[10px] uppercase text-zinc-400">Planned</span>
 }
 
-function formatDate(dateStr: string) {
-	if (!dateStr) return "—"
-	try {
-		return new Date(dateStr).toLocaleDateString()
-	} catch {
-		return dateStr
-	}
-}
 
 export function GiftsTable({ data, toolbarActions }: GiftsTableProps) {
 	const columns = useMemo<ColumnDef<GiftWithPerson>[]>(

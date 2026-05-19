@@ -8,6 +8,7 @@ import { Input } from "#/components/ui/input"
 import { Button } from "#/components/ui/button"
 import { keys } from "#/query-keys"
 import { listPeople, getAvatarUrl } from "#/endpoints/people"
+import { formatDate } from "#/lib/format-datetime"
 import { listLabels } from "#/endpoints/labels"
 import type { Person } from "#/schemas/person"
 
@@ -88,7 +89,7 @@ const columns: ColumnDef<Person>[] = [
 		cell: ({ getValue }) => {
 			const v = getValue<string | null>()
 			return v ? (
-				<span className="font-mono text-[12px] text-zinc-500">{new Date(v).toLocaleDateString()}</span>
+				<span className="font-mono text-[12px] text-zinc-500">{formatDate(v)}</span>
 			) : (
 				<span className="text-[12px] text-zinc-300">—</span>
 			)

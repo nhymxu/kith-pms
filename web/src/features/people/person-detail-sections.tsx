@@ -16,6 +16,7 @@ import { listJournal } from "#/endpoints/journal"
 import { listLabels } from "#/endpoints/labels"
 import { listRelationshipTypes } from "#/endpoints/relationship-types"
 import { listDatesByPerson } from "#/endpoints/dates"
+import { formatDate } from "#/lib/format-datetime"
 import { listGifts } from "#/endpoints/gifts"
 import type { Person } from "#/schemas/person"
 import { AvatarUploader } from "./avatar-uploader"
@@ -42,7 +43,7 @@ function OverviewSection({ person }: { person: Person }) {
 					<><dt className="font-medium text-zinc-500">Date of birth</dt><dd>{person.date_of_birth}</dd></>
 				)}
 				{person.last_contact_at && (
-					<><dt className="font-medium text-zinc-500">Last contact</dt><dd>{new Date(person.last_contact_at).toLocaleDateString()}</dd></>
+					<><dt className="font-medium text-zinc-500">Last contact</dt><dd>{formatDate(person.last_contact_at)}</dd></>
 				)}
 			</dl>
 			{person.other_notes && (

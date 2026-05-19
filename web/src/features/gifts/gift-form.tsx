@@ -18,9 +18,10 @@ interface GiftFormProps {
 	onSubmit: (values: GiftRequest) => Promise<void>
 	submitLabel?: string
 	onCancel?: () => void
+	onImageChange?: (file: File | null) => void
 }
 
-export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCancel }: GiftFormProps) {
+export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCancel, onImageChange }: GiftFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null)
 	const [personSearch, setPersonSearch] = useState("")
 	const [amountDisplay, setAmountDisplay] = useState(
@@ -227,6 +228,18 @@ export function GiftForm({ initial, onSubmit, submitLabel = "Save Gift", onCance
 					)}
 				</form.Field>
 			</div>
+
+			{onImageChange && (
+				<div className="space-y-1.5">
+					<Label>Image</Label>
+					<input
+						type="file"
+						accept="image/jpeg,image/png,image/gif,image/webp"
+						onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
+						className="text-sm"
+					/>
+				</div>
+			)}
 
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (

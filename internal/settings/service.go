@@ -4,13 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
 	"time"
 )
 
 var (
-	ErrInvalidDateFormat = errors.New("settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY")
-	ErrInvalidTimeFormat = errors.New("settings: time_format must be one of 24h, 12h")
-	ErrInvalidTimezone   = errors.New("settings: timezone must not be empty")
+	ErrInvalidDateFormat    = errors.New("settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY")
+	ErrInvalidTimeFormat    = errors.New("settings: time_format must be one of 24h, 12h")
+	ErrInvalidTimezone      = errors.New("settings: timezone must not be empty")
+	ErrInvalidRetentionDays = errors.New("settings: audit_log_retention_days must be >= 0")
 )
 
 var validDateFormats = map[string]bool{
@@ -51,6 +53,12 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.Timezone = v
 	}
 
+	if v, ok := rows[KeyAuditLogRetentionDays]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			result.AuditLogRetentionDays = n
+		}
+	}
+
 	return result, nil
 }
 
@@ -67,11 +75,16 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidTimezone
 	}
 
+	if in.AuditLogRetentionDays < 0 {
+		return UserSettings{}, ErrInvalidRetentionDays
+	}
+
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	for key, val := range map[string]string{
-		KeyDateFormat: in.DateFormat,
-		KeyTimeFormat: in.TimeFormat,
-		KeyTimezone:   in.Timezone,
+		KeyDateFormat:            in.DateFormat,
+		KeyTimeFormat:            in.TimeFormat,
+		KeyTimezone:              in.Timezone,
+		KeyAuditLogRetentionDays: strconv.Itoa(in.AuditLogRetentionDays),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err
@@ -79,4 +92,13 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 	}
 
 	return in, nil
+}
+
+func (s *Service) GetRetentionDays(ctx context.Context) (int, error) {
+	cfg, err := s.Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return cfg.AuditLogRetentionDays, nil
 }

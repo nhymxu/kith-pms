@@ -35,3 +35,12 @@ func (s *Service) Log(ctx context.Context, entityType EntityType, entityID int64
 func (s *Service) List(ctx context.Context, p ListParams) ([]Entry, error) {
 	return s.repo.List(ctx, s.db, p)
 }
+
+// Purge deletes entries older than days. days=0 is a no-op.
+func (s *Service) Purge(ctx context.Context, days int) (int64, error) {
+	if days <= 0 {
+		return 0, nil
+	}
+
+	return s.repo.Purge(ctx, s.db, days)
+}

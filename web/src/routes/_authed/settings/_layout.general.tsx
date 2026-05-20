@@ -10,6 +10,7 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Label } from "#/components/ui/label";
+import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import {
 	type DateFormat,
@@ -67,7 +68,7 @@ const COMMON_TIMEZONES = [
 function GeneralSettingsPage() {
 	const queryClient = useQueryClient();
 
-	const { data: apiSettings } = useQuery({
+	const { data: apiSettings, isPlaceholderData } = useQuery({
 		queryKey: ["settings"],
 		queryFn: getSettings,
 		// Seed local state from localStorage while the query loads.
@@ -77,6 +78,7 @@ function GeneralSettingsPage() {
 				date_format: p.dateFormat,
 				time_format: p.timeFormat,
 				timezone: p.timezone,
+				audit_log_retention_days: 0,
 			} as const;
 		},
 	});
@@ -96,23 +98,30 @@ function GeneralSettingsPage() {
 		return getUserPrefs();
 	});
 
-	// Keep local form state in sync when the query resolves.
+	const [retentionDays, setRetentionDays] = useState<number>(
+		apiSettings?.audit_log_retention_days ?? 0,
+	);
+
+	// Keep local form state in sync when the real query resolves (skip placeholder).
 	const [synced, setSynced] = useState(false);
-	if (apiSettings && !synced) {
+	if (apiSettings && !isPlaceholderData && !synced) {
 		setPrefs({
 			dateFormat: apiSettings.date_format as DateFormat,
 			timeFormat: apiSettings.time_format as TimeFormat,
 			timezone: apiSettings.timezone,
 		});
+		setRetentionDays(apiSettings.audit_log_retention_days ?? 0);
 		setSynced(true);
 	}
 
-	const mutation = useMutation({
+	const prefsMutation = useMutation({
 		mutationFn: () =>
 			updateSettings({
 				date_format: prefs.dateFormat,
 				time_format: prefs.timeFormat,
 				timezone: prefs.timezone,
+				audit_log_retention_days:
+					apiSettings?.audit_log_retention_days ?? retentionDays,
 			}),
 		onSuccess: (updated) => {
 			saveUserPrefs({
@@ -120,8 +129,27 @@ function GeneralSettingsPage() {
 				timeFormat: updated.time_format as TimeFormat,
 				timezone: updated.timezone,
 			});
+			setRetentionDays(updated.audit_log_retention_days ?? 0);
 			queryClient.setQueryData(["settings"], updated);
 		},
+	});
+
+	const auditMutation = useMutation({
+		mutationFn: () =>
+			updateSettings({
+				date_format: prefs.dateFormat,
+				time_format: prefs.timeFormat,
+				timezone: prefs.timezone,
+				audit_log_retention_days: retentionDays,
+			}),
+		onSuccess: (updated) => {
+			setRetentionDays(updated.audit_log_retention_days ?? 0);
+			queryClient.setQueryData(["settings"], updated);
+		},
+	});
+
+	const cleanupMutation = useMutation({
+		mutationFn: runAuditCleanup,
 	});
 
 	return (
@@ -220,19 +248,82 @@ function GeneralSettingsPage() {
 					</div>
 
 					<Button
-						onClick={() => mutation.mutate()}
+						onClick={() => prefsMutation.mutate()}
 						size="sm"
-						disabled={mutation.isPending}
+						disabled={prefsMutation.isPending}
 					>
-						{mutation.isPending
+						{prefsMutation.isPending
 							? "Saving…"
-							: mutation.isSuccess
+							: prefsMutation.isSuccess
 								? "Saved!"
 								: "Save preferences"}
 					</Button>
-					{mutation.isError && (
+					{prefsMutation.isError && (
 						<p className="text-[12px] text-red-500">
 							Failed to save. Please try again.
+						</p>
+					)}
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-[14px] font-medium text-zinc-900">
+						Audit Log
+					</CardTitle>
+					<CardDescription className="text-[12px] text-zinc-500">
+						Automatically remove audit entries older than the specified number
+						of days. Set to 0 to keep all entries.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="space-y-2">
+						<Label className="text-[13px]">Retention period (days)</Label>
+						<input
+							type="number"
+							min={0}
+							value={retentionDays}
+							onChange={(e) =>
+								setRetentionDays(Math.max(0, parseInt(e.target.value, 10) || 0))
+							}
+							className="h-9 w-32 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						/>
+						<p className="text-[11px] text-zinc-400">
+							0 = keep forever (disabled)
+						</p>
+					</div>
+
+					<div className="flex items-center gap-3">
+						<Button
+							onClick={() => auditMutation.mutate()}
+							size="sm"
+							disabled={auditMutation.isPending}
+						>
+							{auditMutation.isPending
+								? "Saving…"
+								: auditMutation.isSuccess
+									? "Saved!"
+									: "Save"}
+						</Button>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => cleanupMutation.mutate()}
+							disabled={cleanupMutation.isPending || retentionDays === 0}
+						>
+							{cleanupMutation.isPending ? "Running…" : "Run cleanup now"}
+						</Button>
+					</div>
+
+					{cleanupMutation.isSuccess && (
+						<p className="text-[12px] text-zinc-500">
+							Deleted {cleanupMutation.data.deleted}{" "}
+							{cleanupMutation.data.deleted === 1 ? "entry" : "entries"}.
+						</p>
+					)}
+					{cleanupMutation.isError && (
+						<p className="text-[12px] text-red-500">
+							Cleanup failed. Please try again.
 						</p>
 					)}
 				</CardContent>

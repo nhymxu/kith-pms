@@ -229,7 +229,74 @@ func TestAuditLog_OrderedNewestFirst(t *testing.T) {
 	}
 }
 
-// ---- context helpers --------------------------------------------------------
+// ---- Purge tests ------------------------------------------------------------
+
+func insertAuditAt(t *testing.T, db *sql.DB, createdAt string) {
+	t.Helper()
+
+	_, err := db.ExecContext(context.Background(),
+		`INSERT INTO audit_log (entity_type, entity_id, entity_name, action, created_at)
+		 VALUES ('person', 1, 'Test', 'create', ?)`, createdAt)
+	if err != nil {
+		t.Fatalf("insertAuditAt: %v", err)
+	}
+}
+
+func TestService_Purge_Disabled(t *testing.T) {
+	svc := audit.NewService(openTestDB(t))
+
+	n, err := svc.Purge(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("purge: %v", err)
+	}
+
+	if n != 0 {
+		t.Errorf("want 0 deleted, got %d", n)
+	}
+}
+
+func TestService_Purge_DeletesOldEntries(t *testing.T) {
+	db := openTestDB(t)
+	svc := audit.NewService(db)
+
+	// one entry 91 days ago, one entry 1 day ago
+	insertAuditAt(t, db, "2026-02-18T00:00:00Z") // 91 days before 2026-05-20
+	insertAuditAt(t, db, "2026-05-19T00:00:00Z") // 1 day ago
+
+	n, err := svc.Purge(context.Background(), 90)
+	if err != nil {
+		t.Fatalf("purge: %v", err)
+	}
+
+	if n != 1 {
+		t.Errorf("want 1 deleted, got %d", n)
+	}
+
+	entries, err := svc.List(context.Background(), audit.ListParams{Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(entries) != 1 {
+		t.Errorf("want 1 remaining entry, got %d", len(entries))
+	}
+}
+
+func TestService_Purge_NothingToDelete(t *testing.T) {
+	db := openTestDB(t)
+	svc := audit.NewService(db)
+
+	insertAuditAt(t, db, "2026-05-19T00:00:00Z") // 1 day ago
+
+	n, err := svc.Purge(context.Background(), 90)
+	if err != nil {
+		t.Fatalf("purge: %v", err)
+	}
+
+	if n != 0 {
+		t.Errorf("want 0 deleted, got %d", n)
+	}
+}
 
 func TestActorContext_RoundTrip(t *testing.T) {
 	ctx := audit.WithActor(context.Background(), 42)

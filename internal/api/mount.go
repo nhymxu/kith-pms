@@ -143,8 +143,9 @@ func mountDates(g *echo.Group, deps Deps) {
 }
 
 func mountAudit(g *echo.Group, deps Deps) {
-	h := &AuditAPI{Svc: deps.AuditService}
+	h := &AuditAPI{Svc: deps.AuditService, SettingsSvc: deps.SettingsService}
 	g.GET("/audit", h.List)
+	g.POST("/audit/cleanup", h.Cleanup)
 }
 
 func mountGifts(g *echo.Group, deps Deps) {

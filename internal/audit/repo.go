@@ -98,6 +98,19 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	return entries, rows.Err()
 }
 
+// Purge deletes audit entries older than `days` days. Returns count deleted.
+func (r *Repo) Purge(ctx context.Context, db *sql.DB, days int) (int64, error) {
+	res, err := db.ExecContext(ctx,
+		`DELETE FROM audit_log WHERE created_at < datetime('now', ?)`,
+		fmt.Sprintf("-%d days", days),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("audit: purge: %w", err)
+	}
+
+	return res.RowsAffected()
+}
+
 // sqlExecer is satisfied by *sql.DB and *sql.Tx.
 type sqlExecer interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)

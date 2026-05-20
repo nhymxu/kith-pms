@@ -77,9 +77,23 @@ cover:
 benchmark:
 	go test -bench=.
 
-.PHONY: lint
-lint: ## Run linter
+.PHONY: lint-go
+lint-go: ## Run golang linter
+	echo "----- Run linting for backend using golangci-lint"
 	./scripts/lint.sh
+
+.PHONY: lint-biome
+lint-biome:
+	echo "----- Run linting for frontend using biome"
+	cd web && pnpm biome check && cd ..
+
+.PHONY: lint-tsc
+lint-tsc:
+	echo "----- Run linting for frontend using tsc"
+	cd web && pnpm tsc --noEmit && cd ..
+
+.PHONY: lint
+lint: lint-go lint-biome lint-tsc
 
 ## tidy: format code and tidy modfile
 .PHONY: tidy

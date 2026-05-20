@@ -7,11 +7,13 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
+	"github.com/nhymxu/kith-pms/internal/settings"
 )
 
-// AuditAPI handles GET /v1/audit.
+// AuditAPI handles audit endpoints.
 type AuditAPI struct {
-	Svc *audit.Service
+	Svc         *audit.Service
+	SettingsSvc *settings.Service
 }
 
 // List returns paginated audit entries, optionally filtered by entity_type and entity_id.
@@ -69,4 +71,27 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		"page_size": 50,
 		"has_more":  len(entries) == 50,
 	})
+}
+
+// Cleanup deletes audit entries older than the configured retention period.
+func (h *AuditAPI) Cleanup(c *echo.Context) error {
+	if h.Svc == nil || h.SettingsSvc == nil {
+		return apiErr(c, http.StatusNotImplemented, "audit not configured")
+	}
+
+	days, err := h.SettingsSvc.GetRetentionDays(c.Request().Context())
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if days <= 0 {
+		return c.JSON(http.StatusOK, map[string]int64{"deleted": 0})
+	}
+
+	n, err := h.Svc.Purge(c.Request().Context(), days)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return c.JSON(http.StatusOK, map[string]int64{"deleted": n})
 }

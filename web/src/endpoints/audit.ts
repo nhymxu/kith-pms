@@ -15,6 +15,10 @@ export interface AuditListParams {
 	to_date?: string;
 }
 
+export async function runAuditCleanup(): Promise<{ deleted: number }> {
+	return apiFetch<{ deleted: number }>("/v1/audit/cleanup", { method: "POST" });
+}
+
 export async function listAudit(
 	params: AuditListParams = {},
 ): Promise<AuditListEnvelope> {

@@ -37,4 +37,6 @@ type ListParams struct {
 	EntityID   int64      // optional; only used when EntityType is set
 	Page       int
 	PageSize   int
+	FromDate   string // optional; YYYY-MM-DD inclusive lower bound
+	ToDate     string // optional; YYYY-MM-DD inclusive upper bound
 }

@@ -33,6 +33,8 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		EntityID:   entityID,
 		Page:       page,
 		PageSize:   50,
+		FromDate:   c.QueryParam("from_date"),
+		ToDate:     c.QueryParam("to_date"),
 	})
 	if err != nil {
 		return err

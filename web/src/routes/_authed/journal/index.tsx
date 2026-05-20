@@ -30,6 +30,8 @@ function JournalPage() {
 			page: search.page,
 			page_size: search.page_size,
 			person_ids: search.people,
+			from_date: search.from_date,
+			to_date: search.to_date,
 		}),
 		queryFn: () =>
 			listJournal({

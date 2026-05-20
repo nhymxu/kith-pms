@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -42,17 +43,30 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 	query := `SELECT id, entity_type, entity_id, entity_name, action, actor_id, created_at
 	          FROM audit_log`
 	args := []any{}
+	where := []string{}
 
 	if p.EntityType != "" {
 		if p.EntityID > 0 {
-			query += ` WHERE entity_type = ? AND entity_id = ?`
-
+			where = append(where, "entity_type = ?", "entity_id = ?")
 			args = append(args, string(p.EntityType), p.EntityID)
 		} else {
-			query += ` WHERE entity_type = ?`
-
+			where = append(where, "entity_type = ?")
 			args = append(args, string(p.EntityType))
 		}
+	}
+
+	if p.FromDate != "" {
+		where = append(where, "date(created_at) >= ?")
+		args = append(args, p.FromDate)
+	}
+
+	if p.ToDate != "" {
+		where = append(where, "date(created_at) <= ?")
+		args = append(args, p.ToDate)
+	}
+
+	if len(where) > 0 {
+		query += ` WHERE ` + joinAnd(where)
 	}
 
 	query += ` ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`
@@ -87,4 +101,8 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 // sqlExecer is satisfied by *sql.DB and *sql.Tx.
 type sqlExecer interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
+func joinAnd(clauses []string) string {
+	return strings.Join(clauses, " AND ")
 }

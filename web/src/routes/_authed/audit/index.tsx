@@ -21,8 +21,12 @@ function AuditPage() {
 	const search = Route.useSearch();
 
 	const { data, isPending, isError } = useQuery({
-		queryKey: keys.audit.list({}),
-		queryFn: () => listAudit({}),
+		queryKey: keys.audit.list({
+			from_date: search.from_date,
+			to_date: search.to_date,
+		}),
+		queryFn: () =>
+			listAudit({ from_date: search.from_date, to_date: search.to_date }),
 	});
 
 	if (isError)

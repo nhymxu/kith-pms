@@ -7,7 +7,6 @@ import { AuditTable } from "#/features/audit/audit-table";
 import { keys } from "#/query-keys";
 
 const searchSchema = z.object({
-	page: z.coerce.number().min(1).optional().default(1),
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
 });
@@ -22,8 +21,8 @@ function AuditPage() {
 	const search = Route.useSearch();
 
 	const { data, isPending, isError } = useQuery({
-		queryKey: keys.audit.list({ page: search.page }),
-		queryFn: () => listAudit({ page: search.page }),
+		queryKey: keys.audit.list({}),
+		queryFn: () => listAudit({}),
 	});
 
 	if (isError)
@@ -55,7 +54,6 @@ function AuditPage() {
 								search: {
 									...search,
 									from_date: e.target.value || undefined,
-									page: 1,
 								},
 							})
 						}
@@ -79,7 +77,6 @@ function AuditPage() {
 								search: {
 									...search,
 									to_date: e.target.value || undefined,
-									page: 1,
 								},
 							})
 						}
@@ -94,10 +91,8 @@ function AuditPage() {
 							void navigate({
 								to: "/audit",
 								search: {
-									...search,
 									from_date: undefined,
 									to_date: undefined,
-									page: 1,
 								},
 							})
 						}
@@ -110,23 +105,7 @@ function AuditPage() {
 			{isPending ? (
 				<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
 			) : (
-				<>
-					<AuditTable data={data?.data ?? []} />
-					{data?.has_more && (
-						<Button
-							variant="neutral"
-							size="sm"
-							onClick={() =>
-								void navigate({
-									to: "/audit",
-									search: { ...search, page: (search.page ?? 1) + 1 },
-								})
-							}
-						>
-							Load more
-						</Button>
-					)}
-				</>
+				<AuditTable data={data?.data ?? []} />
 			)}
 		</div>
 	);

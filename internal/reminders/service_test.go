@@ -52,6 +52,8 @@ func setupTestDB(t *testing.T) *sql.DB {
 			important_date_id INTEGER REFERENCES important_date(id) ON DELETE SET NULL,
 			completed INTEGER NOT NULL DEFAULT 0,
 			completed_at TEXT,
+			recurrence_rule TEXT,
+			recurrence_end_date TEXT,
 			created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
 			updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 		);
@@ -383,5 +385,117 @@ func TestService_ListByStatus(t *testing.T) {
 
 	if len(overdue) != 1 {
 		t.Errorf("expected 1 overdue, got %d", len(overdue))
+	}
+}
+
+func TestMarkComplete_OneOff_NoSpawn(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:   "One-off",
+		DueDate: time.Now().AddDate(0, 0, 1),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := svc.MarkComplete(ctx, id); err != nil {
+		t.Fatalf("MarkComplete: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 1 {
+		t.Errorf("expected 1 row (no spawn), got %d", len(all))
+	}
+}
+
+func TestMarkComplete_Recurring_Daily_Spawns(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	due := time.Date(2026, 5, 20, 0, 0, 0, 0, time.UTC)
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:          "Daily standup",
+		DueDate:        due,
+		RecurrenceRule: &RecurrenceRule{Type: RecurrenceDaily},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := svc.MarkComplete(ctx, id); err != nil {
+		t.Fatalf("MarkComplete: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 2 {
+		t.Fatalf("expected 2 rows (original + spawn), got %d", len(all))
+	}
+
+	var spawned *ReminderWithPerson
+
+	for i := range all {
+		if !all[i].Completed {
+			spawned = &all[i]
+		}
+	}
+
+	if spawned == nil {
+		t.Fatal("expected a non-completed spawned reminder")
+	}
+
+	wantDue := time.Date(2026, 5, 21, 0, 0, 0, 0, time.UTC)
+	if !spawned.DueDate.Equal(wantDue) {
+		t.Errorf("spawned DueDate = %v, want %v", spawned.DueDate, wantDue)
+	}
+}
+
+func TestMarkComplete_Recurring_EndDateReached_NoSpawn(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	due := time.Date(2026, 5, 20, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2026, 5, 20, 0, 0, 0, 0, time.UTC)
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:             "Expiring daily",
+		DueDate:           due,
+		RecurrenceRule:    &RecurrenceRule{Type: RecurrenceDaily},
+		RecurrenceEndDate: &endDate,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if err := svc.MarkComplete(ctx, id); err != nil {
+		t.Fatalf("MarkComplete: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 1 {
+		t.Errorf("expected 1 row (end date reached, no spawn), got %d", len(all))
 	}
 }

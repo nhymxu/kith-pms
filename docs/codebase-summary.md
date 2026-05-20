@@ -205,10 +205,11 @@ kith-pms/
 - **service_test.go**: Integration tests for date parsing, recurring logic, and queries
 
 ### `internal/reminders` — Reminders & notifications
-- **domain.go**: Reminder (title, notes, due_date, person_id, important_date_id, completed), ReminderWithPerson
-- **service.go**: CRUD for reminders; completion tracking; filter by status and person
-- **repo.go**: Queries for reminders with person joins; status filtering
-- **service_test.go**: Integration tests for reminder CRUD and completion
+- **domain.go**: Reminder (title, notes, due_date, person_id, important_date_id, completed, recurrence_rule, recurrence_end_date), ReminderWithPerson; RecurrenceType enum (7 types), RecurrenceRule struct
+- **recurrence.go**: Pure `computeNextDue` function computing next due date for all 7 recurrence types (daily, weekly, monthly, yearly, custom, day_of_week, relative_contact)
+- **service.go**: CRUD for reminders; completion tracking; auto-spawn next occurrence when RecurrenceRule != nil; JournalLastContacter interface for relative-contact lookups
+- **repo.go**: Queries for reminders with person joins; status filtering; read/write recurrence columns (JSON marshal/unmarshal)
+- **service_test.go**: Integration tests for reminder CRUD, completion, and auto-spawn with recurrence
 
 ### `internal/gifts` — Gift management & debt tracking
 - **domain.go**: Gift (title, description, direction, debt_type, person_id, image_path), GiftWithPerson; Direction and DebtType enums

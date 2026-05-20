@@ -9,10 +9,16 @@ import (
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
+// JournalLastContacter is satisfied by journal.Service — used for relative_contact recurrence.
+type JournalLastContacter interface {
+	LastContactDate(ctx context.Context, personID int64) (time.Time, error)
+}
+
 type Service struct {
-	db    *sql.DB
-	repo  *Repo
-	Audit *audit.Service // optional; nil = no audit logging
+	db      *sql.DB
+	repo    *Repo
+	Audit   *audit.Service       // optional; nil = no audit logging
+	Journal JournalLastContacter // optional; nil = fallback to completedAt
 }
 
 func NewService(db *sql.DB) *Service {
@@ -114,13 +120,12 @@ func (s *Service) GetOverdue(ctx context.Context) ([]ReminderWithPerson, error) 
 }
 
 func (s *Service) MarkComplete(ctx context.Context, id int64) error {
-	var title string
-
-	if s.Audit != nil {
-		if r, err := s.repo.GetByID(ctx, id); err == nil && r != nil {
-			title = r.Title
-		}
+	rem, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get reminder: %w", err)
 	}
+
+	now := time.Now()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -128,8 +133,35 @@ func (s *Service) MarkComplete(ctx context.Context, id int64) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if err := s.repo.MarkComplete(ctx, tx, id, time.Now()); err != nil {
+	if err := s.repo.MarkComplete(ctx, tx, id, now); err != nil {
 		return err
+	}
+
+	if rem.RecurrenceRule != nil {
+		var lastContact time.Time
+
+		if s.Journal != nil && rem.PersonID != nil {
+			lastContact, _ = s.Journal.LastContactDate(ctx, *rem.PersonID)
+		}
+
+		rem.CompletedAt = &now
+		nextDue := computeNextDue(rem, lastContact)
+
+		if !nextDue.IsZero() {
+			next := &Reminder{
+				Title:             rem.Title,
+				Notes:             rem.Notes,
+				PersonID:          rem.PersonID,
+				ImportantDateID:   rem.ImportantDateID,
+				RecurrenceRule:    rem.RecurrenceRule,
+				RecurrenceEndDate: rem.RecurrenceEndDate,
+				DueDate:           nextDue,
+			}
+
+			if _, err := s.repo.Create(ctx, tx, next); err != nil {
+				return fmt.Errorf("spawn next occurrence: %w", err)
+			}
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -137,7 +169,7 @@ func (s *Service) MarkComplete(ctx context.Context, id int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityReminder, id, title, audit.ActionUpdate)
+		s.Audit.Log(ctx, audit.EntityReminder, id, rem.Title, audit.ActionUpdate)
 	}
 
 	return nil

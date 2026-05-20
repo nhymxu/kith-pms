@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v5"
 )
@@ -26,4 +27,13 @@ func noContent(c *echo.Context) error {
 
 func apiErr(c *echo.Context, code int, msg string) error {
 	return c.JSON(code, envelope{Error: msg})
+}
+
+// parseDateOrDatetime accepts "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (datetime-local format).
+func parseDateOrDatetime(s string) (time.Time, error) {
+	if len(s) > 10 {
+		return time.ParseInLocation("2006-01-02T15:04", s, time.Local)
+	}
+
+	return time.ParseInLocation("2006-01-02", s, time.Local)
 }

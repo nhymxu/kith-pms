@@ -14,7 +14,7 @@ import {
 } from "#/components/ui/dialog";
 import { deleteReminder, getReminder } from "#/endpoints/reminders";
 import { CompleteButton } from "#/features/reminders/complete-button";
-import { formatDate } from "#/lib/format-datetime";
+import { formatDate, formatDateTime } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/reminders/$reminderId")({
@@ -88,7 +88,7 @@ function ReminderDetailPage() {
 					</div>
 					<div className="flex gap-2">
 						<span className="text-foreground/60 w-28 shrink-0">Due</span>
-						<span>{formatDate(data.due_date)}</span>
+						<span>{data.due_date && data.due_date.length > 10 && data.due_date.slice(11, 16) !== "00:00" ? formatDateTime(data.due_date) : formatDate(data.due_date)}</span>
 					</div>
 					{data.person_name && (
 						<div className="flex gap-2">

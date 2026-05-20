@@ -3,6 +3,7 @@ package reminders
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -15,10 +16,42 @@ func NewRepo(db *sql.DB) *Repo {
 	return &Repo{db: db}
 }
 
+func marshalRecurrenceRule(rule *RecurrenceRule) (*string, error) {
+	if rule == nil {
+		return nil, nil
+	}
+
+	b, err := json.Marshal(rule)
+	if err != nil {
+		return nil, fmt.Errorf("marshal recurrence_rule: %w", err)
+	}
+
+	s := string(b)
+
+	return &s, nil
+}
+
+func unmarshalRecurrenceRule(s *string) *RecurrenceRule {
+	if s == nil {
+		return nil
+	}
+
+	var rule RecurrenceRule
+	if err := json.Unmarshal([]byte(*s), &rule); err != nil {
+		return nil
+	}
+
+	return &rule
+}
+
 func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, error) {
 	query := `
-		INSERT INTO reminder (title, notes, due_date, person_id, important_date_id, completed, completed_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO reminder (
+			title, notes, due_date,
+			person_id, important_date_id,
+			completed, completed_at, recurrence_rule, recurrence_end_date
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	var completedInt int
@@ -33,9 +66,22 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, er
 		completedAtStr = &s
 	}
 
+	ruleStr, err := marshalRecurrenceRule(rem.RecurrenceRule)
+	if err != nil {
+		return 0, err
+	}
+
+	var endDateStr *string
+
+	if rem.RecurrenceEndDate != nil {
+		s := rem.RecurrenceEndDate.Format(time.RFC3339)
+		endDateStr = &s
+	}
+
 	result, err := tx.ExecContext(ctx, query,
 		rem.Title, rem.Notes, rem.DueDate.Format(time.RFC3339),
-		rem.PersonID, rem.ImportantDateID, completedInt, completedAtStr)
+		rem.PersonID, rem.ImportantDateID, completedInt, completedAtStr,
+		ruleStr, endDateStr)
 	if err != nil {
 		return 0, fmt.Errorf("insert reminder: %w", err)
 	}
@@ -51,7 +97,8 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, er
 func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 	query := `
 		SELECT id, title, notes, due_date, person_id, important_date_id,
-		       completed, completed_at, created_at, updated_at
+		       completed, completed_at, created_at, updated_at,
+		       recurrence_rule, recurrence_end_date
 		FROM reminder
 		WHERE id = ?
 	`
@@ -61,11 +108,14 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 		dueDateStr, createdAtStr, updatedAtStr string
 		completedInt                           int
 		completedAtStr                         *string
+		ruleStr                                *string
+		endDateStr                             *string
 	)
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&rem.ID, &rem.Title, &rem.Notes, &dueDateStr, &rem.PersonID, &rem.ImportantDateID,
 		&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr,
+		&ruleStr, &endDateStr,
 	)
 	if err != nil {
 		return nil, err
@@ -74,11 +124,18 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 	rem.Completed = completedInt == 1
 	rem.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 	rem.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
-
 	rem.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
+
 	if completedAtStr != nil {
 		t, _ := time.Parse(time.RFC3339, *completedAtStr)
 		rem.CompletedAt = &t
+	}
+
+	rem.RecurrenceRule = unmarshalRecurrenceRule(ruleStr)
+
+	if endDateStr != nil {
+		t, _ := time.Parse(time.RFC3339, *endDateStr)
+		rem.RecurrenceEndDate = &t
 	}
 
 	return &rem, nil
@@ -88,7 +145,8 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
 	query := `
 		UPDATE reminder
 		SET title = ?, notes = ?, due_date = ?, person_id = ?, important_date_id = ?,
-		    completed = ?, completed_at = ?, updated_at = ?
+		    completed = ?, completed_at = ?, updated_at = ?,
+		    recurrence_rule = ?, recurrence_end_date = ?
 		WHERE id = ?
 	`
 
@@ -104,10 +162,22 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
 		completedAtStr = &s
 	}
 
-	_, err := tx.ExecContext(ctx, query,
+	ruleStr, err := marshalRecurrenceRule(rem.RecurrenceRule)
+	if err != nil {
+		return err
+	}
+
+	var endDateStr *string
+
+	if rem.RecurrenceEndDate != nil {
+		s := rem.RecurrenceEndDate.Format(time.RFC3339)
+		endDateStr = &s
+	}
+
+	_, err = tx.ExecContext(ctx, query,
 		rem.Title, rem.Notes, rem.DueDate.Format(time.RFC3339),
 		rem.PersonID, rem.ImportantDateID, completedInt, completedAtStr,
-		time.Now().Format(time.RFC3339), rem.ID)
+		time.Now().Format(time.RFC3339), ruleStr, endDateStr, rem.ID)
 	if err != nil {
 		return fmt.Errorf("update reminder: %w", err)
 	}
@@ -130,6 +200,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	query := `
 		SELECT r.id, r.title, r.notes, r.due_date, r.person_id, r.important_date_id,
 		       r.completed, r.completed_at, r.created_at, r.updated_at,
+		       r.recurrence_rule, r.recurrence_end_date,
 		       COALESCE(p.name, '') as person_name
 		FROM reminder r
 		LEFT JOIN person p ON r.person_id = p.id
@@ -175,12 +246,13 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 			rwp                                    ReminderWithPerson
 			dueDateStr, createdAtStr, updatedAtStr string
 			completedInt                           int
-			completedAtStr                         *string
+			completedAtStr, ruleStr, endDateStr    *string
 		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
-			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr, &rwp.PersonName,
+			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr,
+			&ruleStr, &endDateStr, &rwp.PersonName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan reminder: %w", err)
@@ -189,11 +261,18 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
-
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
+
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
 			rwp.CompletedAt = &t
+		}
+
+		rwp.RecurrenceRule = unmarshalRecurrenceRule(ruleStr)
+
+		if endDateStr != nil {
+			t, _ := time.Parse(time.RFC3339, *endDateStr)
+			rwp.RecurrenceEndDate = &t
 		}
 
 		results = append(results, rwp)
@@ -209,6 +288,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 	query := `
 		SELECT r.id, r.title, r.notes, r.due_date, r.person_id, r.important_date_id,
 		       r.completed, r.completed_at, r.created_at, r.updated_at,
+		       r.recurrence_rule, r.recurrence_end_date,
 		       COALESCE(p.name, '') as person_name
 		FROM reminder r
 		LEFT JOIN person p ON r.person_id = p.id
@@ -229,12 +309,13 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 			rwp                                    ReminderWithPerson
 			dueDateStr, createdAtStr, updatedAtStr string
 			completedInt                           int
-			completedAtStr                         *string
+			completedAtStr, ruleStr, endDateStr    *string
 		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
-			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr, &rwp.PersonName,
+			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr,
+			&ruleStr, &endDateStr, &rwp.PersonName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan reminder: %w", err)
@@ -243,11 +324,18 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
-
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
+
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
 			rwp.CompletedAt = &t
+		}
+
+		rwp.RecurrenceRule = unmarshalRecurrenceRule(ruleStr)
+
+		if endDateStr != nil {
+			t, _ := time.Parse(time.RFC3339, *endDateStr)
+			rwp.RecurrenceEndDate = &t
 		}
 
 		results = append(results, rwp)
@@ -260,6 +348,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	query := `
 		SELECT r.id, r.title, r.notes, r.due_date, r.person_id, r.important_date_id,
 		       r.completed, r.completed_at, r.created_at, r.updated_at,
+		       r.recurrence_rule, r.recurrence_end_date,
 		       COALESCE(p.name, '') as person_name
 		FROM reminder r
 		LEFT JOIN person p ON r.person_id = p.id
@@ -280,12 +369,13 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 			rwp                                    ReminderWithPerson
 			dueDateStr, createdAtStr, updatedAtStr string
 			completedInt                           int
-			completedAtStr                         *string
+			completedAtStr, ruleStr, endDateStr    *string
 		)
 
 		err := rows.Scan(
 			&rwp.ID, &rwp.Title, &rwp.Notes, &dueDateStr, &rwp.PersonID, &rwp.ImportantDateID,
-			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr, &rwp.PersonName,
+			&completedInt, &completedAtStr, &createdAtStr, &updatedAtStr,
+			&ruleStr, &endDateStr, &rwp.PersonName,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan reminder: %w", err)
@@ -294,11 +384,18 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 		rwp.Completed = completedInt == 1
 		rwp.DueDate, _ = time.Parse(time.RFC3339, dueDateStr)
 		rwp.CreatedAt, _ = time.Parse(time.RFC3339, createdAtStr)
-
 		rwp.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAtStr)
+
 		if completedAtStr != nil {
 			t, _ := time.Parse(time.RFC3339, *completedAtStr)
 			rwp.CompletedAt = &t
+		}
+
+		rwp.RecurrenceRule = unmarshalRecurrenceRule(ruleStr)
+
+		if endDateStr != nil {
+			t, _ := time.Parse(time.RFC3339, *endDateStr)
+			rwp.RecurrenceEndDate = &t
 		}
 
 		results = append(results, rwp)

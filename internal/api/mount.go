@@ -97,7 +97,12 @@ func mountJournal(g *echo.Group, deps Deps) {
 }
 
 func mountReminders(g *echo.Group, deps Deps) {
-	h := &RemindersAPI{Svc: deps.RemindersService}
+	svc := deps.RemindersService
+	if deps.PeopleService != nil {
+		svc.Journal = &peopleLastContacter{people: deps.PeopleService}
+	}
+
+	h := &RemindersAPI{Svc: svc}
 	g.GET("/reminders", h.List)
 	g.POST("/reminders", h.Create)
 	g.GET("/reminders/:id", h.Get)

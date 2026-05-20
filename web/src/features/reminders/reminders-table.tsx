@@ -1,4 +1,4 @@
-// Reminders table: columns for title, person, due date, status
+// Reminders table: columns for title, person, due date, recurrence, status
 
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -8,9 +8,17 @@ import {
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
-import { formatDate } from "#/lib/format-datetime";
+import { formatDate, formatDateTime } from "#/lib/format-datetime";
 import type { ReminderWithPerson } from "#/schemas/reminder";
 import { CompleteButton } from "./complete-button";
+import { recurrenceLabel } from "./reminder-form";
+
+// Returns true if the ISO string contains a non-midnight time component.
+function hasTime(val: string): boolean {
+	if (val.length <= 10) return false;
+	const t = val.slice(11, 16);
+	return t !== "00:00";
+}
 
 interface RemindersTableProps {
 	data: ReminderWithPerson[];
@@ -80,12 +88,24 @@ export function RemindersTable({
 				cell: valueCell<ReminderWithPerson, string>((val) =>
 					val ? (
 						<span className="font-mono text-[12px] text-zinc-500">
-							{formatDate(val)}
+							{hasTime(val) ? formatDateTime(val) : formatDate(val)}
 						</span>
 					) : (
 						<span className="text-zinc-300">—</span>
 					),
 				),
+			},
+			{
+				id: "recurrence",
+				header: "Recurrence",
+				cell: ({ row }) =>
+					row.original.recurrence_rule ? (
+						<span className="font-mono text-[10px] uppercase text-indigo-500">
+							↻ {recurrenceLabel(row.original.recurrence_rule)}
+						</span>
+					) : (
+						<span className="text-zinc-300">—</span>
+					),
 			},
 			{
 				id: "status",

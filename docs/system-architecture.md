@@ -397,6 +397,7 @@ Connection settings:
 | `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
 | `0014_person_last_contact.sql` | last_contact_at nullable timestamp column on person table with partial index |
 | `0015_relationship_type.sql` | relationship_type table (name, reverse_name, self-FK inverse_type_id) + person_relationship junction table (from_person_id, to_person_id, relationship_type_id, notes) with UNIQUE and CHECK constraints |
+| `0016_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

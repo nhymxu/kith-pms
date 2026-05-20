@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -10,8 +11,27 @@ import (
 
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 )
+
+// peopleLastContacter adapts people.Service to reminders.JournalLastContacter.
+type peopleLastContacter struct {
+	people *people.Service
+}
+
+func (p *peopleLastContacter) LastContactDate(ctx context.Context, personID int64) (time.Time, error) {
+	person, err := p.people.Get(ctx, personID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if person.LastContactAt == nil {
+		return time.Time{}, nil
+	}
+
+	return *person.LastContactAt, nil
+}
 
 type RemindersAPI struct {
 	Svc *reminders.Service
@@ -19,11 +39,13 @@ type RemindersAPI struct {
 
 // reminderRequest is the JSON body for create and update.
 type reminderRequest struct {
-	Title           string `json:"title"`
-	Notes           string `json:"notes"`
-	DueDate         string `json:"due_date"` // "YYYY-MM-DD"
-	PersonID        *int64 `json:"person_id"`
-	ImportantDateID *int64 `json:"important_date_id"`
+	Title             string                    `json:"title"`
+	Notes             string                    `json:"notes"`
+	DueDate           string                    `json:"due_date"` // "YYYY-MM-DD"
+	PersonID          *int64                    `json:"person_id"`
+	ImportantDateID   *int64                    `json:"important_date_id"`
+	RecurrenceRule    *reminders.RecurrenceRule `json:"recurrence_rule"`
+	RecurrenceEndDate *string                   `json:"recurrence_end_date"`
 }
 
 // List handles reminder listing. Query params: status (upcoming|overdue|default=all), days (default 30 for upcoming).
@@ -90,9 +112,9 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
 	}
 
-	dueDate, err := time.Parse("2006-01-02", req.DueDate)
+	dueDate, err := parseDateOrDatetime(req.DueDate)
 	if err != nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD")
+		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM")
 	}
 
 	rem := &reminders.Reminder{
@@ -101,6 +123,20 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 		DueDate:         dueDate,
 		PersonID:        req.PersonID,
 		ImportantDateID: req.ImportantDateID,
+		RecurrenceRule:  req.RecurrenceRule,
+	}
+
+	if req.RecurrenceEndDate != nil {
+		t, err := parseDateOrDatetime(*req.RecurrenceEndDate)
+		if err != nil {
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"recurrence_end_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+			)
+		}
+
+		rem.RecurrenceEndDate = &t
 	}
 
 	id, err := h.Svc.Create(c.Request().Context(), rem)
@@ -132,9 +168,9 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
 	}
 
-	dueDate, err := time.Parse("2006-01-02", req.DueDate)
+	dueDate, err := parseDateOrDatetime(req.DueDate)
 	if err != nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD")
+		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM")
 	}
 
 	rem := &reminders.Reminder{
@@ -144,6 +180,20 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 		DueDate:         dueDate,
 		PersonID:        req.PersonID,
 		ImportantDateID: req.ImportantDateID,
+		RecurrenceRule:  req.RecurrenceRule,
+	}
+
+	if req.RecurrenceEndDate != nil {
+		t, err := parseDateOrDatetime(*req.RecurrenceEndDate)
+		if err != nil {
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"recurrence_end_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+			)
+		}
+
+		rem.RecurrenceEndDate = &t
 	}
 
 	if err := h.Svc.Update(c.Request().Context(), rem); err != nil {

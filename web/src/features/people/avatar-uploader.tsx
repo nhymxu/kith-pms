@@ -65,7 +65,7 @@ export function AvatarUploader({
 		e.target.value = "";
 	}
 
-	function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+	function handleDrop(e: React.DragEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		const file = e.dataTransfer.files?.[0];
 		if (file) handleFile(file);
@@ -77,10 +77,15 @@ export function AvatarUploader({
 	return (
 		<div className="space-y-3">
 			{/* Drop zone */}
-			<div
+			<button
+				type="button"
+				tabIndex={showControls ? 0 : -1}
 				onDrop={handleDrop}
 				onDragOver={(e) => e.preventDefault()}
 				onClick={() => showControls && inputRef.current?.click()}
+				onKeyDown={(e) =>
+					e.key === "Enter" && showControls && inputRef.current?.click()
+				}
 				className={`w-24 h-24 rounded-md border border-dashed border-zinc-300 overflow-hidden bg-secondary-background flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-main" : "cursor-default"}`}
 			>
 				{currentSrc ? (
@@ -92,7 +97,7 @@ export function AvatarUploader({
 				) : (
 					<Upload className="size-6 text-foreground/40" />
 				)}
-			</div>
+			</button>
 
 			<input
 				ref={inputRef}

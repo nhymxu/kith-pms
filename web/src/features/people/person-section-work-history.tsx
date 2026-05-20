@@ -155,7 +155,7 @@ export function WorkHistorySection({ personId }: WorkHistorySectionProps) {
 					person_id: personId,
 					created_at: "",
 					position: data.length,
-					company: updated.company!,
+					company: updated.company ?? "",
 					title: updated.title ?? "",
 					start_date: updated.start_date ?? "",
 					end_date: updated.end_date ?? "",

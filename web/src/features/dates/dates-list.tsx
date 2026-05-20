@@ -61,7 +61,7 @@ export function DatesList() {
 	for (const item of data) {
 		const key = monthLabel(item.next_occurrence);
 		if (!groups.has(key)) groups.set(key, []);
-		groups.get(key)!.push(item);
+		groups.get(key)?.push(item);
 	}
 
 	return (
@@ -72,11 +72,11 @@ export function DatesList() {
 						{month}
 					</h2>
 					<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
-						{items.map((item, i) => {
+						{items.map((item, _i) => {
 							const days = daysUntil(item.next_occurrence);
 							return (
 								<div
-									key={i}
+									key={`${item.person.id}-${item.kind}`}
 									className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors"
 								>
 									<div className="flex-1 min-w-0">

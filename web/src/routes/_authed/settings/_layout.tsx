@@ -33,7 +33,7 @@ function SettingsLayout() {
 				</p>
 				<ul className="space-y-0.5">
 					{NAV_ITEMS.map(({ to, icon: Icon, label }) => {
-						const active = pathname === to || pathname.startsWith(to + "/");
+						const active = pathname === to || pathname.startsWith(`${to}/`);
 						return (
 							<li key={to}>
 								<Link

@@ -231,7 +231,7 @@ export function GiftForm({
 									const cents = Math.round(
 										parseFloat(e.target.value || "0") * 100,
 									);
-									field.handleChange(isNaN(cents) ? null : cents);
+									field.handleChange(Number.isNaN(cents) ? null : cents);
 								}}
 								onBlur={field.handleBlur}
 							/>

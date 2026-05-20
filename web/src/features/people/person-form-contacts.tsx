@@ -44,6 +44,7 @@ export function PersonFormContacts({ value, onChange }: Props) {
 			)}
 			{value.map((row, i) => (
 				<div
+					// biome-ignore lint/suspicious/noArrayIndexKey: no stable id on unsaved rows
 					key={i}
 					className="grid grid-cols-[100px_1fr_1fr_32px] gap-2 items-end"
 				>

@@ -51,6 +51,7 @@ export function PersonFormLocations({ value, onChange }: Props) {
 			)}
 			{value.map((row, i) => (
 				<div
+					// biome-ignore lint/suspicious/noArrayIndexKey: no stable id on unsaved rows
 					key={i}
 					className="border border-zinc-200 rounded-md p-3 space-y-2"
 				>

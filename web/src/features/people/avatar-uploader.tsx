@@ -65,7 +65,7 @@ export function AvatarUploader({
 		e.target.value = "";
 	}
 
-	function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+	function handleDrop(e: React.DragEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		const file = e.dataTransfer.files?.[0];
 		if (file) handleFile(file);

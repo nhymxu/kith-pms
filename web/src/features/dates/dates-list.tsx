@@ -76,7 +76,7 @@ export function DatesList() {
 							const days = daysUntil(item.next_occurrence);
 							return (
 								<div
-									key={item.id}
+									key={`${item.person.id}-${item.kind}`}
 									className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors"
 								>
 									<div className="flex-1 min-w-0">

@@ -53,27 +53,27 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 
 ## Tech Stack (Implemented)
 
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| Language | Go 1.26.2, CGO_ENABLED=0 | Compiled binary, low overhead, easy self-hosting |
-| HTTP | Echo v5.1.1 | Lightweight HTTP framework, minimal magic |
-| Database | SQLite (modernc.org/sqlite v1.50.0) | Pure Go, no CGO, single-file database, WAL mode |
-| Frontend | React 19, TanStack Router v1 | CSR SPA with file-based routing; full client-side interactivity |
-| Data Fetching | TanStack Query v5 | Cache-first data fetching, stale-while-revalidate, per-component refresh |
-| Forms | TanStack Form v0 | Uncontrolled form state with Zod validation |
-| Tables | TanStack Table v8 | Headless table library for data-heavy views |
-| UI Components | shadcn/ui (Linear/Stripe minimal, restyled) | Headless component library with Tailwind theming |
-| Styling | Tailwind CSS v4 | Utility-first CSS with design tokens |
-| Build | Vite 8 | Fast bundler; code splitting, lazy loading, HMR |
-| Linter/Formatter | Biome 2.4.5 | Rust-based linter + formatter for JS/TS |
-| Package Manager | pnpm 11 | Fast, disk-efficient workspaces |
-| CLI | urfave/cli v3 | Simple CLI scaffolding for subcommands |
-| Config | koanf v2 | Layered config: defaults → .env file → env vars |
-| Logging | slog | Standard library structured logging (Go 1.21+) |
-| Error Monitoring | slog-sentry | Fan-out errors to Sentry without replacing slog |
-| Auth | bcrypt + HMAC sessions | Password hashing + signed HttpOnly cookie sessions |
-| Search | SQLite FTS5 | Full-text search with auto-update triggers |
-| Charts | Recharts v3.8.1 | Interactive dashboard visualizations |
+| Layer            | Technology                                  | Rationale                                                                |
+|------------------|---------------------------------------------|--------------------------------------------------------------------------|
+| Language         | Go 1.26.2, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
+| HTTP             | Echo v5.1.1                                 | Lightweight HTTP framework, minimal magic                                |
+| Database         | SQLite (modernc.org/sqlite v1.50.0)         | Pure Go, no CGO, single-file database, WAL mode                          |
+| Frontend         | React 19, TanStack Router v1                | CSR SPA with file-based routing; full client-side interactivity          |
+| Data Fetching    | TanStack Query v5                           | Cache-first data fetching, stale-while-revalidate, per-component refresh |
+| Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
+| Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
+| UI Components    | shadcn/ui (Linear/Stripe minimal, restyled) | Headless component library with Tailwind theming                         |
+| Styling          | Tailwind CSS v4                             | Utility-first CSS with design tokens                                     |
+| Build            | Vite 8                                      | Fast bundler; code splitting, lazy loading, HMR                          |
+| Linter/Formatter | Biome 2.4.5                                 | Rust-based linter + formatter for JS/TS                                  |
+| Package Manager  | pnpm 11                                     | Fast, disk-efficient workspaces                                          |
+| CLI              | urfave/cli v3                               | Simple CLI scaffolding for subcommands                                   |
+| Config           | koanf v2                                    | Layered config: defaults → .env file → env vars                          |
+| Logging          | slog                                        | Standard library structured logging (Go 1.21+)                           |
+| Error Monitoring | slog-sentry                                 | Fan-out errors to Sentry without replacing slog                          |
+| Auth             | bcrypt + HMAC sessions                      | Password hashing + signed HttpOnly cookie sessions                       |
+| Search           | SQLite FTS5                                 | Full-text search with auto-update triggers                               |
+| Charts           | Recharts v3.8.1                             | Interactive dashboard visualizations                                     |
 
 ## Design System
 

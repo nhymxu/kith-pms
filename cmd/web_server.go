@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -28,47 +27,8 @@ import (
 	"github.com/nhymxu/kith-pms/internal/settings"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
+	"github.com/nhymxu/kith-pms/pkg/pathutil"
 )
-
-type journalPeopleAdapter struct {
-	svc *people.Service
-}
-
-func (a *journalPeopleAdapter) GetSelf(ctx context.Context) (*journal.PersonAdapter, error) {
-	p, err := a.svc.GetSelf(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if p == nil {
-		return nil, nil
-	}
-
-	return &journal.PersonAdapter{
-		PersonID:      p.ID,
-		LastContactAt: p.LastContactAt,
-	}, nil
-}
-
-func (a *journalPeopleAdapter) Get(ctx context.Context, id int64) (*journal.PersonAdapter, error) {
-	p, err := a.svc.Get(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if p == nil {
-		return nil, nil
-	}
-
-	return &journal.PersonAdapter{
-		PersonID:      p.ID,
-		LastContactAt: p.LastContactAt,
-	}, nil
-}
-
-func (a *journalPeopleAdapter) UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error {
-	return a.svc.UpdateLastContact(ctx, personID, contactTime)
-}
 
 func webServerCommand() *cli.Command {
 	return &cli.Command{
@@ -105,7 +65,7 @@ Can scale later.`,
 			}
 
 			dbPath := config.ENV.DBPath
-			if err := os.MkdirAll(dirOf(dbPath), 0o700); err != nil {
+			if err := os.MkdirAll(pathutil.DirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("api: create db dir: %w", err)
 			}
 
@@ -135,8 +95,6 @@ Can scale later.`,
 
 			e := api.New()
 
-			e.HTTPErrorHandler = jsonErrorHandler
-
 			metrics.RegisterAppCollectors(db, authSvc.Sessions)
 			metrics.RegisterBuildInfo()
 
@@ -158,7 +116,7 @@ Can scale later.`,
 			peopleSvc.LabelsSvc = labelsSvc
 
 			journalSvc := journal.NewService(db)
-			journalSvc.PeopleSvc = &journalPeopleAdapter{svc: peopleSvc}
+			journalSvc.PeopleSvc = &api.JournalPeopleAdapter{Svc: peopleSvc}
 
 			datesSvc := dates.NewService(db)
 
@@ -222,7 +180,7 @@ Can scale later.`,
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 			defer stop()
 
-			go runSessionGC(ctx, authSvc.Sessions)
+			go api.RunSessionGC(ctx, authSvc.Sessions)
 
 			sc := echo.StartConfig{
 				Address:         fmt.Sprintf("%s:%d", host, port),
@@ -240,46 +198,4 @@ Can scale later.`,
 			return nil
 		},
 	}
-}
-
-func runSessionGC(ctx context.Context, repo auth.SessionRepo) {
-	ticker := time.NewTicker(time.Hour)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := repo.DeleteExpiredSessions(ctx); err != nil {
-				slog.Warn("session GC error", "error", err)
-			} else {
-				slog.Debug("session GC: expired sessions deleted")
-			}
-		}
-	}
-}
-
-// jsonErrorHandler is a minimal Echo HTTPErrorHandler.
-// API paths (/v1/*) get a JSON error body; everything else gets a plain status
-// code and lets the SPA catch-all serve index.html via spa.Handler.
-func jsonErrorHandler(c *echo.Context, err error) {
-	code := http.StatusInternalServerError
-	if he, ok := err.(*echo.HTTPError); ok {
-		code = he.Code
-	}
-
-	if err2 := c.JSON(code, map[string]string{"error": http.StatusText(code)}); err2 != nil {
-		slog.Error("error handler: json response", "error", err2)
-	}
-}
-
-func dirOf(path string) string {
-	for i := len(path) - 1; i >= 0; i-- {
-		if path[i] == '/' || path[i] == '\\' {
-			return path[:i]
-		}
-	}
-
-	return "."
 }

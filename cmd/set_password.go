@@ -12,6 +12,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/auth"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/pkg/config"
+	"github.com/nhymxu/kith-pms/pkg/pathutil"
 )
 
 func setPasswordCommand() *cli.Command {
@@ -46,7 +47,7 @@ it does not exist yet.`,
 			}
 
 			dbPath := config.ENV.DBPath
-			if err := os.MkdirAll(dirOf(dbPath), 0o700); err != nil {
+			if err := os.MkdirAll(pathutil.DirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("set-password: create db dir: %w", err)
 			}
 

@@ -11,18 +11,21 @@ import (
 
 	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
+	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/monica"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
+	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 func monicaImportCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "monica-import",
-		Usage: "Import contacts from a Monica JSON export file",
+		Usage: "Import contacts from a Monica JSON export file (v2/v3 and v4 formats supported)",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "from",
@@ -70,8 +73,11 @@ func monicaImportCommand() *cli.Command {
 			journalSvc := journal.NewService(database)
 			remindersSvc := reminders.NewService(database)
 			datesSvc := dates.NewService(database)
+			giftsSvc := gifts.NewService(database)
+			workSvc := work_history.NewService(database)
+			relSvc := relationships.NewService(database)
 
-			return runImport(ctx, export, peopleSvc, labelsSvc, journalSvc, remindersSvc, datesSvc)
+			return runImport(ctx, export, peopleSvc, labelsSvc, journalSvc, remindersSvc, datesSvc, giftsSvc, workSvc, relSvc)
 		},
 	}
 }
@@ -84,6 +90,9 @@ func runImport(
 	journalSvc *journal.Service,
 	remindersSvc *reminders.Service,
 	datesSvc *dates.Service,
+	giftsSvc *gifts.Service,
+	workSvc *work_history.Service,
+	relSvc *relationships.Service,
 ) error {
 	existingLabels, err := labelsSvc.List(ctx)
 	if err != nil {
@@ -95,30 +104,34 @@ func runImport(
 		labelMap[strings.ToLower(l.Name)] = l.ID
 	}
 
+	// First pass: insert all persons and build UUID→personID map for relationship resolution.
+	uuidToPersonID := make(map[string]int64, len(export.Contacts))
+	records := make([]monica.ImportRecord, 0, len(export.Contacts))
+
 	var imported, errCount int
 
 	for _, c := range export.Contacts {
 		rec := monica.MapContact(c)
 		if rec.Person.Name == "" {
 			slog.Warn("monica-import: skipping contact with empty name", "id", c.ID)
-
 			errCount++
-
 			continue
 		}
 
 		personID, err := peopleSvc.Create(ctx, rec.Person, rec.Contacts, rec.Locations)
 		if err != nil {
 			slog.Warn("monica-import: failed to create person", "name", rec.Person.Name, "err", err)
-
 			errCount++
-
 			continue
 		}
 
+		if c.ID != "" {
+			uuidToPersonID[c.ID] = personID
+		}
+
+		// Attach labels.
 		for _, tagName := range rec.TagNames {
 			key := strings.ToLower(tagName)
-
 			labelID, ok := labelMap[key]
 			if !ok {
 				labelID, err = labelsSvc.Create(ctx, tagName, "#6366f1")
@@ -126,21 +139,21 @@ func runImport(
 					slog.Warn("monica-import: failed to create label", "name", tagName, "err", err)
 					continue
 				}
-
 				labelMap[key] = labelID
 			}
-
 			if err := labelsSvc.Attach(ctx, personID, labelID); err != nil {
 				slog.Warn("monica-import: failed to attach label", "person_id", personID, "label", tagName, "err", err)
 			}
 		}
 
+		// Journal entries.
 		for _, act := range rec.Activities {
 			if _, err := journalSvc.Create(ctx, act, []int64{personID}); err != nil {
 				slog.Warn("monica-import: failed to create activity", "person_id", personID, "err", err)
 			}
 		}
 
+		// Reminders.
 		for i := range rec.Reminders {
 			rec.Reminders[i].PersonID = &personID
 			if _, err := remindersSvc.Create(ctx, &rec.Reminders[i]); err != nil {
@@ -148,24 +161,116 @@ func runImport(
 			}
 		}
 
+		// Important dates.
 		if len(rec.Dates) > 0 {
 			if err := datesSvc.ReplaceForPerson(ctx, personID, rec.Dates); err != nil {
 				slog.Warn("monica-import: failed to save dates", "person_id", personID, "err", err)
 			}
 		}
 
-		imported++
+		// Work history.
+		if len(rec.WorkHistory) > 0 {
+			for i := range rec.WorkHistory {
+				rec.WorkHistory[i].PersonID = personID
+			}
+			if err := workSvc.ReplaceForPerson(ctx, personID, rec.WorkHistory); err != nil {
+				slog.Warn("monica-import: failed to save work history", "person_id", personID, "err", err)
+			}
+		}
 
+		// Gifts.
+		for i := range rec.Gifts {
+			rec.Gifts[i].PersonID = personID
+			if _, err := giftsSvc.Create(ctx, &rec.Gifts[i]); err != nil {
+				slog.Warn("monica-import: failed to create gift", "person_id", personID, "err", err)
+			}
+		}
+
+		// Store record for second-pass relationship resolution.
+		rec.Person.ID = personID // borrow ID field for lookup
+		records = append(records, rec)
+
+		imported++
 		slog.Info("monica-import: imported contact", "name", rec.Person.Name, "person_id", personID)
 	}
+
+	// Second pass: resolve and insert relationships now that all persons exist.
+	importRelationships(ctx, export, uuidToPersonID, relSvc)
 
 	fmt.Printf("\nImport complete: %d imported, %d skipped/errors\n", imported, errCount)
 
 	return nil
 }
 
+// importRelationships resolves Monica UUID-based relationships to kith integer IDs.
+func importRelationships(
+	ctx context.Context,
+	export *monica.Export,
+	uuidToPersonID map[string]int64,
+	relSvc *relationships.Service,
+) {
+	if len(uuidToPersonID) == 0 {
+		return
+	}
+
+	// Build a type name cache to avoid repeated DB lookups.
+	typeCache := make(map[string]int64)
+
+	for _, c := range export.Contacts {
+		fromID, ok := uuidToPersonID[c.ID]
+		if !ok {
+			continue
+		}
+
+		for _, rel := range c.Relationships {
+			toID, ok := uuidToPersonID[rel.ToContactUUID]
+			if !ok {
+				continue
+			}
+
+			typeName := strings.TrimSpace(rel.TypeName)
+			if typeName == "" {
+				typeName = "other"
+			}
+
+			typeID, ok := typeCache[strings.ToLower(typeName)]
+			if !ok {
+				rt, err := relSvc.CreateType(ctx, typeName, "")
+				if err != nil {
+					// Type may already exist; try listing to find it.
+					types, lerr := relSvc.ListTypes(ctx)
+					if lerr != nil {
+						slog.Warn("monica-import: failed to resolve relationship type", "type", typeName, "err", err)
+						continue
+					}
+					for _, t := range types {
+						if strings.EqualFold(t.Name, typeName) {
+							typeID = t.ID
+							break
+						}
+					}
+					if typeID == 0 {
+						slog.Warn("monica-import: skipping relationship, type not found", "type", typeName)
+						continue
+					}
+				} else {
+					typeID = rt.ID
+				}
+				typeCache[strings.ToLower(typeName)] = typeID
+			}
+
+			if _, err := relSvc.AttachRelationship(ctx, fromID, toID, typeID, ""); err != nil {
+				if err != relationships.ErrDuplicateRelationship {
+					slog.Warn("monica-import: failed to attach relationship",
+						"from", fromID, "to", toID, "type", typeName, "err", err)
+				}
+			}
+		}
+	}
+}
+
 func printDryRunSummary(export *monica.Export) error {
-	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates int
+	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels int
 
 	for _, c := range export.Contacts {
 		rec := monica.MapContact(c)
@@ -175,6 +280,9 @@ func printDryRunSummary(export *monica.Export) error {
 		totalActivities += len(rec.Activities)
 		totalReminders += len(rec.Reminders)
 		totalDates += len(rec.Dates)
+		totalGifts += len(rec.Gifts)
+		totalWork += len(rec.WorkHistory)
+		totalRels += len(rec.Relationships)
 	}
 
 	fmt.Printf("\nDry-run summary:\n")
@@ -185,6 +293,9 @@ func printDryRunSummary(export *monica.Export) error {
 	fmt.Printf("  Journal entries:     %d\n", totalActivities)
 	fmt.Printf("  Reminders:           %d\n", totalReminders)
 	fmt.Printf("  Important dates:     %d\n", totalDates)
+	fmt.Printf("  Gifts:               %d\n", totalGifts)
+	fmt.Printf("  Work history:        %d\n", totalWork)
+	fmt.Printf("  Relationships:       %d\n", totalRels)
 
 	return nil
 }

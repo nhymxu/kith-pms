@@ -18,6 +18,7 @@ type PeopleAPI struct {
 type personRequest struct {
 	Name             string            `json:"name"`
 	Nickname         string            `json:"nickname"`
+	Gender           string            `json:"gender"` // "" | "male" | "female" | "rather_not_say"
 	RelationshipType string            `json:"relationship_type"`
 	DateOfBirth      string            `json:"date_of_birth"` // "YYYY-MM-DD" or ""
 	OtherNotes       string            `json:"other_notes"`
@@ -201,6 +202,7 @@ func mapPersonRequest(id int64, req personRequest) (people.Person, []people.Cont
 		ID:               id,
 		Name:             req.Name,
 		Nickname:         req.Nickname,
+		Gender:           req.Gender,
 		RelationshipType: req.RelationshipType,
 		OtherNotes:       req.OtherNotes,
 	}

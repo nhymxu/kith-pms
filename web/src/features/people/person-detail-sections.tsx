@@ -5,11 +5,13 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
 import { getPerson, updatePerson } from "#/endpoints/people";
 import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
+import { genderOptions } from "#/schemas/person";
 import { AvatarUploader } from "./avatar-uploader";
 import { ContactsSection } from "./person-section-contacts";
 import { ImportantDatesSection } from "./person-section-dates";
@@ -52,6 +54,7 @@ function OverviewSection({
 }: OverviewSectionProps) {
 	const qc = useQueryClient();
 	const [nickname, setNickname] = useState(person.nickname);
+	const [gender, setGender] = useState(person.gender ?? "");
 	const [relationshipType, setRelationshipType] = useState(
 		person.relationship_type,
 	);
@@ -63,6 +66,7 @@ function OverviewSection({
 			updatePerson(person.id, {
 				name: person.name,
 				nickname,
+				gender,
 				relationship_type: relationshipType,
 				date_of_birth: dob,
 				other_notes: notes,
@@ -148,6 +152,38 @@ function OverviewSection({
 						/>
 					</div>
 					<div>
+						<Label>Gender</Label>
+						<RadioGroup
+							value={gender}
+							onValueChange={setGender}
+							className="flex flex-wrap gap-4 mt-1"
+						>
+							<div className="flex items-center gap-2">
+								<RadioGroupItem value="" id="edit-gender-unselected" />
+								<Label
+									htmlFor="edit-gender-unselected"
+									className="font-normal cursor-pointer text-zinc-400"
+								>
+									Unselected
+								</Label>
+							</div>
+							{genderOptions.map((opt) => (
+								<div key={opt.value} className="flex items-center gap-2">
+									<RadioGroupItem
+										value={opt.value}
+										id={`edit-gender-${opt.value}`}
+									/>
+									<Label
+										htmlFor={`edit-gender-${opt.value}`}
+										className="font-normal cursor-pointer"
+									>
+										{opt.label}
+									</Label>
+								</div>
+							))}
+						</RadioGroup>
+					</div>
+					<div>
 						<Label>Notes</Label>
 						<Textarea
 							rows={3}
@@ -183,6 +219,15 @@ function OverviewSection({
 							<>
 								<dt className="font-medium text-zinc-500">Date of birth</dt>
 								<dd>{person.date_of_birth}</dd>
+							</>
+						)}
+						{person.gender && (
+							<>
+								<dt className="font-medium text-zinc-500">Gender</dt>
+								<dd>
+									{genderOptions.find((o) => o.value === person.gender)
+										?.label ?? person.gender}
+								</dd>
 							</>
 						)}
 						{person.last_contact_at && (

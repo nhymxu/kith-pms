@@ -78,7 +78,7 @@ func (r *sqlPersonRepo) List(
 		}
 	}
 
-	query := `SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
+	query := `SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
 	                 other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
 	                 last_contact_at, created_at, updated_at, is_self
 	          FROM person`
@@ -173,7 +173,7 @@ func buildLabelIntersect(labelIDs []int64) string {
 
 func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
+		`SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
 		        last_contact_at, created_at, updated_at, is_self
 		 FROM person WHERE id = ?`,
@@ -194,7 +194,7 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 
 func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, prefix, name, nickname, date_of_birth, relationship_type,
+		`SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
 		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
 		        last_contact_at, created_at, updated_at, is_self
 		 FROM person WHERE is_self = 1 LIMIT 1`,
@@ -218,11 +218,14 @@ func (r *sqlPersonRepo) Create(ctx context.Context, tx *sql.Tx, p Person) (int64
 
 	res, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO person (prefix, name, nickname, date_of_birth, relationship_type, other_notes, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO person (
+                    prefix, name, nickname, gender, date_of_birth, relationship_type,
+                    other_notes, created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.Prefix,
 		p.Name,
 		p.Nickname,
+		p.Gender,
 		dob,
 		p.RelationshipType,
 		p.OtherNotes,
@@ -247,9 +250,9 @@ func (r *sqlPersonRepo) Update(ctx context.Context, tx *sql.Tx, p Person) error 
 
 	_, err := tx.ExecContext(ctx,
 		`UPDATE person
-		 SET prefix=?, name=?, nickname=?, date_of_birth=?, relationship_type=?, other_notes=?, updated_at=?
+		 SET prefix=?, name=?, nickname=?, gender=?, date_of_birth=?, relationship_type=?, other_notes=?, updated_at=?
 		 WHERE id=?`,
-		p.Prefix, p.Name, p.Nickname, dob, p.RelationshipType, p.OtherNotes, now, p.ID,
+		p.Prefix, p.Name, p.Nickname, p.Gender, dob, p.RelationshipType, p.OtherNotes, now, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("people: update person: %w", err)
@@ -490,7 +493,7 @@ func scanPerson(row rowScanner) (Person, error) {
 	var isSelf int64
 
 	err := row.Scan(
-		&p.ID, &p.Prefix, &p.Name, &p.Nickname,
+		&p.ID, &p.Prefix, &p.Name, &p.Nickname, &p.Gender,
 		&dobStr, &p.RelationshipType, &p.OtherNotes,
 		&p.AvatarPath, &p.AvatarMimeType, &p.AvatarSize, &avatarUploadedAtStr,
 		&lastContactAtStr, &createdAt, &updatedAt, &isSelf,

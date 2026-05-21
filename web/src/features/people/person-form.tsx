@@ -7,10 +7,12 @@ import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Label } from "#/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
 import { createPerson, updatePerson } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 import {
+	genderOptions,
 	type Person,
 	type PersonRequest,
 	personRequestSchema,
@@ -32,6 +34,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 		defaultValues: {
 			name: initial?.name ?? "",
 			nickname: initial?.nickname ?? "",
+			gender: initial?.gender ?? "",
 			relationship_type: initial?.relationship_type ?? "",
 			date_of_birth: initial?.date_of_birth ?? "",
 			other_notes: initial?.other_notes ?? "",
@@ -134,6 +137,42 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 						{(f) => <FormField field={f} label="Date of birth" type="date" />}
 					</form.Field>
 				</div>
+				<form.Field name="gender">
+					{(f) => (
+						<div className="space-y-1.5">
+							<Label>Gender</Label>
+							<RadioGroup
+								value={f.state.value}
+								onValueChange={(v: string) => f.handleChange(v)}
+								className="flex flex-wrap gap-4"
+							>
+								<div className="flex items-center gap-2">
+									<RadioGroupItem value="" id="gender-unselected" />
+									<Label
+										htmlFor="gender-unselected"
+										className="font-normal cursor-pointer text-zinc-400"
+									>
+										Unselected
+									</Label>
+								</div>
+								{genderOptions.map((opt) => (
+									<div key={opt.value} className="flex items-center gap-2">
+										<RadioGroupItem
+											value={opt.value}
+											id={`gender-${opt.value}`}
+										/>
+										<Label
+											htmlFor={`gender-${opt.value}`}
+											className="font-normal cursor-pointer"
+										>
+											{opt.label}
+										</Label>
+									</div>
+								))}
+							</RadioGroup>
+						</div>
+					)}
+				</form.Field>
 				<form.Field name="other_notes">
 					{(f) => (
 						<div className="space-y-1.5">

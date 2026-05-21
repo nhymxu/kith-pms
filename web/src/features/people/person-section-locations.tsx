@@ -124,6 +124,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 			updatePerson(person.id, {
 				name: person.name,
 				nickname: person.nickname,
+				gender: person.gender ?? "",
 				relationship_type: person.relationship_type,
 				date_of_birth: person.date_of_birth
 					? person.date_of_birth.slice(0, 10)

@@ -6,12 +6,23 @@ import (
 	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
+// Gender enum keys stored in DB; full labels are defined here for reference.
+// "male" = Male, "female" = Female, "rather_not_say" = Rather not say, "" = Unselected
+type Gender = string
+
+const (
+	GenderMale         Gender = "male"
+	GenderFemale       Gender = "female"
+	GenderRatherNotSay Gender = "rather_not_say"
+)
+
 // Person represents a contact in the personal relationship manager.
 type Person struct {
 	ID               int64          `json:"id"`
 	Prefix           string         `json:"prefix"`
 	Name             string         `json:"name"`
 	Nickname         string         `json:"nickname"`
+	Gender           string         `json:"gender"`
 	DateOfBirth      *time.Time     `json:"date_of_birth"`
 	RelationshipType string         `json:"relationship_type"`
 	OtherNotes       string         `json:"other_notes"`

@@ -14,6 +14,7 @@ function toDatetimeLocal(val: string): string {
 	const pad = (n: number) => String(n).padStart(2, "0");
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
@@ -139,7 +140,9 @@ export function ReminderForm({
 			</form.Field>
 
 			<form.Field name="due_date">
-				{(field) => <FormField field={field} label="Due Date" type="datetime-local" />}
+				{(field) => (
+					<FormField field={field} label="Due Date" type="datetime-local" />
+				)}
 			</form.Field>
 
 			{/* Person picker (optional) */}
@@ -149,7 +152,9 @@ export function ReminderForm({
 					{(field) => (
 						<Select
 							value={field.state.value ? String(field.state.value) : "__none__"}
-							onValueChange={(v) => field.handleChange(v === "__none__" ? null : Number(v))}
+							onValueChange={(v) =>
+								field.handleChange(v === "__none__" ? null : Number(v))
+							}
 						>
 							<SelectTrigger>
 								<SelectValue placeholder="No person" />

@@ -26,12 +26,21 @@ export const labelRefSchema = z.object({
 	color: z.string(),
 });
 
+export const genderOptions = [
+	{ value: "male", label: "Male" },
+	{ value: "female", label: "Female" },
+	{ value: "rather_not_say", label: "Rather not say" },
+] as const;
+
+export type GenderValue = "" | "male" | "female" | "rather_not_say";
+
 export const personSchema = z.object({
 	id: z.number(),
 	is_self: z.boolean().optional().default(false),
 	prefix: z.string().optional().default(""),
 	name: z.string(),
 	nickname: z.string().optional().default(""),
+	gender: z.string().optional().default(""),
 	date_of_birth: z.string().nullable().optional(),
 	relationship_type: z.string().optional().default(""),
 	other_notes: z.string().optional().default(""),
@@ -76,6 +85,7 @@ export type PersonList = z.infer<typeof personListSchema>;
 export const personRequestSchema = z.object({
 	name: z.string().min(1),
 	nickname: z.string().optional().default(""),
+	gender: z.string().optional().default(""),
 	relationship_type: z.string().optional().default(""),
 	date_of_birth: z.string().optional().default(""),
 	other_notes: z.string().optional().default(""),

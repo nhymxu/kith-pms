@@ -128,7 +128,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | birthdate (year unknown) | Important date only | Stored as `--MM-DD` |
 | first_met_date | Important date (kind: met) | |
 | addresses | Locations | name mapped to home/work/other |
-| contactInformation / contact_fields | Contact info | email, phone, social (twitter/facebook/linkedin/github/instagram), other |
+| contactInformation / contact_fields | Contact info | v2/v3 semantic types map to email/phone/social/other; v4 `contact_fields.type` is a UUID and usually imports as `other` today |
 | tags | Labels | Created with colour `#6366f1` if new |
 | notes | Journal entries | Note body becomes content; title truncated to 60 chars |
 | activities | Journal entries | summary → title, description → content |

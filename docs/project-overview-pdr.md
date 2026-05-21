@@ -72,8 +72,8 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Data Fetching    | TanStack Query v5                           | Cache-first data fetching, stale-while-revalidate, per-component refresh |
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
-| UI Components    | shadcn/ui (Linear/Stripe minimal, restyled) | Headless component library with Tailwind theming                         |
-| Styling          | Tailwind CSS v4                             | Utility-first CSS with design tokens                                     |
+| UI Components    | Local shadcn-style primitives + Base UI     | Accessible local component APIs with Tailwind theming                    |
+| Styling          | Tailwind CSS v4                             | Utility-first CSS with Mist/Blue design tokens                           |
 | Build            | Vite 8                                      | Fast bundler; code splitting, lazy loading, HMR                          |
 | Linter/Formatter | Biome 2.4.5                                 | Rust-based linter + formatter for JS/TS                                  |
 | Package Manager  | pnpm 11                                     | Fast, disk-efficient workspaces                                          |
@@ -94,7 +94,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 ### Single Static Binary
 - Compiled with `CGO_ENABLED=0` — no runtime dependencies, runs on any Linux/macOS/Windows
 - Embedded React SPA (Vite build output compiled into binary)
-- Embedded SQL migrations (0001–0015)
+- Embedded SQL migrations
 - All assets (CSS, JS, images) bundled; no external file dependencies
 
 ### Docker Deployment

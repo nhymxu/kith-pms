@@ -5,7 +5,8 @@
 ```
 kith-pms/
 ├── cmd/                          # CLI entrypoints (compiled to single binary)
-│   ├── main.go                   # Binary entry, dependency init, subcommand dispatch
+│   ├── main.go                   # Binary entry
+│   ├── root.go                   # CLI app setup, dependency init, subcommand dispatch
 │   ├── web_server.go             # `serve` subcommand — starts Echo HTTP server
 │   ├── migrate.go                # `migrate` subcommand — runs schema migrations
 │   ├── set_password.go           # `set-password` subcommand — interactive password setter
@@ -16,7 +17,7 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (0001-0015)
+│   │   └── migrations/           # SQL schema files
 │   ├── auth/                     # Authentication & session management
 │   │   ├── domain.go             # User, Session, CSRF token data structures
 │   │   ├── password.go           # bcrypt hashing & verification
@@ -86,16 +87,16 @@ kith-pms/
 │   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
 │   │   └── mapper_test.go        # Unit tests for Monica-to-domain mapping
 │   ├── api/                      # HTTP API handlers
-│   │   ├── handlers_auth.go      # Authentication endpoints
+│   │   ├── auth.go               # Authentication endpoints
 │   │   ├── handlers_people.go    # People CRUD endpoints
 │   │   ├── handlers_journal.go   # Journal endpoints
 │   │   ├── handlers_gifts.go     # Gift endpoints with image upload
 │   │   ├── handlers_reminders.go # Reminder endpoints
 │   │   ├── handlers_dates.go     # Important dates endpoints
 │   │   ├── handlers_labels.go    # Label endpoints
-│   │   ├── handlers_relationships.go # Relationship type endpoints
+│   │   ├── relationships.go      # Relationship type endpoints
 │   │   ├── handlers_audit.go     # Audit log endpoints
-│   │   ├── handlers_me.go        # User profile endpoints
+│   │   ├── me.go                 # User profile endpoints
 │   │   ├── server.go             # Echo setup (global middleware)
 │   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler()
 │   │   ├── middleware.go         # Auth, session, audit actor middleware
@@ -125,7 +126,8 @@ kith-pms/
 │   ├── 0014_person_last_contact.sql  # last_contact_at column on person
 │   ├── 0015_relationship_type.sql   # relationship_type + person_relationship tables
 │   ├── 0016_user_setting.sql     # user_setting table (key, value) for user preferences
-│   └── 0017_reminder_recurrence.sql # recurrence_rule + recurrence_end_date columns on reminder
+│   ├── 0017_reminder_recurrence.sql # recurrence_rule + recurrence_end_date columns on reminder
+│   └── 0018_person_gender.sql    # gender column on person
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -158,7 +160,8 @@ kith-pms/
 ## Package Responsibilities
 
 ### `cmd` (package `main`)
-- **main.go**: Binary entry point; initializes CLI app and dispatches to subcommands
+- **main.go**: Binary entry point
+- **root.go**: Initializes CLI app, dependency setup, and subcommand dispatch
 - **web_server.go**: `serve` subcommand — starts Echo server after dependency init
 - **migrate.go**: `migrate` subcommand — applies pending SQL migrations
 - **set_password.go**: `set-password` subcommand — interactive password change
@@ -247,17 +250,17 @@ kith-pms/
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
 ### `internal/api` — HTTP API handlers & server
-- **handlers_auth.go**: POST /login, /logout, /logout-all, GET /me, POST /password
+- **auth.go**: POST /login, /logout, /logout-all, GET /me, POST /password
 - **handlers_people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
 - **handlers_journal.go**: CRUD with multi-person tagging, search, date range filter
 - **handlers_gifts.go**: CRUD + image upload/delete/get, filterable by person/direction/debt_type
 - **handlers_reminders.go**: CRUD + PATCH complete, filterable upcoming/overdue/all
 - **handlers_dates.go**: GET /upcoming (30-day window)
 - **handlers_labels.go**: CRUD with usage counts
-- **handlers_relationships.go**: CRUD with usage counts
+- **relationships.go**: CRUD with usage counts
 - **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone, audit_log_retention_days)
 - **handlers_audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
-- **handlers_me.go**: GET profile, POST setup
+- **me.go**: GET profile, POST setup
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
 - **mount.go**: Mounts `/health`, `/ready`, `/metrics`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
 - **middleware.go**: Auth, session validation, CSRF checks, audit actor injection
@@ -266,7 +269,7 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, shadcn/ui (Linear/Stripe minimal design), Tailwind CSS v4, Biome 2.4.5, Vite 8, pnpm 11.
+**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI, Tailwind CSS v4 Mist/Blue tokens, Biome 2.4.5, Vite 8, pnpm 11.
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
@@ -315,7 +318,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **Components**: summary-cards, relationship-pulse-chart, action-queue, recent-relationship-activity, upcoming-moments
 - **Data Adapter**: `dashboard-data.ts` derives KPIs and shapes API responses for widgets
 - **Per-card Refresh**: TanStack Query invalidation on refresh button click
-- **Chart Library**: Recharts v3.8.1 with custom indigo/zinc theme
+- **Chart Library**: Recharts v3.8.1 with custom Blue/Mist theme
 
 **Validation:**
 - Build: `pnpm --dir web build` ✅

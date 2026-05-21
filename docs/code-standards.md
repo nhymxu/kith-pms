@@ -18,7 +18,7 @@
 ### Database & SQL
 - Use raw `database/sql` (no ORM)
 - Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 17 migrations: 0001-0017)
+- Migration files: `0NNN_description.sql` in `internal/db/migrations/`
 - Load migrations programmatically in `internal/db/migrations.go`
 - Transactions: Use `sql.Tx` for multi-statement operations; always defer rollback
 

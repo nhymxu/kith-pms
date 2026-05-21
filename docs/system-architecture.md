@@ -403,6 +403,7 @@ Connection settings:
 | `0015_relationship_type.sql` | relationship_type table (name, reverse_name, self-FK inverse_type_id) + person_relationship junction table (from_person_id, to_person_id, relationship_type_id, notes) with UNIQUE and CHECK constraints |
 | `0016_user_setting.sql` | user_setting table (key, value) for storing user preferences (date_format, time_format, timezone, audit_log_retention_days) |
 | `0017_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
+| `0018_person_gender.sql` | gender TEXT column on person table |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

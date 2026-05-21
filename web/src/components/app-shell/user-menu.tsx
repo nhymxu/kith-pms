@@ -40,17 +40,17 @@ export function UserMenu() {
 			<DropdownMenuContent align="end" className="w-48">
 				<DropdownMenuLabel>Settings</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={() => go("/settings")}>
-					<Tag className="size-4" />
-					Setting
+				<DropdownMenuItem onClick={() => go("/settings")}>
+					<Settings className="size-4" />
+					Settings
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={() => go("/me")}>
-					<Settings className="size-4" />
+				<DropdownMenuItem onClick={() => go("/me")}>
+					<Tag className="size-4" />
 					Self Profile
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={handleLogout}>
+				<DropdownMenuItem onClick={handleLogout}>
 					<LogOut className="size-4" />
 					Log out
 				</DropdownMenuItem>

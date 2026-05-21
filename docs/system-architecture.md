@@ -155,7 +155,7 @@ routes/
 
 ### Components & Styling
 
-**Component Library**: shadcn/ui primitives (Button, Card, Input, Select, Dialog, Sheet, Table, etc.) restyled for Linear/Stripe minimal:
+**Component Library**: Shared UI primitives in `web/src/components/ui` use `@base-ui/react` for accessible behavior where primitives are needed, with shadcn-style component APIs restyled for Linear/Stripe minimal:
 - **Accent**: Indigo-600 (#4f46e5)
 - **Surfaces**: Zinc palette (white, #fafafa muted, #e4e4e7 borders)
 - **Borders**: Hairline (1px) zinc-200; no box shadows

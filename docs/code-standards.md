@@ -126,7 +126,7 @@ if err := tx.Commit(); err != nil {
 ### Components
 - Functional components with hooks
 - Use `#/` path alias for imports: `import { Button } from '#/components/ui/button'` (not `@/`)
-- shadcn/ui primitives restyled for Linear/Stripe minimal aesthetic
+- Shared primitives live in `web/src/components/ui`; use `@base-ui/react` for accessible primitive behavior when needed and preserve shadcn-style local component APIs
 - Lucide React for icons only; no emojis
 
 ### Data Fetching
@@ -151,7 +151,7 @@ export const PersonSchema = z.object({
 
 ### Styling
 - **Tailwind CSS v4** with Linear/Stripe minimal design tokens
-- **shadcn/ui** components restyled for indigo-600 accent, zinc surfaces, hairline borders, no shadows
+- Local UI components use indigo-600 accent, zinc surfaces, hairline borders, no shadows
 - **Recharts v3.8.1** for dashboard charts
 - Design tokens in `web/src/styles.css` (:root CSS variables)
 

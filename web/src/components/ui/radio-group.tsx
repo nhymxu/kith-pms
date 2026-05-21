@@ -1,16 +1,24 @@
-import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import { Radio as RadioPrimitive } from "@base-ui/react/radio";
+import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 import { Circle } from "lucide-react";
 import type * as React from "react";
 import { cn } from "#/lib/utils";
 
-function RadioGroup({
-	className,
-	...props
-}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {
+type RadioGroupProps = Omit<
+	React.ComponentProps<typeof RadioGroupPrimitive>,
+	"onValueChange"
+> & {
+	onValueChange?: (value: string) => void;
+};
+
+function RadioGroup({ className, onValueChange, ...props }: RadioGroupProps) {
 	return (
-		<RadioGroupPrimitive.Root
+		<RadioGroupPrimitive
 			data-slot="radio-group"
 			className={cn("grid gap-2", className)}
+			onValueChange={
+				onValueChange ? (value) => onValueChange(String(value)) : undefined
+			}
 			{...props}
 		/>
 	);
@@ -19,20 +27,20 @@ function RadioGroup({
 function RadioGroupItem({
 	className,
 	...props
-}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+}: React.ComponentProps<typeof RadioPrimitive.Root>) {
 	return (
-		<RadioGroupPrimitive.Item
+		<RadioPrimitive.Root
 			data-slot="radio-group-item"
 			className={cn(
-				"size-4 shrink-0 rounded-full border border-zinc-300 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600",
+				"size-4 shrink-0 rounded-full border border-zinc-300 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[checked]:border-indigo-600 data-[checked]:bg-indigo-600",
 				className,
 			)}
 			{...props}
 		>
-			<RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+			<RadioPrimitive.Indicator className="flex items-center justify-center">
 				<Circle className="size-2 fill-white text-white" />
-			</RadioGroupPrimitive.Indicator>
-		</RadioGroupPrimitive.Item>
+			</RadioPrimitive.Indicator>
+		</RadioPrimitive.Root>
 	);
 }
 

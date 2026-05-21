@@ -47,12 +47,15 @@ func MapContact(c Contact) ImportRecord {
 
 func mapPerson(c Contact) people.Person {
 	parts := []string{c.FirstName, c.MiddleName, c.LastName}
+
 	var nameParts []string
+
 	for _, p := range parts {
 		if s := strings.TrimSpace(p); s != "" {
 			nameParts = append(nameParts, s)
 		}
 	}
+
 	name := strings.Join(nameParts, " ")
 	if name == "" {
 		name = c.Nickname
@@ -73,9 +76,11 @@ func mapPerson(c Contact) people.Person {
 	if c.Job != "" {
 		workParts = append(workParts, c.Job)
 	}
+
 	if c.Company != "" {
 		workParts = append(workParts, "at "+c.Company)
 	}
+
 	if len(workParts) > 0 {
 		notesParts = append(notesParts, "Work: "+strings.Join(workParts, " "))
 	}

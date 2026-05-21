@@ -310,11 +310,14 @@ func parseV4(acc *v4Account) (*Export, error) {
 			if name != "" {
 				name += " "
 			}
+
 			name += c.Properties.LastName
 		}
+
 		if name == "" {
 			name = c.Properties.Nickname
 		}
+
 		uuidToName[c.UUID] = name
 	}
 
@@ -325,6 +328,7 @@ func parseV4(acc *v4Account) (*Export, error) {
 		if p.ContactIs == "" || p.OfContact == "" {
 			continue
 		}
+
 		uuidToRels[p.ContactIs] = append(uuidToRels[p.ContactIs], MRelationship{
 			TypeName:      p.Type,
 			ToContactUUID: p.OfContact,
@@ -349,6 +353,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 		info.Birthdate = p.Birthdate.Date
 		info.IsYearUnknown = p.Birthdate.IsYearUnknown
 	}
+
 	if p.FirstMetDate != nil && p.FirstMetDate.Date != "" {
 		info.FirstMetDate = p.FirstMetDate.Date
 	}
@@ -388,6 +393,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 		if n.Properties.Body == "" {
 			continue
 		}
+
 		notes = append(notes, Note{
 			Body:      n.Properties.Body,
 			CreatedAt: n.CreatedAt,
@@ -400,6 +406,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 		if rp.Title == "" || rp.InitialDate == "" || rp.Inactive {
 			continue
 		}
+
 		reminders = append(reminders, MReminder{
 			Title:         rp.Title,
 			Description:   rp.Description,
@@ -411,10 +418,12 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 	calls := make([]MCall, 0, len(c.Data.Calls.Data))
 	for _, call := range c.Data.Calls.Data {
 		cp := call.Properties
+
 		ts := cp.CalledAt
 		if ts == "" {
 			ts = call.CreatedAt
 		}
+
 		calls = append(calls, MCall{
 			CalledAt: ts,
 			Content:  cp.Content,
@@ -427,6 +436,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 		if tp.Title == "" {
 			continue
 		}
+
 		tasks = append(tasks, MTask{
 			Title:       tp.Title,
 			Description: tp.Description,
@@ -441,6 +451,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 		if gp.Name == "" {
 			continue
 		}
+
 		gifts = append(gifts, MGift{
 			Name:    gp.Name,
 			Comment: gp.Comment,

@@ -225,6 +225,8 @@ export function PersonForm() {
 
 ```
 /health                → GET (liveness probe, no auth)
+/ready                 → GET (readiness probe: DB pingable + migrations applied, no auth)
+/metrics               → GET (Prometheus metrics, no auth)
 /v1/*                  → JSON REST API (see api package)
 /assets/*              → Embedded SPA hashed assets (1-year cache, immutable)
 /favicon.*             → Embedded favicon (1-year cache)
@@ -264,7 +266,9 @@ export function PersonForm() {
 
 **Relationships** — GET types, POST/DELETE type defs
 
-**Audit** — GET audit log entries
+**Audit** — GET audit log entries, `POST /audit/cleanup` (manual purge of entries older than retention period)
+
+**Settings** — `GET /settings`, `PUT /settings` (user preferences including audit log retention days)
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
 
@@ -397,7 +401,8 @@ Connection settings:
 | `0013_person_self.sql` | is_self column on person table with unique index for self-profile feature |
 | `0014_person_last_contact.sql` | last_contact_at nullable timestamp column on person table with partial index |
 | `0015_relationship_type.sql` | relationship_type table (name, reverse_name, self-FK inverse_type_id) + person_relationship junction table (from_person_id, to_person_id, relationship_type_id, notes) with UNIQUE and CHECK constraints |
-| `0016_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
+| `0016_user_setting.sql` | user_setting table (key, value) for storing user preferences (date_format, time_format, timezone, audit_log_retention_days) |
+| `0017_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
@@ -414,7 +419,7 @@ SELECT activities.* FROM activities
 WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH 'search term')
 ```
 
-### Audit Logging
+### Audit Logging & Retention
 
 **Architecture**:
 - Service: `internal/audit/Service` — logs all entity mutations (CREATE, UPDATE, DELETE)
@@ -422,10 +427,14 @@ WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH 'sea
 - Best-effort: Logging failures never block primary operations; errors logged as warnings only
 - Actor attribution: `audit.WithActor(ctx, userID)` and `ActorFromCtx(ctx)` for context-based user tracking
 - Storage: `audit_log` table (entity_type, entity_id, entity_name, action, actor_id, created_at)
+- **Retention Policy**: Configurable TTL via `audit_log_retention_days` setting (0 = disabled/keep forever)
+- **Purge Method**: `Repo.Purge(ctx, db, days)` deletes entries older than N days using SQLite datetime arithmetic
+- **Manual Cleanup**: `POST /v1/audit/cleanup` endpoint triggers immediate purge, returns `{"deleted": N}`
 
 **Usage**:
 ```go
 s.auditSvc.Log(ctx, audit.EntityType("person"), id, "Alice Smith", audit.ActionCreated)
+s.auditSvc.Purge(ctx, retentionDays) // Auto-purge based on setting
 ```
 
 ## Entity Relationships

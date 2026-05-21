@@ -54,10 +54,12 @@ kith-pms/
 │   │   ├── repo.go               # Database queries for dates
 │   │   └── service_test.go       # Service unit tests
 │   ├── reminders/                # Reminders & notifications
-│   │   ├── domain.go             # Reminder, ReminderWithPerson structures
-│   │   ├── service.go            # CRUD and completion tracking business logic
-│   │   ├── repo.go               # Database queries for reminders
-│   │   └── service_test.go       # Service unit tests
+│   │   ├── domain.go             # Reminder, ReminderWithPerson, RecurrenceType, RecurrenceRule structures
+│   │   ├── recurrence.go         # Pure computeNextDue function for 7 recurrence types
+│   │   ├── service.go            # CRUD, completion tracking, auto-spawn on complete
+│   │   ├── repo.go               # Database queries for reminders with recurrence
+│   │   ├── service_test.go       # Service unit tests
+│   │   └── recurrence_test.go    # Recurrence logic unit tests
 │   ├── gifts/                    # Gift management & debt tracking
 │   │   ├── domain.go             # Gift, GiftWithPerson structures; Direction, DebtType constants
 │   │   ├── service.go            # CRUD, image upload/delete business logic
@@ -69,9 +71,10 @@ kith-pms/
 │   │   ├── repo.go               # sqlRelationshipTypeRepo + sqlPersonRelationshipRepo; paired tx writes
 │   │   └── service_test.go       # 10 integration tests (paired rows, self-loop guard, FK restrict)
 │   ├── settings/                 # User settings & preferences
-│   │   ├── domain.go             # UserSettings struct (date_format, time_format, timezone) + Defaults
-│   │   ├── service.go            # Get/Update business logic with validation
-│   │   └── repo.go               # Key/value store queries (GetAll, Set)
+│   │   ├── domain.go             # UserSettings struct (date_format, time_format, timezone, audit_log_retention_days) + Defaults
+│   │   ├── service.go            # Get/Update business logic with validation; GetRetentionDays helper
+│   │   ├── repo.go               # Key/value store queries (GetAll, Set)
+│   │   └── service_test.go       # Service unit tests
 │   ├── files/                    # File storage service
 │   │   ├── service.go            # LocalFileService for avatar uploads
 │   │   └── service_test.go       # File service unit tests
@@ -120,7 +123,9 @@ kith-pms/
 │   ├── 0012_gift.sql             # Gift table with direction, debt type, and image columns
 │   ├── 0013_person_self.sql      # is_self column with unique index for self-profile
 │   ├── 0014_person_last_contact.sql  # last_contact_at column on person
-│   └── 0015_relationship_type.sql   # relationship_type + person_relationship tables
+│   ├── 0015_relationship_type.sql   # relationship_type + person_relationship tables
+│   ├── 0016_user_setting.sql     # user_setting table (key, value) for user preferences
+│   └── 0017_reminder_recurrence.sql # recurrence_rule + recurrence_end_date columns on reminder
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -224,8 +229,8 @@ kith-pms/
 - **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
 
 ### `internal/settings` — User settings & preferences
-- **domain.go**: UserSettings (date_format, time_format, timezone) with Defaults constant
-- **service.go**: Get/Update business logic with validation for format/timezone values
+- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days) with Defaults constant
+- **service.go**: Get/Update business logic with validation for format/timezone values; GetRetentionDays helper; ErrInvalidRetentionDays validation
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
@@ -250,11 +255,11 @@ kith-pms/
 - **handlers_dates.go**: GET /upcoming (30-day window)
 - **handlers_labels.go**: CRUD with usage counts
 - **handlers_relationships.go**: CRUD with usage counts
-- **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone)
-- **handlers_audit.go**: GET with entity_type/entity_id filter, paginated
+- **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone, audit_log_retention_days)
+- **handlers_audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
 - **handlers_me.go**: GET profile, POST setup
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
-- **mount.go**: Mounts `/health`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
+- **mount.go**: Mounts `/health`, `/ready`, `/metrics`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
 - **middleware.go**: Auth, session validation, CSRF checks, audit actor injection
 - **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel

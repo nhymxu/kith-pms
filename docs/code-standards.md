@@ -18,7 +18,7 @@
 ### Database & SQL
 - Use raw `database/sql` (no ORM)
 - Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 0001-0015)
+- Migration files: `0NNN_description.sql` in `internal/db/migrations/` (currently 17 migrations: 0001-0017)
 - Load migrations programmatically in `internal/db/migrations.go`
 - Transactions: Use `sql.Tx` for multi-statement operations; always defer rollback
 
@@ -58,6 +58,10 @@ type Repo struct {
 - Log levels: `Debug` for dev detail, `Info` for lifecycle events, `Warn` for recoverable issues, `Error` for failures
 - In production (`DEBUG=false`), slog outputs JSON; in debug mode, text format
 - Use `slog.WithContext()` to pass request context through handlers
+- **Sentry Integration**: Server-side only via `slog-sentry` fanout (optional, configured via `SENTRY_DSN`)
+  - Never expose Sentry DSN in frontend bundles
+  - Sentry receives Error level and above events with stack traces
+  - Errors logged to slog automatically propagate to Sentry if configured
 
 ### Configuration Access
 - All config consumed via `config.ENV` global — no direct `os.Getenv` calls outside `pkg/config`
@@ -82,6 +86,8 @@ type Repo struct {
 - All API routes prefixed with `/v1/` (e.g., `/v1/people`, `/v1/journal`)
 - No deprecation policy yet; breaking changes require major version bump
 - Health check at `/health` (no auth required)
+- Readiness check at `/ready` (no auth required) — verifies DB connectivity and migrations applied
+- Metrics at `/metrics` (no auth required) — Prometheus exposition format
 
 ### Transaction Patterns
 ```go
@@ -103,6 +109,11 @@ if err := tx.Commit(); err != nil {
     return fmt.Errorf("commit failed: %w", err)
 }
 ```
+
+### Rate Limiting
+- Login attempts: 5 per 15 minutes per IP (enforced in auth handler)
+- Password changes: 5 per 15 minutes per user (enforced in auth handler)
+- Implemented via in-memory rate limiter with sliding window
 
 ## React/TypeScript Frontend
 
@@ -252,6 +263,15 @@ make test-coverage     # generate coverage report
 | `test-coverage` | `go test -race -cover ./...`                                    | Go test coverage summary                     |
 | `vuln-check`    | `govulncheck ./...`                                             | Scan Go for known vulnerabilities            |
 | `gosec`         | `gosec ./...`                                                   | Go security analysis                         |
+
+### Release & Distribution
+
+**Goreleaser**: Multi-platform binary builds (Linux, macOS, Windows; amd64, arm64)
+- Configuration: `.goreleaser.yml` in project root
+- Build targets: `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, `windows/amd64`, `windows/arm64`
+- All builds use `CGO_ENABLED=0` for static binaries
+- GitHub Actions workflow: Automated build + publish on git tag
+- Artifacts: Pre-built binaries + SHA256 checksums on GitHub Releases
 
 ## Pre-commit Checklist
 

@@ -50,6 +50,16 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Automatic change tracking for all entities
 - Timestamps and user attribution
 - Full historical record of edits and deletions
+- Configurable retention policy with manual cleanup endpoint
+
+### Recurring Reminders
+- 7 recurrence types: daily, weekly, monthly, yearly, custom interval, day-of-week, relative-to-last-contact
+- Auto-spawn next occurrence when reminder marked complete
+- Optional end date cutoff to prevent spawning after specified date
+
+### Goreleaser Multi-Platform Releases
+- Automated binary builds for Linux, macOS, Windows (amd64, arm64)
+- GitHub Actions CI/CD integration for release automation
 
 ## Tech Stack (Implemented)
 
@@ -132,8 +142,14 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 - Optional Sentry integration for error reporting
 
 ### Health Checks
-- `GET /health` endpoint (no authentication required)
+- `GET /health` endpoint (no authentication required) — liveness probe
+- `GET /ready` endpoint (no authentication required) — readiness probe (DB pingable + migrations applied)
 - Suitable for container orchestration and monitoring
+
+### Metrics
+- `GET /metrics` endpoint (Prometheus exposition format, no auth)
+- HTTP request metrics: count, duration by method/route/status
+- App metrics: DB size, active sessions, build info
 
 ## Non-Goals
 

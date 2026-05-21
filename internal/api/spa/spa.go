@@ -21,7 +21,7 @@ var publicFS embed.FS
 //   - GET * (catch-all) → index.html with no-cache (excludes /v1/*, /health)
 //
 // Call this LAST, after API and health routes, so it acts as the fallback.
-// The `public/` directory is populated by `make web` (copies web/dist → internal/web/spa/public).
+// The `public/` directory is populated by `make web` (copies web/dist → internal/api/spa/public).
 func Handler(e *echo.Echo) {
 	sub, err := fs.Sub(publicFS, "public")
 	if err != nil {

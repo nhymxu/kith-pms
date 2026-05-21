@@ -92,13 +92,13 @@ kith-pms/
 │   │   ├── handlers_labels.go    # Label endpoints
 │   │   ├── handlers_relationships.go # Relationship type endpoints
 │   │   ├── handlers_audit.go     # Audit log endpoints
-│   │   └── handlers_me.go        # User profile endpoints
-│   └── web/                      # HTTP server & SPA embedding
-│       ├── server.go             # Echo setup (global middleware)
-│       ├── route.go              # Route mounting: /health, /v1/*, spa.Handler()
-│       └── spa/                  # Embedded React SPA
-│           ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
-│           └── public/           # Populated by `make web` (gitignored except placeholder.txt)
+│   │   ├── handlers_me.go        # User profile endpoints
+│   │   ├── server.go             # Echo setup (global middleware)
+│   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler()
+│   │   ├── middleware.go         # Auth, session, audit actor middleware
+│   │   └── spa/                  # Embedded React SPA
+│   │       ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
+│   │       └── public/           # Populated by `make web` (gitignored except placeholder.txt)
 ├── pkg/                          # Shared packages
 │   ├── config/                   # Configuration management
 │   │   ├── env.go                # LoadConfig(), EnvConfigMap, environment parsing
@@ -241,7 +241,7 @@ kith-pms/
 - **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate)
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
-### `internal/api` — HTTP API handlers
+### `internal/api` — HTTP API handlers & server
 - **handlers_auth.go**: POST /login, /logout, /logout-all, GET /me, POST /password
 - **handlers_people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
 - **handlers_journal.go**: CRUD with multi-person tagging, search, date range filter
@@ -253,10 +253,9 @@ kith-pms/
 - **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone)
 - **handlers_audit.go**: GET with entity_type/entity_id filter, paginated
 - **handlers_me.go**: GET profile, POST setup
-
-### `internal/web` — HTTP layer
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
-- **route.go**: Mounts `/health`, API (`/v1/*` via `api.Mount`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
+- **mount.go**: Mounts `/health`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
+- **middleware.go**: Auth, session validation, CSRF checks, audit actor injection
 - **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
 
@@ -266,7 +265,7 @@ kith-pms/
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
-**Build Pipeline**: `pnpm build` → `web/dist/` → copied to `internal/web/spa/public/` via `make web` → embedded in binary via `//go:embed all:public`.
+**Build Pipeline**: `pnpm build` → `web/dist/` → copied to `internal/api/spa/public/` via `make web` → embedded in binary via `//go:embed all:public`.
 
 ### Directory Structure (`web/src/`)
 ```
@@ -343,7 +342,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.2+
 - **Build**: `make web` (pnpm build → copy SPA) then `CGO_ENABLED=0 go build` for single static binary
 - **Binary name**: `kith-pms` (compiled to `bin/kith-pms`)
-- **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/web/spa/public/` for embedding
+- **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/api/spa/public/` for embedding
 
 ## Test Coverage
 

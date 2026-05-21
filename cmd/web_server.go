@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/urfave/cli/v3"
 
+	"github.com/nhymxu/kith-pms/internal/api"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
@@ -25,7 +26,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
 	"github.com/nhymxu/kith-pms/internal/settings"
-	"github.com/nhymxu/kith-pms/internal/web"
 	"github.com/nhymxu/kith-pms/internal/work_history"
 	"github.com/nhymxu/kith-pms/pkg/config"
 )
@@ -133,7 +133,7 @@ Can scale later.`,
 				Lifetime: lifetime,
 			}
 
-			e := web.New()
+			e := api.New()
 
 			e.HTTPErrorHandler = jsonErrorHandler
 
@@ -198,7 +198,7 @@ Can scale later.`,
 
 			apiToken := os.Getenv("API_TOKEN")
 
-			web.Mount(e, web.Deps{
+			api.Mount(e, api.Deps{
 				DB:                   db,
 				AuthService:          authSvc,
 				PeopleService:        peopleSvc,

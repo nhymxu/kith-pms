@@ -22,3 +22,18 @@ func injectAPIActor() echo.MiddlewareFunc {
 		}
 	}
 }
+
+// injectAuditActor copies the authenticated user ID from the Echo context into
+// the request context so service-layer audit calls have actor attribution.
+func injectAuditActor() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			if u := auth.UserFromContext(c); u != nil {
+				ctx := audit.WithActor(c.Request().Context(), u.ID)
+				c.SetRequest(c.Request().WithContext(ctx))
+			}
+
+			return next(c)
+		}
+	}
+}

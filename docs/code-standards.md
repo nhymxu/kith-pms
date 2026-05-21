@@ -70,10 +70,10 @@ type Repo struct {
 - Use `c.Bind()` for JSON/form binding to typed structs
 - Use `c.QueryParam()`, `c.Param()` for individual values
 - Response: JSON REST API only (SPA handles all UI rendering)
-- CSRF middleware applied globally in `internal/web/server.go`; validates `X-Requested-With: kith-spa` header for state-changing calls
+- CSRF middleware applied globally in `internal/api/server.go`; validates `X-Requested-With: kith-spa` header for state-changing calls
 
 ### Middleware & Auth
-- Register global middleware in `internal/web/server.go` (Recover, RequestID, Gzip, CSRF)
+- Register global middleware in `internal/api/server.go` (Recover, RequestID, Gzip, CSRF)
 - Auth middleware checks session cookie, validates HMAC token, injects `*auth.User` into context
 - Inject user into request: `c.Set("user", user)` — retrieve with `c.Get("user").(*auth.User)`
 - CSRF validation automatic for POST/PUT/PATCH/DELETE when authenticated by cookie
@@ -156,7 +156,7 @@ export const PersonSchema = z.object({
 ### Build
 - **Vite 8** for bundling
 - Output to `web/dist/`
-- `make web` copies dist to `internal/web/spa/public/`
+- `make web` copies dist to `internal/api/spa/public/`
 - Embedded into Go binary via `//go:embed all:public`
 
 ### TypeScript Strict Mode
@@ -195,15 +195,15 @@ func TestServiceCRUD(t *testing.T) {
     // Setup: create temp DB, seed schema
     db := setupTestDB(t)
     defer db.Close()
-    
+
     svc := NewService(db)
-    
+
     // Test: call service method
     id, err := svc.Create(ctx, &CreateInput{...})
     if err != nil {
         t.Fatalf("Create failed: %v", err)
     }
-    
+
     // Verify: query database directly
     var created *Model
     err = db.QueryRow("SELECT ... WHERE id = ?", id).Scan(&created.ID, ...)
@@ -234,24 +234,24 @@ make test-coverage     # generate coverage report
 ### Asset Generation
 - **SPA Build**: `pnpm --dir web build` — Vite compiles React + TypeScript to `web/dist/`
 - **CSS**: Tailwind CSS v4 (compiled via Vite plugin) using design tokens in `web/src/styles.css`
-- **Embedding**: `make web` copies `web/dist/` to `internal/web/spa/public/` for Go embed
+- **Embedding**: `make web` copies `web/dist/` to `internal/api/spa/public/` for Go embed
 
 ### Makefile Targets
 
-| Target | Command | Purpose |
-|--------|---------|---------|
-| `web` | `pnpm install && pnpm build && copy to internal/web/spa/public` | Build React SPA (Vite) and copy to embed dir |
-| `build` | `make web && CGO_ENABLED=0 go build -o bin/kith-pms ./cmd` | Full build (SPA + static Go binary) |
-| `dev` | `make dev` | Run `go run ./cmd` with file watching |
-| `deps` | `go mod download && go mod tidy` | Download and tidy Go dependencies |
-| `fmt` | `gofmt -w .` | Auto-format Go files |
-| `check-fmt` | `gofmt -l . \| grep .` | Verify Go formatting (fails if unformatted) |
-| `tidy` | `gofmt -w . && go mod tidy` | Format Go + tidy modules |
-| `lint` | `golangci-lint run ./...` | Run Go linter |
-| `tests` | `go test -race ./...` | Run all Go tests with race detector |
-| `test-coverage` | `go test -race -cover ./...` | Go test coverage summary |
-| `vuln-check` | `govulncheck ./...` | Scan Go for known vulnerabilities |
-| `gosec` | `gosec ./...` | Go security analysis |
+| Target          | Command                                                         | Purpose                                      |
+|-----------------|-----------------------------------------------------------------|----------------------------------------------|
+| `web`           | `pnpm install && pnpm build && copy to internal/api/spa/public` | Build React SPA (Vite) and copy to embed dir |
+| `build`         | `make web && CGO_ENABLED=0 go build -o bin/kith-pms ./cmd`      | Full build (SPA + static Go binary)          |
+| `dev`           | `make dev`                                                      | Run `go run ./cmd` with file watching        |
+| `deps`          | `go mod download && go mod tidy`                                | Download and tidy Go dependencies            |
+| `fmt`           | `gofmt -w .`                                                    | Auto-format Go files                         |
+| `check-fmt`     | `gofmt -l . \| grep .`                                          | Verify Go formatting (fails if unformatted)  |
+| `tidy`          | `gofmt -w . && go mod tidy`                                     | Format Go + tidy modules                     |
+| `lint`          | `golangci-lint run ./...`                                       | Run Go linter                                |
+| `tests`         | `go test -race ./...`                                           | Run all Go tests with race detector          |
+| `test-coverage` | `go test -race -cover ./...`                                    | Go test coverage summary                     |
+| `vuln-check`    | `govulncheck ./...`                                             | Scan Go for known vulnerabilities            |
+| `gosec`         | `gosec ./...`                                                   | Go security analysis                         |
 
 ## Pre-commit Checklist
 

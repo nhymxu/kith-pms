@@ -159,8 +159,8 @@ internal/db/queries/*.go
 
 # SPA build output — populated by `make web`; not committed
 web/dist/
-internal/web/spa/public/*
-!internal/web/spa/public/.gitignore
+internal/api/spa/public/*
+!internal/api/spa/public/.gitignore
 
 # Build output
 bin/

@@ -121,7 +121,7 @@ web/src/ (React + TypeScript)
   ├─ pnpm build (Vite 8)
   └─ web/dist/ (hashed assets: index.html, js/*, css/*)
       └─ make web
-         └─ copy to internal/web/spa/public/
+         └─ copy to internal/api/spa/public/
             └─ go build (//go:embed all:public)
                └─ static binary with SPA embedded
 ```
@@ -129,7 +129,7 @@ web/src/ (React + TypeScript)
 **Build Details**:
 - **Vite 8**: Fast bundler with code splitting, lazy loading, HMR
 - **Output**: `web/dist/` with hashed filenames for cache busting
-- **Embedding**: `internal/web/spa/spa.go` uses `//go:embed all:public`
+- **Embedding**: `internal/api/spa/spa.go` uses `//go:embed all:public`
 - **Asset Serving**: `/assets/*` served with 1-year immutable cache; `/` serves `index.html` (no-cache) for SPA shell
 
 ### Routing & Layouts (TanStack Router v1)
@@ -221,7 +221,7 @@ export function PersonForm() {
 | `middleware.RequestLogger()` | Structured access logging via slog |
 | Sentry middleware | Auto-captures request errors → Sentry |
 
-### Routes (mounted in `internal/web/route.go`)
+### Routes (mounted in `internal/api/mount.go`)
 
 ```
 /health                → GET (liveness probe, no auth)
@@ -474,9 +474,9 @@ person_relationship (N)
 
 ### Single Binary
 - Compiled with `CGO_ENABLED=0` → static binary, no libc or runtime dependencies
-- Embedded React SPA (`//go:embed all:public` in `internal/web/spa/spa.go`)
+- Embedded React SPA (`//go:embed all:public` in `internal/api/spa/spa.go`)
   - Vite builds React 19 SPA to `web/dist/`
-  - `make web` copies `web/dist/` → `internal/web/spa/public/`
+  - `make web` copies `web/dist/` → `internal/api/spa/public/`
   - `go embed` compiles all assets into binary (hashed filenames for cache busting)
 - Embedded migrations (SQL files compiled into binary)
 - **Build pipeline**: `make web` (pnpm build → copy) → `make build` (CGO_ENABLED=0 go build)`

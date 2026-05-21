@@ -1,10 +1,13 @@
 package api
 
 import (
+	"database/sql"
+	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/api/spa"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
 	"github.com/nhymxu/kith-pms/internal/dates"
@@ -12,6 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
+	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -21,6 +25,7 @@ import (
 
 // Deps holds the dependencies required by the API layer.
 type Deps struct {
+	DB                   *sql.DB
 	PeopleService        *people.Service
 	LabelsService        *labels.Service
 	JournalService       *journal.Service
@@ -38,14 +43,23 @@ type Deps struct {
 	GiftStoragePath      string
 	SessionLifetime      time.Duration
 	BehindTLS            bool
-	// LoginLimiter is the rate-limiter middleware shared with the templ login route.
-	// When non-nil, the same bucket is used for both /login and /v1/auth/login (5/15min total per IP).
-	// When nil, MountAuthLogin constructs its own limiter (not shared).
-	LoginLimiter echo.MiddlewareFunc
 }
 
-// Mount registers all /v1/* API routes onto e, protected by SessionOrBearer + SpaCSRF.
+// Mount registers all routes onto e.
+// Order matters: /health, /metrics, /v1/* are mounted first; spa.Handler() is last (catch-all).
 func Mount(e *echo.Echo, deps Deps) {
+	e.GET("/health", func(c *echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
+	e.GET("/metrics", metrics.Handler())
+
+	sessionLoader := auth.SessionLoader(deps.AuthService)
+
+	loginLimiter := auth.RateLimitLogin(5, 15*time.Minute)
+
+	MountAuthLogin(e, deps, loginLimiter)
+
 	v1 := e.Group("/v1",
 		auth.SessionOrBearer(deps.APIToken, deps.AuthService),
 		auth.SpaCSRF(),
@@ -67,6 +81,10 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountPeopleAvatars(v1, deps)
 	mountPeopleQuick(v1, deps)
 	mountSettings(v1, deps)
+
+	e.Use(sessionLoader, injectAuditActor())
+
+	spa.Handler(e)
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
@@ -163,15 +181,9 @@ func mountAuth(g *echo.Group, deps Deps) {
 
 // MountAuthLogin registers the unauthenticated login route on the root Echo instance.
 // Called separately because the /v1 group requires auth — login must bypass it.
-// Uses deps.LoginLimiter when set (shared with templ /login) to enforce a single
-// 5/15min bucket per IP across both login endpoints.
-func MountAuthLogin(e *echo.Echo, deps Deps) {
+// The limiter argument enforces a shared 5/15min bucket per IP across all login endpoints.
+func MountAuthLogin(e *echo.Echo, deps Deps, limiter echo.MiddlewareFunc) {
 	h := newAuthAPI(deps)
-
-	limiter := deps.LoginLimiter
-	if limiter == nil {
-		limiter = auth.RateLimitLogin(5, 15*time.Minute)
-	}
 
 	loginGroup := e.Group("/v1/auth", limiter)
 	loginGroup.POST("/login", h.Login)

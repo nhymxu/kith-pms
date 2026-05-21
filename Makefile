@@ -18,12 +18,12 @@ sqlc: ## Generate sqlc query code
 	sqlc generate -f internal/db/sqlc.yaml
 
 .PHONY: web
-web: ## Build the React SPA and copy output into internal/web/spa/public
+web: ## Build the React SPA and copy output into internal/api/spa/public
 	cd web && pnpm install --frozen-lockfile && pnpm build
-	rm -rf internal/web/spa/public
-	mkdir -p internal/web/spa/public
-	touch internal/web/spa/public/.gitignore
-	cp -R web/dist/. internal/web/spa/public
+	rm -rf internal/api/spa/public
+	mkdir -p internal/api/spa/public
+	touch internal/api/spa/public/.gitignore
+	cp -R web/dist/. internal/api/spa/public
 
 .PHONY: assets
 assets: sqlc web ## Regenerate all generated assets (sqlc + SPA build)
@@ -33,8 +33,8 @@ build: web ## Build the binary (CGO_ENABLED=0); runs pnpm build first
 	CGO_ENABLED=0 go build -o bin/$(APP_NAME) ./cmd
 
 .PHONY: clean
-clean: ## Remove build artefacts (web/dist and internal/web/spa/public)
-	rm -rf web/dist internal/web/spa/public
+clean: ## Remove build artefacts (web/dist and internal/api/spa/public)
+	rm -rf web/dist internal/api/spa/public
 
 .PHONY: migrate
 migrate: ## Apply database migrations

@@ -15,7 +15,7 @@
     "samber/cc-skills-golang/skills/golang-security",
     "samber/cc-skills-golang/skills/golang-stretchr-testify",
     "samber/cc-skills-golang/skills/golang-testing",
-    "vercel-labs/agent-skills/skills/react-best-practices",
-    "shadcn/ui/skills/shadcn"
+    "GoogleChrome/modern-web-guidance/skills/modern-web-guidance",
+    "vercel-labs/agent-skills/skills/react-best-practices"
   ]
 }

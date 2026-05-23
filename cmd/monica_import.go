@@ -3,15 +3,19 @@ package main
 import (
 	"bufio"
 	"context"
+	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli/v3"
 
 	"github.com/nhymxu/kith-pms/internal/dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
+	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -65,7 +69,11 @@ func monicaImportCommand() *cli.Command {
 
 			fmt.Printf("Parsed %d contacts from %s\n", len(export.Contacts), fromPath)
 
-			options, err := resolveMonicaImportOptions(export, cmd.String("inactive-reminders"), cmd.String("account-journal"))
+			options, err := resolveMonicaImportOptions(
+				export,
+				cmd.String("inactive-reminders"),
+				cmd.String("account-journal"),
+			)
 			if err != nil {
 				return err
 			}
@@ -92,11 +100,13 @@ func monicaImportCommand() *cli.Command {
 			giftsSvc := gifts.NewService(database)
 			workSvc := work_history.NewService(database)
 			relSvc := relationships.NewService(database)
+			filesSvc := files.NewLocalFileService(config.ENV.AvatarStoragePath)
 
 			return runImport(
 				ctx,
 				export,
 				options,
+				filesSvc,
 				peopleSvc,
 				labelsSvc,
 				journalSvc,
@@ -114,6 +124,7 @@ func runImport(
 	ctx context.Context,
 	export *monica.Export,
 	options monica.ImportOptions,
+	filesSvc *files.LocalFileService,
 	peopleSvc *people.Service,
 	labelsSvc *labels.Service,
 	journalSvc *journal.Service,
@@ -136,7 +147,7 @@ func runImport(
 	// First pass: insert all persons and build UUID→personID map for relationship resolution.
 	uuidToPersonID := make(map[string]int64, len(export.Contacts))
 
-	var imported, errCount int
+	var imported, errCount, avatarImported, avatarSkipped int
 
 	for _, c := range export.Contacts {
 		rec := monica.MapContactWithOptions(c, options)
@@ -222,6 +233,15 @@ func runImport(
 			}
 		}
 
+		// Avatar: decode base64 dataUrl and save to disk when present.
+		if rec.AvatarDataURL != "" {
+			if saveAvatar(ctx, peopleSvc.DB, filesSvc, peopleSvc.People, personID, rec.AvatarDataURL) {
+				avatarImported++
+			} else {
+				avatarSkipped++
+			}
+		}
+
 		imported++
 
 		slog.Info("monica-import: imported contact", "name", rec.Person.Name, "person_id", personID)
@@ -232,7 +252,15 @@ func runImport(
 
 	if options.ImportAccountJournalEntries {
 		accountJournalImported, accountJournalErrors := importAccountJournalEntries(ctx, export, journalSvc)
-		fmt.Printf("Account journal entries: %d imported, %d skipped/errors\n", accountJournalImported, accountJournalErrors)
+		fmt.Printf(
+			"Account journal entries: %d imported, %d skipped/errors\n",
+			accountJournalImported,
+			accountJournalErrors,
+		)
+	}
+
+	if avatarImported+avatarSkipped > 0 {
+		fmt.Printf("Avatars: %d imported, %d skipped\n", avatarImported, avatarSkipped)
 	}
 
 	fmt.Printf("\nImport complete: %d imported, %d skipped/errors\n", imported, errCount)
@@ -310,24 +338,47 @@ func importRelationships(
 	}
 }
 
-func resolveMonicaImportOptions(export *monica.Export, inactiveMode, accountJournalMode string) (monica.ImportOptions, error) {
+func resolveMonicaImportOptions(
+	export *monica.Export,
+	inactiveMode, accountJournalMode string,
+) (monica.ImportOptions, error) {
 	options := monica.ImportOptions{}
 	reader := bufio.NewReader(os.Stdin)
 
 	inactiveCount := countInactiveReminders(export)
 	if inactiveCount > 0 {
-		answer, err := resolveChoice(reader, inactiveMode, "completed", "skip", fmt.Sprintf("Import %d inactive Monica reminders as completed reminders? No = skip permanently.", inactiveCount))
+		answer, err := resolveChoice(
+			reader,
+			inactiveMode,
+			"completed",
+			"skip",
+			fmt.Sprintf(
+				"Import %d inactive Monica reminders as completed reminders? No = skip permanently.",
+				inactiveCount,
+			),
+		)
 		if err != nil {
 			return options, err
 		}
+
 		options.ImportInactiveReminders = answer
 	}
 
 	if len(export.AccountJournalEntries) > 0 {
-		answer, err := resolveChoice(reader, accountJournalMode, "unlinked", "skip", fmt.Sprintf("Import %d account-level Monica journal entries as unlinked journal entries? No = skip.", len(export.AccountJournalEntries)))
+		answer, err := resolveChoice(
+			reader,
+			accountJournalMode,
+			"unlinked",
+			"skip",
+			fmt.Sprintf(
+				"Import %d account-level Monica journal entries as unlinked journal entries? No = skip.",
+				len(export.AccountJournalEntries),
+			),
+		)
 		if err != nil {
 			return options, err
 		}
+
 		options.ImportAccountJournalEntries = answer
 	}
 
@@ -350,6 +401,7 @@ func resolveChoice(reader *bufio.Reader, mode, yesMode, noMode, question string)
 func askYesNo(reader *bufio.Reader, question string) (bool, error) {
 	for {
 		fmt.Printf("%s [y/N]: ", question)
+
 		answer, err := reader.ReadString('\n')
 		if err != nil {
 			return false, fmt.Errorf("monica-import: read confirmation: %w", err)
@@ -368,6 +420,7 @@ func askYesNo(reader *bufio.Reader, question string) (bool, error) {
 
 func countInactiveReminders(export *monica.Export) int {
 	var count int
+
 	for _, c := range export.Contacts {
 		for _, reminder := range c.Reminders {
 			if reminder.Inactive {
@@ -381,12 +434,16 @@ func countInactiveReminders(export *monica.Export) int {
 
 func importAccountJournalEntries(ctx context.Context, export *monica.Export, journalSvc *journal.Service) (int, int) {
 	var imported, errCount int
+
 	for _, act := range monica.MapAccountJournalEntries(export.AccountJournalEntries) {
 		if _, err := journalSvc.Create(ctx, act, nil); err != nil {
 			slog.Warn("monica-import: failed to create account journal entry", "title", act.Title, "err", err)
+
 			errCount++
+
 			continue
 		}
+
 		imported++
 	}
 
@@ -394,7 +451,7 @@ func importAccountJournalEntries(ctx context.Context, export *monica.Export, jou
 }
 
 func printDryRunSummary(export *monica.Export, options monica.ImportOptions) error {
-	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels int //nolint:lll
+	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels, totalAvatars int //nolint:lll
 
 	for _, c := range export.Contacts {
 		rec := monica.MapContactWithOptions(c, options)
@@ -406,7 +463,11 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 		totalDates += len(rec.Dates)
 		totalGifts += len(rec.Gifts)
 		totalWork += len(rec.WorkHistory)
+
 		totalRels += len(rec.Relationships)
+		if rec.AvatarDataURL != "" {
+			totalAvatars++
+		}
 	}
 
 	fmt.Printf("\nDry-run summary:\n")
@@ -415,19 +476,116 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 	fmt.Printf("  Locations:           %d\n", totalLocations)
 	fmt.Printf("  Tags (labels):       %d\n", totalTags)
 	fmt.Printf("  Journal entries:     %d\n", totalActivities)
+
 	if options.ImportAccountJournalEntries {
 		fmt.Printf("  Account journals:    %d\n", len(monica.MapAccountJournalEntries(export.AccountJournalEntries)))
 	} else if len(export.AccountJournalEntries) > 0 {
 		fmt.Printf("  Account journals:    0 (%d skipped)\n", len(export.AccountJournalEntries))
 	}
+
 	fmt.Printf("  Reminders:           %d\n", totalReminders)
+
 	if skippedInactive := countInactiveReminders(export); skippedInactive > 0 && !options.ImportInactiveReminders {
 		fmt.Printf("  Inactive reminders:  0 (%d skipped)\n", skippedInactive)
 	}
+
 	fmt.Printf("  Important dates:     %d\n", totalDates)
 	fmt.Printf("  Gifts:               %d\n", totalGifts)
 	fmt.Printf("  Work history:        %d\n", totalWork)
 	fmt.Printf("  Relationships:       %d\n", totalRels)
+	fmt.Printf("  Avatars:             %d\n", totalAvatars)
 
 	return nil
+}
+
+// saveAvatar decodes a "data:<mime>;base64,..." dataUrl, writes it to disk, and
+// updates the person row with file path metadata.
+// Returns true on success; logs and returns false so the caller's import loop continues.
+func saveAvatar(
+	ctx context.Context,
+	db *sql.DB,
+	filesSvc *files.LocalFileService,
+	personRepo people.PersonRepo,
+	personID int64,
+	dataURL string,
+) bool {
+	mimeType, data, err := parseDataURL(dataURL)
+	if err != nil {
+		slog.Warn("monica-import: skip avatar, bad data URL", "person_id", personID, "err", err)
+		return false
+	}
+
+	path, err := filesSvc.SaveAvatarBytes(personID, data, mimeType)
+	if err != nil {
+		slog.Warn("monica-import: skip avatar, save failed", "person_id", personID, "err", err)
+		return false
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		_ = filesSvc.DeleteAvatar(personID, path)
+		slog.Warn("monica-import: skip avatar, begin tx failed", "person_id", personID, "err", err)
+
+		return false
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := personRepo.UpdateAvatar(
+		ctx,
+		tx,
+		personID,
+		path,
+		mimeType,
+		int64(len(data)),
+		time.Now().UTC(),
+	); err != nil {
+		_ = filesSvc.DeleteAvatar(personID, path)
+		slog.Warn("monica-import: skip avatar, db update failed", "person_id", personID, "err", err)
+
+		return false
+	}
+
+	if err := tx.Commit(); err != nil {
+		_ = filesSvc.DeleteAvatar(personID, path)
+		slog.Warn("monica-import: skip avatar, commit failed", "person_id", personID, "err", err)
+
+		return false
+	}
+
+	return true
+}
+
+// parseDataURL splits a "data:<mime>;base64,<encoded>" string into its parts.
+func parseDataURL(dataURL string) (mimeType string, data []byte, err error) {
+	const prefix = "data:"
+	if !strings.HasPrefix(dataURL, prefix) {
+		return "", nil, fmt.Errorf("not a data URL")
+	}
+
+	rest := dataURL[len(prefix):]
+
+	mimeType, encoded, ok := strings.Cut(rest, ";base64,")
+	if !ok {
+		return "", nil, fmt.Errorf("not a base64 data URL")
+	}
+
+	// Reject oversized payloads before allocating: base64 expands 3→4, so
+	// a 5 MB decoded image is at most ~6.7 MB encoded (+4 for padding).
+	const maxAvatarSize = 5 * 1024 * 1024
+	if len(encoded) > maxAvatarSize*4/3+4 {
+		return "", nil, fmt.Errorf("avatar data URL exceeds size limit")
+	}
+
+	// Try standard encoding first; fall back to raw (no-padding) for Monica
+	// exports that may omit trailing '=' characters.
+	data, err = base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		data, err = base64.RawStdEncoding.DecodeString(encoded)
+	}
+
+	if err != nil {
+		return "", nil, fmt.Errorf("decode base64: %w", err)
+	}
+
+	return mimeType, data, nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 )
 
 // Export is the top-level decoded result from a Monica v4 export:
@@ -33,6 +34,14 @@ type v4Account struct {
 type v4Data struct {
 	Contacts      []v4Contact      `json:"contacts"`
 	Relationships []v4Relationship `json:"relationships"`
+	Photos        []v4Photo        `json:"photos"`
+}
+
+type v4Photo struct {
+	UUID       string `json:"uuid"`
+	Properties struct {
+		DataURL string `json:"dataUrl"`
+	} `json:"properties"`
 }
 
 type v4Properties struct {
@@ -61,6 +70,9 @@ type v4ContactProps struct {
 	DeceasedDate *v4SpecDate `json:"deceased_date"`
 	FirstMetDate *v4SpecDate `json:"first_met_date"`
 	Tags         []string    `json:"tags"`
+	// Avatar fields
+	AvatarSource string `json:"avatar_source"` // gravatar|adorable|default|external|photo
+	AvatarPhoto  string `json:"avatar_photo"`  // UUID ref to account-level Photo object
 }
 
 type v4SpecDate struct {
@@ -201,6 +213,9 @@ type Contact struct {
 	Gifts       []MGift        `json:"gifts"`
 	// v4 relationship data resolved at parse time
 	Relationships []MRelationship `json:"-"`
+	// AvatarDataURL is a "data:<mime>;base64,..." string resolved from account photos.
+	// Only set when avatar_source == "photo" and the referenced photo UUID is found.
+	AvatarDataURL string `json:"-"`
 }
 
 type Information struct {
@@ -295,7 +310,9 @@ func Parse(r io.Reader) (*Export, error) {
 	}
 
 	if root.Account == nil {
-		return nil, fmt.Errorf("monica-import: unrecognised export format (expected Monica v4 with top-level \"account\" key)")
+		return nil, fmt.Errorf(
+			"monica-import: unrecognised export format (expected Monica v4 with top-level \"account\" key)",
+		)
 	}
 
 	return parseV4(root.Account)
@@ -336,9 +353,17 @@ func parseV4(acc *v4Account) (*Export, error) {
 		})
 	}
 
+	// Build UUID→dataURL map from account-level photos for avatar resolution.
+	photoURLs := make(map[string]string, len(acc.Data.Photos))
+	for _, p := range acc.Data.Photos {
+		if p.UUID != "" && p.Properties.DataURL != "" {
+			photoURLs[p.UUID] = p.Properties.DataURL
+		}
+	}
+
 	contacts := make([]Contact, 0, len(acc.Data.Contacts))
 	for _, c := range acc.Data.Contacts {
-		contacts = append(contacts, normaliseV4Contact(c, uuidToRels[c.UUID]))
+		contacts = append(contacts, normaliseV4Contact(c, uuidToRels[c.UUID], photoURLs))
 	}
 
 	return &Export{
@@ -351,6 +376,7 @@ func normaliseV4AccountJournal(entries []v4JournalEntry) []MAccountJournal {
 	out := make([]MAccountJournal, 0, len(entries))
 	for _, entry := range entries {
 		p := entry.Properties
+
 		title := p.Title
 		if title == "" {
 			title = "Journal entry"
@@ -376,7 +402,7 @@ func normaliseV4AccountJournal(entries []v4JournalEntry) []MAccountJournal {
 	return out
 }
 
-func normaliseV4Contact(c v4Contact, rels []MRelationship) Contact {
+func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]string) Contact {
 	p := c.Properties
 
 	info := Information{}
@@ -493,6 +519,21 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship) Contact {
 		})
 	}
 
+	// Resolve avatar: only import when source is "photo" and UUID resolves to a dataUrl.
+	var avatarDataURL string
+	if p.AvatarSource == "photo" && p.AvatarPhoto != "" {
+		avatarDataURL = photoURLs[p.AvatarPhoto]
+		if avatarDataURL == "" {
+			slog.Debug(
+				"monica-import: avatar photo UUID not found in export",
+				"contact",
+				c.UUID,
+				"photo_uuid",
+				p.AvatarPhoto,
+			)
+		}
+	}
+
 	return Contact{
 		ID:            c.UUID,
 		FirstName:     p.FirstName,
@@ -513,5 +554,6 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship) Contact {
 		Tasks:         tasks,
 		Gifts:         gifts,
 		Relationships: rels,
+		AvatarDataURL: avatarDataURL,
 	}
 }

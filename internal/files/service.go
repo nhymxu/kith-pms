@@ -25,6 +25,7 @@ var allowedMimeTypes = map[string]bool{
 
 type FileService interface {
 	SaveAvatar(personID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
+	SaveAvatarBytes(personID int64, data []byte, mimeType string) (path string, err error)
 	DeleteAvatar(personID int64, path string) error
 	GetAvatarPath(personID int64) string
 	SaveGiftImage(giftID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
@@ -120,6 +121,64 @@ func (s *LocalFileService) SaveAvatar(
 	relativePath := filepath.Join(fmt.Sprintf("%d", personID), filename)
 
 	return relativePath, nil
+}
+
+// SaveAvatarBytes writes raw image bytes to disk without requiring multipart headers.
+// Used by the Monica import CLI to save decoded base64 avatars.
+func (s *LocalFileService) SaveAvatarBytes(personID int64, data []byte, mimeType string) (string, error) {
+	if int64(len(data)) > maxAvatarSize {
+		return "", fmt.Errorf("avatar size %d exceeds maximum %d bytes", len(data), maxAvatarSize)
+	}
+
+	if !allowedMimeTypes[mimeType] {
+		return "", fmt.Errorf("unsupported MIME type: %s", mimeType)
+	}
+
+	// Verify actual content via magic number check
+	detectedType := http.DetectContentType(data)
+	if !allowedMimeTypes[detectedType] {
+		return "", fmt.Errorf("avatar content type %s not allowed", detectedType)
+	}
+
+	ext := mimeTypeToExt(mimeType)
+
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("generate random filename: %w", err)
+	}
+
+	filename := fmt.Sprintf("%s-imported%s", hex.EncodeToString(randomBytes), ext)
+
+	personDir := filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
+	if err := os.MkdirAll(personDir, 0755); err != nil {
+		return "", fmt.Errorf("create directory: %w", err)
+	}
+
+	destPath := filepath.Join(personDir, filename)
+	tempPath := destPath + ".tmp"
+
+	dest, err := os.Create(tempPath)
+	if err != nil {
+		return "", fmt.Errorf("create temp file: %w", err)
+	}
+	defer func() { _ = dest.Close() }()
+
+	if _, err := dest.Write(data); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("write file: %w", err)
+	}
+
+	if err := dest.Sync(); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("sync file: %w", err)
+	}
+
+	if err := os.Rename(tempPath, destPath); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("rename file: %w", err)
+	}
+
+	return filepath.Join(fmt.Sprintf("%d", personID), filename), nil
 }
 
 func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {

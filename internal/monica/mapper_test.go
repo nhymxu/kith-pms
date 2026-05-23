@@ -220,6 +220,7 @@ func TestMapContactInactiveReminderOption(t *testing.T) {
 	if len(withOption.Reminders) != 1 {
 		t.Fatalf("expected inactive reminder imported, got %d", len(withOption.Reminders))
 	}
+
 	if !withOption.Reminders[0].Completed || withOption.Reminders[0].CompletedAt == nil {
 		t.Fatalf("expected inactive reminder imported as completed, got %+v", withOption.Reminders[0])
 	}
@@ -232,7 +233,9 @@ func TestMapAccountJournalEntries(t *testing.T) {
 	if len(activities) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(activities))
 	}
-	if activities[0].Title != "Reflection" || activities[0].Content != "Account note" || activities[0].OccurredAtDate != "2024-01-02" {
+
+	if activities[0].Title != "Reflection" || activities[0].Content != "Account note" ||
+		activities[0].OccurredAtDate != "2024-01-02" {
 		t.Fatalf("unexpected account journal mapping: %+v", activities[0])
 	}
 }
@@ -256,6 +259,73 @@ func TestMapContactFirstMetDate(t *testing.T) {
 	}
 }
 
+func TestParseV4AvatarResolution(t *testing.T) {
+	// Photo source with matching UUID should populate AvatarDataURL.
+	jsonStr := `{
+		"account": {
+			"data": {
+				"contacts": [{
+					"uuid": "contact-1",
+					"properties": {
+						"first_name": "Alice",
+						"avatar_source": "photo",
+						"avatar_photo": "photo-uuid-1"
+					},
+					"data": {
+						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
+						"reminders": {"data": []}, "calls": {"data": []}, "tasks": {"data": []},
+						"gifts": {"data": []}, "activities": {"data": []}
+					}
+				}, {
+					"uuid": "contact-2",
+					"properties": {
+						"first_name": "Bob",
+						"avatar_source": "gravatar",
+						"avatar_photo": ""
+					},
+					"data": {
+						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
+						"reminders": {"data": []}, "calls": {"data": []}, "tasks": {"data": []},
+						"gifts": {"data": []}, "activities": {"data": []}
+					}
+				}],
+				"relationships": [],
+				"photos": [{
+					"uuid": "photo-uuid-1",
+					"properties": {
+						"mime_type": "image/jpeg",
+						"dataUrl": "data:image/jpeg;base64,abc123"
+					}
+				}]
+			},
+			"properties": {"journal_entries": []}
+		}
+	}`
+
+	exp, err := Parse(strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	if len(exp.Contacts) != 2 {
+		t.Fatalf("expected 2 contacts, got %d", len(exp.Contacts))
+	}
+
+	if exp.Contacts[0].AvatarDataURL != "data:image/jpeg;base64,abc123" {
+		t.Errorf("expected avatar data URL for Alice, got %q", exp.Contacts[0].AvatarDataURL)
+	}
+
+	if exp.Contacts[1].AvatarDataURL != "" {
+		t.Errorf("expected no avatar data URL for Bob (gravatar), got %q", exp.Contacts[1].AvatarDataURL)
+	}
+
+	// AvatarDataURL should carry through to ImportRecord.
+	rec := MapContact(exp.Contacts[0])
+	if rec.AvatarDataURL != "data:image/jpeg;base64,abc123" {
+		t.Errorf("expected AvatarDataURL in ImportRecord, got %q", rec.AvatarDataURL)
+	}
+}
+
 func TestParseV4PreservesPromptedData(t *testing.T) {
 	json := `{
 		"account": {
@@ -271,7 +341,9 @@ func TestParseV4PreservesPromptedData(t *testing.T) {
 				}],
 				"relationships": []
 			},
-			"properties": {"journal_entries": [{"created_at": "2024-01-02T00:00:00Z", "properties": {"title": "Private", "post": "Account note"}}]}
+			"properties": {"journal_entries": [
+				{"created_at": "2024-01-02T00:00:00Z", "properties": {"title": "Private", "post": "Account note"}}
+			]}
 		}
 	}`
 
@@ -279,9 +351,11 @@ func TestParseV4PreservesPromptedData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
+
 	if len(exp.Contacts) != 1 || len(exp.Contacts[0].Reminders) != 1 || !exp.Contacts[0].Reminders[0].Inactive {
 		t.Fatalf("expected inactive reminder preserved, got %+v", exp.Contacts)
 	}
+
 	if len(exp.AccountJournalEntries) != 1 || exp.AccountJournalEntries[0].Title != "Private" {
 		t.Fatalf("expected account journal preserved, got %+v", exp.AccountJournalEntries)
 	}

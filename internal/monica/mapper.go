@@ -27,6 +27,9 @@ type ImportRecord struct {
 	Gifts       []gifts.Gift
 	// Relationships are resolved after all persons are inserted (UUID→ID mapping needed).
 	Relationships []MRelationship
+	// AvatarDataURL is non-empty when the contact has a photo avatar in the Monica export.
+	// Format: "data:<mime>;base64,<encoded>"
+	AvatarDataURL string
 }
 
 // MapContact converts a Monica Contact into an ImportRecord.
@@ -46,6 +49,7 @@ func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 		WorkHistory:   mapWorkHistory(c),
 		Gifts:         mapGifts(c.Gifts),
 		Relationships: c.Relationships,
+		AvatarDataURL: c.AvatarDataURL,
 	}
 }
 

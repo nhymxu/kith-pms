@@ -108,7 +108,13 @@ The import is safe to re-run on a fresh database. Running it twice on the same d
 
 ---
 
-## Step 5 — Verify
+## Step 5 — Verify avatars
+
+After import, avatars that were stored as photos in Monica (`avatar_source: photo`) are automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`). The dry-run summary includes an `Avatars:` count showing how many photos will be imported. Check that the path exists and is writable before running the import if you expect avatars to be present.
+
+Contacts whose avatars use gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page.
+
+## Step 6 — Verify all data
 
 Start the server and check your data:
 
@@ -126,6 +132,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 - Gifts are listed per person
 - Work history entries are present
 - Relationships between contacts are linked
+- Avatars appear for contacts that had locally-uploaded photos in Monica (the import summary prints `Avatars: N imported` if any were found)
 
 ---
 
@@ -151,13 +158,14 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | tasks (incomplete only) | Reminders | Due date set to import day; completed tasks are skipped |
 | gifts | Gifts | status mapped to given/received/planned; amount converted to cents |
 | relationships | Person relationships | Relationship type names are created automatically |
+| avatar (photo source) | Person avatar | Automatically imported when Monica `avatar_source` is `"photo"` and the photo data exists in the export. Photos are decoded from dataURL and saved to `AVATAR_STORAGE_PATH` (default: `data/avatars`). Gravatar, adorable, and external avatars are skipped. |
 
 ### What does NOT migrate
 
 | Monica data | Reason |
 |---|---|
-| Photos / avatars | Monica embeds them as base64 in the export; kith stores files on disk. Upload avatars manually after import. |
-| Documents | Same reason as photos. |
+| Gravatar / adorable / external avatars | Only locally-uploaded Monica photos (`avatar_source: photo`) are imported. Other avatar types have no file data in the export. |
+| Documents | Same reason as photos — base64 embedded; no equivalent feature in kith. |
 | Conversations / messages | No equivalent feature in kith. |
 | Life events | No equivalent feature in kith. |
 | Pets | No equivalent feature in kith. |

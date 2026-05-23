@@ -29,6 +29,9 @@ func (s *stubFileService) SaveAvatar(_ int64, _ multipart.File, h *multipart.Fil
 	return s.savedPath, nil
 }
 
+func (s *stubFileService) SaveAvatarBytes(_ int64, _ []byte, _ string) (string, error) {
+	return "", nil
+}
 func (s *stubFileService) DeleteAvatar(_ int64, _ string) error { return nil }
 func (s *stubFileService) GetAvatarPath(_ int64) string         { return "" }
 func (s *stubFileService) SaveGiftImage(_ int64, _ multipart.File, _ *multipart.FileHeader) (string, error) {

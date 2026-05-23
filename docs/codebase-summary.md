@@ -166,7 +166,7 @@ kith-pms/
 - **migrate.go**: `migrate` subcommand — applies pending SQL migrations
 - **set_password.go**: `set-password` subcommand — interactive password change
 - **backup.go** & **restore.go**: Database backup/restore CLI with safety checks
-- **monica_import.go**: `monica-import` subcommand — imports contacts, labels, activities, reminders, and dates from a Monica PRM JSON export
+- **monica_import.go**: `monica-import` subcommand — imports contacts, labels, activities, reminders, dates, and avatars from a Monica PRM JSON export; decodes dataURLs for photos marked with `avatar_source: photo` and saves to disk
 
 ### `internal/db` — Database layer
 - **sqlite.go**: Opens SQLite with modernc.org/sqlite (no CGO); applies PRAGMAs for WAL, foreign keys, safe sync
@@ -237,7 +237,7 @@ kith-pms/
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
-- **service.go**: LocalFileService for avatar uploads with MIME validation, size limits, path traversal prevention
+- **service.go**: LocalFileService with methods for avatar uploads and imports; `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes (used by Monica import); `SaveAvatar(personID, file)` handles multipart upload; all methods include MIME validation, size limits, path traversal prevention
 - **service_test.go**: File service unit tests
 
 ### `internal/metrics` — Prometheus metrics & observability
@@ -245,8 +245,8 @@ kith-pms/
 - **metrics_test.go**: Unit tests for route-template label cardinality, unknown route handling, scrape format validation
 
 ### `internal/monica` — Monica PRM data import
-- **parser.go**: Unmarshals Monica JSON export format (contacts, activities, reminders, tags, etc.) into typed structs
-- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate)
+- **parser.go**: Unmarshals Monica JSON export format (contacts, activities, reminders, tags, photos, etc.) into typed structs; parses `account.data.photos` into UUID→dataURL map; adds `AvatarDataURL` field to `Contact` struct resolved when `avatar_source == "photo"`
+- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream processing
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
 ### `internal/api` — HTTP API handlers & server

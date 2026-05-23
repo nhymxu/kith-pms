@@ -1,20 +1,14 @@
 # Migrating from Monica to kith
 
-This guide covers exporting your data from Monica and importing it into kith. Both Monica v2/v3 and v4 export formats are supported.
+This guide covers exporting your data from Monica v4 and importing it into kith.
 
 ## Step 1 — Export from Monica
-
-### Monica v4 (self-hosted)
 
 1. Log in to your Monica instance
 2. Go to **Settings → Export data**
 3. Choose **Export as JSON** and click **Export**
 4. Wait for the export job to complete (you'll get an email or see a download link)
 5. Download the `.json` file
-
-### Monica v2/v3
-
-Same path: **Settings → Export data → Export as JSON**.
 
 The export is a single JSON file. It may be large (10 MB+) if you have many photos or documents — that's normal.
 
@@ -51,6 +45,14 @@ Always do a dry run first to verify the file parses correctly:
 ./bin/kith-pms monica-import --from /path/to/monica-export.json --dry-run
 ```
 
+If the export contains inactive reminders or account-level journal entries, the dry run uses the same default prompts as a real import. Pass explicit choices to make preview runs non-interactive:
+
+```bash
+./bin/kith-pms monica-import --from /path/to/monica-export.json --dry-run \
+  --inactive-reminders=skip \
+  --account-journal=skip
+```
+
 Example output:
 
 ```
@@ -77,6 +79,21 @@ No data is written. If the contact count looks wrong, check that you downloaded 
 
 ```bash
 ./bin/kith-pms monica-import --from /path/to/monica-export.json
+```
+
+By default, the import asks before including Monica data that cannot be linked cleanly:
+
+| Option | Values | Default | Behavior |
+|---|---|---|---|
+| `--inactive-reminders` | `ask`, `skip`, `completed` | `ask` | `completed` imports inactive Monica reminders as completed kith reminders; `skip` omits them. |
+| `--account-journal` | `ask`, `skip`, `unlinked` | `ask` | `unlinked` imports Monica v4 account-level journal entries without person links; `skip` omits them. |
+
+For unattended imports, set both options explicitly:
+
+```bash
+./bin/kith-pms monica-import --from /path/to/monica-export.json \
+  --inactive-reminders=completed \
+  --account-journal=unlinked
 ```
 
 The command logs each imported contact and finishes with a summary:
@@ -114,29 +131,26 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 
 ## What gets migrated
 
-### Monica v2/v3 and v4
-
 | Monica field | kith field | Notes |
 |---|---|---|
 | first_name + last_name | Person name | |
-| middle_name (v4) | Person name | Included between first and last |
+| middle_name | Person name | Included between first and last |
 | nickname | Nickname | |
-| description (v4) | OtherNotes | Prepended before work info |
-| job + company | OtherNotes | `Work: job at company` |
-| job + company (v4) | Work history | Stored as a work history entry; start date defaults to 2000 since Monica doesn't export it |
+| description | OtherNotes | Prepended before work info |
+| job + company | Work history | Stored as a work history entry; start date defaults to 2000 since Monica doesn't export it |
 | birthdate (with year) | Person DOB + Important date (birthday) | |
 | birthdate (year unknown) | Important date only | Stored as `--MM-DD` |
 | first_met_date | Important date (kind: met) | |
 | addresses | Locations | name mapped to home/work/other |
-| contactInformation / contact_fields | Contact info | v2/v3 semantic types map to email/phone/social/other; v4 `contact_fields.type` is a UUID and usually imports as `other` today |
+| contact_fields | Contact info | `contact_fields.type` is a UUID and usually imports as `other` |
 | tags | Labels | Created with colour `#6366f1` if new |
 | notes | Journal entries | Note body becomes content; title truncated to 60 chars |
 | activities | Journal entries | summary → title, description → content |
-| calls (v4) | Journal entries | `Call on YYYY-MM-DD` title, content from call notes |
-| reminders | Reminders | |
-| tasks (v4, incomplete only) | Reminders | Due date set to import day; completed tasks are skipped |
-| gifts (v4) | Gifts | status mapped to given/received/planned; amount converted to cents |
-| relationships (v4) | Person relationships | Relationship type names are created automatically |
+| calls | Journal entries | `Call on YYYY-MM-DD` title, content from call notes |
+| reminders | Reminders | Active reminders import by default. Inactive reminders prompt by default; use `--inactive-reminders=completed` to import them as completed reminders or `--inactive-reminders=skip` to omit them. |
+| tasks (incomplete only) | Reminders | Due date set to import day; completed tasks are skipped |
+| gifts | Gifts | status mapped to given/received/planned; amount converted to cents |
+| relationships | Person relationships | Relationship type names are created automatically |
 
 ### What does NOT migrate
 
@@ -149,10 +163,10 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | Pets | No equivalent feature in kith. |
 | Debts | No equivalent feature in kith (use gifts with debt_type if needed). |
 | Completed tasks | Intentionally skipped — already done. |
-| Journal entries (account-level, v4) | Monica's account-level journal has no per-person link; not imported. |
+| Journal entries (account-level) | Prompted by default because they have no person link; use `--account-journal=unlinked` to import them as unlinked journal entries or `--account-journal=skip` to omit them. |
 | Audit logs | Internal Monica data, not relevant to kith. |
 | Sync tokens / vCard data | Internal Monica data, not relevant to kith. |
-| Inactive reminders (v4) | Skipped — marked inactive in Monica. |
+| Inactive reminders | Prompted by default; use `--inactive-reminders=completed` to import them as completed reminders or `--inactive-reminders=skip` to omit them. |
 
 ---
 
@@ -175,4 +189,4 @@ DEBUG=true ./bin/kith-pms monica-import --from export.json
 
 **Work history start date shows 2000** — Monica's export does not include job start dates. Edit the work history entries manually in kith after import.
 
-**Relationship types created with generic names** — Monica v4 exports relationship type names as strings (e.g. "Friend", "Colleague"). These are created automatically in kith. Review and merge duplicates under **Settings → Relationship types** if needed.
+**Relationship types created with generic names** — Monica exports relationship type names as strings (e.g. "Friend", "Colleague"). These are created automatically in kith. Review and merge duplicates under **Settings → Relationship types** if needed.

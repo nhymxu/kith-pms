@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log/slog"
@@ -25,7 +26,7 @@ import (
 func monicaImportCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "monica-import",
-		Usage: "Import contacts from a Monica JSON export file (v2/v3 and v4 formats supported)",
+		Usage: "Import contacts from a Monica v4 JSON export file",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "from",
@@ -35,6 +36,16 @@ func monicaImportCommand() *cli.Command {
 			&cli.BoolFlag{
 				Name:  "dry-run",
 				Usage: "Parse and report without writing to the database",
+			},
+			&cli.StringFlag{
+				Name:  "inactive-reminders",
+				Usage: "How to handle inactive Monica reminders: ask, skip, or completed",
+				Value: "ask",
+			},
+			&cli.StringFlag{
+				Name:  "account-journal",
+				Usage: "How to handle account-level Monica journal entries: ask, skip, or unlinked",
+				Value: "ask",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -54,8 +65,13 @@ func monicaImportCommand() *cli.Command {
 
 			fmt.Printf("Parsed %d contacts from %s\n", len(export.Contacts), fromPath)
 
+			options, err := resolveMonicaImportOptions(export, cmd.String("inactive-reminders"), cmd.String("account-journal"))
+			if err != nil {
+				return err
+			}
+
 			if dryRun {
-				return printDryRunSummary(export)
+				return printDryRunSummary(export, options)
 			}
 
 			database, err := internaldb.Open(config.ENV.DBPath)
@@ -80,6 +96,7 @@ func monicaImportCommand() *cli.Command {
 			return runImport(
 				ctx,
 				export,
+				options,
 				peopleSvc,
 				labelsSvc,
 				journalSvc,
@@ -96,6 +113,7 @@ func monicaImportCommand() *cli.Command {
 func runImport(
 	ctx context.Context,
 	export *monica.Export,
+	options monica.ImportOptions,
 	peopleSvc *people.Service,
 	labelsSvc *labels.Service,
 	journalSvc *journal.Service,
@@ -121,7 +139,7 @@ func runImport(
 	var imported, errCount int
 
 	for _, c := range export.Contacts {
-		rec := monica.MapContact(c)
+		rec := monica.MapContactWithOptions(c, options)
 		if rec.Person.Name == "" {
 			slog.Warn("monica-import: skipping contact with empty name", "id", c.ID)
 
@@ -212,6 +230,11 @@ func runImport(
 	// Second pass: resolve and insert relationships now that all persons exist.
 	importRelationships(ctx, export, uuidToPersonID, relSvc)
 
+	if options.ImportAccountJournalEntries {
+		accountJournalImported, accountJournalErrors := importAccountJournalEntries(ctx, export, journalSvc)
+		fmt.Printf("Account journal entries: %d imported, %d skipped/errors\n", accountJournalImported, accountJournalErrors)
+	}
+
 	fmt.Printf("\nImport complete: %d imported, %d skipped/errors\n", imported, errCount)
 
 	return nil
@@ -287,11 +310,94 @@ func importRelationships(
 	}
 }
 
-func printDryRunSummary(export *monica.Export) error {
+func resolveMonicaImportOptions(export *monica.Export, inactiveMode, accountJournalMode string) (monica.ImportOptions, error) {
+	options := monica.ImportOptions{}
+	reader := bufio.NewReader(os.Stdin)
+
+	inactiveCount := countInactiveReminders(export)
+	if inactiveCount > 0 {
+		answer, err := resolveChoice(reader, inactiveMode, "completed", "skip", fmt.Sprintf("Import %d inactive Monica reminders as completed reminders? No = skip permanently.", inactiveCount))
+		if err != nil {
+			return options, err
+		}
+		options.ImportInactiveReminders = answer
+	}
+
+	if len(export.AccountJournalEntries) > 0 {
+		answer, err := resolveChoice(reader, accountJournalMode, "unlinked", "skip", fmt.Sprintf("Import %d account-level Monica journal entries as unlinked journal entries? No = skip.", len(export.AccountJournalEntries)))
+		if err != nil {
+			return options, err
+		}
+		options.ImportAccountJournalEntries = answer
+	}
+
+	return options, nil
+}
+
+func resolveChoice(reader *bufio.Reader, mode, yesMode, noMode, question string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case yesMode:
+		return true, nil
+	case "", "ask":
+		return askYesNo(reader, question)
+	case noMode:
+		return false, nil
+	default:
+		return false, fmt.Errorf("monica-import: invalid option %q, expected ask, %s, or %s", mode, noMode, yesMode)
+	}
+}
+
+func askYesNo(reader *bufio.Reader, question string) (bool, error) {
+	for {
+		fmt.Printf("%s [y/N]: ", question)
+		answer, err := reader.ReadString('\n')
+		if err != nil {
+			return false, fmt.Errorf("monica-import: read confirmation: %w", err)
+		}
+
+		switch strings.ToLower(strings.TrimSpace(answer)) {
+		case "", "n", "no":
+			return false, nil
+		case "y", "yes":
+			return true, nil
+		default:
+			fmt.Println("Please answer y or n.")
+		}
+	}
+}
+
+func countInactiveReminders(export *monica.Export) int {
+	var count int
+	for _, c := range export.Contacts {
+		for _, reminder := range c.Reminders {
+			if reminder.Inactive {
+				count++
+			}
+		}
+	}
+
+	return count
+}
+
+func importAccountJournalEntries(ctx context.Context, export *monica.Export, journalSvc *journal.Service) (int, int) {
+	var imported, errCount int
+	for _, act := range monica.MapAccountJournalEntries(export.AccountJournalEntries) {
+		if _, err := journalSvc.Create(ctx, act, nil); err != nil {
+			slog.Warn("monica-import: failed to create account journal entry", "title", act.Title, "err", err)
+			errCount++
+			continue
+		}
+		imported++
+	}
+
+	return imported, errCount
+}
+
+func printDryRunSummary(export *monica.Export, options monica.ImportOptions) error {
 	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels int //nolint:lll
 
 	for _, c := range export.Contacts {
-		rec := monica.MapContact(c)
+		rec := monica.MapContactWithOptions(c, options)
 		totalContacts += len(rec.Contacts)
 		totalLocations += len(rec.Locations)
 		totalTags += len(rec.TagNames)
@@ -309,7 +415,15 @@ func printDryRunSummary(export *monica.Export) error {
 	fmt.Printf("  Locations:           %d\n", totalLocations)
 	fmt.Printf("  Tags (labels):       %d\n", totalTags)
 	fmt.Printf("  Journal entries:     %d\n", totalActivities)
+	if options.ImportAccountJournalEntries {
+		fmt.Printf("  Account journals:    %d\n", len(monica.MapAccountJournalEntries(export.AccountJournalEntries)))
+	} else if len(export.AccountJournalEntries) > 0 {
+		fmt.Printf("  Account journals:    0 (%d skipped)\n", len(export.AccountJournalEntries))
+	}
 	fmt.Printf("  Reminders:           %d\n", totalReminders)
+	if skippedInactive := countInactiveReminders(export); skippedInactive > 0 && !options.ImportInactiveReminders {
+		fmt.Printf("  Inactive reminders:  0 (%d skipped)\n", skippedInactive)
+	}
 	fmt.Printf("  Important dates:     %d\n", totalDates)
 	fmt.Printf("  Gifts:               %d\n", totalGifts)
 	fmt.Printf("  Work history:        %d\n", totalWork)

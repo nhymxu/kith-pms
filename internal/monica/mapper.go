@@ -31,13 +31,17 @@ type ImportRecord struct {
 
 // MapContact converts a Monica Contact into an ImportRecord.
 func MapContact(c Contact) ImportRecord {
+	return MapContactWithOptions(c, ImportOptions{})
+}
+
+func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 	return ImportRecord{
 		Person:        mapPerson(c),
 		Contacts:      mapContactInfo(c.ContactInfo),
 		Locations:     mapLocations(c.Addresses),
 		TagNames:      mapTags(c.Tags),
 		Activities:    mapActivities(c),
-		Reminders:     mapReminders(c.Reminders, c.Tasks),
+		Reminders:     mapReminders(c.Reminders, c.Tasks, options),
 		Dates:         mapDates(c.Information),
 		WorkHistory:   mapWorkHistory(c),
 		Gifts:         mapGifts(c.Gifts),
@@ -162,6 +166,28 @@ func mapTags(tags []Tag) []string {
 	return names
 }
 
+func MapAccountJournalEntries(entries []MAccountJournal) []journal.Activity {
+	out := make([]journal.Activity, 0, len(entries))
+	for _, entry := range entries {
+		if entry.Content == "" {
+			continue
+		}
+
+		title := strings.TrimSpace(entry.Title)
+		if title == "" {
+			title = truncate(entry.Content, 60)
+		}
+
+		out = append(out, journal.Activity{
+			Title:          title,
+			Content:        entry.Content,
+			OccurredAtDate: dateFromISO(entry.OccurredAtDate),
+		})
+	}
+
+	return out
+}
+
 func mapActivities(c Contact) []journal.Activity {
 	var out []journal.Activity
 
@@ -216,11 +242,11 @@ func mapActivities(c Contact) []journal.Activity {
 }
 
 // mapReminders maps Monica reminders and incomplete tasks to kith reminders.
-func mapReminders(mrs []MReminder, tasks []MTask) []reminders.Reminder {
+func mapReminders(mrs []MReminder, tasks []MTask, options ImportOptions) []reminders.Reminder {
 	out := make([]reminders.Reminder, 0, len(mrs)+len(tasks))
 
 	for _, r := range mrs {
-		if r.Title == "" || r.InitialDate == "" {
+		if r.Title == "" || r.InitialDate == "" || (r.Inactive && !options.ImportInactiveReminders) {
 			continue
 		}
 
@@ -229,11 +255,18 @@ func mapReminders(mrs []MReminder, tasks []MTask) []reminders.Reminder {
 			continue
 		}
 
-		out = append(out, reminders.Reminder{
+		reminder := reminders.Reminder{
 			Title:   r.Title,
 			Notes:   r.Description,
 			DueDate: t,
-		})
+		}
+		if r.Inactive {
+			reminder.Completed = true
+			completedAt := t
+			reminder.CompletedAt = &completedAt
+		}
+
+		out = append(out, reminder)
 	}
 
 	// Incomplete tasks become reminders due today.

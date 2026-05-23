@@ -2,25 +2,27 @@ package monica
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 )
 
-// Export is the top-level decoded result, normalised from either format:
-//   - Monica v2/v3: {"contacts": [...]}
-//   - Monica v4:    {"account": {"data": {"contacts": [...]}}}
+// Export is the top-level decoded result from a Monica v4 export:
+//
+//	{"account": {"data": {"contacts": [...]}}}
 type Export struct {
-	Contacts []Contact `json:"contacts"`
+	Contacts              []Contact         `json:"contacts"`
+	AccountJournalEntries []MAccountJournal `json:"-"`
+}
+
+type ImportOptions struct {
+	ImportInactiveReminders     bool
+	ImportAccountJournalEntries bool
 }
 
 // ---- v4 wire types ----------------------------------------------------------
 
 type v4Root struct {
 	Account *v4Account `json:"account"`
-}
-
-// legacyRoot is the v2/v3 flat format: {"contacts": [...]}
-type legacyRoot struct {
-	Contacts []Contact `json:"contacts"`
 }
 
 type v4Account struct {
@@ -177,9 +179,7 @@ type v4JournalEntry struct {
 	} `json:"properties"`
 }
 
-// ---- v2/v3 wire types (kept for backward compat) ----------------------------
-
-// Contact is the normalised contact used by the mapper regardless of source format.
+// Contact is the normalised contact used by the mapper.
 type Contact struct {
 	ID          string         `json:"id"`
 	FirstName   string         `json:"first_name"`
@@ -243,6 +243,7 @@ type MReminder struct {
 	Description   string `json:"description"`
 	InitialDate   string `json:"initial_date"` // "YYYY-MM-DD"
 	FrequencyType string `json:"frequency_type"`
+	Inactive      bool   `json:"inactive"`
 }
 
 type Tag struct {
@@ -275,7 +276,13 @@ type MRelationship struct {
 	ToContactName string `json:"to_contact_name"` // resolved after all contacts parsed
 }
 
-// Parse decodes a Monica JSON export from r, supporting both v2/v3 and v4 formats.
+type MAccountJournal struct {
+	Title          string `json:"title"`
+	Content        string `json:"content"`
+	OccurredAtDate string `json:"occurred_at_date"`
+}
+
+// Parse decodes a Monica v4 JSON export from r.
 func Parse(r io.Reader) (*Export, error) {
 	raw, err := io.ReadAll(r)
 	if err != nil {
@@ -287,18 +294,11 @@ func Parse(r io.Reader) (*Export, error) {
 		return nil, err
 	}
 
-	// v4 format: has "account" key
-	if root.Account != nil {
-		return parseV4(root.Account)
+	if root.Account == nil {
+		return nil, fmt.Errorf("monica-import: unrecognised export format (expected Monica v4 with top-level \"account\" key)")
 	}
 
-	// v2/v3 flat format: {"contacts": [...]} with fields at top level of each contact
-	var legacy legacyRoot
-	if err := json.Unmarshal(raw, &legacy); err != nil {
-		return nil, err
-	}
-
-	return &Export{Contacts: legacy.Contacts}, nil
+	return parseV4(root.Account)
 }
 
 func parseV4(acc *v4Account) (*Export, error) {
@@ -338,14 +338,45 @@ func parseV4(acc *v4Account) (*Export, error) {
 
 	contacts := make([]Contact, 0, len(acc.Data.Contacts))
 	for _, c := range acc.Data.Contacts {
-		contacts = append(contacts, normaliseV4Contact(c, uuidToRels[c.UUID], nil))
+		contacts = append(contacts, normaliseV4Contact(c, uuidToRels[c.UUID]))
 	}
 
-	return &Export{Contacts: contacts}, nil
+	return &Export{
+		Contacts:              contacts,
+		AccountJournalEntries: normaliseV4AccountJournal(acc.Properties.JournalEntries),
+	}, nil
 }
 
-// normaliseV4Contact converts a v4 wire contact into the canonical Contact type.
-func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
+func normaliseV4AccountJournal(entries []v4JournalEntry) []MAccountJournal {
+	out := make([]MAccountJournal, 0, len(entries))
+	for _, entry := range entries {
+		p := entry.Properties
+		title := p.Title
+		if title == "" {
+			title = "Journal entry"
+		}
+
+		content := p.Post
+		if content == "" {
+			continue
+		}
+
+		occurredAt := p.Date
+		if occurredAt == "" {
+			occurredAt = dateFromISO(entry.CreatedAt)
+		}
+
+		out = append(out, MAccountJournal{
+			Title:          title,
+			Content:        content,
+			OccurredAtDate: occurredAt,
+		})
+	}
+
+	return out
+}
+
+func normaliseV4Contact(c v4Contact, rels []MRelationship) Contact {
 	p := c.Properties
 
 	info := Information{}
@@ -403,7 +434,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 	reminders := make([]MReminder, 0, len(c.Data.Reminders.Data))
 	for _, r := range c.Data.Reminders.Data {
 		rp := r.Properties
-		if rp.Title == "" || rp.InitialDate == "" || rp.Inactive {
+		if rp.Title == "" || rp.InitialDate == "" {
 			continue
 		}
 
@@ -412,6 +443,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, _ any) Contact {
 			Description:   rp.Description,
 			InitialDate:   rp.InitialDate,
 			FrequencyType: rp.FrequencyType,
+			Inactive:      rp.Inactive,
 		})
 	}
 

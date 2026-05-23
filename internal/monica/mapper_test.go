@@ -205,6 +205,38 @@ func TestMapContactReminderEmptySkipped(t *testing.T) {
 	}
 }
 
+func TestMapContactInactiveReminderOption(t *testing.T) {
+	c := Contact{
+		FirstName: "Test",
+		Reminders: []MReminder{{Title: "Paused", InitialDate: "2024-06-01", Inactive: true}},
+	}
+
+	withoutOption := MapContact(c)
+	if len(withoutOption.Reminders) != 0 {
+		t.Errorf("expected inactive reminder skipped by default, got %d", len(withoutOption.Reminders))
+	}
+
+	withOption := MapContactWithOptions(c, ImportOptions{ImportInactiveReminders: true})
+	if len(withOption.Reminders) != 1 {
+		t.Fatalf("expected inactive reminder imported, got %d", len(withOption.Reminders))
+	}
+	if !withOption.Reminders[0].Completed || withOption.Reminders[0].CompletedAt == nil {
+		t.Fatalf("expected inactive reminder imported as completed, got %+v", withOption.Reminders[0])
+	}
+}
+
+func TestMapAccountJournalEntries(t *testing.T) {
+	entries := []MAccountJournal{{Title: "Reflection", Content: "Account note", OccurredAtDate: "2024-01-02"}}
+
+	activities := MapAccountJournalEntries(entries)
+	if len(activities) != 1 {
+		t.Fatalf("expected 1 activity, got %d", len(activities))
+	}
+	if activities[0].Title != "Reflection" || activities[0].Content != "Account note" || activities[0].OccurredAtDate != "2024-01-02" {
+		t.Fatalf("unexpected account journal mapping: %+v", activities[0])
+	}
+}
+
 func TestMapContactFirstMetDate(t *testing.T) {
 	c := Contact{
 		FirstName:   "Test",
@@ -224,22 +256,33 @@ func TestMapContactFirstMetDate(t *testing.T) {
 	}
 }
 
-func TestParse(t *testing.T) {
-	json := `{"contacts":[{"id":"abc","first_name":"Alice","last_name":"Smith",` +
-		`"information":{"birthdate":"","is_year_unknown":false,"first_met_date":""},` +
-		`"addresses":[],"contactInformation":[],"notes":[],"activities":[],` +
-		`"reminders":[],"tags":[]}]}`
+func TestParseV4PreservesPromptedData(t *testing.T) {
+	json := `{
+		"account": {
+			"data": {
+				"contacts": [{
+					"uuid": "contact-1",
+					"properties": {"first_name": "Alice"},
+					"data": {
+						"reminders": {"data": [{"properties": {"title": "Paused", "initial_date": "2024-06-01", "inactive": true}}]},
+						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
+						"calls": {"data": []}, "tasks": {"data": []}, "gifts": {"data": []}, "activities": {"data": []}
+					}
+				}],
+				"relationships": []
+			},
+			"properties": {"journal_entries": [{"created_at": "2024-01-02T00:00:00Z", "properties": {"title": "Private", "post": "Account note"}}]}
+		}
+	}`
 
 	exp, err := Parse(strings.NewReader(json))
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
-
-	if len(exp.Contacts) != 1 {
-		t.Fatalf("expected 1 contact, got %d", len(exp.Contacts))
+	if len(exp.Contacts) != 1 || len(exp.Contacts[0].Reminders) != 1 || !exp.Contacts[0].Reminders[0].Inactive {
+		t.Fatalf("expected inactive reminder preserved, got %+v", exp.Contacts)
 	}
-
-	if exp.Contacts[0].FirstName != "Alice" {
-		t.Errorf("expected 'Alice', got %q", exp.Contacts[0].FirstName)
+	if len(exp.AccountJournalEntries) != 1 || exp.AccountJournalEntries[0].Title != "Private" {
+		t.Fatalf("expected account journal preserved, got %+v", exp.AccountJournalEntries)
 	}
 }

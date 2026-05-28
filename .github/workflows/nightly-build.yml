@@ -14,8 +14,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: GoReleaser
+  nightly-build:
+    name: GoReleaser-nightly
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -65,4 +65,7 @@ jobs:
           > It may contain bugs and breaking changes. Use at your own risk.
           > For stable releases, please use a versioned release.
 
-          Built from commit: $(git rev-parse --short HEAD)"
+          Built from commit: $(git rev-parse --short HEAD)" \
+            --prerelease \
+            --target $(git rev-parse HEAD) \
+            dist/*.tar.gz

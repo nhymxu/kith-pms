@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Repo struct{}
@@ -27,7 +29,7 @@ func (r *Repo) Insert(ctx context.Context, db sqlExecer, e Entry) error {
 }
 
 // List returns paginated audit entries, optionally filtered by entity type and ID.
-func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, error) {
+func (r *Repo) List(ctx context.Context, db *bun.DB, p ListParams) ([]Entry, error) {
 	pageSize := p.PageSize
 	if pageSize <= 0 {
 		pageSize = 50
@@ -99,7 +101,7 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 }
 
 // Purge deletes audit entries older than `days` days. Returns count deleted.
-func (r *Repo) Purge(ctx context.Context, db *sql.DB, days int) (int64, error) {
+func (r *Repo) Purge(ctx context.Context, db *bun.DB, days int) (int64, error) {
 	res, err := db.ExecContext(ctx,
 		`DELETE FROM audit_log WHERE created_at < datetime('now', ?)`,
 		fmt.Sprintf("-%d days", days),

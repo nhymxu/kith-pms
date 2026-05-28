@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"log/slog"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/uptrace/bun"
 	"github.com/urfave/cli/v3"
 
 	"github.com/nhymxu/kith-pms/internal/dates"
@@ -503,7 +503,7 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 // Returns true on success; logs and returns false so the caller's import loop continues.
 func saveAvatar(
 	ctx context.Context,
-	db *sql.DB,
+	db *bun.DB,
 	filesSvc *files.LocalFileService,
 	personRepo people.PersonRepo,
 	personID int64,

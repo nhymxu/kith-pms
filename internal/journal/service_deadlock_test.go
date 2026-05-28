@@ -6,17 +6,21 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 )
 
 // TestCreateNoDeadlock verifies that Create() doesn't deadlock when updateLastContactForParticipants
 // is called after the transaction commits (not inside it).
 func TestCreateNoDeadlock(t *testing.T) {
 	// Setup in-memory database
-	db, err := sql.Open("sqlite", ":memory:")
+	sqldb, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("failed to open db: %v", err)
 	}
+
+	db := bun.NewDB(sqldb, sqlitedialect.New())
 	defer db.Close()
 
 	// Create minimal schema
@@ -50,7 +54,7 @@ func TestCreateNoDeadlock(t *testing.T) {
 		INSERT INTO person (id, name, is_self) VALUES (2, 'Other Person', 0);
 	`
 
-	if _, err := db.Exec(schema); err != nil {
+	if _, err := sqldb.Exec(schema); err != nil {
 		t.Fatalf("failed to create schema: %v", err)
 	}
 
@@ -105,7 +109,7 @@ func TestCreateNoDeadlock(t *testing.T) {
 	// Verify the activity was created
 	var count int
 
-	err = db.QueryRow("SELECT COUNT(*) FROM activity WHERE id = ?", id).Scan(&count)
+	err = sqldb.QueryRow("SELECT COUNT(*) FROM activity WHERE id = ?", id).Scan(&count)
 	if err != nil {
 		t.Fatalf("failed to query activity: %v", err)
 	}
@@ -115,7 +119,7 @@ func TestCreateNoDeadlock(t *testing.T) {
 	}
 
 	// Verify person links were created
-	err = db.QueryRow("SELECT COUNT(*) FROM activity_person WHERE activity_id = ?", id).Scan(&count)
+	err = sqldb.QueryRow("SELECT COUNT(*) FROM activity_person WHERE activity_id = ?", id).Scan(&count)
 	if err != nil {
 		t.Fatalf("failed to query activity_person: %v", err)
 	}
@@ -129,7 +133,7 @@ func TestCreateNoDeadlock(t *testing.T) {
 
 // mockPeopleService implements PeopleServiceInterface for testing
 type mockPeopleService struct {
-	db *sql.DB
+	db *bun.DB
 }
 
 func (m *mockPeopleService) GetSelf(ctx context.Context) (*PersonAdapter, error) {

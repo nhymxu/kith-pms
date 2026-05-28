@@ -5,17 +5,19 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Repo struct {
-	db *sql.DB
+	db *bun.DB
 }
 
-func NewRepo(db *sql.DB) *Repo {
+func NewRepo(db *bun.DB) *Repo {
 	return &Repo{db: db}
 }
 
-func (r *Repo) Create(ctx context.Context, tx *sql.Tx, g *Gift) (int64, error) {
+func (r *Repo) Create(ctx context.Context, tx bun.Tx, g *Gift) (int64, error) {
 	var dateVal *string
 	if g.Date != "" {
 		dateVal = &g.Date
@@ -210,7 +212,7 @@ func (r *Repo) Count(ctx context.Context, params ListParams) (int, error) {
 	return total, nil
 }
 
-func (r *Repo) Update(ctx context.Context, tx *sql.Tx, g *Gift) error {
+func (r *Repo) Update(ctx context.Context, tx bun.Tx, g *Gift) error {
 	var dateVal *string
 	if g.Date != "" {
 		dateVal = &g.Date
@@ -231,7 +233,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, g *Gift) error {
 	return nil
 }
 
-func (r *Repo) UpdateImage(ctx context.Context, tx *sql.Tx, id int64, imagePath, imageMimeType string) error {
+func (r *Repo) UpdateImage(ctx context.Context, tx bun.Tx, id int64, imagePath, imageMimeType string) error {
 	_, err := tx.ExecContext(ctx, `
 		UPDATE gift SET image_path=?, image_mime_type=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
 		WHERE id=?`, imagePath, imageMimeType, id)
@@ -242,7 +244,7 @@ func (r *Repo) UpdateImage(ctx context.Context, tx *sql.Tx, id int64, imagePath,
 	return nil
 }
 
-func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) error {
+func (r *Repo) Delete(ctx context.Context, tx bun.Tx, id int64) error {
 	_, err := tx.ExecContext(ctx, `DELETE FROM gift WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("delete gift: %w", err)

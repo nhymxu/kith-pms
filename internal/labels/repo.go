@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type LabelRepo interface {
@@ -27,9 +29,9 @@ type PersonLabelRepo interface {
 
 // ---- sqlLabelRepo -----------------------------------------------------------
 
-type sqlLabelRepo struct{ db *sql.DB }
+type sqlLabelRepo struct{ db *bun.DB }
 
-func NewLabelRepo(db *sql.DB) LabelRepo { return &sqlLabelRepo{db: db} }
+func NewLabelRepo(db *bun.DB) LabelRepo { return &sqlLabelRepo{db: db} }
 
 func (r *sqlLabelRepo) Create(ctx context.Context, name, color string) (int64, error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
@@ -180,9 +182,9 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 
 // ---- sqlPersonLabelRepo -----------------------------------------------------
 
-type sqlPersonLabelRepo struct{ db *sql.DB }
+type sqlPersonLabelRepo struct{ db *bun.DB }
 
-func NewPersonLabelRepo(db *sql.DB) PersonLabelRepo { return &sqlPersonLabelRepo{db: db} }
+func NewPersonLabelRepo(db *bun.DB) PersonLabelRepo { return &sqlPersonLabelRepo{db: db} }
 
 func (r *sqlPersonLabelRepo) Attach(ctx context.Context, personID, labelID int64) error {
 	_, err := r.db.ExecContext(ctx,

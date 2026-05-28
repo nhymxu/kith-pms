@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 )
 
 func TestParseFlexible(t *testing.T) {
@@ -82,20 +84,22 @@ func TestImportantDate_MonthDay(t *testing.T) {
 	}
 }
 
-func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite", ":memory:")
+func setupTestDB(t *testing.T) *bun.DB {
+	sqldb, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
 
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
 	// Enable foreign keys (required for CASCADE)
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	_, err = sqldb.Exec("PRAGMA foreign_keys = ON")
 	if err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	// Create person table (minimal)
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL,
@@ -107,7 +111,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	}
 
 	// Create important_date table
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE important_date (
 			id INTEGER PRIMARY KEY,
 			person_id INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,

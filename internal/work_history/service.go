@@ -2,21 +2,22 @@ package work_history
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
 // Service provides business logic for work history operations.
 type Service struct {
-	db    *sql.DB
+	db    *bun.DB
 	repo  WorkHistoryRepo
 	Audit *audit.Service // optional; nil = no audit logging
 }
 
 // NewService creates a new Service backed by the given database.
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{
 		db:   db,
 		repo: NewRepo(db),

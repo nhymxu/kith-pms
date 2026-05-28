@@ -67,7 +67,8 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 |------------------|---------------------------------------------|--------------------------------------------------------------------------|
 | Language         | Go 1.26.2, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
 | HTTP             | Echo v5.1.1                                 | Lightweight HTTP framework, minimal magic                                |
-| Database         | SQLite (modernc.org/sqlite v1.50.0)         | Pure Go, no CGO, single-file database, WAL mode                          |
+| Database         | SQLite (modernc.org/sqlite v1.50.1)         | Pure Go, no CGO, single-file database, WAL mode                          |
+| ORM              | uptrace/bun v1.2.18                         | Lightweight query builder; raw SQL queries retained; no model layer      |
 | Frontend         | React 19, TanStack Router v1                | CSR SPA with file-based routing; full client-side interactivity          |
 | Data Fetching    | TanStack Query v5                           | Cache-first data fetching, stale-while-revalidate, per-component refresh |
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |

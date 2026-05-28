@@ -2,22 +2,23 @@ package work_history
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type WorkHistoryRepo interface {
 	ListByPerson(ctx context.Context, personID int64) ([]WorkEntry, error)
-	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, entries []WorkEntry) error
+	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, entries []WorkEntry) error
 }
 
 type sqlRepo struct {
-	db *sql.DB
+	db *bun.DB
 }
 
 // NewRepo creates a new SQL-backed WorkHistoryRepo.
-func NewRepo(db *sql.DB) WorkHistoryRepo {
+func NewRepo(db *bun.DB) WorkHistoryRepo {
 	return &sqlRepo{db: db}
 }
 
@@ -70,7 +71,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]WorkEntry
 	return entries, nil
 }
 
-func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, entries []WorkEntry) error {
+func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, entries []WorkEntry) error {
 	// Delete existing entries for this person.
 	_, err := tx.ExecContext(ctx, "DELETE FROM work_history WHERE person_id = ?", personID)
 	if err != nil {

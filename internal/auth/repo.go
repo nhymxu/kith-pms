@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type UserRepo interface {
@@ -23,10 +25,10 @@ type SessionRepo interface {
 	CountActiveSessions(ctx context.Context) (int64, error)
 }
 
-// sqlUserRepo implements UserRepo using raw *sql.DB queries.
-type sqlUserRepo struct{ db *sql.DB }
+// sqlUserRepo implements UserRepo using raw *bun.DB queries.
+type sqlUserRepo struct{ db *bun.DB }
 
-func NewUserRepo(db *sql.DB) UserRepo { return &sqlUserRepo{db: db} }
+func NewUserRepo(db *bun.DB) UserRepo { return &sqlUserRepo{db: db} }
 
 func (r *sqlUserRepo) GetUser(ctx context.Context) (*User, error) {
 	row := r.db.QueryRowContext(ctx,
@@ -54,10 +56,10 @@ func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
 	return nil
 }
 
-// sqlSessionRepo implements SessionRepo using raw *sql.DB queries.
-type sqlSessionRepo struct{ db *sql.DB }
+// sqlSessionRepo implements SessionRepo using raw *bun.DB queries.
+type sqlSessionRepo struct{ db *bun.DB }
 
-func NewSessionRepo(db *sql.DB) SessionRepo { return &sqlSessionRepo{db: db} }
+func NewSessionRepo(db *bun.DB) SessionRepo { return &sqlSessionRepo{db: db} }
 
 func (r *sqlSessionRepo) CreateSession(ctx context.Context, s Session) error {
 	_, err := r.db.ExecContext(ctx,

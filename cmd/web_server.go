@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
+	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/urfave/cli/v3"
 
 	"github.com/nhymxu/kith-pms/internal/api"
@@ -74,6 +75,10 @@ Can scale later.`,
 				return fmt.Errorf("api: open db: %w", err)
 			}
 			defer func() { _ = db.Close() }()
+
+			if config.ENV.Debug {
+				db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+			}
 
 			if config.ENV.DBAutoMigrate {
 				if err := internaldb.Up(db); err != nil {

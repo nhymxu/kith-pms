@@ -2,10 +2,11 @@ package people
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"mime/multipart"
 	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/labels"
@@ -22,7 +23,7 @@ type ListParams struct {
 }
 
 type Service struct {
-	DB          *sql.DB
+	DB          *bun.DB
 	People      PersonRepo
 	Contacts    ContactRepo
 	Locations   LocationRepo
@@ -40,7 +41,7 @@ type FileService interface {
 	DeleteAvatar(personID int64, path string) error
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{
 		DB:        db,
 		People:    NewPersonRepo(db),

@@ -2,10 +2,11 @@ package journal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
@@ -25,7 +26,7 @@ type ListParams struct {
 
 // Service provides business logic for managing journal activities.
 type Service struct {
-	DB         *sql.DB
+	DB         *bun.DB
 	Activities ActivityRepo
 	Links      ActivityPersonRepo
 	Audit      *audit.Service // optional; nil = no audit logging
@@ -46,7 +47,7 @@ type PersonAdapter struct {
 }
 
 // NewService constructs a Service wired to db.
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{
 		DB:         db,
 		Activities: NewActivityRepo(db),

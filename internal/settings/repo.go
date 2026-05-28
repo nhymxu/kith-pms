@@ -2,8 +2,9 @@ package settings
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"github.com/uptrace/bun"
 )
 
 type Repo interface {
@@ -11,9 +12,9 @@ type Repo interface {
 	Set(ctx context.Context, key, value, updatedAt string) error
 }
 
-type sqlRepo struct{ db *sql.DB }
+type sqlRepo struct{ db *bun.DB }
 
-func NewRepo(db *sql.DB) Repo { return &sqlRepo{db: db} }
+func NewRepo(db *bun.DB) Repo { return &sqlRepo{db: db} }
 
 func (r *sqlRepo) GetAll(ctx context.Context) (map[string]string, error) {
 	rows, err := r.db.QueryContext(ctx, `SELECT key, value FROM user_setting`)

@@ -2,26 +2,21 @@ package journal_test
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/journal"
 )
 
 // openTestDB opens an in-memory SQLite database and runs all migrations.
-func openTestDB(t *testing.T) *sql.DB {
+func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
-	}
-	// Enable foreign keys for cascade behaviour.
-	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
-		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	if err := internaldb.Up(db); err != nil {
@@ -39,7 +34,7 @@ func newSvc(t *testing.T) *journal.Service {
 }
 
 // insertPerson inserts a bare person row and returns its ID.
-func insertPerson(t *testing.T, db *sql.DB, name string) int64 {
+func insertPerson(t *testing.T, db *bun.DB, name string) int64 {
 	t.Helper()
 
 	res, err := db.Exec(`INSERT INTO person (name) VALUES (?)`, name)
@@ -53,7 +48,7 @@ func insertPerson(t *testing.T, db *sql.DB, name string) int64 {
 }
 
 // insertLabel inserts a label row and returns its ID.
-func insertLabel(t *testing.T, db *sql.DB, name string) int64 {
+func insertLabel(t *testing.T, db *bun.DB, name string) int64 {
 	t.Helper()
 
 	res, err := db.Exec(`INSERT INTO label (name, color) VALUES (?, '#aabbcc')`, name)
@@ -67,7 +62,7 @@ func insertLabel(t *testing.T, db *sql.DB, name string) int64 {
 }
 
 // attachLabel links a label to a person.
-func attachLabel(t *testing.T, db *sql.DB, personID, labelID int64) {
+func attachLabel(t *testing.T, db *bun.DB, personID, labelID int64) {
 	t.Helper()
 
 	if _, err := db.Exec(

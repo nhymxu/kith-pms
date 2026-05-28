@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"os"
 
+	// sqliteshim is registered by internal/db/sqlite.go; import here ensures the
+	// driver is present when backup runs as a standalone subcommand.
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/urfave/cli/v3"
-	_ "modernc.org/sqlite"
 
 	"github.com/nhymxu/kith-pms/pkg/config"
 )

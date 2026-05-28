@@ -5,26 +5,30 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
+func setupTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	sqldb, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
 
-	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
+	if _, err := sqldb.Exec("PRAGMA foreign_keys = ON"); err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
 
-	if _, err := db.Exec(`CREATE TABLE person (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`); err != nil {
+	if _, err := sqldb.Exec(`CREATE TABLE person (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`); err != nil {
 		t.Fatalf("create person table: %v", err)
 	}
 
-	if _, err := db.Exec(`
+	if _, err := sqldb.Exec(`
 		CREATE TABLE gift (
 			id              INTEGER PRIMARY KEY,
 			person_id       INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,
@@ -49,7 +53,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func insertPerson(t *testing.T, db *sql.DB, name string) int64 {
+func insertPerson(t *testing.T, db *bun.DB, name string) int64 {
 	t.Helper()
 
 	res, err := db.ExecContext(context.Background(), "INSERT INTO person (name) VALUES (?)", name)

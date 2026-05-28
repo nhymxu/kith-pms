@@ -5,20 +5,22 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type ImportantDateRepo interface {
 	ListByPerson(ctx context.Context, personID int64) ([]ImportantDate, error)
-	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, dates []ImportantDate) error
+	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dates []ImportantDate) error
 	OnThisDay(ctx context.Context, monthDay, todayISO string) ([]OnThisDayItem, error)
 	ListAll(ctx context.Context) ([]OnThisDayItem, error)
 }
 
 type sqlRepo struct {
-	db *sql.DB
+	db *bun.DB
 }
 
-func NewRepo(db *sql.DB) ImportantDateRepo {
+func NewRepo(db *bun.DB) ImportantDateRepo {
 	return &sqlRepo{db: db}
 }
 
@@ -72,7 +74,7 @@ func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]Important
 	return dates, nil
 }
 
-func (r *sqlRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, dates []ImportantDate) error {
+func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dates []ImportantDate) error {
 	// Delete existing
 	_, err := tx.ExecContext(ctx, "DELETE FROM important_date WHERE person_id = ?", personID)
 	if err != nil {

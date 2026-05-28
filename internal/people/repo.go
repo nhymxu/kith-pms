@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type PersonRepo interface {
@@ -14,40 +16,40 @@ type PersonRepo interface {
 	Count(ctx context.Context, q string, labelIDs []int64) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
-	Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error)
-	Update(ctx context.Context, tx *sql.Tx, p Person) error
+	Create(ctx context.Context, tx bun.Tx, p Person) (int64, error)
+	Update(ctx context.Context, tx bun.Tx, p Person) error
 	Delete(ctx context.Context, id int64) error
-	SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error
-	ClearSelf(ctx context.Context, tx *sql.Tx) error
+	SetSelf(ctx context.Context, tx bun.Tx, personID int64) error
+	ClearSelf(ctx context.Context, tx bun.Tx) error
 	UpdateAvatar(
 		ctx context.Context,
-		tx *sql.Tx,
+		tx bun.Tx,
 		personID int64,
 		path, mimeType string,
 		size int64,
 		uploadedAt time.Time,
 	) error
-	ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error
-	UpdateLastContact(ctx context.Context, tx *sql.Tx, personID int64, contactTime time.Time) error
+	ClearAvatar(ctx context.Context, tx bun.Tx, personID int64) error
+	UpdateLastContact(ctx context.Context, tx bun.Tx, personID int64, contactTime time.Time) error
 }
 
 type ContactRepo interface {
 	// ReplaceAll deletes all contacts for personID and inserts the new slice.
-	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, contacts []ContactInfo) error
+	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, contacts []ContactInfo) error
 	ListByPerson(ctx context.Context, personID int64) ([]ContactInfo, error)
 }
 
 type LocationRepo interface {
 	// ReplaceAll deletes all locations for personID and inserts the new slice.
-	ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, locations []Location) error
+	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, locations []Location) error
 	ListByPerson(ctx context.Context, personID int64) ([]Location, error)
 }
 
 // ---- sqlPersonRepo ----------------------------------------------------------
 
-type sqlPersonRepo struct{ db *sql.DB }
+type sqlPersonRepo struct{ db *bun.DB }
 
-func NewPersonRepo(db *sql.DB) PersonRepo { return &sqlPersonRepo{db: db} }
+func NewPersonRepo(db *bun.DB) PersonRepo { return &sqlPersonRepo{db: db} }
 
 func (r *sqlPersonRepo) List(
 	ctx context.Context,
@@ -212,7 +214,7 @@ func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
 	return &p, nil
 }
 
-func (r *sqlPersonRepo) Create(ctx context.Context, tx *sql.Tx, p Person) (int64, error) {
+func (r *sqlPersonRepo) Create(ctx context.Context, tx bun.Tx, p Person) (int64, error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	dob := formatNullableDate(p.DateOfBirth)
 
@@ -244,7 +246,7 @@ func (r *sqlPersonRepo) Create(ctx context.Context, tx *sql.Tx, p Person) (int64
 	return id, nil
 }
 
-func (r *sqlPersonRepo) Update(ctx context.Context, tx *sql.Tx, p Person) error {
+func (r *sqlPersonRepo) Update(ctx context.Context, tx bun.Tx, p Person) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	dob := formatNullableDate(p.DateOfBirth)
 
@@ -270,7 +272,7 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx *sql.Tx, personID int64) error {
+func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx bun.Tx, personID int64) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	res, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 1, updated_at = ? WHERE id = ?`, now, personID)
@@ -290,7 +292,7 @@ func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx *sql.Tx, personID int64)
 	return nil
 }
 
-func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx *sql.Tx) error {
+func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx bun.Tx) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	_, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 0, updated_at = ? WHERE is_self = 1`, now)
@@ -303,7 +305,7 @@ func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx *sql.Tx) error {
 
 func (r *sqlPersonRepo) UpdateAvatar(
 	ctx context.Context,
-	tx *sql.Tx,
+	tx bun.Tx,
 	personID int64,
 	path, mimeType string,
 	size int64,
@@ -325,7 +327,7 @@ func (r *sqlPersonRepo) UpdateAvatar(
 	return nil
 }
 
-func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx *sql.Tx, personID int64) error {
+func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx bun.Tx, personID int64) error {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	_, err := tx.ExecContext(ctx,
@@ -343,7 +345,7 @@ func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx *sql.Tx, personID in
 
 func (r *sqlPersonRepo) UpdateLastContact(
 	ctx context.Context,
-	tx *sql.Tx,
+	tx bun.Tx,
 	personID int64,
 	contactTime time.Time,
 ) error {
@@ -363,11 +365,11 @@ func (r *sqlPersonRepo) UpdateLastContact(
 
 // ---- sqlContactRepo ---------------------------------------------------------
 
-type sqlContactRepo struct{ db *sql.DB }
+type sqlContactRepo struct{ db *bun.DB }
 
-func NewContactRepo(db *sql.DB) ContactRepo { return &sqlContactRepo{db: db} }
+func NewContactRepo(db *bun.DB) ContactRepo { return &sqlContactRepo{db: db} }
 
-func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, contacts []ContactInfo) error {
+func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, contacts []ContactInfo) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM contact_info WHERE person_id = ?`, personID); err != nil {
 		return fmt.Errorf("people: delete contacts: %w", err)
 	}
@@ -412,11 +414,11 @@ func (r *sqlContactRepo) ListByPerson(ctx context.Context, personID int64) ([]Co
 
 // ---- sqlLocationRepo --------------------------------------------------------
 
-type sqlLocationRepo struct{ db *sql.DB }
+type sqlLocationRepo struct{ db *bun.DB }
 
-func NewLocationRepo(db *sql.DB) LocationRepo { return &sqlLocationRepo{db: db} }
+func NewLocationRepo(db *bun.DB) LocationRepo { return &sqlLocationRepo{db: db} }
 
-func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, personID int64, locations []Location) error {
+func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, locations []Location) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM location WHERE person_id = ?`, personID); err != nil {
 		return fmt.Errorf("people: delete locations: %w", err)
 	}

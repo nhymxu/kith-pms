@@ -2,7 +2,6 @@ package handler_test
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,7 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
@@ -26,7 +25,7 @@ const testAPIToken = "test-api-token-12345"
 const testSecret = "test-secret-key-32-bytes-long!00"
 
 // openTestDB opens an in-memory SQLite database with all migrations applied.
-func openTestDB(t *testing.T) *sql.DB {
+func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
 	db, err := internaldb.Open(":memory:")
@@ -44,7 +43,7 @@ func openTestDB(t *testing.T) *sql.DB {
 }
 
 // newTestAuthSvc creates an auth.Service backed by db. If password is non-empty, seeds a user.
-func newTestAuthSvc(t *testing.T, db *sql.DB, password string) *auth.Service {
+func newTestAuthSvc(t *testing.T, db *bun.DB, password string) *auth.Service {
 	t.Helper()
 
 	svc := &auth.Service{
@@ -147,31 +146,31 @@ func execHandlerWithUser(
 
 // ---- service factories ------------------------------------------------------
 
-func newPeopleService(db *sql.DB) *people.Service {
+func newPeopleService(db *bun.DB) *people.Service {
 	svc := people.NewService(db)
 	svc.Audit = audit.NewService(db)
 
 	return svc
 }
 
-func newLabelsService(db *sql.DB) *labels.Service {
+func newLabelsService(db *bun.DB) *labels.Service {
 	return labels.NewService(db)
 }
 
-func newRelationshipsService(db *sql.DB) *relationships.Service {
+func newRelationshipsService(db *bun.DB) *relationships.Service {
 	return relationships.NewService(db)
 }
 
-func newJournalService(db *sql.DB) *journal.Service {
+func newJournalService(db *bun.DB) *journal.Service {
 	return journal.NewService(db)
 }
 
-func newGiftsService(db *sql.DB) *gifts.Service {
+func newGiftsService(db *bun.DB) *gifts.Service {
 	return gifts.NewService(db)
 }
 
 // insertTestPerson inserts a person row and returns its ID.
-func insertTestPerson(t *testing.T, db *sql.DB, name string) int64 {
+func insertTestPerson(t *testing.T, db *bun.DB, name string) int64 {
 	t.Helper()
 
 	res, err := db.ExecContext(context.Background(), `INSERT INTO person (name) VALUES (?)`, name)

@@ -15,12 +15,15 @@
 - Test files: `<name>_test.go` alongside the source file
 - React components: `kebab-case.tsx` or `PascalCase.tsx` (e.g., `topbar.tsx`, `AppShell.tsx`, `dashboard-card.tsx`)
 
-### Database & SQL
-- Use raw `database/sql` (no ORM)
-- Parameterized queries only: `db.QueryRow("SELECT ... WHERE id = ?", id)` (no string concat)
-- Migration files: `0NNN_description.sql` in `internal/db/migrations/`
-- Load migrations programmatically in `internal/db/migrations.go`
-- Transactions: Use `sql.Tx` for multi-statement operations; always defer rollback
+### Database & ORM Usage
+- **ORM**: uptrace/bun (query builder + struct scanning only)
+- **Raw SQL Retained**: All queries are raw SQL strings; bun used only for execution and struct scanning (KISS principle)
+- **No ORM Models**: Intentionally skipped bun model layer; no intermediate struct mapping overhead
+- **Parameterized Queries**: Always use `?` placeholders: `db.NewRaw("SELECT ... WHERE id = ?", id).Scan(ctx, &result)` (never string concat)
+- **Transaction Pattern**: Repo methods accept `bun.IDB` interface (satisfied by `*bun.DB` or `bun.Tx`) for unified transaction handling
+- **FTS5 Queries**: Journal full-text search uses `db.NewRaw()` with direct SQL since bun has no virtual table abstraction
+- **Migration Files**: `0NNN_description.sql` in `internal/db/migrations/`; load programmatically in `internal/db/migrations.go`
+- **Transactions**: Begin with `db.BeginTx(ctx, nil)`, always defer rollback, execute statements, commit when done
 
 ### Struct Organization (Domain Models)
 ```go

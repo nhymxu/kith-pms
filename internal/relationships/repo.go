@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 // ---- RelationshipTypeRepo ---------------------------------------------------
@@ -21,9 +23,9 @@ type RelationshipTypeRepo interface {
 	ListWithCounts(ctx context.Context) ([]RelationshipType, error)
 }
 
-type sqlRelationshipTypeRepo struct{ db *sql.DB }
+type sqlRelationshipTypeRepo struct{ db *bun.DB }
 
-func NewSQLRelationshipTypeRepo(db *sql.DB) RelationshipTypeRepo {
+func NewSQLRelationshipTypeRepo(db *bun.DB) RelationshipTypeRepo {
 	return &sqlRelationshipTypeRepo{db: db}
 }
 
@@ -164,7 +166,7 @@ type querier interface {
 
 type sqlPersonRelationshipRepo struct{ db querier }
 
-func NewSQLPersonRelationshipRepo(db *sql.DB) PersonRelationshipRepo {
+func NewSQLPersonRelationshipRepo(db *bun.DB) PersonRelationshipRepo {
 	return &sqlPersonRelationshipRepo{db: db}
 }
 

@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"database/sql"
 	"runtime/debug"
 	"strconv"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/uptrace/bun"
 )
 
 // SessionCounter is satisfied by auth.SessionRepo — avoids import cycle.
@@ -43,7 +43,7 @@ func init() {
 }
 
 // RegisterAppCollectors registers DB-size and active-session gauges.
-func RegisterAppCollectors(db *sql.DB, sessions SessionCounter) {
+func RegisterAppCollectors(db *bun.DB, sessions SessionCounter) {
 	Registry.MustRegister(
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Name: "kith_db_size_bytes",

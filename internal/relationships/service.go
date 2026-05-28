@@ -2,9 +2,10 @@ package relationships
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
@@ -24,11 +25,11 @@ type Service struct {
 	Types         RelationshipTypeRepo
 	Relationships PersonRelationshipRepo
 	Audit         *audit.Service
-	db            *sql.DB // needed for transactions
+	db            *bun.DB // needed for transactions
 }
 
 // NewService constructs a Service wired to db.
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{
 		Types:         NewSQLRelationshipTypeRepo(db),
 		Relationships: NewSQLPersonRelationshipRepo(db),

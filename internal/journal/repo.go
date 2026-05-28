@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type ActivityRepo interface {
-	Create(ctx context.Context, tx *sql.Tx, a Activity) (int64, error)
-	Update(ctx context.Context, tx *sql.Tx, a Activity) error
+	Create(ctx context.Context, tx bun.Tx, a Activity) (int64, error)
+	Update(ctx context.Context, tx bun.Tx, a Activity) error
 	Get(ctx context.Context, id int64) (*Activity, error)
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context, params ListParams) ([]Activity, error)
@@ -19,17 +21,17 @@ type ActivityRepo interface {
 }
 
 type ActivityPersonRepo interface {
-	ReplaceAll(ctx context.Context, tx *sql.Tx, activityID int64, personIDs []int64) error
+	ReplaceAll(ctx context.Context, tx bun.Tx, activityID int64, personIDs []int64) error
 	ListByActivity(ctx context.Context, activityID int64) ([]ActivityPerson, error)
 }
 
 // ---- sqlActivityRepo --------------------------------------------------------
 
-type sqlActivityRepo struct{ db *sql.DB }
+type sqlActivityRepo struct{ db *bun.DB }
 
-func NewActivityRepo(db *sql.DB) ActivityRepo { return &sqlActivityRepo{db: db} }
+func NewActivityRepo(db *bun.DB) ActivityRepo { return &sqlActivityRepo{db: db} }
 
-func (r *sqlActivityRepo) Create(ctx context.Context, tx *sql.Tx, a Activity) (int64, error) {
+func (r *sqlActivityRepo) Create(ctx context.Context, tx bun.Tx, a Activity) (int64, error) {
 	const q = `
 		INSERT INTO activity (title, occurred_at_date, occurred_at_time, content)
 		VALUES (?, ?, ?, ?)`
@@ -52,7 +54,7 @@ func (r *sqlActivityRepo) Create(ctx context.Context, tx *sql.Tx, a Activity) (i
 	return id, nil
 }
 
-func (r *sqlActivityRepo) Update(ctx context.Context, tx *sql.Tx, a Activity) error {
+func (r *sqlActivityRepo) Update(ctx context.Context, tx bun.Tx, a Activity) error {
 	const q = `
 		UPDATE activity
 		SET title = ?, occurred_at_date = ?, occurred_at_time = ?,
@@ -369,14 +371,14 @@ func parseTime(s string) time.Time {
 
 // ---- sqlActivityPersonRepo --------------------------------------------------
 
-type sqlActivityPersonRepo struct{ db *sql.DB }
+type sqlActivityPersonRepo struct{ db *bun.DB }
 
-func NewActivityPersonRepo(db *sql.DB) ActivityPersonRepo {
+func NewActivityPersonRepo(db *bun.DB) ActivityPersonRepo {
 	return &sqlActivityPersonRepo{db: db}
 }
 
 // ReplaceAll deletes all person links for the activity and inserts new ones.
-func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx *sql.Tx, activityID int64, personIDs []int64) error {
+func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx bun.Tx, activityID int64, personIDs []int64) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM activity_person WHERE activity_id = ?`, activityID); err != nil {
 		return fmt.Errorf("journal: delete activity_person: %w", err)
 	}

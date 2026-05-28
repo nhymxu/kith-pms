@@ -2,17 +2,18 @@ package reminders
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Repo struct {
-	db *sql.DB
+	db *bun.DB
 }
 
-func NewRepo(db *sql.DB) *Repo {
+func NewRepo(db *bun.DB) *Repo {
 	return &Repo{db: db}
 }
 
@@ -44,7 +45,7 @@ func unmarshalRecurrenceRule(s *string) *RecurrenceRule {
 	return &rule
 }
 
-func (r *Repo) Create(ctx context.Context, tx *sql.Tx, rem *Reminder) (int64, error) {
+func (r *Repo) Create(ctx context.Context, tx bun.Tx, rem *Reminder) (int64, error) {
 	query := `
 		INSERT INTO reminder (
 			title, notes, due_date,
@@ -141,7 +142,7 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Reminder, error) {
 	return &rem, nil
 }
 
-func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
+func (r *Repo) Update(ctx context.Context, tx bun.Tx, rem *Reminder) error {
 	query := `
 		UPDATE reminder
 		SET title = ?, notes = ?, due_date = ?, person_id = ?, important_date_id = ?,
@@ -185,7 +186,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, rem *Reminder) error {
 	return nil
 }
 
-func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) error {
+func (r *Repo) Delete(ctx context.Context, tx bun.Tx, id int64) error {
 	query := `DELETE FROM reminder WHERE id = ?`
 
 	_, err := tx.ExecContext(ctx, query, id)
@@ -404,7 +405,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	return results, rows.Err()
 }
 
-func (r *Repo) MarkComplete(ctx context.Context, tx *sql.Tx, id int64, completedAt time.Time) error {
+func (r *Repo) MarkComplete(ctx context.Context, tx bun.Tx, id int64, completedAt time.Time) error {
 	query := `
 		UPDATE reminder
 		SET completed = 1, completed_at = ?, updated_at = ?

@@ -9,14 +9,6 @@ list: ## list Makefile targets
 	@echo "Available commands: \n"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: tools
-tools: ## Install pinned dev tools (sqlc)
-	bash scripts/install-tools.sh
-
-.PHONY: sqlc
-sqlc: ## Generate sqlc query code
-	sqlc generate -f internal/db/sqlc.yaml
-
 .PHONY: web
 web: ## Build the React SPA and copy output into internal/api/spa/public
 	cd web && pnpm install --frozen-lockfile && pnpm build
@@ -26,7 +18,7 @@ web: ## Build the React SPA and copy output into internal/api/spa/public
 	cp -R web/dist/. internal/api/spa/public
 
 .PHONY: assets
-assets: sqlc web ## Regenerate all generated assets (sqlc + SPA build)
+assets: web ## Regenerate all generated assets (SPA build)
 
 .PHONY: build
 build: web ## Build the binary (CGO_ENABLED=0); runs pnpm build first

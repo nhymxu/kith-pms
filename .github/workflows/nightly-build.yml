@@ -67,5 +67,5 @@ jobs:
 
           Built from commit: $(git rev-parse --short HEAD)" \
             --prerelease \
-            --target $(git rev-parse HEAD) \
+            --target "$(git rev-parse HEAD)" \
             dist/*.tar.gz

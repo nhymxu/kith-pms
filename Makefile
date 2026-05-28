@@ -112,7 +112,7 @@ check-duplicate-code: ## Identify duplicate code
 .PHONY: vuln-check
 vuln-check: ## Scan source code for vulnerabilities
 	go install golang.org/x/vuln/cmd/govulncheck@latest
-	govulncheck
+	govulncheck ./...
 
 .PHONY: vuln-check-bin
 vuln-check-bin: ## Scan binary for vulnerabilities

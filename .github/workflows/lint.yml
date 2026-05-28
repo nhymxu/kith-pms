@@ -1,4 +1,4 @@
-name: CI
+name: Lint + test
 
 on:
   push:
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  go-ci:
+  go-lint:
     name: Go lint + test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -37,7 +37,7 @@ jobs:
       - name: Vulnerability check
         run: make vuln-check
 
-  web-ci:
+  web-lint:
     name: Web lint + build
     runs-on: ubuntu-latest
     timeout-minutes: 10

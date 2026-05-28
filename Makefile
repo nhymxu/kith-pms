@@ -63,7 +63,7 @@ fmt: ## Run go fmt against code
 
 .PHONY: tests
 tests: ## Run all tests
-	go test -race -v -tags integration $(GO_TEST_FLAGS)
+	go test -race -v -tags integration $(GO_TEST_FLAGS) ./...
 
 .PHONY: test-coverage
 test-coverage:

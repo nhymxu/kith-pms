@@ -16,12 +16,12 @@
 - React components: `kebab-case.tsx` or `PascalCase.tsx` (e.g., `topbar.tsx`, `AppShell.tsx`, `dashboard-card.tsx`)
 
 ### Database & ORM Usage
-- **ORM**: uptrace/bun (query builder + struct scanning only)
-- **Raw SQL Retained**: All queries are raw SQL strings; bun used only for execution and struct scanning (KISS principle)
-- **No ORM Models**: Intentionally skipped bun model layer; no intermediate struct mapping overhead
-- **Parameterized Queries**: Always use `?` placeholders: `db.NewRaw("SELECT ... WHERE id = ?", id).Scan(ctx, &result)` (never string concat)
-- **Transaction Pattern**: Repo methods accept `bun.IDB` interface (satisfied by `*bun.DB` or `bun.Tx`) for unified transaction handling
-- **FTS5 Queries**: Journal full-text search uses `db.NewRaw()` with direct SQL since bun has no virtual table abstraction
+- **ORM**: uptrace/bun (query builder + model mapping)
+- **ORM Models**: Domain structs embed `bun.BaseModel` with `bun:"table:..."` tags; bun handles column mapping, time serialization, and struct scanning automatically
+- **Query Builder**: Use `db.NewSelect()`, `db.NewInsert()`, `db.NewUpdate()`, `db.NewDelete()` throughout repos; raw SQL fragments allowed in `Where()`/`Join()`/`OrderExpr()` for FTS5, INTERSECT, and SQLite-specific functions
+- **FTS5 Queries**: Journal full-text search uses bun `Where("activity_fts MATCH ?", ...)` + `Join("JOIN activity_fts ...")` — raw SQL fragments inside the query builder, not `db.NewRaw()`
+- **Parameterized Queries**: Always use `?` placeholders — bun enforces this via its API; use `bun.List(slice)` for IN clauses
+- **Transaction Pattern**: Write methods accept `bun.IDB` (satisfied by `*bun.DB` or `bun.Tx`) for unified transaction handling
 - **Migration Files**: `0NNN_description.sql` in `internal/db/migrations/`; load programmatically in `internal/db/migrations.go`
 - **Transactions**: Begin with `db.BeginTx(ctx, nil)`, always defer rollback, execute statements, commit when done
 
@@ -102,8 +102,8 @@ if err != nil {
 }
 defer tx.Rollback() // Safe to call after Commit
 
-// Execute statements
-_, err = tx.ExecContext(ctx, "UPDATE ...", args...)
+// Execute via bun query builder on tx (satisfies bun.IDB)
+_, err = tx.NewUpdate().Model(&person).WherePK().Column("name", "updated_at").Exec(ctx)
 if err != nil {
     return fmt.Errorf("update failed: %w", err)
 }

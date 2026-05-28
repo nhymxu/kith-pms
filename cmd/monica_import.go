@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/urfave/cli/v3"
@@ -537,7 +536,6 @@ func saveAvatar(
 		path,
 		mimeType,
 		int64(len(data)),
-		time.Now().UTC(),
 	); err != nil {
 		_ = filesSvc.DeleteAvatar(personID, path)
 		slog.Warn("monica-import: skip avatar, db update failed", "person_id", personID, "err", err)

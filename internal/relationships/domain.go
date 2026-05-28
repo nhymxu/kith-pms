@@ -1,25 +1,33 @@
 package relationships
 
-import "time"
+import (
+	"time"
+
+	"github.com/uptrace/bun"
+)
 
 // RelationshipType describes a named kind of link between two people.
 // When InverseTypeID is set, the system auto-creates the inverse junction row.
 type RelationshipType struct {
-	ID            int64     `json:"id"`
-	Name          string    `json:"name"`
-	ReverseName   string    `json:"reverse_name"`
-	InverseTypeID *int64    `json:"inverse_type_id"`
-	CreatedAt     time.Time `json:"created_at"`
-	UsageCount    int       `json:"usage_count"`
+	bun.BaseModel `bun:"table:relationship_type,alias:rt"`
+
+	ID            int64     `bun:",pk,autoincrement" json:"id"`
+	Name          string    `bun:"name"              json:"name"`
+	ReverseName   string    `bun:"reverse_name"      json:"reverse_name"`
+	InverseTypeID *int64    `bun:"inverse_type_id"   json:"inverse_type_id"`
+	CreatedAt     time.Time `bun:"created_at"        json:"created_at"`
+	UsageCount    int       `bun:"-"                 json:"usage_count"` // computed via COUNT, not in base select
 }
 
 type PersonRelationship struct {
-	ID                 int64     `json:"id"`
-	FromPersonID       int64     `json:"from_person_id"`
-	ToPersonID         int64     `json:"to_person_id"`
-	RelationshipTypeID int64     `json:"relationship_type_id"`
-	Notes              string    `json:"notes"`
-	CreatedAt          time.Time `json:"created_at"`
+	bun.BaseModel `bun:"table:person_relationship,alias:pr"`
+
+	ID                 int64     `bun:",pk,autoincrement"    json:"id"`
+	FromPersonID       int64     `bun:"from_person_id"       json:"from_person_id"`
+	ToPersonID         int64     `bun:"to_person_id"         json:"to_person_id"`
+	RelationshipTypeID int64     `bun:"relationship_type_id" json:"relationship_type_id"`
+	Notes              string    `bun:"notes"                json:"notes"`
+	CreatedAt          time.Time `bun:"created_at"           json:"created_at"`
 }
 
 type RelationshipView struct {

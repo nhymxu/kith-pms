@@ -1,6 +1,10 @@
 package reminders
 
-import "time"
+import (
+	"time"
+
+	"github.com/uptrace/bun"
+)
 
 type RecurrenceType string
 
@@ -22,18 +26,20 @@ type RecurrenceRule struct {
 }
 
 type Reminder struct {
-	ID                int64           `json:"id"`
-	Title             string          `json:"title"`
-	Notes             string          `json:"notes"`
-	DueDate           time.Time       `json:"due_date"`
-	PersonID          *int64          `json:"person_id"`
-	ImportantDateID   *int64          `json:"important_date_id"`
-	Completed         bool            `json:"completed"`
-	CompletedAt       *time.Time      `json:"completed_at"`
-	RecurrenceRule    *RecurrenceRule `json:"recurrence_rule,omitempty"`
-	RecurrenceEndDate *time.Time      `json:"recurrence_end_date,omitempty"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
+	bun.BaseModel `bun:"table:reminder,alias:r"`
+
+	ID                int64           `bun:",pk,autoincrement"     json:"id"`
+	Title             string          `bun:"title"                 json:"title"`
+	Notes             string          `bun:"notes"                 json:"notes"`
+	DueDate           time.Time       `bun:"due_date"              json:"due_date"`
+	PersonID          *int64          `bun:"person_id"             json:"person_id"`
+	ImportantDateID   *int64          `bun:"important_date_id"     json:"important_date_id"`
+	Completed         bool            `bun:"completed"             json:"completed"`
+	CompletedAt       *time.Time      `bun:"completed_at"          json:"completed_at"`
+	RecurrenceRule    *RecurrenceRule `bun:"-"               json:"recurrence_rule,omitempty"` // JSON-marshaled separately
+	RecurrenceEndDate *time.Time      `bun:"recurrence_end_date"   json:"recurrence_end_date,omitempty"`
+	CreatedAt         time.Time       `bun:"created_at"            json:"created_at"`
+	UpdatedAt         time.Time       `bun:"updated_at"            json:"updated_at"`
 }
 
 type ReminderWithPerson struct {

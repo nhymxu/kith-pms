@@ -25,100 +25,46 @@ func NewRepo(db *bun.DB) ImportantDateRepo {
 }
 
 func (r *sqlRepo) ListByPerson(ctx context.Context, personID int64) ([]ImportantDate, error) {
-	query := `
-		SELECT id, person_id, kind, label, date_value, recurring, notes, position, created_at
-		FROM important_date
-		WHERE person_id = ?
-		ORDER BY position, id
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, personID)
-	if err != nil {
-		return nil, fmt.Errorf("query dates: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
 	var dates []ImportantDate
 
-	for rows.Next() {
-		var (
-			d         ImportantDate
-			recurring int
-			createdAt string
-		)
-
-		err := rows.Scan(
-			&d.ID,
-			&d.PersonID,
-			&d.Kind,
-			&d.Label,
-			&d.DateValue,
-			&recurring,
-			&d.Notes,
-			&d.Position,
-			&createdAt,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("scan date: %w", err)
-		}
-
-		d.Recurring = recurring == 1
-		d.CreatedAt, _ = parseTimestamp(createdAt)
-		dates = append(dates, d)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate dates: %w", err)
+	err := r.db.NewSelect().
+		Model(&dates).
+		Where("person_id = ?", personID).
+		OrderExpr("position, id").
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query dates: %w", err)
 	}
 
 	return dates, nil
 }
 
 func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dates []ImportantDate) error {
-	// Delete existing
-	_, err := tx.ExecContext(ctx, "DELETE FROM important_date WHERE person_id = ?", personID)
+	_, err := tx.NewDelete().Model((*ImportantDate)(nil)).Where("person_id = ?", personID).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("delete existing dates: %w", err)
 	}
 
-	// Insert new
 	if len(dates) == 0 {
 		return nil
 	}
 
-	stmt, err := tx.PrepareContext(ctx, `
-		INSERT INTO important_date (person_id, kind, label, date_value, recurring, notes, position)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`)
-	if err != nil {
-		return fmt.Errorf("prepare insert: %w", err)
+	now := time.Now().UTC()
+	for i := range dates {
+		dates[i].PersonID = personID
+		dates[i].CreatedAt = now
 	}
-	defer func() { _ = stmt.Close() }()
 
-	for _, d := range dates {
-		recurringInt := 0
-		if d.Recurring {
-			recurringInt = 1
-		}
-
-		_, err := stmt.ExecContext(ctx, personID, d.Kind, d.Label, d.DateValue, recurringInt, d.Notes, d.Position)
-		if err != nil {
-			return fmt.Errorf("insert date: %w", err)
-		}
+	_, err = tx.NewInsert().Model(&dates).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("insert dates: %w", err)
 	}
 
 	return nil
 }
 
-func parseTimestamp(s string) (time.Time, error) {
-	t, err := time.Parse("2006-01-02T15:04:05.999Z", s)
-	if err != nil {
-		t, err = time.Parse("2006-01-02T15:04:05Z", s)
-	}
-
-	return t, err
-}
-
+// OnThisDay uses raw SQL because it JOINs important_date with person and scans
+// into a non-model DTO (OnThisDayItem) with nullable nickname and computed YearsSince.
 func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]OnThisDayItem, error) {
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
@@ -166,13 +112,13 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		}
 
 		item.Date.Recurring = recurring == 1
-
-		item.Date.CreatedAt, _ = parseTimestamp(createdAt)
+		if createdAt != "" {
+			item.Date.CreatedAt, _ = time.Parse(time.RFC3339Nano, createdAt)
+		}
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
 		}
 
-		// Calculate YearsSince if year-having
 		if !item.Date.IsYearless() && item.Date.Recurring {
 			dateVal, err := time.Parse("2006-01-02", item.Date.DateValue)
 			if err == nil {
@@ -193,6 +139,8 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 	return items, nil
 }
 
+// ListAll uses raw SQL because it JOINs important_date with person and scans
+// into a non-model DTO (OnThisDayItem) with nullable nickname.
 func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
@@ -238,8 +186,9 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 		}
 
 		item.Date.Recurring = recurring == 1
-
-		item.Date.CreatedAt, _ = parseTimestamp(createdAt)
+		if createdAt != "" {
+			item.Date.CreatedAt, _ = time.Parse(time.RFC3339Nano, createdAt)
+		}
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
 		}

@@ -16,32 +16,25 @@ type PersonRepo interface {
 	Count(ctx context.Context, q string, labelIDs []int64) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
-	Create(ctx context.Context, tx bun.Tx, p Person) (int64, error)
-	Update(ctx context.Context, tx bun.Tx, p Person) error
+	Create(ctx context.Context, db bun.IDB, p Person) (int64, error)
+	Update(ctx context.Context, db bun.IDB, p Person) error
 	Delete(ctx context.Context, id int64) error
-	SetSelf(ctx context.Context, tx bun.Tx, personID int64) error
-	ClearSelf(ctx context.Context, tx bun.Tx) error
-	UpdateAvatar(
-		ctx context.Context,
-		tx bun.Tx,
-		personID int64,
-		path, mimeType string,
-		size int64,
-		uploadedAt time.Time,
-	) error
-	ClearAvatar(ctx context.Context, tx bun.Tx, personID int64) error
-	UpdateLastContact(ctx context.Context, tx bun.Tx, personID int64, contactTime time.Time) error
+	SetSelf(ctx context.Context, db bun.IDB, personID int64) error
+	ClearSelf(ctx context.Context, db bun.IDB) error
+	UpdateAvatar(ctx context.Context, db bun.IDB, personID int64, path, mimeType string, size int64) error
+	ClearAvatar(ctx context.Context, db bun.IDB, personID int64) error
+	UpdateLastContact(ctx context.Context, db bun.IDB, personID int64, contactTime time.Time) error
 }
 
 type ContactRepo interface {
 	// ReplaceAll deletes all contacts for personID and inserts the new slice.
-	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, contacts []ContactInfo) error
+	ReplaceAll(ctx context.Context, db bun.IDB, personID int64, contacts []ContactInfo) error
 	ListByPerson(ctx context.Context, personID int64) ([]ContactInfo, error)
 }
 
 type LocationRepo interface {
 	// ReplaceAll deletes all locations for personID and inserts the new slice.
-	ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, locations []Location) error
+	ReplaceAll(ctx context.Context, db bun.IDB, personID int64, locations []Location) error
 	ListByPerson(ctx context.Context, personID int64) ([]Location, error)
 }
 
@@ -58,94 +51,59 @@ func (r *sqlPersonRepo) List(
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
-	// Build WHERE clause and args dynamically.
-	var (
-		where []string
-		args  []any
-	)
+	var people []Person
+
+	sq := r.db.NewSelect().Model(&people)
 
 	if q != "" {
-		where = append(where, "name_lower LIKE ?")
-		args = append(args, "%"+q+"%")
+		sq = sq.Where("name_lower LIKE ?", "%"+strings.ToLower(q)+"%")
 	}
 
 	// AND-semantics: person must have ALL listed labels.
-	// Use INTERSECT subqueries — one per label ID.
+	// Use INTERSECT subqueries — one per label ID (bun has no INTERSECT support).
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
-
-		where = append(where, "id IN ("+sub+")")
-		for _, id := range labelIDs {
-			args = append(args, id)
+		args := make([]any, len(labelIDs))
+		for i, id := range labelIDs {
+			args[i] = id
 		}
+		sq = sq.Where("id IN ("+sub+")", args...)
 	}
 
-	query := `SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
-	                 other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-	                 last_contact_at, created_at, updated_at, is_self
-	          FROM person`
-	if len(where) > 0 {
-		query += " WHERE " + strings.Join(where, " AND ")
-	}
+	sq = sq.OrderExpr(buildOrderBy(sort)).Limit(limit).Offset(offset)
 
-	query += " ORDER BY " + buildOrderBy(sort) + " LIMIT ? OFFSET ?"
-
-	args = append(args, limit, offset)
-
-	rows, err := r.db.QueryContext(ctx, query, args...)
-	if err != nil {
+	if err := sq.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("people: list query: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var people []Person
-
-	for rows.Next() {
-		p, err := scanPerson(rows)
-		if err != nil {
-			return nil, err
-		}
-
-		people = append(people, p)
-	}
-
-	return people, rows.Err()
+	return people, nil
 }
 
 func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (int, error) {
-	var (
-		where []string
-		args  []any
-	)
+	sq := r.db.NewSelect().Model((*Person)(nil))
 
 	if q != "" {
-		where = append(where, "name_lower LIKE ?")
-		args = append(args, "%"+q+"%")
+		sq = sq.Where("name_lower LIKE ?", "%"+strings.ToLower(q)+"%")
 	}
 
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
-
-		where = append(where, "id IN ("+sub+")")
-		for _, id := range labelIDs {
-			args = append(args, id)
+		args := make([]any, len(labelIDs))
+		for i, id := range labelIDs {
+			args[i] = id
 		}
+		sq = sq.Where("id IN ("+sub+")", args...)
 	}
 
-	query := "SELECT COUNT(*) FROM person"
-	if len(where) > 0 {
-		query += " WHERE " + strings.Join(where, " AND ")
-	}
-
-	var total int
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+	total, err := sq.Count(ctx)
+	if err != nil {
 		return 0, fmt.Errorf("people: count query: %w", err)
 	}
 
 	return total, nil
 }
 
-// buildOrderBy returns the ORDER BY clause based on sort parameter.
+// buildOrderBy returns the ORDER BY expression based on sort parameter.
 func buildOrderBy(sort string) string {
 	switch sort {
 	case "name":
@@ -174,20 +132,14 @@ func buildLabelIntersect(labelIDs []int64) string {
 }
 
 func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
-		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        last_contact_at, created_at, updated_at, is_self
-		 FROM person WHERE id = ?`,
-		id,
-	)
+	var p Person
 
-	p, err := scanPerson(row)
+	err := r.db.NewSelect().Model(&p).Where("\"p\".\"id\" = ?", id).Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
 		return nil, err
 	}
 
@@ -195,67 +147,39 @@ func (r *sqlPersonRepo) Get(ctx context.Context, id int64) (*Person, error) {
 }
 
 func (r *sqlPersonRepo) GetSelf(ctx context.Context) (*Person, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, prefix, name, nickname, gender, date_of_birth, relationship_type,
-		        other_notes, avatar_path, avatar_mime_type, avatar_size, avatar_uploaded_at,
-		        last_contact_at, created_at, updated_at, is_self
-		 FROM person WHERE is_self = 1 LIMIT 1`,
-	)
+	var p Person
 
-	p, err := scanPerson(row)
+	err := r.db.NewSelect().Model(&p).Where("\"p\".\"is_self\" = ?", true).Limit(1).Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
 		return nil, err
 	}
 
 	return &p, nil
 }
 
-func (r *sqlPersonRepo) Create(ctx context.Context, tx bun.Tx, p Person) (int64, error) {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	dob := formatNullableDate(p.DateOfBirth)
+func (r *sqlPersonRepo) Create(ctx context.Context, db bun.IDB, p Person) (int64, error) {
+	p.CreatedAt = time.Now().UTC()
+	p.UpdatedAt = p.CreatedAt
 
-	res, err := tx.ExecContext(
-		ctx,
-		`INSERT INTO person (
-                    prefix, name, nickname, gender, date_of_birth, relationship_type,
-                    other_notes, created_at, updated_at
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.Prefix,
-		p.Name,
-		p.Nickname,
-		p.Gender,
-		dob,
-		p.RelationshipType,
-		p.OtherNotes,
-		now,
-		now,
-	)
+	_, err := db.NewInsert().Model(&p).Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("people: create person: %w", err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("people: create person last id: %w", err)
-	}
-
-	return id, nil
+	return p.ID, nil
 }
 
-func (r *sqlPersonRepo) Update(ctx context.Context, tx bun.Tx, p Person) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	dob := formatNullableDate(p.DateOfBirth)
+func (r *sqlPersonRepo) Update(ctx context.Context, db bun.IDB, p Person) error {
+	p.UpdatedAt = time.Now().UTC()
 
-	_, err := tx.ExecContext(ctx,
-		`UPDATE person
-		 SET prefix=?, name=?, nickname=?, gender=?, date_of_birth=?, relationship_type=?, other_notes=?, updated_at=?
-		 WHERE id=?`,
-		p.Prefix, p.Name, p.Nickname, p.Gender, dob, p.RelationshipType, p.OtherNotes, now, p.ID,
-	)
+	_, err := db.NewUpdate().Model(&p).WherePK().
+		Column("prefix", "name", "nickname", "gender", "date_of_birth",
+			"relationship_type", "other_notes", "updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: update person: %w", err)
 	}
@@ -264,7 +188,7 @@ func (r *sqlPersonRepo) Update(ctx context.Context, tx bun.Tx, p Person) error {
 }
 
 func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM person WHERE id = ?`, id)
+	_, err := r.db.NewDelete().Model((*Person)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: delete person: %w", err)
 	}
@@ -272,30 +196,28 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *sqlPersonRepo) SetSelf(ctx context.Context, tx bun.Tx, personID int64) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-
-	res, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 1, updated_at = ? WHERE id = ?`, now, personID)
+func (r *sqlPersonRepo) SetSelf(ctx context.Context, db bun.IDB, personID int64) error {
+	res, err := db.NewUpdate().Model((*Person)(nil)).
+		Set("is_self = ?, updated_at = ?", true, time.Now().UTC()).
+		Where("id = ?", personID).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: set self: %w", err)
 	}
 
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("people: set self rows affected: %w", err)
-	}
-
-	if rows == 0 {
-		return fmt.Errorf("person not found")
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return fmt.Errorf("person not found: %d", personID)
 	}
 
 	return nil
 }
 
-func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx bun.Tx) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-
-	_, err := tx.ExecContext(ctx, `UPDATE person SET is_self = 0, updated_at = ? WHERE is_self = 1`, now)
+func (r *sqlPersonRepo) ClearSelf(ctx context.Context, db bun.IDB) error {
+	_, err := db.NewUpdate().Model((*Person)(nil)).
+		Set("is_self = ?, updated_at = ?", false, time.Now().UTC()).
+		Where("is_self = ?", true).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: clear self: %w", err)
 	}
@@ -305,21 +227,24 @@ func (r *sqlPersonRepo) ClearSelf(ctx context.Context, tx bun.Tx) error {
 
 func (r *sqlPersonRepo) UpdateAvatar(
 	ctx context.Context,
-	tx bun.Tx,
+	db bun.IDB,
 	personID int64,
 	path, mimeType string,
 	size int64,
-	uploadedAt time.Time,
 ) error {
-	uploadedAtStr := uploadedAt.UTC().Format(time.RFC3339Nano)
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC()
+	p := &Person{
+		ID:               personID,
+		AvatarPath:       path,
+		AvatarMimeType:   mimeType,
+		AvatarSize:       size,
+		AvatarUploadedAt: &now,
+		UpdatedAt:        now,
+	}
 
-	_, err := tx.ExecContext(ctx,
-		`UPDATE person
-		 SET avatar_path=?, avatar_mime_type=?, avatar_size=?, avatar_uploaded_at=?, updated_at=?
-		 WHERE id=?`,
-		path, mimeType, size, uploadedAtStr, now, personID,
-	)
+	_, err := db.NewUpdate().Model(p).WherePK().
+		Column("avatar_path", "avatar_mime_type", "avatar_size", "avatar_uploaded_at", "updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: update avatar: %w", err)
 	}
@@ -327,15 +252,16 @@ func (r *sqlPersonRepo) UpdateAvatar(
 	return nil
 }
 
-func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx bun.Tx, personID int64) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, db bun.IDB, personID int64) error {
+	now := time.Now().UTC()
+	p := &Person{
+		ID:        personID,
+		UpdatedAt: now,
+	}
 
-	_, err := tx.ExecContext(ctx,
-		`UPDATE person
-		 SET avatar_path='', avatar_mime_type='', avatar_size=0, avatar_uploaded_at=NULL, updated_at=?
-		 WHERE id=?`,
-		now, personID,
-	)
+	_, err := db.NewUpdate().Model(p).WherePK().
+		Column("avatar_path", "avatar_mime_type", "avatar_size", "avatar_uploaded_at", "updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: clear avatar: %w", err)
 	}
@@ -345,17 +271,19 @@ func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, tx bun.Tx, personID int
 
 func (r *sqlPersonRepo) UpdateLastContact(
 	ctx context.Context,
-	tx bun.Tx,
+	db bun.IDB,
 	personID int64,
 	contactTime time.Time,
 ) error {
-	contactTimeStr := contactTime.UTC().Format(time.RFC3339Nano)
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	p := &Person{
+		ID:            personID,
+		LastContactAt: &contactTime,
+		UpdatedAt:     time.Now().UTC(),
+	}
 
-	_, err := tx.ExecContext(ctx,
-		`UPDATE person SET last_contact_at=?, updated_at=? WHERE id=?`,
-		contactTimeStr, now, personID,
-	)
+	_, err := db.NewUpdate().Model(p).WherePK().
+		Column("last_contact_at", "updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: update last contact: %w", err)
 	}
@@ -369,47 +297,42 @@ type sqlContactRepo struct{ db *bun.DB }
 
 func NewContactRepo(db *bun.DB) ContactRepo { return &sqlContactRepo{db: db} }
 
-func (r *sqlContactRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, contacts []ContactInfo) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM contact_info WHERE person_id = ?`, personID); err != nil {
+func (r *sqlContactRepo) ReplaceAll(ctx context.Context, db bun.IDB, personID int64, contacts []ContactInfo) error {
+	_, err := db.NewDelete().Model((*ContactInfo)(nil)).Where("person_id = ?", personID).Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("people: delete contacts: %w", err)
 	}
 
-	for i, c := range contacts {
-		_, err := tx.ExecContext(ctx,
-			`INSERT INTO contact_info (person_id, type, value, label, position) VALUES (?, ?, ?, ?, ?)`,
-			personID, c.Type, c.Value, c.Label, i,
-		)
-		if err != nil {
-			return fmt.Errorf("people: insert contact[%d]: %w", i, err)
-		}
+	if len(contacts) == 0 {
+		return nil
+	}
+
+	// Ensure PersonID and Position are set before bulk insert.
+	for i := range contacts {
+		contacts[i].PersonID = personID
+		contacts[i].Position = i
+	}
+
+	_, err = db.NewInsert().Model(&contacts).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: insert contacts: %w", err)
 	}
 
 	return nil
 }
 
 func (r *sqlContactRepo) ListByPerson(ctx context.Context, personID int64) ([]ContactInfo, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, person_id, type, value, label, position
-		 FROM contact_info WHERE person_id = ? ORDER BY position`,
-		personID,
-	)
+	var contacts []ContactInfo
+
+	err := r.db.NewSelect().Model(&contacts).
+		Where("person_id = ?", personID).
+		OrderExpr("position ASC, id ASC").
+		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("people: list contacts: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var contacts []ContactInfo
-
-	for rows.Next() {
-		var c ContactInfo
-		if err := rows.Scan(&c.ID, &c.PersonID, &c.Type, &c.Value, &c.Label, &c.Position); err != nil {
-			return nil, fmt.Errorf("people: scan contact: %w", err)
-		}
-
-		contacts = append(contacts, c)
-	}
-
-	return contacts, rows.Err()
+	return contacts, nil
 }
 
 // ---- sqlLocationRepo --------------------------------------------------------
@@ -418,134 +341,40 @@ type sqlLocationRepo struct{ db *bun.DB }
 
 func NewLocationRepo(db *bun.DB) LocationRepo { return &sqlLocationRepo{db: db} }
 
-func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, locations []Location) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM location WHERE person_id = ?`, personID); err != nil {
+func (r *sqlLocationRepo) ReplaceAll(ctx context.Context, db bun.IDB, personID int64, locations []Location) error {
+	_, err := db.NewDelete().Model((*Location)(nil)).Where("person_id = ?", personID).Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("people: delete locations: %w", err)
 	}
 
-	for i, l := range locations {
-		_, err := tx.ExecContext(
-			ctx,
-			`INSERT INTO location (person_id, type, address, city, country, postal_code, position) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			personID,
-			l.Type,
-			l.Address,
-			l.City,
-			l.Country,
-			l.PostalCode,
-			i,
-		)
-		if err != nil {
-			return fmt.Errorf("people: insert location[%d]: %w", i, err)
-		}
+	if len(locations) == 0 {
+		return nil
+	}
+
+	// Ensure PersonID and Position are set before bulk insert.
+	for i := range locations {
+		locations[i].PersonID = personID
+		locations[i].Position = i
+	}
+
+	_, err = db.NewInsert().Model(&locations).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: insert locations: %w", err)
 	}
 
 	return nil
 }
 
 func (r *sqlLocationRepo) ListByPerson(ctx context.Context, personID int64) ([]Location, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, person_id, type, address, city, country, postal_code, position
-		 FROM location WHERE person_id = ? ORDER BY position`,
-		personID,
-	)
+	var locations []Location
+
+	err := r.db.NewSelect().Model(&locations).
+		Where("person_id = ?", personID).
+		OrderExpr("position ASC, id ASC").
+		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("people: list locations: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var locations []Location
-
-	for rows.Next() {
-		var l Location
-		if err := rows.Scan(
-			&l.ID,
-			&l.PersonID,
-			&l.Type,
-			&l.Address,
-			&l.City,
-			&l.Country,
-			&l.PostalCode,
-			&l.Position,
-		); err != nil {
-			return nil, fmt.Errorf("people: scan location: %w", err)
-		}
-
-		locations = append(locations, l)
-	}
-
-	return locations, rows.Err()
-}
-
-// ---- scan helpers -----------------------------------------------------------
-
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
-func scanPerson(row rowScanner) (Person, error) {
-	var (
-		p                    Person
-		dobStr               sql.NullString
-		avatarUploadedAtStr  sql.NullString
-		lastContactAtStr     sql.NullString
-		createdAt, updatedAt string
-	)
-
-	var isSelf int64
-
-	err := row.Scan(
-		&p.ID, &p.Prefix, &p.Name, &p.Nickname, &p.Gender,
-		&dobStr, &p.RelationshipType, &p.OtherNotes,
-		&p.AvatarPath, &p.AvatarMimeType, &p.AvatarSize, &avatarUploadedAtStr,
-		&lastContactAtStr, &createdAt, &updatedAt, &isSelf,
-	)
-	p.IsSelf = isSelf == 1
-
-	if err != nil {
-		return Person{}, fmt.Errorf("people: scan person: %w", err)
-	}
-
-	if dobStr.Valid && dobStr.String != "" {
-		if t, err := parseDate(dobStr.String); err == nil {
-			p.DateOfBirth = &t
-		}
-	}
-
-	if avatarUploadedAtStr.Valid && avatarUploadedAtStr.String != "" {
-		if t, err := parseTime(avatarUploadedAtStr.String); err == nil {
-			p.AvatarUploadedAt = &t
-		}
-	}
-
-	if lastContactAtStr.Valid && lastContactAtStr.String != "" {
-		if t, err := parseTime(lastContactAtStr.String); err == nil {
-			p.LastContactAt = &t
-		}
-	}
-
-	p.CreatedAt, _ = parseTime(createdAt)
-	p.UpdatedAt, _ = parseTime(updatedAt)
-
-	return p, nil
-}
-
-func parseTime(s string) (time.Time, error) {
-	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
-		return t, nil
-	}
-
-	return time.Parse(time.RFC3339, s)
-}
-
-func parseDate(s string) (time.Time, error) {
-	return time.Parse("2006-01-02", s)
-}
-
-func formatNullableDate(t *time.Time) interface{} {
-	if t == nil {
-		return nil
-	}
-
-	return t.Format("2006-01-02")
+	return locations, nil
 }

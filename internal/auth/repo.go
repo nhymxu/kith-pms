@@ -25,30 +25,37 @@ type SessionRepo interface {
 	CountActiveSessions(ctx context.Context) (int64, error)
 }
 
-// sqlUserRepo implements UserRepo using raw *bun.DB queries.
+// sqlUserRepo implements UserRepo using bun query builder.
 type sqlUserRepo struct{ db *bun.DB }
 
 func NewUserRepo(db *bun.DB) UserRepo { return &sqlUserRepo{db: db} }
 
 func (r *sqlUserRepo) GetUser(ctx context.Context) (*User, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, password_hash, created_at, updated_at FROM user LIMIT 1`,
-	)
+	var u User
 
-	return scanUser(row)
+	err := r.db.NewSelect().Model(&u).Limit(1).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("auth: get user: %w", err)
+	}
+
+	return &u, nil
 }
 
 func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	u := &User{
+		ID:           1,
+		PasswordHash: hash,
+		UpdatedAt:    time.Now().UTC(),
+	}
 
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO user (id, password_hash, updated_at)
-		 VALUES (1, ?, ?)
-		 ON CONFLICT(id) DO UPDATE SET
-		     password_hash = excluded.password_hash,
-		     updated_at    = excluded.updated_at`,
-		hash, now,
-	)
+	_, err := r.db.NewInsert().
+		Model(u).
+		On("CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = EXCLUDED.updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: upsert user: %w", err)
 	}
@@ -56,22 +63,13 @@ func (r *sqlUserRepo) UpsertUser(ctx context.Context, hash string) error {
 	return nil
 }
 
-// sqlSessionRepo implements SessionRepo using raw *bun.DB queries.
+// sqlSessionRepo implements SessionRepo using bun query builder.
 type sqlSessionRepo struct{ db *bun.DB }
 
 func NewSessionRepo(db *bun.DB) SessionRepo { return &sqlSessionRepo{db: db} }
 
 func (r *sqlSessionRepo) CreateSession(ctx context.Context, s Session) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO session (id, user_id, expires_at, last_seen_at, ip, user_agent)
-		 VALUES (?, ?, ?, ?, ?, ?)`,
-		s.ID,
-		s.UserID,
-		s.ExpiresAt.UTC().Format(time.RFC3339Nano),
-		s.LastSeenAt.UTC().Format(time.RFC3339Nano),
-		s.IP,
-		s.UserAgent,
-	)
+	_, err := r.db.NewInsert().Model(&s).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: create session: %w", err)
 	}
@@ -80,22 +78,32 @@ func (r *sqlSessionRepo) CreateSession(ctx context.Context, s Session) error {
 }
 
 func (r *sqlSessionRepo) GetSession(ctx context.Context, id string) (*Session, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, user_id, expires_at, last_seen_at, ip, user_agent
-		 FROM session WHERE id = ?`,
-		id,
-	)
+	var s Session
 
-	return scanSession(row)
+	err := r.db.NewSelect().Model(&s).Where("id = ?", id).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("auth: get session: %w", err)
+	}
+
+	return &s, nil
 }
 
 func (r *sqlSessionRepo) TouchSession(ctx context.Context, id string, expiresAt time.Time) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	s := &Session{
+		ID:         id,
+		ExpiresAt:  expiresAt.UTC(),
+		LastSeenAt: time.Now().UTC(),
+	}
 
-	_, err := r.db.ExecContext(ctx,
-		`UPDATE session SET expires_at = ?, last_seen_at = ? WHERE id = ?`,
-		expiresAt.UTC().Format(time.RFC3339Nano), now, id,
-	)
+	_, err := r.db.NewUpdate().
+		Model(s).
+		Column("expires_at", "last_seen_at").
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: touch session: %w", err)
 	}
@@ -104,7 +112,7 @@ func (r *sqlSessionRepo) TouchSession(ctx context.Context, id string, expiresAt 
 }
 
 func (r *sqlSessionRepo) DeleteSession(ctx context.Context, id string) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM session WHERE id = ?`, id)
+	_, err := r.db.NewDelete().Model((*Session)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: delete session: %w", err)
 	}
@@ -113,7 +121,7 @@ func (r *sqlSessionRepo) DeleteSession(ctx context.Context, id string) error {
 }
 
 func (r *sqlSessionRepo) DeleteAllSessions(ctx context.Context, userID int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM session WHERE user_id = ?`, userID)
+	_, err := r.db.NewDelete().Model((*Session)(nil)).Where("user_id = ?", userID).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: delete all sessions: %w", err)
 	}
@@ -122,9 +130,7 @@ func (r *sqlSessionRepo) DeleteAllSessions(ctx context.Context, userID int64) er
 }
 
 func (r *sqlSessionRepo) DeleteExpiredSessions(ctx context.Context) error {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-
-	_, err := r.db.ExecContext(ctx, `DELETE FROM session WHERE expires_at < ?`, now)
+	_, err := r.db.NewDelete().Model((*Session)(nil)).Where("expires_at < ?", time.Now().UTC()).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("auth: delete expired sessions: %w", err)
 	}
@@ -133,73 +139,10 @@ func (r *sqlSessionRepo) DeleteExpiredSessions(ctx context.Context) error {
 }
 
 func (r *sqlSessionRepo) CountActiveSessions(ctx context.Context) (int64, error) {
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-
-	var n int64
-
-	err := r.db.QueryRowContext(ctx,
-		`SELECT count(*) FROM session WHERE expires_at > ?`, now,
-	).Scan(&n)
+	n, err := r.db.NewSelect().Model((*Session)(nil)).Where("expires_at > ?", time.Now().UTC()).Count(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("auth: count active sessions: %w", err)
 	}
 
-	return n, nil
-}
-
-// ---- scan helpers -----------------------------------------------------------
-
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
-func scanUser(row rowScanner) (*User, error) {
-	var (
-		u                    User
-		createdAt, updatedAt string
-	)
-
-	err := row.Scan(&u.ID, &u.PasswordHash, &createdAt, &updatedAt)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf("auth: scan user: %w", err)
-	}
-
-	u.CreatedAt, _ = parseTime(createdAt)
-	u.UpdatedAt, _ = parseTime(updatedAt)
-
-	return &u, nil
-}
-
-func scanSession(row rowScanner) (*Session, error) {
-	var (
-		s                     Session
-		expiresAt, lastSeenAt string
-	)
-
-	err := row.Scan(&s.ID, &s.UserID, &expiresAt, &lastSeenAt, &s.IP, &s.UserAgent)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf("auth: scan session: %w", err)
-	}
-
-	s.ExpiresAt, _ = parseTime(expiresAt)
-	s.LastSeenAt, _ = parseTime(lastSeenAt)
-
-	return &s, nil
-}
-
-// parseTime tries RFC3339Nano then RFC3339 to handle both formats.
-func parseTime(s string) (time.Time, error) {
-	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
-		return t, nil
-	}
-
-	return time.Parse(time.RFC3339, s)
+	return int64(n), nil
 }

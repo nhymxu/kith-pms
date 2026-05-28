@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/uptrace/bun"
 )
 
 type Kind string
@@ -18,18 +19,21 @@ const (
 )
 
 type ImportantDate struct {
-	ID        int64     `json:"id"`
-	PersonID  int64     `json:"person_id"`
-	Kind      string    `json:"kind"`
-	Label     string    `json:"label"`
-	DateValue string    `json:"date_value"`
-	Recurring bool      `json:"recurring"`
-	Notes     string    `json:"notes"`
-	Position  int       `json:"position"`
-	CreatedAt time.Time `json:"created_at"`
+	bun.BaseModel `bun:"table:important_date,alias:d"`
+
+	ID        int64     `bun:",pk,autoincrement" json:"id"`
+	PersonID  int64     `bun:"person_id"         json:"person_id"`
+	Kind      string    `bun:"kind"              json:"kind"`
+	Label     string    `bun:"label"             json:"label"`
+	DateValue string    `bun:"date_value"        json:"date_value"`
+	Recurring bool      `bun:"recurring"         json:"recurring"`
+	Notes     string    `bun:"notes"             json:"notes"`
+	Position  int       `bun:"position"          json:"position"`
+	CreatedAt time.Time `bun:"created_at"        json:"created_at"`
 }
 
 // OnThisDayItem represents a date match with person info and years since.
+// It is a JOIN DTO — not a bun model.
 type OnThisDayItem struct {
 	Person     people.Person `json:"person"`
 	Date       ImportantDate `json:"date"`

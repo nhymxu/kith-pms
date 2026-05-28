@@ -32,41 +32,21 @@ type sqlActivityRepo struct{ db *bun.DB }
 func NewActivityRepo(db *bun.DB) ActivityRepo { return &sqlActivityRepo{db: db} }
 
 func (r *sqlActivityRepo) Create(ctx context.Context, tx bun.Tx, a Activity) (int64, error) {
-	const q = `
-		INSERT INTO activity (title, occurred_at_date, occurred_at_time, content)
-		VALUES (?, ?, ?, ?)`
-
-	var oat any
-	if a.OccurredAtTime != "" {
-		oat = a.OccurredAtTime
-	}
-
-	res, err := tx.ExecContext(ctx, q, a.Title, a.OccurredAtDate, oat, a.Content)
+	a.CreatedAt = time.Now().UTC()
+	a.UpdatedAt = a.CreatedAt
+	_, err := tx.NewInsert().Model(&a).Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("journal: create activity: %w", err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("journal: last insert id: %w", err)
-	}
-
-	return id, nil
+	return a.ID, nil
 }
 
 func (r *sqlActivityRepo) Update(ctx context.Context, tx bun.Tx, a Activity) error {
-	const q = `
-		UPDATE activity
-		SET title = ?, occurred_at_date = ?, occurred_at_time = ?,
-		    content = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
-		WHERE id = ?`
-
-	var oat any
-	if a.OccurredAtTime != "" {
-		oat = a.OccurredAtTime
-	}
-
-	_, err := tx.ExecContext(ctx, q, a.Title, a.OccurredAtDate, oat, a.Content, a.ID)
+	a.UpdatedAt = time.Now().UTC()
+	_, err := tx.NewUpdate().Model(&a).WherePK().
+		Column("title", "occurred_at_date", "occurred_at_time", "content", "updated_at").
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("journal: update activity: %w", err)
 	}
@@ -75,13 +55,8 @@ func (r *sqlActivityRepo) Update(ctx context.Context, tx bun.Tx, a Activity) err
 }
 
 func (r *sqlActivityRepo) Get(ctx context.Context, id int64) (*Activity, error) {
-	const q = `
-		SELECT id, title, occurred_at_date, occurred_at_time, content, created_at, updated_at
-		FROM activity WHERE id = ?`
-
-	row := r.db.QueryRowContext(ctx, q, id)
-
-	a, err := scanActivity(row)
+	var a Activity
+	err := r.db.NewSelect().Model(&a).Where("\"activity\".\"id\" = ?", id).Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -90,11 +65,11 @@ func (r *sqlActivityRepo) Get(ctx context.Context, id int64) (*Activity, error) 
 		return nil, fmt.Errorf("journal: get activity: %w", err)
 	}
 
-	return a, nil
+	return &a, nil
 }
 
 func (r *sqlActivityRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM activity WHERE id = ?`, id)
+	_, err := r.db.NewDelete().Model((*Activity)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("journal: delete activity: %w", err)
 	}
@@ -102,151 +77,62 @@ func (r *sqlActivityRepo) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, error) {
-	var (
-		joins []string
-		where []string
-		args  []any
-	)
+// buildActivityQuery constructs a shared base SELECT with all WHERE/JOIN filters applied.
+func (r *sqlActivityRepo) buildActivityQuery(params ListParams) *bun.SelectQuery {
+	q := r.db.NewSelect().TableExpr("activity")
 
-	useFTS := strings.TrimSpace(params.Query) != ""
-	if useFTS {
-		joins = append(joins, "JOIN activity_fts ON activity_fts.rowid = activity.id")
-		where = append(where, "activity_fts MATCH ?")
-		args = append(args, sanitizeFTSQuery(params.Query))
+	if strings.TrimSpace(params.Query) != "" {
+		q = q.Join("JOIN activity_fts ON activity_fts.rowid = activity.id").
+			Where("activity_fts MATCH ?", sanitizeFTSQuery(params.Query))
 	}
 
 	if len(params.PersonIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(params.PersonIDs))
-		placeholders = placeholders[:len(placeholders)-1]
-
-		where = append(
-			where,
-			"activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))",
+		q = q.Where(
+			"activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN (?))",
+			bun.List(params.PersonIDs),
 		)
-		for _, pid := range params.PersonIDs {
-			args = append(args, pid)
-		}
 	}
 
 	if len(params.LabelIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(params.LabelIDs))
-		placeholders = placeholders[:len(placeholders)-1]
-
-		where = append(
-			where,
-			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN ("+placeholders+"))", //nolint:lll
+		q = q.Where(
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN (?))",
+			bun.List(params.LabelIDs),
 		)
-		for _, lid := range params.LabelIDs {
-			args = append(args, lid)
-		}
 	}
 
 	if params.FromDate != "" && params.ToDate != "" {
-		where = append(where, "activity.occurred_at_date BETWEEN ? AND ?")
-		args = append(args, params.FromDate, params.ToDate)
+		q = q.Where("activity.occurred_at_date BETWEEN ? AND ?", params.FromDate, params.ToDate)
 	} else if params.FromDate != "" {
-		where = append(where, "activity.occurred_at_date >= ?")
-		args = append(args, params.FromDate)
+		q = q.Where("activity.occurred_at_date >= ?", params.FromDate)
 	} else if params.ToDate != "" {
-		where = append(where, "activity.occurred_at_date <= ?")
-		args = append(args, params.ToDate)
+		q = q.Where("activity.occurred_at_date <= ?", params.ToDate)
 	}
 
-	query := "SELECT COUNT(*) FROM activity"
-	if len(joins) > 0 {
-		query += " " + strings.Join(joins, " ")
-	}
+	return q
+}
 
-	if len(where) > 0 {
-		query += " WHERE " + strings.Join(where, " AND ")
-	}
-
-	var total int
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&total); err != nil {
+func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, error) {
+	count, err := r.buildActivityQuery(params).Count(ctx)
+	if err != nil {
 		return 0, fmt.Errorf("journal: count activities: %w", err)
 	}
 
-	return total, nil
+	return count, nil
 }
 
-// List builds a dynamic SQL query based on non-zero filter fields in params.
+// List builds a dynamic query based on non-zero filter fields in params.
 func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activity, error) {
-	var (
-		joins []string
-		where []string
-		args  []any
-	)
-
-	// FTS full-text search — join activity_fts and use MATCH.
 	useFTS := strings.TrimSpace(params.Query) != ""
-	if useFTS {
-		joins = append(joins, "JOIN activity_fts ON activity_fts.rowid = activity.id")
-		where = append(where, "activity_fts MATCH ?")
-		args = append(args, sanitizeFTSQuery(params.Query))
-	}
 
-	// Filter by person IDs (OR semantics — any linked person).
-	if len(params.PersonIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(params.PersonIDs))
-		placeholders = placeholders[:len(placeholders)-1]
-
-		where = append(
-			where,
-			"activity.id IN (SELECT activity_id FROM activity_person WHERE person_id IN ("+placeholders+"))",
-		)
-		for _, pid := range params.PersonIDs {
-			args = append(args, pid)
-		}
-	}
-
-	// Filter by label IDs — activities involving any person with those labels.
-	if len(params.LabelIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(params.LabelIDs))
-		placeholders = placeholders[:len(placeholders)-1]
-
-		where = append(
-			where,
-			"activity.id IN (SELECT ap.activity_id FROM activity_person ap"+
-				" JOIN person_label pl ON pl.person_id = ap.person_id"+
-				" WHERE pl.label_id IN ("+placeholders+"))",
-		)
-		for _, lid := range params.LabelIDs {
-			args = append(args, lid)
-		}
-	}
-
-	// Date range filter.
-	if params.FromDate != "" && params.ToDate != "" {
-		where = append(where, "activity.occurred_at_date BETWEEN ? AND ?")
-		args = append(args, params.FromDate, params.ToDate)
-	} else if params.FromDate != "" {
-		where = append(where, "activity.occurred_at_date >= ?")
-		args = append(args, params.FromDate)
-	} else if params.ToDate != "" {
-		where = append(where, "activity.occurred_at_date <= ?")
-		args = append(args, params.ToDate)
-	}
-
-	query := `SELECT activity.id, activity.title, activity.occurred_at_date, activity.occurred_at_time,
-	                 activity.content, activity.created_at, activity.updated_at
-	          FROM activity`
-
-	if len(joins) > 0 {
-		query += " " + strings.Join(joins, " ")
-	}
-
-	if len(where) > 0 {
-		query += " WHERE " + strings.Join(where, " AND ")
-	}
+	q := r.buildActivityQuery(params).
+		ColumnExpr("activity.id, activity.title, activity.occurred_at_date, activity.occurred_at_time, activity.content, activity.created_at, activity.updated_at")
 
 	if useFTS {
-		query += " ORDER BY bm25(activity_fts), activity.occurred_at_date DESC, activity.id DESC"
+		q = q.OrderExpr("bm25(activity_fts), activity.occurred_at_date DESC, activity.id DESC")
 	} else {
-		query += " ORDER BY activity.occurred_at_date DESC, activity.id DESC"
+		q = q.OrderExpr("activity.occurred_at_date DESC, activity.id DESC")
 	}
 
-	// Pagination.
 	pageSize := params.PageSize
 	if pageSize <= 0 {
 		pageSize = 30
@@ -257,30 +143,10 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 		page = 1
 	}
 
-	offset := (page - 1) * pageSize
-	query += " LIMIT ? OFFSET ?"
-
-	args = append(args, pageSize, offset)
-
-	rows, err := r.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("journal: list query: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
 	var list []Activity
-
-	for rows.Next() {
-		a, err := scanActivityRow(rows)
-		if err != nil {
-			return nil, fmt.Errorf("journal: scan activity row: %w", err)
-		}
-
-		list = append(list, *a)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("journal: list rows err: %w", err)
+	err := q.Limit(pageSize).Offset((page-1)*pageSize).Scan(ctx, &list)
+	if err != nil {
+		return nil, fmt.Errorf("journal: list activities: %w", err)
 	}
 
 	return list, nil
@@ -297,79 +163,14 @@ func sanitizeFTSQuery(q string) string {
 	return `"` + q + `"`
 }
 
-// ---- row scanners -----------------------------------------------------------
-
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
-func scanActivity(s rowScanner) (*Activity, error) {
-	var (
-		a                    Activity
-		oat                  sql.NullString
-		createdAt, updatedAt string
-	)
-
-	err := s.Scan(
-		&a.ID, &a.Title, &a.OccurredAtDate, &oat,
-		&a.Content, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if oat.Valid {
-		a.OccurredAtTime = oat.String
-	}
-
-	a.CreatedAt = parseTime(createdAt)
-	a.UpdatedAt = parseTime(updatedAt)
-
-	return &a, nil
-}
-
-func scanActivityRow(rows *sql.Rows) (*Activity, error) {
-	var (
-		a                    Activity
-		oat                  sql.NullString
-		createdAt, updatedAt string
-	)
-
-	err := rows.Scan(
-		&a.ID, &a.Title, &a.OccurredAtDate, &oat,
-		&a.Content, &createdAt, &updatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if oat.Valid {
-		a.OccurredAtTime = oat.String
-	}
-
-	a.CreatedAt = parseTime(createdAt)
-	a.UpdatedAt = parseTime(updatedAt)
-
-	return &a, nil
-}
-
-func parseTime(s string) time.Time {
-	// Try multiple layouts stored in SQLite TEXT columns.
-	for _, layout := range []string{
-		"2006-01-02T15:04:05.999Z",
-		"2006-01-02T15:04:05Z",
-		"2006-01-02T15:04:05",
-		time.RFC3339,
-	} {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t
-		}
-	}
-
-	return time.Time{}
-}
-
 // ---- sqlActivityPersonRepo --------------------------------------------------
+
+// activityPersonLink is a private bun model for the activity_person join table.
+type activityPersonLink struct {
+	bun.BaseModel `bun:"table:activity_person"`
+	ActivityID    int64 `bun:"activity_id"`
+	PersonID      int64 `bun:"person_id"`
+}
 
 type sqlActivityPersonRepo struct{ db *bun.DB }
 
@@ -377,19 +178,25 @@ func NewActivityPersonRepo(db *bun.DB) ActivityPersonRepo {
 	return &sqlActivityPersonRepo{db: db}
 }
 
-// ReplaceAll deletes all person links for the activity and inserts new ones.
+// ReplaceAll deletes all person links for the activity and bulk-inserts new ones.
 func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx bun.Tx, activityID int64, personIDs []int64) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM activity_person WHERE activity_id = ?`, activityID); err != nil {
+	_, err := tx.NewDelete().Model((*activityPersonLink)(nil)).Where("activity_id = ?", activityID).Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("journal: delete activity_person: %w", err)
 	}
 
-	for _, pid := range personIDs {
-		if _, err := tx.ExecContext(ctx,
-			`INSERT INTO activity_person (activity_id, person_id) VALUES (?, ?)`,
-			activityID, pid,
-		); err != nil {
-			return fmt.Errorf("journal: insert activity_person: %w", err)
-		}
+	if len(personIDs) == 0 {
+		return nil
+	}
+
+	links := make([]activityPersonLink, len(personIDs))
+	for i, pid := range personIDs {
+		links[i] = activityPersonLink{ActivityID: activityID, PersonID: pid}
+	}
+
+	_, err = tx.NewInsert().Model(&links).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("journal: insert activity_person: %w", err)
 	}
 
 	return nil
@@ -397,29 +204,33 @@ func (r *sqlActivityPersonRepo) ReplaceAll(ctx context.Context, tx bun.Tx, activ
 
 // ListByActivity returns all people linked to the given activity.
 func (r *sqlActivityPersonRepo) ListByActivity(ctx context.Context, activityID int64) ([]ActivityPerson, error) {
-	const q = `
-		SELECT ap.person_id, p.name, COALESCE(p.nickname, ''), COALESCE(p.avatar_path, '')
-		FROM activity_person ap
-		JOIN person p ON p.id = ap.person_id
-		WHERE ap.activity_id = ?
-		ORDER BY p.name`
+	var rows []struct {
+		PersonID   int64  `bun:"person_id"`
+		Name       string `bun:"name"`
+		Nickname   string `bun:"nickname"`
+		AvatarPath string `bun:"avatar_path"`
+	}
 
-	rows, err := r.db.QueryContext(ctx, q, activityID)
+	err := r.db.NewSelect().
+		TableExpr("activity_person ap").
+		Join("JOIN person p ON p.id = ap.person_id").
+		ColumnExpr("ap.person_id, p.name, COALESCE(p.nickname, '') AS nickname, COALESCE(p.avatar_path, '') AS avatar_path").
+		Where("ap.activity_id = ?", activityID).
+		OrderExpr("p.name").
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("journal: list activity people: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var list []ActivityPerson
-
-	for rows.Next() {
-		var ap ActivityPerson
-		if err := rows.Scan(&ap.PersonID, &ap.Name, &ap.Nickname, &ap.AvatarPath); err != nil {
-			return nil, fmt.Errorf("journal: scan activity person: %w", err)
+	result := make([]ActivityPerson, len(rows))
+	for i, row := range rows {
+		result[i] = ActivityPerson{
+			PersonID:   row.PersonID,
+			Name:       row.Name,
+			Nickname:   row.Nickname,
+			AvatarPath: row.AvatarPath,
 		}
-
-		list = append(list, ap)
 	}
 
-	return list, rows.Err()
+	return result, nil
 }

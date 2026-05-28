@@ -71,7 +71,7 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 	activity := journal.Activity{
 		Title:          req.Title,
 		OccurredAtDate: req.OccurredAtDate,
-		OccurredAtTime: strings.TrimSpace(req.OccurredAtTime),
+		OccurredAtTime: nullableString(strings.TrimSpace(req.OccurredAtTime)),
 		Content:        strings.TrimSpace(req.Content),
 	}
 

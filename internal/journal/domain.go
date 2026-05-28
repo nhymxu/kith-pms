@@ -1,18 +1,27 @@
 package journal
 
-import "time"
+import (
+	"time"
+
+	"github.com/uptrace/bun"
+)
 
 type Activity struct {
-	ID             int64            `json:"id"`
-	Title          string           `json:"title"`
-	OccurredAtDate string           `json:"occurred_at_date"`
-	OccurredAtTime string           `json:"occurred_at_time"`
-	Content        string           `json:"content"`
-	CreatedAt      time.Time        `json:"created_at"`
-	UpdatedAt      time.Time        `json:"updated_at"`
-	People         []ActivityPerson `json:"people"`
+	bun.BaseModel `bun:"table:activity,alias:activity"`
+
+	ID             int64     `bun:",pk,autoincrement"  json:"id"`
+	Title          string    `bun:"title"              json:"title"`
+	OccurredAtDate string    `bun:"occurred_at_date"   json:"occurred_at_date"`
+	OccurredAtTime *string   `bun:"occurred_at_time"   json:"occurred_at_time"` // nullable; NULL when no time recorded
+	Content        string    `bun:"content"            json:"content"`
+	CreatedAt      time.Time `bun:"created_at"         json:"created_at"`
+	UpdatedAt      time.Time `bun:"updated_at"         json:"updated_at"`
+
+	// Populated separately via activity_person JOIN — not stored in activity table
+	People []ActivityPerson `bun:"-" json:"people"`
 }
 
+// ActivityPerson is a JOIN DTO — not a bun model; scanned from activity_person + person tables.
 type ActivityPerson struct {
 	PersonID   int64  `json:"person_id"`
 	Name       string `json:"name"`

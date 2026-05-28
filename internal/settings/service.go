@@ -80,7 +80,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidRetentionDays
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:            in.DateFormat,
 		KeyTimeFormat:            in.TimeFormat,

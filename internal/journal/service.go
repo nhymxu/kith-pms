@@ -149,7 +149,12 @@ func (s *Service) updateLastContactForParticipants(ctx context.Context, a Activi
 		return nil
 	}
 
-	activityTime, err := parseActivityTimestamp(a.OccurredAtDate, a.OccurredAtTime)
+	var oatStr string
+	if a.OccurredAtTime != nil {
+		oatStr = *a.OccurredAtTime
+	}
+
+	activityTime, err := parseActivityTimestamp(a.OccurredAtDate, oatStr)
 	if err != nil {
 		return nil
 	}

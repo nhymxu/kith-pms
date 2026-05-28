@@ -67,10 +67,11 @@ func TestCreateNoDeadlock(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	oat := "10:00"
 	activity := Activity{
 		Title:          "Test Activity",
 		OccurredAtDate: "2026-05-06",
-		OccurredAtTime: "10:00",
+		OccurredAtTime: &oat,
 		Content:        "Test content",
 	}
 

@@ -1,4 +1,4 @@
-package api_test
+package handler_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/settings"
 )
@@ -16,7 +16,7 @@ func TestAuditCleanup_RetentionDisabled(t *testing.T) {
 	auditSvc := audit.NewService(db)
 	settingsSvc := settings.NewService(db)
 
-	h := &api.AuditAPI{Svc: auditSvc, SettingsSvc: settingsSvc}
+	h := &handler.AuditAPI{Svc: auditSvc, SettingsSvc: settingsSvc}
 	e := newTestEcho()
 
 	req := jsonRequest(http.MethodPost, "/v1/audit/cleanup", "")
@@ -65,7 +65,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		t.Fatalf("update settings: %v", err)
 	}
 
-	h := &api.AuditAPI{Svc: auditSvc, SettingsSvc: settingsSvc}
+	h := &handler.AuditAPI{Svc: auditSvc, SettingsSvc: settingsSvc}
 	e := newTestEcho()
 
 	req := jsonRequest(http.MethodPost, "/v1/audit/cleanup", "")

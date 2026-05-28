@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"errors"
@@ -18,14 +18,6 @@ type AuthAPI struct {
 	Svc             *auth.Service
 	SessionLifetime time.Duration
 	BehindTLS       bool
-}
-
-func newAuthAPI(deps Deps) *AuthAPI {
-	return &AuthAPI{
-		Svc:             deps.AuthService,
-		SessionLifetime: deps.SessionLifetime,
-		BehindTLS:       deps.BehindTLS,
-	}
 }
 
 // Login handles POST /v1/auth/login.

@@ -68,9 +68,10 @@ type Repo struct {
 - Add new config fields to `EnvConfigMap` in `pkg/config/env.go` and defaults in `pkg/config/default.go`
 
 ### HTTP Handlers (Echo v5)
-- Handlers live in `internal/api/` (one file per domain)
-- Handler signatures: `func(c echo.Context) error` (Echo v5 pattern)
-- Return errors via `c.Error(err)` — let Echo's error handler format response
+- Handlers live in `internal/api/handler/` package (one file per domain) with struct-based pattern
+- **Handler Struct Pattern**: `type XxxAPI struct { Svc *xxx.Service }` with method receivers `(h *XxxAPI) Method(c echo.Context) error`
+- Handler signatures: `func(h *XxxAPI) MethodName(c echo.Context) error` (Echo v5 method receiver pattern)
+- Response helpers: Use `response.go` functions — `ok(c, data)`, `created(c, data)`, `apiErr(c, code, msg)` with {data, error} envelope
 - Use `c.Bind()` for JSON/form binding to typed structs
 - Use `c.QueryParam()`, `c.Param()` for individual values
 - Response: JSON REST API only (SPA handles all UI rendering)

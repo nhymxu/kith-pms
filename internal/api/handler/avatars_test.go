@@ -1,4 +1,4 @@
-package api_test
+package handler_test
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 )
 
 // ---- stub FileService -------------------------------------------------------
@@ -119,7 +119,7 @@ func TestAvatarsUpload_HappyPath(t *testing.T) {
 	// people.Service.UploadAvatar delegates to its own FileService field.
 	peopleSvc.FileService = fileSvc
 
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      peopleSvc,
 		FileSvc:        fileSvc,
 		AvatarBasePath: t.TempDir(),
@@ -139,7 +139,7 @@ func TestAvatarsUpload_HappyPath(t *testing.T) {
 
 func TestAvatarsUpload_InvalidID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		FileSvc:        &stubFileService{},
 		AvatarBasePath: t.TempDir(),
@@ -157,7 +157,7 @@ func TestAvatarsUpload_InvalidID_Returns400(t *testing.T) {
 func TestAvatarsUpload_UnsupportedMIME_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Bob")
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		FileSvc:        &stubFileService{},
 		AvatarBasePath: t.TempDir(),
@@ -175,7 +175,7 @@ func TestAvatarsUpload_UnsupportedMIME_Returns422(t *testing.T) {
 func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Charlie")
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		FileSvc:        &stubFileService{},
 		AvatarBasePath: t.TempDir(),
@@ -200,7 +200,7 @@ func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 
 func TestAvatarsDelete_PersonNotFound_Returns404(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		FileSvc:        &stubFileService{},
 		AvatarBasePath: t.TempDir(),
@@ -222,7 +222,7 @@ func TestAvatarsDelete_PersonNotFound_Returns404(t *testing.T) {
 func TestAvatarsGet_NoAvatar_Returns404(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Dave")
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		FileSvc:        &stubFileService{},
 		AvatarBasePath: t.TempDir(),
@@ -239,7 +239,7 @@ func TestAvatarsGet_NoAvatar_Returns404(t *testing.T) {
 
 func TestAvatarsGet_InvalidID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      newPeopleService(db),
 		AvatarBasePath: t.TempDir(),
 	}

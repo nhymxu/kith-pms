@@ -1,4 +1,4 @@
-package api_test
+package handler_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 	"github.com/nhymxu/kith-pms/internal/auth"
 )
 
@@ -17,7 +17,7 @@ import (
 func TestAuthLogin_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	req := jsonRequest(http.MethodPost, "/v1/auth/login", `{"password":"correct-pw"}`)
@@ -48,7 +48,7 @@ func TestAuthLogin_HappyPath(t *testing.T) {
 func TestAuthLogin_WrongPassword_Returns401(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	req := jsonRequest(http.MethodPost, "/v1/auth/login", `{"password":"wrong-pw"}`)
@@ -62,7 +62,7 @@ func TestAuthLogin_WrongPassword_Returns401(t *testing.T) {
 func TestAuthLogin_MissingPassword_Returns400(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	req := jsonRequest(http.MethodPost, "/v1/auth/login", `{}`)
@@ -78,7 +78,7 @@ func TestAuthLogin_MissingPassword_Returns400(t *testing.T) {
 func TestAuthLogout_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	session := loginAndGetCookie(t, svc, "pw")
 
@@ -110,7 +110,7 @@ func TestAuthLogout_HappyPath(t *testing.T) {
 func TestAuthMe_AuthenticatedUser_Returns200(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	// Fetch the seeded user to use as context value.
 	user, err := svc.Users.GetUser(context.Background()) //nolint:staticcheck
@@ -134,7 +134,7 @@ func TestAuthMe_AuthenticatedUser_Returns200(t *testing.T) {
 func TestAuthMe_Unauthenticated_Returns401(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	req := jsonRequest(http.MethodGet, "/v1/auth/me", "")
@@ -151,7 +151,7 @@ func TestAuthMe_Unauthenticated_Returns401(t *testing.T) {
 func TestAuthChangePassword_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "old-pw-long")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	body := `{"current_password":"old-pw-long","new_password":"new-pw-long","confirm_password":"new-pw-long"}`
@@ -170,7 +170,7 @@ func TestAuthChangePassword_HappyPath(t *testing.T) {
 func TestAuthChangePassword_WrongCurrentPassword_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	body := `{"current_password":"wrong-pw","new_password":"new-pw-long","confirm_password":"new-pw-long"}`
@@ -185,7 +185,7 @@ func TestAuthChangePassword_WrongCurrentPassword_Returns422(t *testing.T) {
 func TestAuthChangePassword_MismatchConfirm_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	body := `{"current_password":"correct-pw","new_password":"new-pw-long","confirm_password":"different-pw"}`
@@ -200,7 +200,7 @@ func TestAuthChangePassword_MismatchConfirm_Returns422(t *testing.T) {
 func TestAuthChangePassword_TooShort_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "correct-pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	e := newTestEcho()
 	body := `{"current_password":"correct-pw","new_password":"short","confirm_password":"short"}`
@@ -217,7 +217,7 @@ func TestAuthChangePassword_TooShort_Returns422(t *testing.T) {
 func TestAuthLogoutAll_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	svc := newTestAuthSvc(t, db, "pw")
-	h := &api.AuthAPI{Svc: svc}
+	h := &handler.AuthAPI{Svc: svc}
 
 	// User is already seeded by newTestAuthSvc — LogoutAll resolves via Users.GetUser.
 

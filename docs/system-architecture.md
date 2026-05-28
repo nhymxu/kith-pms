@@ -211,6 +211,15 @@ export function PersonForm() {
 
 ## HTTP Server (Echo v5.1.1)
 
+### Handler Architecture
+
+**Handler Package Pattern** (`internal/api/handler/`):
+- All HTTP handlers organized in a dedicated `handler/` subpackage
+- Struct-based handlers with injected service dependencies
+- Pattern: `type XxxAPI struct { Svc *xxx.Service }` with method receivers `(h *XxxAPI) MethodName(c echo.Context) error`
+- Centralized response helpers in `response.go`: `ok(c, data)`, `created(c, data)`, `apiErr(c, code, msg)` with {data, error} envelope
+- 23 handler files organized by domain (auth, people, labels, journal, dates, gifts, reminders, audit, relationships, work_history, avatars, people_labels, people_quick, me) plus testhelpers
+
 ### Global Middleware Stack (applied in order)
 
 | Middleware | Purpose |

@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 	"github.com/nhymxu/kith-pms/internal/api/spa"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
@@ -88,7 +89,7 @@ func Mount(e *echo.Echo, deps Deps) {
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
-	h := &PeopleAPI{Svc: deps.PeopleService}
+	h := &handler.PeopleAPI{Svc: deps.PeopleService}
 	g.GET("/people", h.List)
 	g.POST("/people", h.Create)
 	g.GET("/people/:id", h.Get)
@@ -97,7 +98,7 @@ func mountPeople(g *echo.Group, deps Deps) {
 }
 
 func mountLabels(g *echo.Group, deps Deps) {
-	h := &LabelsAPI{Svc: deps.LabelsService}
+	h := &handler.LabelsAPI{Svc: deps.LabelsService}
 	g.GET("/labels", h.List)
 	g.POST("/labels", h.Create)
 	g.GET("/labels/:id", h.Get)
@@ -106,7 +107,7 @@ func mountLabels(g *echo.Group, deps Deps) {
 }
 
 func mountJournal(g *echo.Group, deps Deps) {
-	h := &JournalAPI{Svc: deps.JournalService}
+	h := &handler.JournalAPI{Svc: deps.JournalService}
 	g.GET("/journal", h.List)
 	g.POST("/journal", h.Create)
 	g.GET("/journal/:id", h.Get)
@@ -117,10 +118,10 @@ func mountJournal(g *echo.Group, deps Deps) {
 func mountReminders(g *echo.Group, deps Deps) {
 	svc := deps.RemindersService
 	if deps.PeopleService != nil {
-		svc.Journal = &peopleLastContacter{people: deps.PeopleService}
+		svc.Journal = handler.NewPeopleLastContacter(deps.PeopleService)
 	}
 
-	h := &RemindersAPI{Svc: svc}
+	h := &handler.RemindersAPI{Svc: svc}
 	g.GET("/reminders", h.List)
 	g.POST("/reminders", h.Create)
 	g.GET("/reminders/:id", h.Get)
@@ -130,26 +131,26 @@ func mountReminders(g *echo.Group, deps Deps) {
 }
 
 func mountWorkHistory(g *echo.Group, deps Deps) {
-	h := &WorkHistoryAPI{Svc: deps.WorkHistoryService}
+	h := &handler.WorkHistoryAPI{Svc: deps.WorkHistoryService}
 	g.GET("/people/:id/work-history", h.ListByPerson)
 	g.PUT("/people/:id/work-history", h.ReplaceForPerson)
 }
 
 func mountDates(g *echo.Group, deps Deps) {
-	h := &DatesAPI{Svc: deps.DatesService}
+	h := &handler.DatesAPI{Svc: deps.DatesService}
 	g.GET("/people/:id/dates", h.ListByPerson)
 	g.PUT("/people/:id/dates", h.ReplaceForPerson)
 	g.GET("/dates/upcoming", h.Upcoming)
 }
 
 func mountAudit(g *echo.Group, deps Deps) {
-	h := &AuditAPI{Svc: deps.AuditService, SettingsSvc: deps.SettingsService}
+	h := &handler.AuditAPI{Svc: deps.AuditService, SettingsSvc: deps.SettingsService}
 	g.GET("/audit", h.List)
 	g.POST("/audit/cleanup", h.Cleanup)
 }
 
 func mountGifts(g *echo.Group, deps Deps) {
-	h := &GiftsAPI{Svc: deps.GiftsService, GiftStoragePath: deps.GiftStoragePath}
+	h := &handler.GiftsAPI{Svc: deps.GiftsService, GiftStoragePath: deps.GiftStoragePath}
 	g.GET("/gifts", h.List)
 	g.POST("/gifts", h.Create)
 	g.GET("/gifts/:id", h.GetByID)
@@ -171,7 +172,11 @@ func mountAuth(g *echo.Group, deps Deps) {
 	// attach the /v1/auth/login endpoint to a separate unprotected group in the echo
 	// instance. The other auth endpoints (logout, me, password) remain inside the
 	// protected group.
-	h := newAuthAPI(deps)
+	h := &handler.AuthAPI{
+		Svc:             deps.AuthService,
+		SessionLifetime: deps.SessionLifetime,
+		BehindTLS:       deps.BehindTLS,
+	}
 
 	// Protected auth endpoints (require existing auth or cookie).
 	g.POST("/auth/logout", h.Logout)
@@ -184,20 +189,24 @@ func mountAuth(g *echo.Group, deps Deps) {
 // Called separately because the /v1 group requires auth — login must bypass it.
 // The limiter argument enforces a shared 5/15min bucket per IP across all login endpoints.
 func MountAuthLogin(e *echo.Echo, deps Deps, limiter echo.MiddlewareFunc) {
-	h := newAuthAPI(deps)
+	h := &handler.AuthAPI{
+		Svc:             deps.AuthService,
+		SessionLifetime: deps.SessionLifetime,
+		BehindTLS:       deps.BehindTLS,
+	}
 
 	loginGroup := e.Group("/v1/auth", limiter)
 	loginGroup.POST("/login", h.Login)
 }
 
 func mountMe(g *echo.Group, deps Deps) {
-	h := &MeAPI{PeopleSvc: deps.PeopleService}
+	h := &handler.MeAPI{PeopleSvc: deps.PeopleService}
 	g.GET("/me", h.GetMe)
 	g.POST("/me/setup", h.PostSetup)
 }
 
 func mountRelationships(g *echo.Group, deps Deps) {
-	h := &RelationshipsAPI{Svc: deps.RelationshipsService}
+	h := &handler.RelationshipsAPI{Svc: deps.RelationshipsService}
 	g.GET("/relationship-types", h.ListTypes)
 	g.POST("/relationship-types", h.CreateType)
 	g.PUT("/relationship-types/:id", h.UpdateType)
@@ -208,13 +217,13 @@ func mountRelationships(g *echo.Group, deps Deps) {
 }
 
 func mountPeopleLabels(g *echo.Group, deps Deps) {
-	h := &PeopleLabelsAPI{Svc: deps.LabelsService}
+	h := &handler.PeopleLabelsAPI{Svc: deps.LabelsService}
 	g.POST("/people/:id/labels", h.Attach)
 	g.DELETE("/people/:id/labels/:labelID", h.Detach)
 }
 
 func mountPeopleAvatars(g *echo.Group, deps Deps) {
-	h := &AvatarsAPI{
+	h := &handler.AvatarsAPI{
 		PeopleSvc:      deps.PeopleService,
 		FileSvc:        deps.FileSvc,
 		AvatarBasePath: deps.AvatarBasePath,
@@ -225,13 +234,13 @@ func mountPeopleAvatars(g *echo.Group, deps Deps) {
 }
 
 func mountSettings(g *echo.Group, deps Deps) {
-	h := &SettingsAPI{Svc: deps.SettingsService}
+	h := &handler.SettingsAPI{Svc: deps.SettingsService}
 	g.GET("/settings", h.Get)
 	g.PUT("/settings", h.Update)
 }
 
 func mountPeopleQuick(g *echo.Group, deps Deps) {
-	h := &PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc:  deps.PeopleService,
 		JournalSvc: deps.JournalService,
 		GiftsSvc:   deps.GiftsService,

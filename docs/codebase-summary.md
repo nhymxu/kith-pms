@@ -86,20 +86,29 @@ kith-pms/
 │   │   ├── parser.go             # Monica JSON export format unmarshaling
 │   │   ├── mapper.go             # Field mapping from Monica to kith-pms domain
 │   │   └── mapper_test.go        # Unit tests for Monica-to-domain mapping
-│   ├── api/                      # HTTP API handlers
-│   │   ├── auth.go               # Authentication endpoints
-│   │   ├── handlers_people.go    # People CRUD endpoints
-│   │   ├── handlers_journal.go   # Journal endpoints
-│   │   ├── handlers_gifts.go     # Gift endpoints with image upload
-│   │   ├── handlers_reminders.go # Reminder endpoints
-│   │   ├── handlers_dates.go     # Important dates endpoints
-│   │   ├── handlers_labels.go    # Label endpoints
-│   │   ├── relationships.go      # Relationship type endpoints
-│   │   ├── handlers_audit.go     # Audit log endpoints
-│   │   ├── me.go                 # User profile endpoints
+│   ├── api/                      # HTTP API handlers & server
+│   │   ├── handler/              # HTTP handler package (struct-based handlers with injected services)
+│   │   │   ├── auth.go / auth_test.go                # Authentication endpoints
+│   │   │   ├── people.go                             # People CRUD endpoints
+│   │   │   ├── journal.go                            # Journal endpoints
+│   │   │   ├── gifts.go                              # Gift endpoints with image upload
+│   │   │   ├── reminders.go                          # Reminder endpoints
+│   │   │   ├── dates.go                              # Important dates endpoints
+│   │   │   ├── labels.go                             # Label endpoints
+│   │   │   ├── relationships.go / relationships_test.go # Relationship type endpoints
+│   │   │   ├── audit.go / audit_test.go              # Audit log endpoints
+│   │   │   ├── me.go                                 # User profile endpoints
+│   │   │   ├── avatars.go / avatars_test.go          # Avatar endpoints
+│   │   │   ├── people_labels.go / people_labels_test.go # People-label association endpoints
+│   │   │   ├── people_quick.go / people_quick_test.go   # Quick operations endpoints
+│   │   │   ├── work_history.go                       # Work history endpoints
+│   │   │   ├── response.go                           # Response helpers (ok, created, apiErr)
+│   │   │   └── testhelpers_test.go                   # Test utilities
 │   │   ├── server.go             # Echo setup (global middleware)
 │   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler()
 │   │   ├── middleware.go         # Auth, session, audit actor middleware
+│   │   ├── session_gc.go         # Session garbage collection
+│   │   ├── journal_people_adapter.go # Adapter for journal-people operations
 │   │   └── spa/                  # Embedded React SPA
 │   │       ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
 │   │       └── public/           # Populated by `make web` (gitignored except placeholder.txt)
@@ -250,20 +259,28 @@ kith-pms/
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
 
 ### `internal/api` — HTTP API handlers & server
-- **auth.go**: POST /login, /logout, /logout-all, GET /me, POST /password
-- **handlers_people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
-- **handlers_journal.go**: CRUD with multi-person tagging, search, date range filter
-- **handlers_gifts.go**: CRUD + image upload/delete/get, filterable by person/direction/debt_type
-- **handlers_reminders.go**: CRUD + PATCH complete, filterable upcoming/overdue/all
-- **handlers_dates.go**: GET /upcoming (30-day window)
-- **handlers_labels.go**: CRUD with usage counts
-- **relationships.go**: CRUD with usage counts
-- **handlers_settings.go**: GET /settings, PUT /settings for user preferences (date format, time format, timezone, audit_log_retention_days)
-- **handlers_audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
-- **me.go**: GET profile, POST setup
+- **handler/ package** — HTTP handler structs with injected services (struct-based pattern)
+  - **auth.go**: Authentication endpoints (POST /login, /logout, /logout-all, GET /me, POST /password)
+  - **people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
+  - **journal.go**: CRUD with multi-person tagging, search, date range filter
+  - **gifts.go**: CRUD + image upload/delete/get, filterable by person/direction/debt_type
+  - **reminders.go**: CRUD + PATCH complete, filterable upcoming/overdue/all
+  - **dates.go**: GET /upcoming (30-day window)
+  - **labels.go**: CRUD with usage counts
+  - **relationships.go**: CRUD with usage counts
+  - **audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
+  - **me.go**: GET profile, POST setup
+  - **avatars.go**: Avatar endpoints (already in handler package)
+  - **people_labels.go**: People-label association endpoints
+  - **people_quick.go**: Quick operations endpoints
+  - **work_history.go**: Work history endpoints
+  - **response.go**: Response helpers (ok, created, apiErr) with envelope {data, error}
+  - **testhelpers_test.go**: Test utilities
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
-- **mount.go**: Mounts `/health`, `/ready`, `/metrics`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware
+- **mount.go**: Mounts `/health`, `/ready`, `/metrics`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware; handler package imports
 - **middleware.go**: Auth, session validation, CSRF checks, audit actor injection
+- **session_gc.go**: Session garbage collection utilities
+- **journal_people_adapter.go**: Adapter for journal-people operations
 - **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
 

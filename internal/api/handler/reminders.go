@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"context"
@@ -31,6 +31,11 @@ func (p *peopleLastContacter) LastContactDate(ctx context.Context, personID int6
 	}
 
 	return *person.LastContactAt, nil
+}
+
+// NewPeopleLastContacter creates a reminders.JournalLastContacter backed by people.Service.
+func NewPeopleLastContacter(svc *people.Service) reminders.JournalLastContacter {
+	return &peopleLastContacter{people: svc}
 }
 
 type RemindersAPI struct {

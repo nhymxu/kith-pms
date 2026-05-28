@@ -1,4 +1,4 @@
-package api_test
+package handler_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 )
 
 // ---- QuickJournal -----------------------------------------------------------
@@ -15,7 +15,7 @@ import (
 func TestPeopleQuickJournal_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Alice")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc:  newPeopleService(db),
 		JournalSvc: newJournalService(db),
 	}
@@ -36,7 +36,7 @@ func TestPeopleQuickJournal_HappyPath(t *testing.T) {
 func TestPeopleQuickJournal_MissingTitle_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Bob")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc:  newPeopleService(db),
 		JournalSvc: newJournalService(db),
 	}
@@ -51,7 +51,7 @@ func TestPeopleQuickJournal_MissingTitle_Returns422(t *testing.T) {
 
 func TestPeopleQuickJournal_PersonNotFound_Returns404(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc:  newPeopleService(db),
 		JournalSvc: newJournalService(db),
 	}
@@ -68,7 +68,7 @@ func TestPeopleQuickJournal_PersonNotFound_Returns404(t *testing.T) {
 func TestPeopleQuickJournal_InvalidDate_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Carol")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc:  newPeopleService(db),
 		JournalSvc: newJournalService(db),
 	}
@@ -87,7 +87,7 @@ func TestPeopleQuickJournal_InvalidDate_Returns422(t *testing.T) {
 func TestPeopleQuickGift_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Dave")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 		GiftsSvc:  newGiftsService(db),
 	}
@@ -104,7 +104,7 @@ func TestPeopleQuickGift_HappyPath(t *testing.T) {
 func TestPeopleQuickGift_MissingTitle_Returns422(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Eve")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 		GiftsSvc:  newGiftsService(db),
 	}
@@ -119,7 +119,7 @@ func TestPeopleQuickGift_MissingTitle_Returns422(t *testing.T) {
 
 func TestPeopleQuickGift_PersonNotFound_Returns404(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 		GiftsSvc:  newGiftsService(db),
 	}
@@ -137,7 +137,7 @@ func TestPeopleQuickGift_PersonNotFound_Returns404(t *testing.T) {
 func TestPeopleUpdateLastContact_HappyPath(t *testing.T) {
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Frank")
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 	}
 
@@ -151,7 +151,7 @@ func TestPeopleUpdateLastContact_HappyPath(t *testing.T) {
 
 func TestPeopleUpdateLastContact_PersonNotFound_Returns404(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 	}
 
@@ -165,7 +165,7 @@ func TestPeopleUpdateLastContact_PersonNotFound_Returns404(t *testing.T) {
 
 func TestPeopleUpdateLastContact_InvalidID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleQuickAPI{
+	h := &handler.PeopleQuickAPI{
 		PeopleSvc: newPeopleService(db),
 	}
 

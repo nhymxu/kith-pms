@@ -1,4 +1,4 @@
-package api_test
+package handler_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nhymxu/kith-pms/internal/api"
+	"github.com/nhymxu/kith-pms/internal/api/handler"
 )
 
 func TestPeopleLabelsAttach_HappyPath(t *testing.T) {
@@ -20,7 +20,7 @@ func TestPeopleLabelsAttach_HappyPath(t *testing.T) {
 		t.Fatalf("create label: %v", err)
 	}
 
-	h := &api.PeopleLabelsAPI{Svc: labelsSvc}
+	h := &handler.PeopleLabelsAPI{Svc: labelsSvc}
 	req := jsonRequest(http.MethodPost, "/v1/people/1/labels",
 		fmt.Sprintf(`{"label_id":%d}`, labelID))
 	rec := execHandler(newTestEcho(), req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.Attach)
@@ -32,7 +32,7 @@ func TestPeopleLabelsAttach_HappyPath(t *testing.T) {
 
 func TestPeopleLabelsAttach_MissingLabelID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleLabelsAPI{Svc: newLabelsService(db)}
+	h := &handler.PeopleLabelsAPI{Svc: newLabelsService(db)}
 
 	req := jsonRequest(http.MethodPost, "/v1/people/1/labels", `{"label_id":0}`)
 	rec := execHandler(newTestEcho(), req, map[string]string{"id": "1"}, h.Attach)
@@ -44,7 +44,7 @@ func TestPeopleLabelsAttach_MissingLabelID_Returns400(t *testing.T) {
 
 func TestPeopleLabelsAttach_InvalidPersonID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleLabelsAPI{Svc: newLabelsService(db)}
+	h := &handler.PeopleLabelsAPI{Svc: newLabelsService(db)}
 
 	req := jsonRequest(http.MethodPost, "/v1/people/bad/labels", `{"label_id":1}`)
 	rec := execHandler(newTestEcho(), req, map[string]string{"id": "bad"}, h.Attach)
@@ -66,7 +66,7 @@ func TestPeopleLabelsDetach_HappyPath(t *testing.T) {
 
 	_ = labelsSvc.Attach(context.Background(), personID, labelID)
 
-	h := &api.PeopleLabelsAPI{Svc: labelsSvc}
+	h := &handler.PeopleLabelsAPI{Svc: labelsSvc}
 	req := httptest.NewRequest(http.MethodDelete,
 		fmt.Sprintf("/v1/people/%d/labels/%d", personID, labelID), nil)
 	rec := execHandler(newTestEcho(), req,
@@ -80,7 +80,7 @@ func TestPeopleLabelsDetach_HappyPath(t *testing.T) {
 
 func TestPeopleLabelsDetach_InvalidLabelID_Returns400(t *testing.T) {
 	db := openTestDB(t)
-	h := &api.PeopleLabelsAPI{Svc: newLabelsService(db)}
+	h := &handler.PeopleLabelsAPI{Svc: newLabelsService(db)}
 
 	req := httptest.NewRequest(http.MethodDelete, "/v1/people/1/labels/bad", nil)
 	rec := execHandler(newTestEcho(), req,

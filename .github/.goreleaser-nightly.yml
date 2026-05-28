@@ -1,0 +1,53 @@
+version: 2
+
+before:
+  hooks:
+    - make web
+
+builds:
+  - id: kith-pms
+    main: ./cmd
+    binary: kith-pms
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w -X main.version=nightly -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - id: kith-pms
+    name_template: "{{ .ProjectName }}_nightly_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    formats:
+      - tar.gz
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  disable: true
+
+release:
+  prerelease: true
+  name_template: "Nightly Build"
+  header: |
+    ## Nightly Build
+
+    > **Warning**: This is an automated nightly build from the main branch.
+    > It may contain bugs and breaking changes. Use at your own risk.
+    > For stable releases, please use a versioned release.
+
+    Built from commit: {{ .ShortCommit }}

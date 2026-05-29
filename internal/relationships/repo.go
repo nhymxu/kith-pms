@@ -220,7 +220,7 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 
 	err := r.db.NewSelect().
 		TableExpr("person_relationship pr").
-		ColumnExpr("pr.id, pr.to_person_id AS other_person_id, p.name AS other_person_name, COALESCE(p.avatar_path, '') AS other_person_avatar, t.name AS type_name, pr.notes").
+		ColumnExpr("pr.id, pr.to_person_id AS other_person_id, p.name AS other_person_name, COALESCE(p.avatar_path, '') AS other_person_avatar, t.name AS type_name, pr.notes"). //nolint:golines,lll
 		Join("JOIN person p ON p.id = pr.to_person_id").
 		Join("JOIN relationship_type t ON t.id = pr.relationship_type_id").
 		Where("pr.from_person_id = ?", personID).

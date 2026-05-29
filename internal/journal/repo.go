@@ -34,6 +34,7 @@ func NewActivityRepo(db *bun.DB) ActivityRepo { return &sqlActivityRepo{db: db} 
 func (r *sqlActivityRepo) Create(ctx context.Context, tx bun.Tx, a Activity) (int64, error) {
 	a.CreatedAt = time.Now().UTC()
 	a.UpdatedAt = a.CreatedAt
+
 	_, err := tx.NewInsert().Model(&a).Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("journal: create activity: %w", err)
@@ -44,6 +45,7 @@ func (r *sqlActivityRepo) Create(ctx context.Context, tx bun.Tx, a Activity) (in
 
 func (r *sqlActivityRepo) Update(ctx context.Context, tx bun.Tx, a Activity) error {
 	a.UpdatedAt = time.Now().UTC()
+
 	_, err := tx.NewUpdate().Model(&a).WherePK().
 		Column("title", "occurred_at_date", "occurred_at_time", "content", "updated_at").
 		Exec(ctx)
@@ -56,6 +58,7 @@ func (r *sqlActivityRepo) Update(ctx context.Context, tx bun.Tx, a Activity) err
 
 func (r *sqlActivityRepo) Get(ctx context.Context, id int64) (*Activity, error) {
 	var a Activity
+
 	err := r.db.NewSelect().Model(&a).Where("\"activity\".\"id\" = ?", id).Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
@@ -95,7 +98,7 @@ func (r *sqlActivityRepo) buildActivityQuery(params ListParams) *bun.SelectQuery
 
 	if len(params.LabelIDs) > 0 {
 		q = q.Where(
-			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN (?))",
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN (?))", //nolint:lll
 			bun.List(params.LabelIDs),
 		)
 	}
@@ -125,7 +128,7 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	useFTS := strings.TrimSpace(params.Query) != ""
 
 	q := r.buildActivityQuery(params).
-		ColumnExpr("activity.id, activity.title, activity.occurred_at_date, activity.occurred_at_time, activity.content, activity.created_at, activity.updated_at")
+		ColumnExpr("activity.id, activity.title, activity.occurred_at_date, activity.occurred_at_time, activity.content, activity.created_at, activity.updated_at") //nolint:golines,lll
 
 	if useFTS {
 		q = q.OrderExpr("bm25(activity_fts), activity.occurred_at_date DESC, activity.id DESC")
@@ -144,6 +147,7 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 	}
 
 	var list []Activity
+
 	err := q.Limit(pageSize).Offset((page-1)*pageSize).Scan(ctx, &list)
 	if err != nil {
 		return nil, fmt.Errorf("journal: list activities: %w", err)

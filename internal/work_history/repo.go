@@ -48,6 +48,7 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, ent
 	}
 
 	now := time.Now().UTC()
+
 	for i := range entries {
 		entries[i].PersonID = personID
 		entries[i].CreatedAt = now

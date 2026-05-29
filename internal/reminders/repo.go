@@ -170,7 +170,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	results := make([]ReminderWithPerson, 0, len(rows))
 	for _, row := range rows {
 		results = append(results, ReminderWithPerson{
-			Reminder:   *row.reminderRow.toReminder(),
+			Reminder:   *row.toReminder(),
 			PersonName: row.PersonName,
 		})
 	}
@@ -201,7 +201,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 	results := make([]ReminderWithPerson, 0, len(rows))
 	for _, row := range rows {
 		results = append(results, ReminderWithPerson{
-			Reminder:   *row.reminderRow.toReminder(),
+			Reminder:   *row.toReminder(),
 			PersonName: row.PersonName,
 		})
 	}
@@ -229,7 +229,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 	results := make([]ReminderWithPerson, 0, len(rows))
 	for _, row := range rows {
 		results = append(results, ReminderWithPerson{
-			Reminder:   *row.reminderRow.toReminder(),
+			Reminder:   *row.toReminder(),
 			PersonName: row.PersonName,
 		})
 	}

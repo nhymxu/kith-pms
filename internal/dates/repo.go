@@ -50,6 +50,7 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dat
 	}
 
 	now := time.Now().UTC()
+
 	for i := range dates {
 		dates[i].PersonID = personID
 		dates[i].CreatedAt = now
@@ -115,6 +116,7 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		if createdAt != "" {
 			item.Date.CreatedAt, _ = time.Parse(time.RFC3339Nano, createdAt)
 		}
+
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
 		}
@@ -189,6 +191,7 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 		if createdAt != "" {
 			item.Date.CreatedAt, _ = time.Parse(time.RFC3339Nano, createdAt)
 		}
+
 		if nickname.Valid {
 			item.Person.Nickname = nickname.String
 		}

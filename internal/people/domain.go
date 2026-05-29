@@ -3,8 +3,9 @@ package people
 import (
 	"time"
 
-	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/uptrace/bun"
+
+	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
 // Gender enum keys stored in DB; full labels are defined here for reference.

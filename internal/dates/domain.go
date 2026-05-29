@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/uptrace/bun"
+
+	"github.com/nhymxu/kith-pms/internal/people"
 )
 
 type Kind string

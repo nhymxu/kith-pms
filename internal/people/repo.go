@@ -63,10 +63,12 @@ func (r *sqlPersonRepo) List(
 	// Use INTERSECT subqueries — one per label ID (bun has no INTERSECT support).
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
+
 		args := make([]any, len(labelIDs))
 		for i, id := range labelIDs {
 			args[i] = id
 		}
+
 		sq = sq.Where("id IN ("+sub+")", args...)
 	}
 
@@ -88,10 +90,12 @@ func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (
 
 	if len(labelIDs) > 0 {
 		sub := buildLabelIntersect(labelIDs)
+
 		args := make([]any, len(labelIDs))
 		for i, id := range labelIDs {
 			args[i] = id
 		}
+
 		sq = sq.Where("id IN ("+sub+")", args...)
 	}
 

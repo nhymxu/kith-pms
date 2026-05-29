@@ -2,17 +2,18 @@ package audit
 
 import (
 	"context"
-	"database/sql"
 	"log/slog"
+
+	"github.com/uptrace/bun"
 )
 
 // Service provides audit logging for domain mutations.
 type Service struct {
-	db   *sql.DB
+	db   *bun.DB
 	repo *Repo
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{db: db, repo: NewRepo()}
 }
 

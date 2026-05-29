@@ -6,21 +6,25 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlite", ":memory:")
+func setupTestDB(t *testing.T) *bun.DB {
+	sqldb, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
 
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
+	_, err = sqldb.Exec("PRAGMA foreign_keys = ON")
 	if err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
 
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL
@@ -30,7 +34,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 		t.Fatalf("create person table: %v", err)
 	}
 
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE important_date (
 			id INTEGER PRIMARY KEY,
 			person_id INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,
@@ -42,7 +46,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 		t.Fatalf("create important_date table: %v", err)
 	}
 
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE reminder (
 			id INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,

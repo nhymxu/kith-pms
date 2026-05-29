@@ -2,10 +2,11 @@ package settings
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strconv"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -30,7 +31,7 @@ type Service struct {
 	Repo Repo
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{Repo: NewRepo(db)}
 }
 
@@ -79,7 +80,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidRetentionDays
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:            in.DateFormat,
 		KeyTimeFormat:            in.TimeFormat,

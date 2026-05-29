@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
+
+	"github.com/uptrace/bun"
 )
 
 // ---- RelationshipTypeRepo ---------------------------------------------------
@@ -21,34 +22,29 @@ type RelationshipTypeRepo interface {
 	ListWithCounts(ctx context.Context) ([]RelationshipType, error)
 }
 
-type sqlRelationshipTypeRepo struct{ db *sql.DB }
+type sqlRelationshipTypeRepo struct{ db *bun.DB }
 
-func NewSQLRelationshipTypeRepo(db *sql.DB) RelationshipTypeRepo {
+func NewSQLRelationshipTypeRepo(db *bun.DB) RelationshipTypeRepo {
 	return &sqlRelationshipTypeRepo{db: db}
 }
 
 func (r *sqlRelationshipTypeRepo) Create(ctx context.Context, name, reverseName string) (int64, error) {
-	res, err := r.db.ExecContext(ctx,
-		`INSERT INTO relationship_type (name, reverse_name) VALUES (?, ?)`,
-		name, reverseName,
-	)
+	rt := &RelationshipType{Name: name, ReverseName: reverseName}
+
+	_, err := r.db.NewInsert().Model(rt).Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("relationships: create type: %w", err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("relationships: create type last id: %w", err)
-	}
-
-	return id, nil
+	return rt.ID, nil
 }
 
 func (r *sqlRelationshipTypeRepo) Update(ctx context.Context, id int64, name, reverseName string) error {
-	_, err := r.db.ExecContext(ctx,
-		`UPDATE relationship_type SET name = ?, reverse_name = ? WHERE id = ?`,
-		name, reverseName, id,
-	)
+	_, err := r.db.NewUpdate().Model((*RelationshipType)(nil)).
+		Set("name = ?", name).
+		Set("reverse_name = ?", reverseName).
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("relationships: update type: %w", err)
 	}
@@ -57,10 +53,10 @@ func (r *sqlRelationshipTypeRepo) Update(ctx context.Context, id int64, name, re
 }
 
 func (r *sqlRelationshipTypeRepo) SetInverseTypeID(ctx context.Context, id int64, inverseID *int64) error {
-	_, err := r.db.ExecContext(ctx,
-		`UPDATE relationship_type SET inverse_type_id = ? WHERE id = ?`,
-		inverseID, id,
-	)
+	_, err := r.db.NewUpdate().Model((*RelationshipType)(nil)).
+		Set("inverse_type_id = ?", inverseID).
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("relationships: set inverse type: %w", err)
 	}
@@ -69,7 +65,7 @@ func (r *sqlRelationshipTypeRepo) SetInverseTypeID(ctx context.Context, id int64
 }
 
 func (r *sqlRelationshipTypeRepo) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM relationship_type WHERE id = ?`, id)
+	_, err := r.db.NewDelete().Model((*RelationshipType)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("relationships: delete type: %w", err)
 	}
@@ -78,71 +74,56 @@ func (r *sqlRelationshipTypeRepo) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *sqlRelationshipTypeRepo) Get(ctx context.Context, id int64) (*RelationshipType, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, name, reverse_name, inverse_type_id, created_at FROM relationship_type WHERE id = ?`, id,
-	)
+	var rt RelationshipType
 
-	t, err := scanRelationshipType(row)
+	err := r.db.NewSelect().Model(&rt).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("relationships: get type: %w", err)
 	}
 
-	return &t, nil
+	return &rt, nil
 }
 
 func (r *sqlRelationshipTypeRepo) List(ctx context.Context) ([]RelationshipType, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, name, reverse_name, inverse_type_id, created_at FROM relationship_type ORDER BY name`,
-	)
+	var types []RelationshipType
+
+	err := r.db.NewSelect().Model(&types).OrderExpr("name").Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list types: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	return collectRelationshipTypes(rows)
+	return types, nil
 }
 
 func (r *sqlRelationshipTypeRepo) ListWithCounts(ctx context.Context) ([]RelationshipType, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT rt.id, rt.name, rt.reverse_name, rt.inverse_type_id, rt.created_at,
-		        COUNT(pr.id) AS usage_count
-		 FROM relationship_type rt
-		 LEFT JOIN person_relationship pr ON pr.relationship_type_id = rt.id
-		 GROUP BY rt.id
-		 ORDER BY rt.name`,
-	)
+	var rows []struct {
+		RelationshipType
+		Count int `bun:"count"`
+	}
+
+	err := r.db.NewSelect().
+		TableExpr("relationship_type rt").
+		ColumnExpr("rt.*, COUNT(pr.id) AS count").
+		Join("LEFT JOIN person_relationship pr ON pr.relationship_type_id = rt.id").
+		GroupExpr("rt.id").
+		OrderExpr("rt.name").
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list types with counts: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var types []RelationshipType
-
-	for rows.Next() {
-		var (
-			rt        RelationshipType
-			createdAt string
-			inverseID sql.NullInt64
-		)
-		if err := rows.Scan(&rt.ID, &rt.Name, &rt.ReverseName, &inverseID, &createdAt, &rt.UsageCount); err != nil {
-			return nil, fmt.Errorf("relationships: scan type with count: %w", err)
-		}
-
-		rt.CreatedAt, _ = parseTime(createdAt)
-
-		if inverseID.Valid {
-			v := inverseID.Int64
-			rt.InverseTypeID = &v
-		}
-
+	types := make([]RelationshipType, 0, len(rows))
+	for _, row := range rows {
+		rt := row.RelationshipType
+		rt.UsageCount = row.Count
 		types = append(types, rt)
 	}
 
-	return types, rows.Err()
+	return types, nil
 }
 
 // ---- PersonRelationshipRepo -------------------------------------------------
@@ -155,16 +136,11 @@ type PersonRelationshipRepo interface {
 	ListByPersonID(ctx context.Context, personID int64) ([]RelationshipView, error)
 }
 
-// querier is satisfied by both *sql.DB and *sql.Tx, enabling transactional repo use.
-type querier interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
+// sqlPersonRelationshipRepo uses bun.IDB so it works with both *bun.DB and bun.Tx.
+// The service constructs it with a bun.Tx for transactional operations.
+type sqlPersonRelationshipRepo struct{ db bun.IDB }
 
-type sqlPersonRelationshipRepo struct{ db querier }
-
-func NewSQLPersonRelationshipRepo(db *sql.DB) PersonRelationshipRepo {
+func NewSQLPersonRelationshipRepo(db *bun.DB) PersonRelationshipRepo {
 	return &sqlPersonRelationshipRepo{db: db}
 }
 
@@ -173,25 +149,23 @@ func (r *sqlPersonRelationshipRepo) Attach(
 	fromID, toID, typeID int64,
 	notes string,
 ) (int64, error) {
-	res, err := r.db.ExecContext(ctx,
-		`INSERT INTO person_relationship (from_person_id, to_person_id, relationship_type_id, notes)
-		 VALUES (?, ?, ?, ?)`,
-		fromID, toID, typeID, notes,
-	)
+	pr := &PersonRelationship{
+		FromPersonID:       fromID,
+		ToPersonID:         toID,
+		RelationshipTypeID: typeID,
+		Notes:              notes,
+	}
+
+	_, err := r.db.NewInsert().Model(pr).Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("relationships: attach: %w", err)
 	}
 
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("relationships: attach last id: %w", err)
-	}
-
-	return id, nil
+	return pr.ID, nil
 }
 
 func (r *sqlPersonRelationshipRepo) Detach(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM person_relationship WHERE id = ?`, id)
+	_, err := r.db.NewDelete().Model((*PersonRelationship)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("relationships: detach: %w", err)
 	}
@@ -200,18 +174,15 @@ func (r *sqlPersonRelationshipRepo) Detach(ctx context.Context, id int64) error 
 }
 
 func (r *sqlPersonRelationshipRepo) Get(ctx context.Context, id int64) (*PersonRelationship, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, from_person_id, to_person_id, relationship_type_id, notes, created_at
-		 FROM person_relationship WHERE id = ?`, id,
-	)
+	var pr PersonRelationship
 
-	pr, err := scanPersonRelationship(row)
+	err := r.db.NewSelect().Model(&pr).Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("relationships: get: %w", err)
 	}
 
 	return &pr, nil
@@ -221,129 +192,57 @@ func (r *sqlPersonRelationshipRepo) FindPair(
 	ctx context.Context,
 	fromID, toID, typeID int64,
 ) (*PersonRelationship, error) {
-	row := r.db.QueryRowContext(ctx,
-		`SELECT id, from_person_id, to_person_id, relationship_type_id, notes, created_at
-		 FROM person_relationship
-		 WHERE from_person_id = ? AND to_person_id = ? AND relationship_type_id = ?`,
-		fromID, toID, typeID,
-	)
+	var pr PersonRelationship
 
-	pr, err := scanPersonRelationship(row)
+	err := r.db.NewSelect().Model(&pr).
+		Where("from_person_id = ? AND to_person_id = ? AND relationship_type_id = ?", fromID, toID, typeID).
+		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("relationships: find pair: %w", err)
 	}
 
 	return &pr, nil
 }
 
 func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID int64) ([]RelationshipView, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT pr.id, pr.to_person_id, p.name, COALESCE(p.avatar_path, ''), t.name, pr.notes
-		 FROM person_relationship pr
-		 JOIN person p            ON p.id = pr.to_person_id
-		 JOIN relationship_type t ON t.id = pr.relationship_type_id
-		 WHERE pr.from_person_id = ?
-		 ORDER BY t.name, p.name`,
-		personID,
-	)
+	var rows []struct {
+		ID                int64  `bun:"id"`
+		OtherPersonID     int64  `bun:"other_person_id"`
+		OtherPersonName   string `bun:"other_person_name"`
+		OtherPersonAvatar string `bun:"other_person_avatar"`
+		TypeName          string `bun:"type_name"`
+		Notes             string `bun:"notes"`
+	}
+
+	err := r.db.NewSelect().
+		TableExpr("person_relationship pr").
+		ColumnExpr("pr.id, pr.to_person_id AS other_person_id, p.name AS other_person_name, COALESCE(p.avatar_path, '') AS other_person_avatar, t.name AS type_name, pr.notes"). //nolint:golines,lll
+		Join("JOIN person p ON p.id = pr.to_person_id").
+		Join("JOIN relationship_type t ON t.id = pr.relationship_type_id").
+		Where("pr.from_person_id = ?", personID).
+		OrderExpr("t.name, p.name").
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("relationships: list by person: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var views []RelationshipView
-
-	for rows.Next() {
-		var v RelationshipView
-		if err := rows.Scan(
-			&v.ID,
-			&v.OtherPersonID,
-			&v.OtherPersonName,
-			&v.OtherPersonAvatar,
-			&v.TypeName,
-			&v.Notes,
-		); err != nil {
-			return nil, fmt.Errorf("relationships: scan view: %w", err)
-		}
-
-		views = append(views, v)
+	views := make([]RelationshipView, 0, len(rows))
+	for _, row := range rows {
+		views = append(views, RelationshipView{
+			ID:                row.ID,
+			OtherPersonID:     row.OtherPersonID,
+			OtherPersonName:   row.OtherPersonName,
+			OtherPersonAvatar: row.OtherPersonAvatar,
+			TypeName:          row.TypeName,
+			Notes:             row.Notes,
+		})
 	}
 
-	return views, rows.Err()
-}
-
-// ---- scan helpers -----------------------------------------------------------
-
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
-func scanRelationshipType(row rowScanner) (RelationshipType, error) {
-	var (
-		rt        RelationshipType
-		createdAt string
-		inverseID sql.NullInt64
-	)
-	if err := row.Scan(&rt.ID, &rt.Name, &rt.ReverseName, &inverseID, &createdAt); err != nil {
-		return RelationshipType{}, fmt.Errorf("relationships: scan type: %w", err)
-	}
-
-	rt.CreatedAt, _ = parseTime(createdAt)
-
-	if inverseID.Valid {
-		v := inverseID.Int64
-		rt.InverseTypeID = &v
-	}
-
-	return rt, nil
-}
-
-func collectRelationshipTypes(rows *sql.Rows) ([]RelationshipType, error) {
-	var types []RelationshipType
-
-	for rows.Next() {
-		rt, err := scanRelationshipType(rows)
-		if err != nil {
-			return nil, err
-		}
-
-		types = append(types, rt)
-	}
-
-	return types, rows.Err()
-}
-
-func scanPersonRelationship(row rowScanner) (PersonRelationship, error) {
-	var (
-		pr        PersonRelationship
-		createdAt string
-	)
-	if err := row.Scan(
-		&pr.ID,
-		&pr.FromPersonID,
-		&pr.ToPersonID,
-		&pr.RelationshipTypeID,
-		&pr.Notes,
-		&createdAt,
-	); err != nil {
-		return PersonRelationship{}, fmt.Errorf("relationships: scan junction: %w", err)
-	}
-
-	pr.CreatedAt, _ = parseTime(createdAt)
-
-	return pr, nil
-}
-
-func parseTime(s string) (time.Time, error) {
-	if t, err := time.Parse(time.RFC3339Nano, s); err == nil {
-		return t, nil
-	}
-
-	return time.Parse(time.RFC3339, s)
+	return views, nil
 }
 
 // isFKConstraintErr returns true for SQLite FOREIGN KEY constraint violations.

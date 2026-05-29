@@ -15,9 +15,11 @@ kith-pms/
 │   └── monica_import.go          # `monica-import` subcommand — imports Monica PRM JSON exports
 ├── internal/                     # Private application code
 │   ├── db/                       # Database layer
-│   │   ├── sqlite.go             # SQLite connection with WAL + ForeignKeys PRAGMAs
+│   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files
+│   │   └── migrations/           # SQL schema files (18 migrations)
+│   ├── testutil/                 # Test utilities
+│   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management
 │   │   ├── domain.go             # User, Session, CSRF token data structures
 │   │   ├── password.go           # bcrypt hashing & verification
@@ -25,7 +27,7 @@ kith-pms/
 │   │   ├── csrf.go               # CSRF token generation & validation
 │   │   ├── middleware.go         # Echo middleware for auth/session checks
 │   │   ├── service.go            # Auth business logic (login, logout, token refresh)
-│   │   ├── repo.go               # User & session queries
+│   │   ├── repo.go               # User & session queries (via bun)
 │   │   ├── service_test.go       # Service unit tests
 │   │   └── password_test.go      # Password hashing tests
 │   ├── audit/                    # Audit logging & change tracking
@@ -102,10 +104,11 @@ kith-pms/
 │   │   │   ├── people_labels.go / people_labels_test.go # People-label association endpoints
 │   │   │   ├── people_quick.go / people_quick_test.go   # Quick operations endpoints
 │   │   │   ├── work_history.go                       # Work history endpoints
+│   │   │   ├── settings.go                           # Settings endpoints
 │   │   │   ├── response.go                           # Response helpers (ok, created, apiErr)
 │   │   │   └── testhelpers_test.go                   # Test utilities
 │   │   ├── server.go             # Echo setup (global middleware)
-│   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler()
+│   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler() (imports handler/ package)
 │   │   ├── middleware.go         # Auth, session, audit actor middleware
 │   │   ├── session_gc.go         # Session garbage collection
 │   │   ├── journal_people_adapter.go # Adapter for journal-people operations
@@ -178,8 +181,11 @@ kith-pms/
 - **monica_import.go**: `monica-import` subcommand — imports contacts, labels, activities, reminders, dates, and avatars from a Monica PRM JSON export; decodes dataURLs for photos marked with `avatar_source: photo` and saves to disk
 
 ### `internal/db` — Database layer
-- **sqlite.go**: Opens SQLite with modernc.org/sqlite (no CGO); applies PRAGMAs for WAL, foreign keys, safe sync
-- **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions
+- **sqlite.go**: Opens SQLite via bun (uptrace/bun v1.2.18 wrapping modernc.org/sqlite); applies PRAGMAs for WAL, foreign keys, safe sync; returns `*bun.DB`
+- **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions; extracts underlying `*sql.DB` from `*bun.DB` for schema work
+
+### `internal/testutil` — Test utilities
+- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, runs all 18 migrations, registers `t.Cleanup` for teardown
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
@@ -188,7 +194,7 @@ kith-pms/
 - **csrf.go**: Per-request CSRF token generation & validation
 - **middleware.go**: Echo middleware for session validation and CSRF checks
 - **service.go**: Login/logout business logic; token refresh; password changes
-- **repo.go**: SQL queries for user lookups, session CRUD, token management
+- **repo.go**: User & session queries using bun (no raw SQL, uses bun query builders for readability)
 
 ### `internal/audit` — Audit logging & change tracking
 - **domain.go**: Entry (id, entity_type, entity_id, entity_name, action, actor_id, created_at), EntityType enum, Action enum
@@ -355,7 +361,11 @@ styles.css               # Tailwind + design tokens (:root variables)
 |---------|---------|---------|
 | `labstack/echo/v5` | v5.1.1+ | HTTP framework |
 | `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
-| `modernc.org/sqlite` | v1.50.0+ | Pure Go SQLite (no CGO) |
+| `uptrace/bun` | v1.2.18+ | Query builder + struct scanning |
+| `uptrace/bun/dialect/sqlitedialect` | v1.2.18+ | SQLite dialect for bun |
+| `uptrace/bun/driver/sqliteshim` | v1.2.18+ | SQLite driver shim (auto-selects modernc when CGO disabled) |
+| `uptrace/bun/extra/bundebug` | v1.2.18+ | Query debug logging hook |
+| `modernc.org/sqlite` | v1.50.1+ | Pure Go SQLite driver (no CGO) |
 | `golang.org/x/crypto` | latest | bcrypt password hashing |
 | `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
@@ -371,7 +381,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Test Coverage
 
-15 test files across:
+18+ test files across all domains using shared `testutil.NewDB(t *testing.T)` helper:
 - `auth`: password hashing, session tokens, CSRF token generation
 - `audit`: logging behavior, list queries, actor attribution
 - `people`: CRUD, search, label associations
@@ -379,10 +389,14 @@ styles.css               # Tailwind + design tokens (:root variables)
 - `journal`: CRUD, FTS5 full-text search
 - `dates`: important dates, OnThisDay queries, recurring logic
 - `files`: avatar upload, MIME validation, path traversal prevention
-- `reminders`: CRUD, completion tracking, status filtering
+- `reminders`: CRUD, completion tracking, status filtering, recurrence logic
 - `gifts`: CRUD, image operations, debt tracking
 - `relationships`: paired rows, self-loop guards, FK constraints
+- `settings`: configuration get/update, validation
+- `work_history`: CRUD operations
 
-**Total**: 159 Go tests passing. Run all: `make tests` (includes race detector)
+**Total**: 159 Go tests passing with race detector. Run all: `make tests`
+
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 18 migrations applied, providing clean per-test isolation.
 
 React frontend tests: Vitest + @testing-library/react; run via `pnpm --dir web test`

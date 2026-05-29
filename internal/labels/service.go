@@ -2,11 +2,12 @@ package labels
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
@@ -29,7 +30,7 @@ type Service struct {
 }
 
 // NewService constructs a Service wired to db.
-func NewService(db *sql.DB) *Service {
+func NewService(db *bun.DB) *Service {
 	return &Service{
 		Labels:       NewLabelRepo(db),
 		PersonLabels: NewPersonLabelRepo(db),

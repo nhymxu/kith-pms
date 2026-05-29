@@ -5,25 +5,29 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "github.com/uptrace/bun/driver/sqliteshim"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
+func setupTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	sqldb, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
 
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+
 	// Enable foreign keys (required for CASCADE).
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	_, err = sqldb.Exec("PRAGMA foreign_keys = ON")
 	if err != nil {
 		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	// Minimal person table.
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL
@@ -34,7 +38,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 	}
 
 	// work_history table matching migration 0010.
-	_, err = db.Exec(`
+	_, err = sqldb.Exec(`
 		CREATE TABLE work_history (
 			id INTEGER PRIMARY KEY,
 			person_id INTEGER NOT NULL REFERENCES person(id) ON DELETE CASCADE,

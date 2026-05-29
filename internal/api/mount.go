@@ -1,11 +1,11 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v5"
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/api/handler"
 	"github.com/nhymxu/kith-pms/internal/api/spa"
@@ -26,7 +26,7 @@ import (
 
 // Deps holds the dependencies required by the API layer.
 type Deps struct {
-	DB                   *sql.DB
+	DB                   *bun.DB
 	PeopleService        *people.Service
 	LabelsService        *labels.Service
 	JournalService       *journal.Service

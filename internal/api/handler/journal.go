@@ -93,7 +93,7 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 		Title:          req.Title,
 		Content:        req.Content,
 		OccurredAtDate: req.OccurredAtDate,
-		OccurredAtTime: req.OccurredAtTime,
+		OccurredAtTime: nullableString(req.OccurredAtTime),
 	}
 
 	id, err := h.Svc.Create(c.Request().Context(), a, req.PersonIDs)
@@ -124,7 +124,7 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 		Title:          req.Title,
 		Content:        req.Content,
 		OccurredAtDate: req.OccurredAtDate,
-		OccurredAtTime: req.OccurredAtTime,
+		OccurredAtTime: nullableString(req.OccurredAtTime),
 	}
 
 	if err := h.Svc.Update(c.Request().Context(), a, req.PersonIDs); err != nil {

@@ -2,26 +2,21 @@ package settings_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/settings"
 )
 
-func openTestDB(t *testing.T) *sql.DB {
+func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
-	}
-
-	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
-		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	if err := internaldb.Up(db); err != nil {

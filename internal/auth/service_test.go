@@ -2,17 +2,18 @@ package auth_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/auth"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 )
 
 // setupTestDB creates an in-memory SQLite database with schema applied.
-func setupTestDB(t *testing.T) *sql.DB {
+func setupTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
 	db, err := internaldb.Open(":memory:")

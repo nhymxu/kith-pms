@@ -213,12 +213,12 @@ export function PersonForm() {
 
 ### Handler Architecture
 
-**Handler Package Pattern** (`internal/api/handler/`):
-- All HTTP handlers organized in a dedicated `handler/` subpackage
+**Handler Package Pattern** (`internal/api/handler/` subdirectory):
+- All HTTP handlers organized in a dedicated `handler/` subpackage (moved from flat `internal/api/handlers_*.go` files)
 - Struct-based handlers with injected service dependencies
 - Pattern: `type XxxAPI struct { Svc *xxx.Service }` with method receivers `(h *XxxAPI) MethodName(c echo.Context) error`
 - Centralized response helpers in `response.go`: `ok(c, data)`, `created(c, data)`, `apiErr(c, code, msg)` with {data, error} envelope
-- 23 handler files organized by domain (auth, people, labels, journal, dates, gifts, reminders, audit, relationships, work_history, avatars, people_labels, people_quick, me) plus testhelpers
+- 20+ handler files organized by domain (auth, people, labels, journal, dates, gifts, reminders, audit, relationships, work_history, avatars, people_labels, people_quick, me) plus testhelpers
 
 ### Global Middleware Stack (applied in order)
 
@@ -376,7 +376,7 @@ Gift images are stored separately from avatars with similar security patterns:
 - On delete: clears DB metadata, removes file from disk
 - On retrieve: serves from disk with cache headers
 
-## Database Layer
+## Database Layer & ORM
 
 ### SQLite Configuration
 
@@ -384,10 +384,32 @@ Gift images are stored separately from avatars with similar security patterns:
 
 Connection settings:
 - **Driver**: `modernc.org/sqlite` (pure Go, no CGO)
+- **ORM Wrapper**: uptrace/bun (query builder + struct scanning)
+- **Raw SQL Approach**: All queries are raw SQL strings; bun used as thin wrapper for execution and struct scanning
+- **No ORM Models**: Intentionally skipped bun model layer; kept raw SQL throughout for simplicity
 - **WAL mode**: Write-Ahead Log for concurrent readers without blocking writer
 - **Foreign keys**: Enabled (PRAGMA foreign_keys=ON)
 - **Synchronous**: NORMAL (safe with WAL; balance of durability vs speed)
 - **MaxOpenConns**: 1 (serializes all writes per SQLite single-writer model)
+
+### Query Execution Pattern
+
+All 11 repositories accept `bun.IDB` interface (satisfied by `*bun.DB` or `bun.Tx`) for transaction support:
+```go
+func (r *Repo) GetByID(ctx context.Context, db bun.IDB, id int64) (*Model, error) {
+    // Raw SQL execution via bun
+    err := db.NewRaw("SELECT * FROM table WHERE id = ?", id).Scan(ctx, &result)
+    return result, err
+}
+```
+
+**FTS5 Queries**: Journal full-text search uses `db.NewRaw()` pattern with direct SQL:
+```go
+// FTS5 virtual table queries
+err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH ?)", term).Scan(ctx, &results)
+```
+
+**Debug Logging**: When `DEBUG=true`, `bundebug.NewQueryHook()` is conditionally registered for verbose query logging to stderr.
 
 ### Schema & Migrations
 

@@ -2,25 +2,20 @@ package audit_test
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 )
 
-func openTestDB(t *testing.T) *sql.DB {
+func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
-	}
-
-	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
-		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	if err := internaldb.Up(db); err != nil {
@@ -231,7 +226,7 @@ func TestAuditLog_OrderedNewestFirst(t *testing.T) {
 
 // ---- Purge tests ------------------------------------------------------------
 
-func insertAuditAt(t *testing.T, db *sql.DB, createdAt string) {
+func insertAuditAt(t *testing.T, db *bun.DB, createdAt string) {
 	t.Helper()
 
 	_, err := db.ExecContext(context.Background(),

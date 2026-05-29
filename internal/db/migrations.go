@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 //go:embed migrations/*.sql
@@ -24,7 +26,8 @@ type MigrationStatus struct {
 // Up applies all unapplied migrations in ascending version order.
 // Each migration runs in its own transaction; a failure rolls back that
 // migration only and returns the error immediately.
-func Up(db *sql.DB) error {
+func Up(bunDB *bun.DB) error {
+	db := bunDB.DB
 	if err := ensureMigrationsTable(db); err != nil {
 		return err
 	}
@@ -53,7 +56,8 @@ func Up(db *sql.DB) error {
 }
 
 // Status returns the list of all known migrations with their applied/pending state.
-func Status(db *sql.DB) ([]MigrationStatus, error) {
+func Status(bunDB *bun.DB) ([]MigrationStatus, error) {
+	db := bunDB.DB
 	if err := ensureMigrationsTable(db); err != nil {
 		return nil, err
 	}

@@ -29,6 +29,15 @@ func apiErr(c *echo.Context, code int, msg string) error {
 	return c.JSON(code, envelope{Error: msg})
 }
 
+// nullableString returns nil for empty strings, otherwise a pointer to the string.
+func nullableString(s string) *string {
+	if s == "" {
+		return nil
+	}
+
+	return &s
+}
+
 // parseDateOrDatetime accepts "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (datetime-local format).
 func parseDateOrDatetime(s string) (time.Time, error) {
 	if len(s) > 10 {

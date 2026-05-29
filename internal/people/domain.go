@@ -3,6 +3,8 @@ package people
 import (
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
@@ -18,25 +20,29 @@ const (
 
 // Person represents a contact in the personal relationship manager.
 type Person struct {
-	ID               int64          `json:"id"`
-	Prefix           string         `json:"prefix"`
-	Name             string         `json:"name"`
-	Nickname         string         `json:"nickname"`
-	Gender           string         `json:"gender"`
-	DateOfBirth      *time.Time     `json:"date_of_birth"`
-	RelationshipType string         `json:"relationship_type"`
-	OtherNotes       string         `json:"other_notes"`
-	AvatarPath       string         `json:"avatar_path"`
-	AvatarMimeType   string         `json:"avatar_mime_type"`
-	AvatarSize       int64          `json:"avatar_size"`
-	AvatarUploadedAt *time.Time     `json:"avatar_uploaded_at"`
-	LastContactAt    *time.Time     `json:"last_contact_at"`
-	IsSelf           bool           `json:"is_self"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	Contacts         []ContactInfo  `json:"contacts"`
-	Locations        []Location     `json:"locations"`
-	Labels           []labels.Label `json:"labels"`
+	bun.BaseModel `bun:"table:person,alias:p"`
+
+	ID               int64      `bun:",pk,autoincrement"    json:"id"`
+	Prefix           string     `bun:"prefix"               json:"prefix"`
+	Name             string     `bun:"name"                 json:"name"`
+	Nickname         string     `bun:"nickname"             json:"nickname"`
+	Gender           string     `bun:"gender"               json:"gender"`
+	DateOfBirth      *time.Time `bun:"date_of_birth"        json:"date_of_birth"`
+	RelationshipType string     `bun:"relationship_type"    json:"relationship_type"`
+	OtherNotes       string     `bun:"other_notes"          json:"other_notes"`
+	AvatarPath       string     `bun:"avatar_path"          json:"avatar_path"`
+	AvatarMimeType   string     `bun:"avatar_mime_type"     json:"avatar_mime_type"`
+	AvatarSize       int64      `bun:"avatar_size"          json:"avatar_size"`
+	AvatarUploadedAt *time.Time `bun:"avatar_uploaded_at"   json:"avatar_uploaded_at"`
+	LastContactAt    *time.Time `bun:"last_contact_at"      json:"last_contact_at"`
+	IsSelf           bool       `bun:"is_self"              json:"is_self"`
+	CreatedAt        time.Time  `bun:"created_at"           json:"created_at"`
+	UpdatedAt        time.Time  `bun:"updated_at"           json:"updated_at"`
+
+	// Computed/relation fields — populated separately, not stored in person table
+	Contacts  []ContactInfo  `bun:"-" json:"contacts"`
+	Locations []Location     `bun:"-" json:"locations"`
+	Labels    []labels.Label `bun:"-" json:"labels"`
 }
 
 // GetLastContactAt returns the last contact timestamp (for interface compatibility).
@@ -51,22 +57,26 @@ type PersonList struct {
 
 // ContactInfo represents a contact method (phone, email, social, etc.) for a Person.
 type ContactInfo struct {
-	ID       int64  `json:"id"`
-	PersonID int64  `json:"person_id"`
-	Type     string `json:"type"`
-	Value    string `json:"value"`
-	Label    string `json:"label"`
-	Position int    `json:"position"`
+	bun.BaseModel `bun:"table:contact_info,alias:ci"`
+
+	ID       int64  `bun:",pk,autoincrement" json:"id"`
+	PersonID int64  `bun:"person_id"         json:"person_id"`
+	Type     string `bun:"type"              json:"type"`
+	Value    string `bun:"value"             json:"value"`
+	Label    string `bun:"label"             json:"label"`
+	Position int    `bun:"position"          json:"position"`
 }
 
 // Location represents a physical address associated with a Person.
 type Location struct {
-	ID         int64  `json:"id"`
-	PersonID   int64  `json:"person_id"`
-	Type       string `json:"type"`
-	Address    string `json:"address"`
-	City       string `json:"city"`
-	Country    string `json:"country"`
-	PostalCode string `json:"postal_code"`
-	Position   int    `json:"position"`
+	bun.BaseModel `bun:"table:location,alias:loc"`
+
+	ID         int64  `bun:",pk,autoincrement" json:"id"`
+	PersonID   int64  `bun:"person_id"         json:"person_id"`
+	Type       string `bun:"type"              json:"type"`
+	Address    string `bun:"address"           json:"address"`
+	City       string `bun:"city"              json:"city"`
+	Country    string `bun:"country"           json:"country"`
+	PostalCode string `bun:"postal_code"       json:"postal_code"`
+	Position   int    `bun:"position"          json:"position"`
 }

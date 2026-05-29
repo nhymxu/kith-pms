@@ -2,10 +2,9 @@ package audit
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"strings"
-	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Repo struct{}
@@ -13,12 +12,8 @@ type Repo struct{}
 func NewRepo() *Repo { return &Repo{} }
 
 // Insert writes a single audit entry using the provided executor (db or tx).
-func (r *Repo) Insert(ctx context.Context, db sqlExecer, e Entry) error {
-	_, err := db.ExecContext(ctx,
-		`INSERT INTO audit_log (entity_type, entity_id, entity_name, action, actor_id)
-		 VALUES (?, ?, ?, ?, ?)`,
-		string(e.EntityType), e.EntityID, e.EntityName, string(e.Action), e.ActorID,
-	)
+func (r *Repo) Insert(ctx context.Context, db bun.IDB, e Entry) error {
+	_, err := db.NewInsert().Model(&e).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("audit: insert: %w", err)
 	}
@@ -27,7 +22,7 @@ func (r *Repo) Insert(ctx context.Context, db sqlExecer, e Entry) error {
 }
 
 // List returns paginated audit entries, optionally filtered by entity type and ID.
-func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, error) {
+func (r *Repo) List(ctx context.Context, db *bun.DB, p ListParams) ([]Entry, error) {
 	pageSize := p.PageSize
 	if pageSize <= 0 {
 		pageSize = 50
@@ -40,82 +35,41 @@ func (r *Repo) List(ctx context.Context, db *sql.DB, p ListParams) ([]Entry, err
 
 	offset := (page - 1) * pageSize
 
-	query := `SELECT id, entity_type, entity_id, entity_name, action, actor_id, created_at
-	          FROM audit_log`
-	args := []any{}
-	where := []string{}
+	var entries []Entry
+
+	q := db.NewSelect().Model(&entries).OrderExpr("created_at DESC, id DESC").Limit(pageSize).Offset(offset)
 
 	if p.EntityType != "" {
+		q = q.Where("entity_type = ?", string(p.EntityType))
 		if p.EntityID > 0 {
-			where = append(where, "entity_type = ?", "entity_id = ?")
-			args = append(args, string(p.EntityType), p.EntityID)
-		} else {
-			where = append(where, "entity_type = ?")
-			args = append(args, string(p.EntityType))
+			q = q.Where("entity_id = ?", p.EntityID)
 		}
 	}
 
 	if p.FromDate != "" {
-		where = append(where, "date(created_at) >= ?")
-		args = append(args, p.FromDate)
+		q = q.Where("date(created_at) >= ?", p.FromDate)
 	}
 
 	if p.ToDate != "" {
-		where = append(where, "date(created_at) <= ?")
-		args = append(args, p.ToDate)
+		q = q.Where("date(created_at) <= ?", p.ToDate)
 	}
 
-	if len(where) > 0 {
-		query += ` WHERE ` + joinAnd(where)
-	}
-
-	query += ` ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`
-
-	args = append(args, pageSize, offset)
-
-	rows, err := db.QueryContext(ctx, query, args...)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("audit: list: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 
-	var entries []Entry
-
-	for rows.Next() {
-		var (
-			e            Entry
-			createdAtStr string
-		)
-		if err := rows.Scan(&e.ID, &e.EntityType, &e.EntityID, &e.EntityName,
-			&e.Action, &e.ActorID, &createdAtStr); err != nil {
-			return nil, fmt.Errorf("audit: scan row: %w", err)
-		}
-
-		e.CreatedAt, _ = time.Parse("2006-01-02T15:04:05.999Z", createdAtStr)
-		entries = append(entries, e)
-	}
-
-	return entries, rows.Err()
+	return entries, nil
 }
 
 // Purge deletes audit entries older than `days` days. Returns count deleted.
-func (r *Repo) Purge(ctx context.Context, db *sql.DB, days int) (int64, error) {
-	res, err := db.ExecContext(ctx,
-		`DELETE FROM audit_log WHERE created_at < datetime('now', ?)`,
-		fmt.Sprintf("-%d days", days),
-	)
+func (r *Repo) Purge(ctx context.Context, db *bun.DB, days int) (int64, error) {
+	res, err := db.NewDelete().
+		Model((*Entry)(nil)).
+		Where("created_at < datetime('now', ?)", fmt.Sprintf("-%d days", days)).
+		Exec(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("audit: purge: %w", err)
 	}
 
 	return res.RowsAffected()
-}
-
-// sqlExecer is satisfied by *sql.DB and *sql.Tx.
-type sqlExecer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-}
-
-func joinAnd(clauses []string) string {
-	return strings.Join(clauses, " AND ")
 }

@@ -2,17 +2,16 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 )
 
 // newTestDB opens an in-memory SQLite DB and runs all migrations.
-func newTestDB(t *testing.T) *sql.DB {
+func newTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
 	db, err := internaldb.Open(":memory:")

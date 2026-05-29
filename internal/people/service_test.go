@@ -2,27 +2,22 @@ package people_test
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
+	"github.com/uptrace/bun"
 
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/people"
 )
 
 // openTestDB opens an in-memory SQLite database and runs all migrations.
-func openTestDB(t *testing.T) *sql.DB {
+func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := sql.Open("sqlite", ":memory:")
+	db, err := internaldb.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
-	}
-	// Enable foreign keys for cascade behaviour.
-	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
-		t.Fatalf("enable foreign keys: %v", err)
 	}
 
 	if err := internaldb.Up(db); err != nil {

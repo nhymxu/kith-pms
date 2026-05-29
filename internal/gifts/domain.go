@@ -3,6 +3,8 @@ package gifts
 import (
 	"fmt"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type Direction string
@@ -22,19 +24,21 @@ const (
 )
 
 type Gift struct {
-	ID            int64     `json:"id"`
-	PersonID      int64     `json:"person_id"`
-	Title         string    `json:"title"`
-	Direction     Direction `json:"direction"`
-	Date          string    `json:"date"`
-	Notes         string    `json:"notes"`
-	AmountCents   *int64    `json:"amount_cents"`
-	Currency      string    `json:"currency"`
-	DebtType      DebtType  `json:"debt_type"`
-	ImagePath     string    `json:"image_path"`
-	ImageMimeType string    `json:"image_mime_type"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	bun.BaseModel `bun:"table:gift,alias:g"`
+
+	ID            int64     `bun:",pk,autoincrement" json:"id"`
+	PersonID      int64     `bun:"person_id"         json:"person_id"`
+	Title         string    `bun:"title"             json:"title"`
+	Direction     Direction `bun:"direction"         json:"direction"`
+	Date          string    `bun:"date,nullzero"     json:"date"` // YYYY-MM-DD or ""; nullzero stores "" as NULL
+	Notes         string    `bun:"notes"             json:"notes"`
+	AmountCents   *int64    `bun:"amount_cents"      json:"amount_cents"`
+	Currency      string    `bun:"currency"          json:"currency"`
+	DebtType      DebtType  `bun:"debt_type"         json:"debt_type"`
+	ImagePath     string    `bun:"image_path"        json:"image_path"`
+	ImageMimeType string    `bun:"image_mime_type"   json:"image_mime_type"`
+	CreatedAt     time.Time `bun:"created_at"        json:"created_at"`
+	UpdatedAt     time.Time `bun:"updated_at"        json:"updated_at"`
 }
 
 type GiftWithPerson struct {

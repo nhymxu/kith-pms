@@ -73,6 +73,9 @@ linters:
       - linters:
           - staticcheck
         text: 'grpc.DialContext is deprecated: use NewClient instead.  Will be supported throughout 1.x.'
+      - linters:
+          - lll
+        source: '// @Param'
     paths:
       - ^zz_generated.*
       - third_party$

@@ -133,6 +133,7 @@ make deps          # download and tidy Go modules
 make web           # pnpm build + copy SPA into internal/web/spa/public
 make build         # make web + CGO_ENABLED=0 go build (full build)
 make assets        # alias for make web + sqlc codegen
+make swagger       # generate OpenAPI docs from swaggo annotations
 make fmt           # gofmt all Go files
 make lint          # run golangci-lint
 make tests         # run all tests with race detector

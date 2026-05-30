@@ -49,7 +49,20 @@ type AvatarsAPI struct {
 }
 
 // Upload handles POST /v1/people/:id/avatar.
-// Accepts multipart/form-data with field "avatar". Max 5 MB. Allowed: jpeg/png/gif/webp.
+//
+// @Summary      Upload avatar
+// @Tags         people
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id      path      int   true  "Person ID"
+// @Param        avatar  formData  file  true  "Avatar image (jpeg/png/gif/webp, max 5MB)"
+// @Success      200     {object}  envelope{data=object{uploaded=bool}}
+// @Failure      400     {object}  envelope
+// @Failure      413     {object}  envelope
+// @Failure      422     {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/avatar [post]
 func (h *AvatarsAPI) Upload(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -103,6 +116,17 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 }
 
 // Delete handles DELETE /v1/people/:id/avatar.
+//
+// @Summary      Delete avatar
+// @Tags         people
+// @Produce      json
+// @Param        id   path  int  true  "Person ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/avatar [delete]
 func (h *AvatarsAPI) Delete(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -121,7 +145,17 @@ func (h *AvatarsAPI) Delete(c *echo.Context) error {
 }
 
 // Get handles GET /v1/people/:id/avatar.
-// Streams the avatar file directly.
+//
+// @Summary      Get avatar image
+// @Tags         people
+// @Produce      image/jpeg
+// @Param        id   path  int  true  "Person ID"
+// @Success      200
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/avatar [get]
 func (h *AvatarsAPI) Get(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {

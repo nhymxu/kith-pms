@@ -54,6 +54,17 @@ type reminderRequest struct {
 }
 
 // List handles reminder listing. Query params: status (upcoming|overdue|default=all), days (default 30 for upcoming).
+//
+// @Summary      List reminders
+// @Tags         reminders
+// @Produce      json
+// @Param        status  query  string  false  "Filter: upcoming, overdue, or all"
+// @Param        days    query  int     false  "Days ahead for upcoming"  default(30)
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders [get]
 func (h *RemindersAPI) List(c *echo.Context) error {
 	status := c.QueryParam("status")
 
@@ -89,6 +100,18 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 	}
 }
 
+// Get godoc
+//
+// @Summary      Get reminder
+// @Tags         reminders
+// @Produce      json
+// @Param        id   path      int  true  "Reminder ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders/{id} [get]
 func (h *RemindersAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -107,6 +130,19 @@ func (h *RemindersAPI) Get(c *echo.Context) error {
 	return ok(c, r)
 }
 
+// Create godoc
+//
+// @Summary      Create reminder
+// @Tags         reminders
+// @Accept       json
+// @Produce      json
+// @Param        body  body      reminderRequest  true  "Reminder data"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders [post]
 func (h *RemindersAPI) Create(c *echo.Context) error {
 	var req reminderRequest
 	if err := c.Bind(&req); err != nil {
@@ -152,6 +188,21 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
+// Update godoc
+//
+// @Summary      Update reminder
+// @Tags         reminders
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int              true  "Reminder ID"
+// @Param        body  body      reminderRequest  true  "Reminder data"
+// @Success      200   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      404   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders/{id} [put]
 func (h *RemindersAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -208,6 +259,18 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
+// Delete godoc
+//
+// @Summary      Delete reminder
+// @Tags         reminders
+// @Produce      json
+// @Param        id   path  int  true  "Reminder ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders/{id} [delete]
 func (h *RemindersAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -227,6 +290,18 @@ func (h *RemindersAPI) Delete(c *echo.Context) error {
 	return noContent(c)
 }
 
+// Complete godoc
+//
+// @Summary      Complete reminder
+// @Tags         reminders
+// @Produce      json
+// @Param        id   path      int  true  "Reminder ID"
+// @Success      200  {object}  envelope{data=object{id=int}}
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /reminders/{id}/complete [patch]
 func (h *RemindersAPI) Complete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

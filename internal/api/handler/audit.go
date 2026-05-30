@@ -17,6 +17,20 @@ type AuditAPI struct {
 }
 
 // List returns paginated audit entries, optionally filtered by entity_type and entity_id.
+//
+// @Summary      List audit log entries
+// @Tags         audit
+// @Produce      json
+// @Param        entity_type  query  string  false  "Filter by entity type"
+// @Param        entity_id    query  int     false  "Filter by entity ID"
+// @Param        page         query  int     false  "Page number"  default(1)
+// @Param        from_date    query  string  false  "From date YYYY-MM-DD"
+// @Param        to_date      query  string  false  "To date YYYY-MM-DD"
+// @Success      200  {object}  object{data=[]object,page=int,page_size=int,has_more=bool}
+// @Failure      501  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /audit [get]
 func (h *AuditAPI) List(c *echo.Context) error {
 	if h.Svc == nil {
 		return apiErr(c, http.StatusNotImplemented, "audit not configured")
@@ -74,6 +88,15 @@ func (h *AuditAPI) List(c *echo.Context) error {
 }
 
 // Cleanup deletes audit entries older than the configured retention period.
+//
+// @Summary      Clean up old audit entries
+// @Tags         audit
+// @Produce      json
+// @Success      200  {object}  object{deleted=int}
+// @Failure      501  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /audit/cleanup [post]
 func (h *AuditAPI) Cleanup(c *echo.Context) error {
 	if h.Svc == nil || h.SettingsSvc == nil {
 		return apiErr(c, http.StatusNotImplemented, "audit not configured")

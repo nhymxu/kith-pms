@@ -20,8 +20,12 @@ web: ## Build the React SPA and copy output into internal/api/spa/public
 .PHONY: assets
 assets: web ## Regenerate all generated assets (SPA build)
 
+.PHONY: swagger
+swagger: ## Generate OpenAPI docs from annotations (requires: go install github.com/swaggo/swag/cmd/swag@v1.16.4)
+	swag init -g cmd/doc.go -o internal/api/swagger --parseDependency --parseInternal
+
 .PHONY: build
-build: web ## Build the binary (CGO_ENABLED=0); runs pnpm build first
+build: swagger web ## Build the binary (CGO_ENABLED=0); runs swagger + pnpm build first
 	CGO_ENABLED=0 go build -o bin/$(APP_NAME) ./cmd
 
 .PHONY: clean

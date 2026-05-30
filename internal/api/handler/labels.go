@@ -20,6 +20,16 @@ type labelRequest struct {
 	Color string `json:"color"` // "#RRGGBB"
 }
 
+// List godoc
+//
+// @Summary      List labels
+// @Tags         labels
+// @Produce      json
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /labels [get]
 func (h *LabelsAPI) List(c *echo.Context) error {
 	list, err := h.Svc.ListWithCounts(c.Request().Context())
 	if err != nil {
@@ -29,6 +39,18 @@ func (h *LabelsAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
+// Get godoc
+//
+// @Summary      Get label
+// @Tags         labels
+// @Produce      json
+// @Param        id   path      int  true  "Label ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /labels/{id} [get]
 func (h *LabelsAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -47,6 +69,19 @@ func (h *LabelsAPI) Get(c *echo.Context) error {
 	return ok(c, label)
 }
 
+// Create godoc
+//
+// @Summary      Create label
+// @Tags         labels
+// @Accept       json
+// @Produce      json
+// @Param        body  body      labelRequest  true  "Label data"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /labels [post]
 func (h *LabelsAPI) Create(c *echo.Context) error {
 	var req labelRequest
 	if err := c.Bind(&req); err != nil {
@@ -65,6 +100,20 @@ func (h *LabelsAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
+// Update godoc
+//
+// @Summary      Update label
+// @Tags         labels
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int           true  "Label ID"
+// @Param        body  body      labelRequest  true  "Label data"
+// @Success      200   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /labels/{id} [put]
 func (h *LabelsAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -83,6 +132,18 @@ func (h *LabelsAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
+// Delete godoc
+//
+// @Summary      Delete label
+// @Tags         labels
+// @Produce      json
+// @Param        id   path  int  true  "Label ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /labels/{id} [delete]
 func (h *LabelsAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

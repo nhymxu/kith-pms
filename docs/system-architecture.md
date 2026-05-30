@@ -17,6 +17,7 @@
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Web Layer (Echo v5.1.1 JSON API + React 19 SPA)          │   │
 │  │  ├─ /health        → Liveness probe (no auth)            │   │
+│  │  ├─ /swagger/*     → Swagger UI + OpenAPI spec (no auth) │   │
 │  │  ├─ /v1/*          → JSON REST API (SessionOrBearer)     │   │
 │  │  ├─ /assets/*      → Embedded SPA hashed assets (1yr)    │   │
 │  │  ├─ /favicon.*     → Embedded favicon (1yr)              │   │
@@ -236,6 +237,7 @@ export function PersonForm() {
 /health                → GET (liveness probe, no auth)
 /ready                 → GET (readiness probe: DB pingable + migrations applied, no auth)
 /metrics               → GET (Prometheus metrics, no auth)
+/swagger/*             → Swagger UI + OpenAPI spec (no auth)
 /v1/*                  → JSON REST API (see api package)
 /assets/*              → Embedded SPA hashed assets (1-year cache, immutable)
 /favicon.*             → Embedded favicon (1-year cache)

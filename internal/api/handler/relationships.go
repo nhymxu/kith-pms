@@ -16,6 +16,15 @@ type RelationshipsAPI struct {
 }
 
 // ListTypes handles GET /v1/relationship-types.
+//
+// @Summary      List relationship types
+// @Tags         relationships
+// @Produce      json
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /relationship-types [get]
 func (h *RelationshipsAPI) ListTypes(c *echo.Context) error {
 	types, err := h.Svc.ListTypesWithCounts(c.Request().Context())
 	if err != nil {
@@ -26,7 +35,18 @@ func (h *RelationshipsAPI) ListTypes(c *echo.Context) error {
 }
 
 // CreateType handles POST /v1/relationship-types.
-// Body: {"name": "...", "reverse_name": "..."}.
+//
+// @Summary      Create relationship type
+// @Tags         relationships
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{name=string,reverse_name=string}  true  "Relationship type"
+// @Success      201   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /relationship-types [post]
 func (h *RelationshipsAPI) CreateType(c *echo.Context) error {
 	var req struct {
 		Name        string `json:"name"`
@@ -45,7 +65,19 @@ func (h *RelationshipsAPI) CreateType(c *echo.Context) error {
 }
 
 // UpdateType handles PUT /v1/relationship-types/:id.
-// Body: {"name": "...", "reverse_name": "..."}.
+//
+// @Summary      Update relationship type
+// @Tags         relationships
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                                       true  "Type ID"
+// @Param        body  body      object{name=string,reverse_name=string}  true  "Relationship type"
+// @Success      200   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /relationship-types/{id} [put]
 func (h *RelationshipsAPI) UpdateType(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -68,6 +100,17 @@ func (h *RelationshipsAPI) UpdateType(c *echo.Context) error {
 }
 
 // DeleteType handles DELETE /v1/relationship-types/:id.
+//
+// @Summary      Delete relationship type
+// @Tags         relationships
+// @Produce      json
+// @Param        id   path  int  true  "Type ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      409  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /relationship-types/{id} [delete]
 func (h *RelationshipsAPI) DeleteType(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -86,6 +129,16 @@ func (h *RelationshipsAPI) DeleteType(c *echo.Context) error {
 }
 
 // ListByPerson handles GET /v1/people/:id/relationships.
+//
+// @Summary      List relationships for person
+// @Tags         relationships
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/relationships [get]
 func (h *RelationshipsAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -101,7 +154,20 @@ func (h *RelationshipsAPI) ListByPerson(c *echo.Context) error {
 }
 
 // AttachRelationship handles POST /v1/people/:id/relationships.
-// Body: {"to_person_id": 123, "relationship_type_id": 1, "notes": "..."}.
+//
+// @Summary      Attach relationship to person
+// @Tags         relationships
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                                                              true  "Person ID"
+// @Param        body  body      object{to_person_id=int,relationship_type_id=int,notes=string}  true  "Relationship data"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      409   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/relationships [post]
 func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 	fromID, err := parseID(c)
 	if err != nil {
@@ -149,6 +215,17 @@ func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 }
 
 // DetachRelationship handles DELETE /v1/people/:id/relationships/:relID.
+//
+// @Summary      Detach relationship from person
+// @Tags         relationships
+// @Produce      json
+// @Param        id     path  int  true  "Person ID"
+// @Param        relID  path  int  true  "Relationship ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/relationships/{relID} [delete]
 func (h *RelationshipsAPI) DetachRelationship(c *echo.Context) error {
 	relID, err := strconv.ParseInt(c.Param("relID"), 10, 64)
 	if err != nil {

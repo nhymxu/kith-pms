@@ -13,6 +13,16 @@ type SettingsAPI struct {
 	Svc *settings.Service
 }
 
+// Get godoc
+//
+// @Summary      Get settings
+// @Tags         settings
+// @Produce      json
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /settings [get]
 func (h *SettingsAPI) Get(c *echo.Context) error {
 	s, err := h.Svc.Get(c.Request().Context())
 	if err != nil {
@@ -22,6 +32,19 @@ func (h *SettingsAPI) Get(c *echo.Context) error {
 	return ok(c, s)
 }
 
+// Update godoc
+//
+// @Summary      Update settings
+// @Tags         settings
+// @Accept       json
+// @Produce      json
+// @Param        body  body      settings.UserSettings  true  "Settings"
+// @Success      200   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /settings [put]
 func (h *SettingsAPI) Update(c *echo.Context) error {
 	var req settings.UserSettings
 	if err := c.Bind(&req); err != nil {

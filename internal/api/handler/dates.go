@@ -30,6 +30,16 @@ type importantDateRequest struct {
 }
 
 // ListByPerson handles GET /v1/people/:id/dates
+//
+// @Summary      List important dates for person
+// @Tags         dates
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/dates [get]
 func (h *DatesAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -45,6 +55,18 @@ func (h *DatesAPI) ListByPerson(c *echo.Context) error {
 }
 
 // ReplaceForPerson handles PUT /v1/people/:id/dates
+//
+// @Summary      Replace dates for person
+// @Tags         dates
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                  true  "Person ID"
+// @Param        body  body      datesReplaceRequest  true  "Dates list"
+// @Success      200   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/dates [put]
 func (h *DatesAPI) ReplaceForPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -90,6 +112,17 @@ type personRef struct {
 	Name string `json:"name"`
 }
 
+// Upcoming godoc
+//
+// @Summary      Get upcoming dates
+// @Tags         dates
+// @Produce      json
+// @Param        days  query     int  false  "Days ahead to look"  default(30)
+// @Success      200   {object}  envelope
+// @Failure      500   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /dates/upcoming [get]
 func (h *DatesAPI) Upcoming(c *echo.Context) error {
 	days, _ := strconv.Atoi(c.QueryParam("days"))
 	if days < 1 {

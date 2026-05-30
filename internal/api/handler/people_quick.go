@@ -22,7 +22,20 @@ type PeopleQuickAPI struct {
 }
 
 // QuickJournal handles POST /v1/people/:id/journal/quick.
-// Body: {"title":"...","occurred_at_date":"YYYY-MM-DD","occurred_at_time":"HH:MM","content":"...","person_ids":[...]}.
+//
+// @Summary      Quick journal entry for person
+// @Tags         people
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                                                                                          true  "Person ID"
+// @Param        body  body      object{title=string,occurred_at_date=string,occurred_at_time=string,content=string,person_ids=[]int}  true  "Journal entry"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      404   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/journal/quick [post]
 func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -97,9 +110,20 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 }
 
 // QuickGift handles POST /v1/people/:id/gifts/quick.
-// Body: {"title":"...","direction":"planned|given|received","date":"YYYY-MM-DD",
 //
-//	"notes":"...","amount":"12.50","currency":"USD","debt_type":"i_owe|they_owe|"}.
+// @Summary      Quick gift entry for person
+// @Tags         people
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                                                                                              true  "Person ID"
+// @Param        body  body      object{title=string,direction=string,date=string,notes=string,amount=string,currency=string,debt_type=string}  true  "Gift data"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      404   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/gifts/quick [post]
 func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -182,7 +206,17 @@ func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 }
 
 // UpdateLastContact handles POST /v1/people/:id/last-contact.
-// Records now as the last contact timestamp for the person.
+//
+// @Summary      Update last contact timestamp
+// @Tags         people
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope{data=object{updated=bool}}
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/last-contact [post]
 func (h *PeopleQuickAPI) UpdateLastContact(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {

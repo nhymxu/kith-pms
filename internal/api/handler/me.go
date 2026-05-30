@@ -15,7 +15,16 @@ type MeAPI struct {
 }
 
 // GetMe handles GET /v1/me.
-// Returns the "self" person entry or 404 if not configured.
+//
+// @Summary      Get self profile
+// @Description  Returns the person designated as "Me", or 404 if not configured.
+// @Tags         me
+// @Produce      json
+// @Success      200  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /me [get]
 func (h *MeAPI) GetMe(c *echo.Context) error {
 	self, err := h.PeopleSvc.GetSelf(c.Request().Context())
 	if err != nil {
@@ -30,8 +39,18 @@ func (h *MeAPI) GetMe(c *echo.Context) error {
 }
 
 // PostSetup handles POST /v1/me/setup.
-// Body: {"person_id": 123}.
-// Designates an existing person as the "self" person.
+//
+// @Summary      Setup self profile
+// @Description  Designates an existing person as the "Me" person.
+// @Tags         me
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{person_id=int}  true  "Person to designate as self"
+// @Success      200   {object}  envelope{data=object{person_id=int}}
+// @Failure      400   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /me/setup [post]
 func (h *MeAPI) PostSetup(c *echo.Context) error {
 	var req struct {
 		PersonID int64 `json:"person_id"`

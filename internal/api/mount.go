@@ -85,6 +85,7 @@ func Mount(e *echo.Echo, deps Deps) {
 
 	e.Use(sessionLoader, injectAuditActor())
 
+	mountSwagger(e)
 	spa.Handler(e)
 }
 

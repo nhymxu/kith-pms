@@ -3,7 +3,7 @@ FROM node:24-alpine AS spa-builder
 
 WORKDIR /app/web
 
-# Install pnpm via corepack (bundled with Node 22)
+# Install pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY web/package.json web/pnpm-lock.yaml ./
@@ -17,9 +17,6 @@ FROM golang:1.26.3-alpine AS go-builder
 
 WORKDIR /app
 
-# Install sqlc for code generation
-RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
-
 # Cache Go module downloads
 COPY go.mod go.sum ./
 RUN go mod download
@@ -30,9 +27,6 @@ COPY . .
 # Copy the built SPA into the embed path
 RUN mkdir -p internal/web/spa/public
 COPY --from=spa-builder /app/web/dist/ internal/web/spa/public/
-
-# Generate sqlc query code (skip gracefully if no config)
-RUN sqlc generate -f internal/db/sqlc.yaml 2>/dev/null || true
 
 # Build the static binary
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o kith-pms ./cmd

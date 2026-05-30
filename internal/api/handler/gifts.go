@@ -31,6 +31,20 @@ type giftRequest struct {
 	DebtType    string `json:"debt_type"`
 }
 
+// List godoc
+//
+// @Summary      List gifts
+// @Tags         gifts
+// @Produce      json
+// @Param        page       query  int     false  "Page number"  default(1)
+// @Param        person_id  query  int     false  "Filter by person ID"
+// @Param        direction  query  string  false  "Filter: planned, given, received"
+// @Param        debt_type  query  string  false  "Filter: i_owe, they_owe"
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts [get]
 func (h *GiftsAPI) List(c *echo.Context) error {
 	page, _ := strconv.Atoi(c.QueryParam("page"))
 	if page < 1 {
@@ -59,6 +73,18 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
+// Create godoc
+//
+// @Summary      Create gift
+// @Tags         gifts
+// @Accept       json
+// @Produce      json
+// @Param        body  body      giftRequest  true  "Gift data"
+// @Success      201   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts [post]
 func (h *GiftsAPI) Create(c *echo.Context) error {
 	var req giftRequest
 	if err := c.Bind(&req); err != nil {
@@ -86,6 +112,17 @@ func (h *GiftsAPI) Create(c *echo.Context) error {
 }
 
 // GetByID handles GET /v1/gifts/:id
+//
+// @Summary      Get gift
+// @Tags         gifts
+// @Produce      json
+// @Param        id   path      int  true  "Gift ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id} [get]
 func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -114,6 +151,20 @@ var giftImageAllowedTypes = map[string]bool{
 }
 
 // UploadImage handles POST /v1/gifts/:id/image
+//
+// @Summary      Upload gift image
+// @Tags         gifts
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id     path      int   true  "Gift ID"
+// @Param        image  formData  file  true  "Image file (jpeg/png/gif/webp, max 5MB)"
+// @Success      200    {object}  envelope{data=object{uploaded=bool}}
+// @Failure      400    {object}  envelope
+// @Failure      413    {object}  envelope
+// @Failure      422    {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id}/image [post]
 func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -163,6 +214,17 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 }
 
 // DeleteImage handles DELETE /v1/gifts/:id/image
+//
+// @Summary      Delete gift image
+// @Tags         gifts
+// @Produce      json
+// @Param        id   path  int  true  "Gift ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id}/image [delete]
 func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -181,6 +243,17 @@ func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
 }
 
 // GetImage handles GET /v1/gifts/:id/image
+//
+// @Summary      Get gift image
+// @Tags         gifts
+// @Produce      image/jpeg
+// @Param        id   path  int  true  "Gift ID"
+// @Success      200
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id}/image [get]
 func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -225,6 +298,19 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	return err
 }
 
+// Update godoc
+//
+// @Summary      Update gift
+// @Tags         gifts
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int          true  "Gift ID"
+// @Param        body  body      giftRequest  true  "Gift data"
+// @Success      200   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id} [put]
 func (h *GiftsAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -250,6 +336,17 @@ func (h *GiftsAPI) Update(c *echo.Context) error {
 	return ok(c, g)
 }
 
+// Delete godoc
+//
+// @Summary      Delete gift
+// @Tags         gifts
+// @Produce      json
+// @Param        id   path  int  true  "Gift ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /gifts/{id} [delete]
 func (h *GiftsAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -264,6 +361,16 @@ func (h *GiftsAPI) Delete(c *echo.Context) error {
 }
 
 // ListByPerson handles GET /v1/people/:id/gifts
+//
+// @Summary      List gifts for person
+// @Tags         gifts
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/gifts [get]
 func (h *GiftsAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {

@@ -23,6 +23,22 @@ type journalRequest struct {
 	PersonIDs      []int64 `json:"person_ids"`
 }
 
+// List godoc
+//
+// @Summary      List journal entries
+// @Tags         journal
+// @Produce      json
+// @Param        q           query  string  false  "Full-text search query"
+// @Param        page        query  int     false  "Page number"   default(1)
+// @Param        page_size   query  int     false  "Page size"     default(50)
+// @Param        from_date   query  string  false  "From date YYYY-MM-DD"
+// @Param        to_date     query  string  false  "To date YYYY-MM-DD"
+// @Param        person_ids  query  string  false  "Comma-separated person IDs"
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /journal [get]
 func (h *JournalAPI) List(c *echo.Context) error {
 	q := c.QueryParam("q")
 
@@ -61,6 +77,18 @@ func (h *JournalAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
+// Get godoc
+//
+// @Summary      Get journal entry
+// @Tags         journal
+// @Produce      json
+// @Param        id   path      int  true  "Entry ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /journal/{id} [get]
 func (h *JournalAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -79,6 +107,19 @@ func (h *JournalAPI) Get(c *echo.Context) error {
 	return ok(c, a)
 }
 
+// Create godoc
+//
+// @Summary      Create journal entry
+// @Tags         journal
+// @Accept       json
+// @Produce      json
+// @Param        body  body      journalRequest  true  "Journal entry"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /journal [post]
 func (h *JournalAPI) Create(c *echo.Context) error {
 	var req journalRequest
 	if err := c.Bind(&req); err != nil {
@@ -104,6 +145,20 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
+// Update godoc
+//
+// @Summary      Update journal entry
+// @Tags         journal
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int             true  "Entry ID"
+// @Param        body  body      journalRequest  true  "Journal entry"
+// @Success      200   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /journal/{id} [put]
 func (h *JournalAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -134,6 +189,18 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
+// Delete godoc
+//
+// @Summary      Delete journal entry
+// @Tags         journal
+// @Produce      json
+// @Param        id   path  int  true  "Entry ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /journal/{id} [delete]
 func (h *JournalAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

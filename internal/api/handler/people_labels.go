@@ -15,7 +15,18 @@ type PeopleLabelsAPI struct {
 }
 
 // Attach handles POST /v1/people/:id/labels.
-// Body: {"label_id": 123}.
+//
+// @Summary      Attach label to person
+// @Tags         people
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                       true  "Person ID"
+// @Param        body  body      object{label_id=int}  true  "Label ID"
+// @Success      200   {object}  envelope{data=object{attached=bool}}
+// @Failure      400   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/labels [post]
 func (h *PeopleLabelsAPI) Attach(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -37,6 +48,17 @@ func (h *PeopleLabelsAPI) Attach(c *echo.Context) error {
 }
 
 // Detach handles DELETE /v1/people/:id/labels/:labelID.
+//
+// @Summary      Detach label from person
+// @Tags         people
+// @Produce      json
+// @Param        id       path  int  true  "Person ID"
+// @Param        labelID  path  int  true  "Label ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/labels/{labelID} [delete]
 func (h *PeopleLabelsAPI) Detach(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {

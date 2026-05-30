@@ -1,0 +1,2302 @@
+basePath: /v1
+definitions:
+  github_com_nhymxu_kith-pms_internal_reminders.RecurrenceRule:
+    properties:
+      day_of_week:
+        type: integer
+      interval:
+        type: integer
+      type:
+        $ref: '#/definitions/github_com_nhymxu_kith-pms_internal_reminders.RecurrenceType'
+      unit:
+        type: string
+    type: object
+  github_com_nhymxu_kith-pms_internal_reminders.RecurrenceType:
+    enum:
+    - daily
+    - weekly
+    - monthly
+    - yearly
+    - custom
+    - relative_contact
+    - day_of_week
+    type: string
+    x-enum-varnames:
+    - RecurrenceDaily
+    - RecurrenceWeekly
+    - RecurrenceMonthly
+    - RecurrenceYearly
+    - RecurrenceCustom
+    - RecurrenceRelativeContact
+    - RecurrenceDayOfWeek
+  github_com_nhymxu_kith-pms_internal_settings.UserSettings:
+    properties:
+      audit_log_retention_days:
+        description: 0 = disabled
+        type: integer
+      date_format:
+        type: string
+      time_format:
+        type: string
+      timezone:
+        type: string
+    type: object
+  internal_api_handler.contactRequest:
+    properties:
+      label:
+        type: string
+      position:
+        type: integer
+      type:
+        type: string
+      value:
+        type: string
+    type: object
+  internal_api_handler.datesReplaceRequest:
+    properties:
+      dates:
+        items:
+          $ref: '#/definitions/internal_api_handler.importantDateRequest'
+        type: array
+    type: object
+  internal_api_handler.envelope:
+    properties:
+      data: {}
+      error:
+        type: string
+    type: object
+  internal_api_handler.giftRequest:
+    properties:
+      amount_cents:
+        type: integer
+      currency:
+        type: string
+      date:
+        type: string
+      debt_type:
+        type: string
+      direction:
+        type: string
+      notes:
+        type: string
+      person_id:
+        type: integer
+      title:
+        type: string
+    type: object
+  internal_api_handler.importantDateRequest:
+    properties:
+      date_value:
+        description: '"YYYY-MM-DD" or "--MM-DD"'
+        type: string
+      kind:
+        type: string
+      label:
+        type: string
+      notes:
+        type: string
+      position:
+        type: integer
+      recurring:
+        type: boolean
+    type: object
+  internal_api_handler.journalRequest:
+    properties:
+      content:
+        type: string
+      occurred_at_date:
+        description: '"YYYY-MM-DD"'
+        type: string
+      occurred_at_time:
+        description: '"HH:MM" or ""'
+        type: string
+      person_ids:
+        items:
+          type: integer
+        type: array
+      title:
+        type: string
+    type: object
+  internal_api_handler.labelRequest:
+    properties:
+      color:
+        description: '"#RRGGBB"'
+        type: string
+      name:
+        type: string
+    type: object
+  internal_api_handler.locationRequest:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      position:
+        type: integer
+      postal_code:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_api_handler.personRequest:
+    properties:
+      contacts:
+        items:
+          $ref: '#/definitions/internal_api_handler.contactRequest'
+        type: array
+      date_of_birth:
+        description: '"YYYY-MM-DD" or ""'
+        type: string
+      gender:
+        description: '"" | "male" | "female" | "rather_not_say"'
+        type: string
+      locations:
+        items:
+          $ref: '#/definitions/internal_api_handler.locationRequest'
+        type: array
+      name:
+        type: string
+      nickname:
+        type: string
+      other_notes:
+        type: string
+      relationship_type:
+        type: string
+    type: object
+  internal_api_handler.reminderRequest:
+    properties:
+      due_date:
+        description: '"YYYY-MM-DD"'
+        type: string
+      important_date_id:
+        type: integer
+      notes:
+        type: string
+      person_id:
+        type: integer
+      recurrence_end_date:
+        type: string
+      recurrence_rule:
+        $ref: '#/definitions/github_com_nhymxu_kith-pms_internal_reminders.RecurrenceRule'
+      title:
+        type: string
+    type: object
+  internal_api_handler.workEntryRequest:
+    properties:
+      company:
+        type: string
+      description:
+        type: string
+      end_date:
+        type: string
+      location:
+        type: string
+      position:
+        type: integer
+      start_date:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_api_handler.workHistoryReplaceRequest:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/internal_api_handler.workEntryRequest'
+        type: array
+    type: object
+host: localhost:8000
+info:
+  contact:
+    name: kith
+    url: https://github.com/nhymxu/kith-pms
+  description: Self-hosted personal relationship manager API.
+  license:
+    name: MIT
+  title: kith API
+  version: "1.0"
+paths:
+  /audit:
+    get:
+      parameters:
+      - description: Filter by entity type
+        in: query
+        name: entity_type
+        type: string
+      - description: Filter by entity ID
+        in: query
+        name: entity_id
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: From date YYYY-MM-DD
+        in: query
+        name: from_date
+        type: string
+      - description: To date YYYY-MM-DD
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                items:
+                  type: object
+                type: array
+              has_more:
+                type: boolean
+              page:
+                type: integer
+              page_size:
+                type: integer
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List audit log entries
+      tags:
+      - audit
+  /audit/cleanup:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              deleted:
+                type: integer
+            type: object
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Clean up old audit entries
+      tags:
+      - audit
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with password. Sets kith_session HttpOnly cookie on
+        success.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    logged_in:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Revoke current session and clear the session cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    logged_out:
+                      type: boolean
+                  type: object
+              type: object
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/logout-all:
+    post:
+      description: Revoke all active sessions and clear the session cookie.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    logged_out:
+                      type: boolean
+                  type: object
+              type: object
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Logout all sessions
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Returns the authenticated user's ID and creation time.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    created_at:
+                      type: string
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      summary: Get current user
+      tags:
+      - auth
+  /auth/password:
+    post:
+      consumes:
+      - application/json
+      description: Change the login password. Revokes all sessions and re-issues a
+        new one.
+      parameters:
+      - description: Password change request
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            confirm_password:
+              type: string
+            current_password:
+              type: string
+            new_password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    password_changed:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Change password
+      tags:
+      - auth
+  /dates/upcoming:
+    get:
+      parameters:
+      - default: 30
+        description: Days ahead to look
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get upcoming dates
+      tags:
+      - dates
+  /gifts:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Filter by person ID
+        in: query
+        name: person_id
+        type: integer
+      - description: 'Filter: planned, given, received'
+        in: query
+        name: direction
+        type: string
+      - description: 'Filter: i_owe, they_owe'
+        in: query
+        name: debt_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List gifts
+      tags:
+      - gifts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Gift data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.giftRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create gift
+      tags:
+      - gifts
+  /gifts/{id}:
+    delete:
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete gift
+      tags:
+      - gifts
+    get:
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get gift
+      tags:
+      - gifts
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Gift data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.giftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update gift
+      tags:
+      - gifts
+  /gifts/{id}/image:
+    delete:
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete gift image
+      tags:
+      - gifts
+    get:
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get gift image
+      tags:
+      - gifts
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Gift ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Image file (jpeg/png/gif/webp, max 5MB)
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    uploaded:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Upload gift image
+      tags:
+      - gifts
+  /journal:
+    get:
+      parameters:
+      - description: Full-text search query
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: From date YYYY-MM-DD
+        in: query
+        name: from_date
+        type: string
+      - description: To date YYYY-MM-DD
+        in: query
+        name: to_date
+        type: string
+      - description: Comma-separated person IDs
+        in: query
+        name: person_ids
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List journal entries
+      tags:
+      - journal
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Journal entry
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.journalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create journal entry
+      tags:
+      - journal
+  /journal/{id}:
+    delete:
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete journal entry
+      tags:
+      - journal
+    get:
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get journal entry
+      tags:
+      - journal
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Journal entry
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.journalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update journal entry
+      tags:
+      - journal
+  /labels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List labels
+      tags:
+      - labels
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Label data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.labelRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create label
+      tags:
+      - labels
+  /labels/{id}:
+    delete:
+      parameters:
+      - description: Label ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete label
+      tags:
+      - labels
+    get:
+      parameters:
+      - description: Label ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get label
+      tags:
+      - labels
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Label ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Label data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.labelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update label
+      tags:
+      - labels
+  /me:
+    get:
+      description: Returns the person designated as "Me", or 404 if not configured.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get self profile
+      tags:
+      - me
+  /me/setup:
+    post:
+      consumes:
+      - application/json
+      description: Designates an existing person as the "Me" person.
+      parameters:
+      - description: Person to designate as self
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            person_id:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    person_id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Setup self profile
+      tags:
+      - me
+  /people:
+    get:
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Comma-separated label IDs
+        in: query
+        name: labels
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List people
+      tags:
+      - people
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.personRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create person
+      tags:
+      - people
+  /people/{id}:
+    delete:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete person
+      tags:
+      - people
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get person
+      tags:
+      - people
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Person data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.personRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update person
+      tags:
+      - people
+  /people/{id}/avatar:
+    delete:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete avatar
+      tags:
+      - people
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - image/jpeg
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get avatar image
+      tags:
+      - people
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Avatar image (jpeg/png/gif/webp, max 5MB)
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    uploaded:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Upload avatar
+      tags:
+      - people
+  /people/{id}/dates:
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List important dates for person
+      tags:
+      - dates
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dates list
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.datesReplaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Replace dates for person
+      tags:
+      - dates
+  /people/{id}/gifts:
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List gifts for person
+      tags:
+      - gifts
+  /people/{id}/gifts/quick:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Gift data
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            amount:
+              type: string
+            currency:
+              type: string
+            date:
+              type: string
+            debt_type:
+              type: string
+            direction:
+              type: string
+            notes:
+              type: string
+            title:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Quick gift entry for person
+      tags:
+      - people
+  /people/{id}/journal/quick:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Journal entry
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            content:
+              type: string
+            occurred_at_date:
+              type: string
+            occurred_at_time:
+              type: string
+            person_ids:
+              items:
+                type: integer
+              type: array
+            title:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Quick journal entry for person
+      tags:
+      - people
+  /people/{id}/labels:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Label ID
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            label_id:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    attached:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Attach label to person
+      tags:
+      - people
+  /people/{id}/labels/{labelID}:
+    delete:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Label ID
+        in: path
+        name: labelID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Detach label from person
+      tags:
+      - people
+  /people/{id}/last-contact:
+    post:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    updated:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update last contact timestamp
+      tags:
+      - people
+  /people/{id}/relationships:
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List relationships for person
+      tags:
+      - relationships
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Relationship data
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            notes:
+              type: string
+            relationship_type_id:
+              type: integer
+            to_person_id:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Attach relationship to person
+      tags:
+      - relationships
+  /people/{id}/relationships/{relID}:
+    delete:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Relationship ID
+        in: path
+        name: relID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Detach relationship from person
+      tags:
+      - relationships
+  /people/{id}/work-history:
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List work history for person
+      tags:
+      - work-history
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Work history entries
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.workHistoryReplaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Replace work history for person
+      tags:
+      - work-history
+  /relationship-types:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List relationship types
+      tags:
+      - relationships
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Relationship type
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            name:
+              type: string
+            reverse_name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create relationship type
+      tags:
+      - relationships
+  /relationship-types/{id}:
+    delete:
+      parameters:
+      - description: Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete relationship type
+      tags:
+      - relationships
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Relationship type
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            name:
+              type: string
+            reverse_name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update relationship type
+      tags:
+      - relationships
+  /reminders:
+    get:
+      parameters:
+      - description: 'Filter: upcoming, overdue, or all'
+        in: query
+        name: status
+        type: string
+      - default: 30
+        description: Days ahead for upcoming
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List reminders
+      tags:
+      - reminders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Reminder data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.reminderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create reminder
+      tags:
+      - reminders
+  /reminders/{id}:
+    delete:
+      parameters:
+      - description: Reminder ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete reminder
+      tags:
+      - reminders
+    get:
+      parameters:
+      - description: Reminder ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get reminder
+      tags:
+      - reminders
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Reminder ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Reminder data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.reminderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update reminder
+      tags:
+      - reminders
+  /reminders/{id}/complete:
+    patch:
+      parameters:
+      - description: Reminder ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    id:
+                      type: integer
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Complete reminder
+      tags:
+      - reminders
+  /settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get settings
+      tags:
+      - settings
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_nhymxu_kith-pms_internal_settings.UserSettings'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update settings
+      tags:
+      - settings
+securityDefinitions:
+  CSRFHeader:
+    description: Must be set to "kith-spa" on all mutating requests (POST/PUT/PATCH/DELETE)
+    in: header
+    name: X-Requested-With
+    type: apiKey
+  CookieAuth:
+    description: HttpOnly session cookie set by POST /v1/auth/login
+    in: cookie
+    name: kith_session
+    type: apiKey
+swagger: "2.0"

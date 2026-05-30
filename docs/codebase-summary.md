@@ -108,7 +108,8 @@ kith-pms/
 │   │   │   ├── response.go                           # Response helpers (ok, created, apiErr)
 │   │   │   └── testhelpers_test.go                   # Test utilities
 │   │   ├── server.go             # Echo setup (global middleware)
-│   │   ├── mount.go              # Route mounting: /health, /v1/*, spa.Handler() (imports handler/ package)
+│   │   ├── mount.go              # Route mounting: /health, /swagger/*, /v1/*, spa.Handler()
+│   │   ├── swagger_handler.go    # Swagger UI handler for Echo v5 (custom, no labstack/echo-swagger dep)
 │   │   ├── middleware.go         # Auth, session, audit actor middleware
 │   │   ├── session_gc.go         # Session garbage collection
 │   │   ├── journal_people_adapter.go # Adapter for journal-people operations
@@ -283,12 +284,27 @@ kith-pms/
   - **response.go**: Response helpers (ok, created, apiErr) with envelope {data, error}
   - **testhelpers_test.go**: Test utilities
 - **server.go**: Creates Echo instance with global middleware (recover, request ID, gzip, logger, sentry)
-- **mount.go**: Mounts `/health`, `/ready`, `/metrics`, API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware; handler package imports
+- **mount.go**: Mounts `/health`, `/ready`, `/metrics`, `/swagger/*` (Swagger UI), API routes (`/v1/*`), then `spa.Handler()` as catch-all; injects session loader + audit actor middleware; handler package imports
 - **middleware.go**: Auth, session validation, CSRF checks, audit actor injection
 - **session_gc.go**: Session garbage collection utilities
 - **journal_people_adapter.go**: Adapter for journal-people operations
+- **swagger_handler.go**: Custom Echo v5-compatible handler for Swagger UI; wraps `swaggo/files/v2` embedded assets; serves at `/swagger/*`
 - **spa/spa.go**: Embeds `public/` via `//go:embed all:public`; serves `/assets/*` with 1-year immutable cache; returns `index.html` (no-cache, CSP headers) for all non-API GET paths; real 404 for unknown `/assets/*` paths
 - **spa/public/**: Populated at build time by `make web` (copies `web/dist/` here); gitignored except `placeholder.txt` sentinel
+
+### OpenAPI/Swagger Documentation
+
+**Generation**: `make swagger` runs `swag init -g cmd/doc.go -o docs` to generate OpenAPI 2.0 spec from swaggo annotations.
+
+**Files**:
+- **cmd/doc.go**: Swaggo package-level annotations defining API title, version, base path (`/v1`), security definitions (CookieAuth + CSRFHeader)
+- **docs/swagger.json**: Generated OpenAPI 2.0 spec (28 paths, ~61 endpoints); auto-generated, not committed
+- **docs/swagger.yaml**: Generated OpenAPI 2.0 spec in YAML format; auto-generated, not committed
+- **internal/api/swagger_handler.go**: Custom Echo v5 handler serving Swagger UI at `/swagger/*` and spec at `/swagger/doc.json`; wraps `swaggo/files/v2` embedded assets; no external `labstack/echo-swagger` dependency
+
+**Annotations**: All 16 handler files in `internal/api/handler/` include swaggo comments on endpoint methods documenting request/response schemas, parameters, and security requirements.
+
+**Access**: Open [http://localhost:8000/swagger/index.html](http://localhost:8000/swagger/index.html) to browse interactive API documentation (no auth required).
 
 ## React SPA Frontend (`web/` directory)
 

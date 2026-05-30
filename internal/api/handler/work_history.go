@@ -29,6 +29,16 @@ type workEntryRequest struct {
 }
 
 // ListByPerson handles GET /v1/people/:id/work-history
+//
+// @Summary      List work history for person
+// @Tags         work-history
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/work-history [get]
 func (h *WorkHistoryAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
@@ -44,6 +54,19 @@ func (h *WorkHistoryAPI) ListByPerson(c *echo.Context) error {
 }
 
 // ReplaceForPerson handles PUT /v1/people/:id/work-history
+//
+// @Summary      Replace work history for person
+// @Tags         work-history
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int                        true  "Person ID"
+// @Param        body  body      workHistoryReplaceRequest  true  "Work history entries"
+// @Success      200   {object}  envelope
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/work-history [put]
 func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {

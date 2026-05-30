@@ -42,6 +42,20 @@ type locationRequest struct {
 	Position   int    `json:"position"`
 }
 
+// List godoc
+//
+// @Summary      List people
+// @Tags         people
+// @Produce      json
+// @Param        q          query     string  false  "Search query"
+// @Param        page       query     int     false  "Page number"   default(1)
+// @Param        page_size  query     int     false  "Page size"     default(50)
+// @Param        labels     query     string  false  "Comma-separated label IDs"
+// @Success      200  {object}  envelope
+// @Failure      500  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people [get]
 func (h *PeopleAPI) List(c *echo.Context) error {
 	q := c.QueryParam("q")
 
@@ -88,6 +102,18 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	return ok(c, list)
 }
 
+// Get godoc
+//
+// @Summary      Get person
+// @Tags         people
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id} [get]
 func (h *PeopleAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -106,6 +132,19 @@ func (h *PeopleAPI) Get(c *echo.Context) error {
 	return ok(c, p)
 }
 
+// Create godoc
+//
+// @Summary      Create person
+// @Tags         people
+// @Accept       json
+// @Produce      json
+// @Param        body  body      personRequest  true  "Person data"
+// @Success      201   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people [post]
 func (h *PeopleAPI) Create(c *echo.Context) error {
 	var req personRequest
 	if err := c.Bind(&req); err != nil {
@@ -132,6 +171,21 @@ func (h *PeopleAPI) Create(c *echo.Context) error {
 	return created(c, map[string]any{"id": id})
 }
 
+// Update godoc
+//
+// @Summary      Update person
+// @Tags         people
+// @Accept       json
+// @Produce      json
+// @Param        id    path      int            true  "Person ID"
+// @Param        body  body      personRequest  true  "Person data"
+// @Success      200   {object}  envelope{data=object{id=int}}
+// @Failure      400   {object}  envelope
+// @Failure      404   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id} [put]
 func (h *PeopleAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
@@ -171,6 +225,18 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 	return ok(c, map[string]any{"id": id})
 }
 
+// Delete godoc
+//
+// @Summary      Delete person
+// @Tags         people
+// @Produce      json
+// @Param        id   path  int  true  "Person ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id} [delete]
 func (h *PeopleAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {

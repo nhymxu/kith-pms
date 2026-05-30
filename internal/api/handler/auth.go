@@ -21,8 +21,17 @@ type AuthAPI struct {
 }
 
 // Login handles POST /v1/auth/login.
-// Body: {"password": "..."}.
-// On success sets kith_session cookie and returns {data: {id: <userID>}}.
+//
+// @Summary      Login
+// @Description  Authenticate with password. Sets kith_session HttpOnly cookie on success.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{password=string}  true  "Login credentials"
+// @Success      200   {object}  envelope{data=object{logged_in=bool}}
+// @Failure      400   {object}  envelope
+// @Failure      401   {object}  envelope
+// @Router       /auth/login [post]
 func (h *AuthAPI) Login(c *echo.Context) error {
 	var req struct {
 		Password string `json:"password"`
@@ -49,7 +58,15 @@ func (h *AuthAPI) Login(c *echo.Context) error {
 }
 
 // Logout handles POST /v1/auth/logout.
-// Revokes the current session and clears the cookie.
+//
+// @Summary      Logout
+// @Description  Revoke current session and clear the session cookie.
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  envelope{data=object{logged_out=bool}}
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /auth/logout [post]
 func (h *AuthAPI) Logout(c *echo.Context) error {
 	cookie, err := c.Request().Cookie(apiCookieName)
 	if err == nil && cookie.Value != "" {
@@ -62,7 +79,15 @@ func (h *AuthAPI) Logout(c *echo.Context) error {
 }
 
 // LogoutAll handles POST /v1/auth/logout-all.
-// Revokes all sessions for the user and clears the cookie.
+//
+// @Summary      Logout all sessions
+// @Description  Revoke all active sessions and clear the session cookie.
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  envelope{data=object{logged_out=bool}}
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /auth/logout-all [post]
 func (h *AuthAPI) LogoutAll(c *echo.Context) error {
 	_ = h.Svc.LogoutAll(c.Request().Context())
 	h.clearSessionCookie(c)
@@ -71,7 +96,15 @@ func (h *AuthAPI) LogoutAll(c *echo.Context) error {
 }
 
 // Me handles GET /v1/auth/me.
-// Returns the authenticated user's ID, or 401 if not authenticated.
+//
+// @Summary      Get current user
+// @Description  Returns the authenticated user's ID and creation time.
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  envelope{data=object{id=int,created_at=string}}
+// @Failure      401  {object}  envelope
+// @Security     CookieAuth
+// @Router       /auth/me [get]
 func (h *AuthAPI) Me(c *echo.Context) error {
 	user := auth.UserFromContext(c)
 	if user == nil {
@@ -85,7 +118,19 @@ func (h *AuthAPI) Me(c *echo.Context) error {
 }
 
 // ChangePassword handles POST /v1/auth/password.
-// Body: {"current_password": "...", "new_password": "...", "confirm_password": "..."}.
+//
+// @Summary      Change password
+// @Description  Change the login password. Revokes all sessions and re-issues a new one.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object{current_password=string,new_password=string,confirm_password=string}  true  "Password change request"
+// @Success      200   {object}  envelope{data=object{password_changed=bool}}
+// @Failure      400   {object}  envelope
+// @Failure      422   {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /auth/password [post]
 func (h *AuthAPI) ChangePassword(c *echo.Context) error {
 	var req struct {
 		CurrentPassword string `json:"current_password"`

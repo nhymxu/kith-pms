@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"strings"
 
 	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v5"
@@ -29,7 +30,8 @@ func New() *echo.Echo {
 	}
 
 	skipper := func(c *echo.Context) bool {
-		return slices.Contains(skipPaths, c.Request().URL.Path)
+		path := c.Request().URL.Path
+		return slices.Contains(skipPaths, path) || strings.HasPrefix(path, "/swagger/")
 	}
 
 	e.Use(

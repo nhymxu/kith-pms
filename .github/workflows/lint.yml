@@ -16,6 +16,8 @@ concurrency:
 jobs:
   go-lint:
     name: Go lint + test
+    # Skip push triggered by a PR merge — the pull_request event already ran this
+    if: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Merge pull request')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -39,6 +41,8 @@ jobs:
 
   web-lint:
     name: Web lint + build
+    # Skip push triggered by a PR merge — the pull_request event already ran this
+    if: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Merge pull request')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:

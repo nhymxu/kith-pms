@@ -10,13 +10,13 @@ require (
 	github.com/knadh/koanf/providers/confmap v1.0.0
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.4
+	github.com/knadh/koanf/v2 v2.3.5
 	github.com/labstack/echo/v5 v5.1.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/samber/slog-multi v1.8.0
 	github.com/samber/slog-sentry/v2 v2.10.3
-	github.com/swaggo/files/v2 v2.0.0
-	github.com/swaggo/swag v1.16.4
+	github.com/swaggo/files/v2 v2.0.2
+	github.com/swaggo/swag v1.16.6
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/uptrace/bun/driver/sqliteshim v1.2.18

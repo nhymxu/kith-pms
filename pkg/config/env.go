@@ -68,8 +68,8 @@ func LoadConfig(cfgFile string) error {
 		configFile = cfgFile
 	}
 
-	// Load from config file (optional – skip if file does not exist)
-	err := k.Load(file.Provider(configFile), dotenv.Parser())
+	// ParserEnv with "." delimiter unflatens dotted keys (e.g. JWT.SECRET → JWT → SECRET)
+	err := k.Load(file.Provider(configFile), dotenv.ParserEnv("", ".", nil))
 	if err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", configFile)
 	} else if !errors.Is(err, fs.ErrNotExist) {

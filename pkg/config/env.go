@@ -7,8 +7,8 @@ import (
 	"github.com/nhymxu/gommon/cfgloader"
 )
 
-// EnvConfigMap define mapping struct field and environment field
-type EnvConfigMap struct {
+// Config define mapping struct field and environment field
+type Config struct {
 	Debug  bool `koanf:"DEBUG"`
 	Sentry struct {
 		DSN string `koanf:"DSN"`
@@ -31,13 +31,13 @@ type EnvConfigMap struct {
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
 }
 
-func (c *EnvConfigMap) Sanitized() EnvConfigMap {
-	var cc EnvConfigMap
+func (c *Config) Sanitized() Config {
+	var cc Config
 
 	// Secrets excluded ❌
 	err := copier.Copy(&cc, &c)
 	if err != nil {
-		return EnvConfigMap{}
+		return Config{}
 	}
 
 	return cc
@@ -66,11 +66,13 @@ var configDefaults = map[string]any{
 }
 
 // C is the global config instance.
-var C EnvConfigMap
+var C Config
 
-// LoadConfig reads env file and loads to environment and global C variable
-func LoadConfig(cfgFile string) error {
+// Load reads env file and populates C.
+func Load(cfgFile string) error {
 	var err error
-	C, err = cfgloader.LoadConfig[EnvConfigMap](cfgFile, configDefaults)
+
+	C, err = cfgloader.LoadConfig[Config](cfgFile, configDefaults)
+
 	return err
 }

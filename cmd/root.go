@@ -42,7 +42,7 @@ with relationship, life log, memory, ...`,
 }
 
 func dependencyInit(cfgFile string) {
-	err := config.LoadConfig(cfgFile)
+	err := config.Load(cfgFile)
 	if err != nil {
 		panic("Can't load config from environment")
 	}

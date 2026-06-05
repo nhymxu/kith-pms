@@ -65,12 +65,12 @@ var configDefaults = map[string]any{
 	"SESSION_LIFETIME":  30 * 24 * time.Hour,
 }
 
-// ENV is global variable for using config in other place
-var ENV EnvConfigMap
+// C is the global config instance.
+var C EnvConfigMap
 
-// LoadConfig reads env file and loads to environment and global ENV variable
+// LoadConfig reads env file and loads to environment and global C variable
 func LoadConfig(cfgFile string) error {
 	var err error
-	ENV, err = cfgloader.LoadConfig[EnvConfigMap](cfgFile, configDefaults)
+	C, err = cfgloader.LoadConfig[EnvConfigMap](cfgFile, configDefaults)
 	return err
 }

@@ -34,7 +34,7 @@ The restore file is set to 0600 permissions after copy.`,
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
 			src := cmd.String("from")
-			dst := config.ENV.DBPath
+			dst := config.C.DBPath
 			force := cmd.Bool("force")
 
 			if !force {

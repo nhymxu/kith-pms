@@ -188,7 +188,7 @@ func (h *AuthAPI) ChangePassword(c *echo.Context) error {
 func (h *AuthAPI) setSessionCookie(c *echo.Context, token string) {
 	lifetime := h.SessionLifetime
 	if lifetime <= 0 {
-		lifetime = config.ENV.SessionLifetime
+		lifetime = config.C.SessionLifetime
 	}
 
 	cookie := new(http.Cookie)
@@ -199,7 +199,7 @@ func (h *AuthAPI) setSessionCookie(c *echo.Context, token string) {
 	cookie.SameSite = http.SameSiteLaxMode
 	cookie.Expires = time.Now().Add(lifetime)
 
-	behindTLS := h.BehindTLS || config.ENV.BehindTLS
+	behindTLS := h.BehindTLS || config.C.BehindTLS
 	if behindTLS {
 		cookie.Secure = true
 	}

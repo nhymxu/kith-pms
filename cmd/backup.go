@@ -29,7 +29,7 @@ The backup file contains all data including password hashes — store it securel
 			},
 		},
 		Action: func(_ context.Context, cmd *cli.Command) error {
-			src := config.ENV.DBPath
+			src := config.C.DBPath
 			dst := cmd.String("to")
 
 			srcInfo, err := os.Stat(src)

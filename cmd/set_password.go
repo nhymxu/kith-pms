@@ -46,7 +46,7 @@ it does not exist yet.`,
 				return fmt.Errorf("set-password: hash: %w", err)
 			}
 
-			dbPath := config.ENV.DBPath
+			dbPath := config.C.DBPath
 			if err := os.MkdirAll(pathutil.DirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("set-password: create db dir: %w", err)
 			}

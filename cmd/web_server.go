@@ -59,13 +59,13 @@ Can scale later.`,
 			port := cmd.Int64("port")
 			shutdownTime := cmd.Int64("shutdown_time")
 
-			secret := []byte(config.ENV.SessionSecret)
+			secret := []byte(config.C.SessionSecret)
 			if len(secret) < 32 {
 				slog.Error("SESSION_SECRET must be at least 32 bytes — refusing to start")
 				os.Exit(1)
 			}
 
-			dbPath := config.ENV.DBPath
+			dbPath := config.C.DBPath
 			if err := os.MkdirAll(pathutil.DirOf(dbPath), 0o700); err != nil {
 				return fmt.Errorf("api: create db dir: %w", err)
 			}
@@ -76,17 +76,17 @@ Can scale later.`,
 			}
 			defer func() { _ = db.Close() }()
 
-			if config.ENV.Debug {
+			if config.C.Debug {
 				db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 			}
 
-			if config.ENV.DBAutoMigrate {
+			if config.C.DBAutoMigrate {
 				if err := internaldb.Up(db); err != nil {
 					return fmt.Errorf("api: auto-migrate: %w", err)
 				}
 			}
 
-			lifetime := config.ENV.SessionLifetime
+			lifetime := config.C.SessionLifetime
 			if lifetime <= 0 {
 				lifetime = 30 * 24 * time.Hour
 			}
@@ -105,7 +105,7 @@ Can scale later.`,
 
 			peopleSvc := people.NewService(db)
 
-			avatarPath := config.ENV.AvatarStoragePath
+			avatarPath := config.C.AvatarStoragePath
 			if avatarPath == "" {
 				avatarPath = "data/avatars"
 			}
@@ -141,7 +141,7 @@ Can scale later.`,
 			giftsSvc := gifts.NewService(db)
 			giftsSvc.Audit = auditSvc
 
-			giftStoragePath := config.ENV.GiftStoragePath
+			giftStoragePath := config.C.GiftStoragePath
 			if giftStoragePath == "" {
 				giftStoragePath = "data/gifts"
 			}
@@ -179,7 +179,7 @@ Can scale later.`,
 				GiftStoragePath:      giftStoragePath,
 				APIToken:             apiToken,
 				SessionLifetime:      lifetime,
-				BehindTLS:            config.ENV.BehindTLS,
+				BehindTLS:            config.C.BehindTLS,
 			})
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

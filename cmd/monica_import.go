@@ -81,7 +81,7 @@ func monicaImportCommand() *cli.Command {
 				return printDryRunSummary(export, options)
 			}
 
-			database, err := internaldb.Open(config.ENV.DBPath)
+			database, err := internaldb.Open(config.C.DBPath)
 			if err != nil {
 				return fmt.Errorf("monica-import: open db: %w", err)
 			}
@@ -99,7 +99,7 @@ func monicaImportCommand() *cli.Command {
 			giftsSvc := gifts.NewService(database)
 			workSvc := work_history.NewService(database)
 			relSvc := relationships.NewService(database)
-			filesSvc := files.NewLocalFileService(config.ENV.AvatarStoragePath)
+			filesSvc := files.NewLocalFileService(config.C.AvatarStoragePath)
 
 			return runImport(
 				ctx,

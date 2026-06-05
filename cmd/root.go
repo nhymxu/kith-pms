@@ -52,7 +52,7 @@ func dependencyInit(cfgFile string) {
 }
 
 func newBaseHandler() slog.Handler {
-	if config.ENV.Debug {
+	if config.C.Debug {
 		return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
 
@@ -64,9 +64,9 @@ func initLog() {
 }
 
 func initSentry() {
-	if config.ENV.Sentry.DSN != "" {
+	if config.C.Sentry.DSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
-			Dsn:              config.ENV.Sentry.DSN,
+			Dsn:              config.C.Sentry.DSN,
 			AttachStacktrace: true,
 		})
 		if err != nil {

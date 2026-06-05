@@ -24,10 +24,12 @@ cd kith-pms
 cp .env.example .env
 # Edit .env — set SESSION_SECRET (min 32 chars)
 
-make build
+CGO_ENABLED=0 go build -o bin/kith-pms ./cmd
 ./bin/kith-pms migrate up
 ./bin/kith-pms set-password
 ```
+
+> If you also need the web interface, run `make build` instead (requires Node.js + pnpm for the SPA build).
 
 If kith is already running, stop the server before importing to avoid lock contention:
 

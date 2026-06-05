@@ -65,7 +65,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 
 | Layer            | Technology                                  | Rationale                                                                |
 |------------------|---------------------------------------------|--------------------------------------------------------------------------|
-| Language         | Go 1.26.2, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
+| Language         | Go 1.26.4, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
 | HTTP             | Echo v5.1.1                                 | Lightweight HTTP framework, minimal magic                                |
 | Database         | SQLite (modernc.org/sqlite v1.50.1)         | Pure Go, no CGO, single-file database, WAL mode                          |
 | ORM              | uptrace/bun v1.2.18                         | Lightweight query builder; raw SQL queries retained; no model layer      |
@@ -74,7 +74,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
 | UI Components    | Local shadcn-style primitives + Base UI     | Accessible local component APIs with Tailwind theming                    |
-| Styling          | Tailwind CSS v4                             | Utility-first CSS with Mist/Blue design tokens                           |
+| Styling          | Tailwind CSS v4                             | Utility-first CSS with Indigo/Zinc design tokens                          |
 | Build            | Vite 8                                      | Fast bundler; code splitting, lazy loading, HMR                          |
 | Linter/Formatter | Biome 2.4.5                                 | Rust-based linter + formatter for JS/TS                                  |
 | Package Manager  | pnpm 11                                     | Fast, disk-efficient workspaces                                          |
@@ -100,7 +100,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 
 ### Docker Deployment
 - Multi-stage Dockerfile: Node.js (build SPA) → Go (compile binary) → distroless (runtime)
-- `docker-compose.yml` for local self-hosting with volume mounts for data persistence
+- `docker-compose.dev.yml` for local development; production stack in `deploy/compose/docker-compose.yml` with Litestream sidecar
 - Automatic migrations on startup (configurable via `DB_AUTO_MIGRATE`)
 
 ### Data Storage
@@ -132,7 +132,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 
 ### Data Privacy
 - No external services required (self-hosted only)
-- Optional Sentry integration for error monitoring (configurable via `SENTRY_DSN`)
+- Optional Sentry integration for error monitoring (configurable via `SENTRY.DSN` env var)
 - All data remains on user's infrastructure
 
 ## Monitoring & Observability

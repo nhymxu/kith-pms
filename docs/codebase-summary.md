@@ -118,7 +118,7 @@ kith-pms/
 │   │       └── public/           # Populated by `make web` (gitignored except placeholder.txt)
 ├── pkg/                          # Shared packages
 │   ├── config/                   # Configuration management
-│   │   ├── env.go                # LoadConfig(), EnvConfigMap, environment parsing
+│   │   ├── env.go                # Load(), Config struct, environment parsing
 │   │   ├── const.go              # Application constants
 │   │   └── default.go            # Default config values
 │   └── errors/                   # Custom error types
@@ -164,7 +164,7 @@ kith-pms/
 │   └── gifts/                    # Gift images
 ├── docs/                         # Project documentation
 ├── Dockerfile                    # Multi-stage container build
-├── docker-compose.yml            # Local development setup
+├── docker-compose.dev.yml        # Local development setup
 ├── Makefile                      # Dev workflow targets
 ├── go.mod / go.sum               # Module definition and lockfile
 └── .env.example                  # Example environment variables
@@ -308,7 +308,7 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI, Tailwind CSS v4 Mist/Blue tokens, Biome 2.4.5, Vite 8, pnpm 11.
+**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI, Tailwind CSS v4 Indigo/Zinc tokens, Biome 2.4.5, Vite 8, pnpm 11.
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
@@ -357,7 +357,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **Components**: summary-cards, relationship-pulse-chart, action-queue, recent-relationship-activity, upcoming-moments
 - **Data Adapter**: `dashboard-data.ts` derives KPIs and shapes API responses for widgets
 - **Per-card Refresh**: TanStack Query invalidation on refresh button click
-- **Chart Library**: Recharts v3.8.1 with custom Blue/Mist theme
+- **Chart Library**: Recharts v3.8.1 with custom Indigo/Zinc theme
 
 **Validation:**
 - Build: `pnpm --dir web build` ✅
@@ -390,14 +390,14 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Module & Build
 
-- **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.2+
+- **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.4
 - **Build**: `make web` (pnpm build → copy SPA) then `CGO_ENABLED=0 go build` for single static binary
 - **Binary name**: `kith-pms` (compiled to `bin/kith-pms`)
 - **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/api/spa/public/` for embedding
 
 ## Test Coverage
 
-18+ test files across all domains using shared `testutil.NewDB(t *testing.T)` helper:
+26 test files across all domains using shared `testutil.NewDB(t *testing.T)` helper:
 - `auth`: password hashing, session tokens, CSRF token generation
 - `audit`: logging behavior, list queries, actor attribution
 - `people`: CRUD, search, label associations

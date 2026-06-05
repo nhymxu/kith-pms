@@ -67,7 +67,7 @@ Entry: `main.go` → `urfave/cli.NewApp().Run(os.Args)`
 All subcommands inherit from root command's `Before` hook:
 1. **Config loading**: `config.LoadConfig()` — three-layer merge (defaults → .env → env vars)
 2. **Logging**: Initialize slog with either text (DEBUG=true) or JSON (DEBUG=false) format
-3. **Sentry (optional)**: If SENTRY_DSN set, integrate slog with Sentry error reporting
+3. **Sentry (optional)**: If `SENTRY.DSN` set, integrate slog with Sentry error reporting
 
 Subcommands after dependency init:
 | Command | Purpose |
@@ -88,7 +88,7 @@ Three-layer merge via koanf (lowest → highest precedence):
 3. Environment variables          ← always wins
 ```
 
-Result unmarshals to global `config.ENV` (`EnvConfigMap`).
+Result unmarshals to global `config.C` (`Config`).
 
 ### Supported Environment Variables
 
@@ -100,7 +100,7 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 | `SESSION_LIFETIME`    | duration | `720h` (30 days) | Session cookie expiry duration                          |
 | `BEHIND_TLS`          | bool     | `false`          | Set `true` when behind TLS proxy (marks cookies Secure) |
 | `DEBUG`               | bool     | `false`          | `true` → text logs + debug level                        |
-| `SENTRY_DSN`          | string   | *(empty)*        | Sentry DSN; omit to disable error reporting             |
+| `SENTRY.DSN`          | string   | *(empty)*        | Sentry DSN; omit to disable error reporting             |
 | `AVATAR_STORAGE_PATH` | string   | `data/avatars`   | Directory for storing avatar files                      |
 | `GIFT_STORAGE_PATH`   | string   | `data/gifts`     | Directory for storing gift images                       |
 | `TOKEN_AUTH`          | string   | *(empty)*        | Static bearer token for API clients (optional)          |
@@ -112,6 +112,34 @@ Result unmarshals to global `config.ENV` (`EnvConfigMap`).
 - **All code**: Uses stdlib `log/slog` directly (no third-party logging imports in business logic)
 
 Sentry receives: stack traces (AttachStacktrace: true), all slog Error/above events.
+
+## Prometheus Metrics
+
+**Package**: `internal/metrics/metrics.go`
+
+Exposed at `GET /metrics` (no authentication required) in Prometheus exposition format.
+
+### Metrics Provided
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `http_requests_total` | Counter | method, route, status | Total HTTP request count |
+| `http_request_duration_seconds` | Histogram | method, route, status | Request latency buckets |
+| `kith_db_size_bytes` | Gauge | - | SQLite database file size (via PRAGMA page_count) |
+| `kith_active_sessions` | Gauge | - | Current valid session count |
+| `kith_build_info` | Gauge | version, go_version | Build metadata (always 1) |
+
+### Architecture
+
+- Custom Prometheus registry (not global default) to avoid conflicts with imported packages
+- HTTP middleware wraps every request: records start time, increments counter on response, observes duration
+- Route template normalization strips dynamic parameters (`/people/:id` instead of `/people/42`) to bound label cardinality
+- GaugeFunc collectors poll `PRAGMA page_count` and session count on each `/metrics` scrape
+- Build info gauge is set once at startup from `cmd/doc.go` version constant
+
+### Testing
+
+- `metrics_test.go` validates: route-template label cardinality is bounded, unknown routes return 404, output format is valid Prometheus exposition.
 
 ## Frontend Architecture (React 19 SPA)
 
@@ -168,6 +196,27 @@ routes/
 - Mobile (<md): Hamburger menu toggle; nav items in collapsible sidebar
 
 **Charts**: Recharts v3.8.1 with custom indigo/zinc theme for dashboard visualizations
+
+**Dashboard Architecture**: The dashboard page (`web/src/routes/_authed/index.tsx`) executes 7 parallel TanStack Query fetches (people, journal, reminders, dates, gifts, labels, audit) to power 5 interactive widgets:
+- **Summary KPI Cards**: People count, follow-ups, important dates, gifts, journal activity — per-card refresh via `queryClient.invalidateQueries()`
+- **Relationship Pulse Chart**: Recharts line chart with responsive container and custom indigo tooltip; data derived by `dashboard-data.ts`
+- **Action Queue**: Filterable pills (all/dates/journal/gifts), capped to 8 rows with Show more/less toggle
+- **Recent Relationship Activity**: Capped to 6 entries with timestamps and person links
+- **Upcoming Moments**: Capped to 5 upcoming important dates/reminders
+
+**Settings Two-Panel Layout**: `web/src/routes/_authed/settings/` uses a left sidebar with navigation (General, Labels, Relationship Types, Security) and a right detail panel. The General settings panel manages date/time format, timezone, and audit log retention days. Settings persist to the `user_setting` table and are loaded on app start.
+
+**People Detail Page (9 Sections)**: The people detail view at `web/src/features/people/detail/sections/` is modularized into 9 focused section components orchestrated by `person-detail-sections.tsx`:
+1. **Overview-section.tsx** — Inline edit mode toggle with avatar controls
+2. **Contacts-section.tsx** — Inline add/edit/delete per row
+3. **Locations-section.tsx** — Inline add/edit/delete per row
+4. **Labels-section.tsx** — Attached/available sub-headings for clear distinction
+5. **Relationships-section.tsx** — Notes truncated below entries; search-as-you-type person picker
+6. **Journal-section.tsx** — "Quick journal" button; entry rows show other people involved
+7. **Work-history-section.tsx** — Inline add/edit/delete via bulk replace API
+8. **Important-dates-section.tsx** — DOB read-only with lock icon; custom dates add/edit/delete
+9. **Gifts-section.tsx** — "Quick gift" button in section header
+Each section uses `SectionCard` for consistent visual spacing and TanStack Query optimistic updates.
 
 ### Data Layer (TanStack Query v5)
 
@@ -353,7 +402,7 @@ The file storage layer handles avatar uploads with security and durability guara
 
 ### Gift Image Storage Architecture
 
-**Location**: `internal/api/handlers_gifts.go` (image endpoints)
+**Location**: `internal/api/handler/gifts.go` (image endpoints)
 
 Gift images are stored separately from avatars with similar security patterns:
 
@@ -527,7 +576,7 @@ person_relationship (N)
 
 ### Container (multi-stage Dockerfile)
 - Stage 1: `node:24-alpine` — `pnpm install --frozen-lockfile && pnpm build`
-- Stage 2: `golang:1.26.3-alpine` — copies SPA into embed path, runs `go build`
+- Stage 2: `golang:1.26.4-alpine` — copies SPA into embed path, runs `go build`
 - Stage 3: `gcr.io/distroless/static-debian12` — minimal runtime, non-root UID 65532
 - `go.uber.org/automaxprocs` auto-sets GOMAXPROCS to match container CPU quota
 - Database: Mount volume at `/data` for persistent storage

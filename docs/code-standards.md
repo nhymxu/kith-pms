@@ -6,8 +6,8 @@
 - Lowercase, single word: `config`, `auth`, `audit`, `people`, `labels`, `journal`
 - No underscores or mixed case in package names
 - Package name matches directory name
-- Domain packages under `internal/` (auth, audit, people, labels, journal, dates, reminders, files, db, web, api)
-- Shared packages under `pkg/` (config)
+- Domain packages under `internal/` (auth, audit, people, labels, journal, dates, reminders, files, gifts, work_history, relationships, settings, monica)
+- Shared packages under `pkg/` (config, errors)
 
 ### File Naming
 - Go standard: `snake_case.go` (e.g., `env.go`, `domain.go`, `service.go`, `repo.go`)
@@ -40,12 +40,12 @@ type Person struct {
 
 // service.go — business logic
 type Service struct {
-    db *sql.DB
+    db bun.IDB
 }
 
 // repo.go — data access layer
 type Repo struct {
-    db *sql.DB
+    db *bun.DB
 }
 ```
 
@@ -61,14 +61,14 @@ type Repo struct {
 - Log levels: `Debug` for dev detail, `Info` for lifecycle events, `Warn` for recoverable issues, `Error` for failures
 - In production (`DEBUG=false`), slog outputs JSON; in debug mode, text format
 - Use `slog.WithContext()` to pass request context through handlers
-- **Sentry Integration**: Server-side only via `slog-sentry` fanout (optional, configured via `SENTRY_DSN`)
+- **Sentry Integration**: Server-side only via `slog-sentry` fanout (optional, configured via `SENTRY.DSN`)
   - Never expose Sentry DSN in frontend bundles
   - Sentry receives Error level and above events with stack traces
   - Errors logged to slog automatically propagate to Sentry if configured
 
 ### Configuration Access
-- All config consumed via `config.ENV` global — no direct `os.Getenv` calls outside `pkg/config`
-- Add new config fields to `EnvConfigMap` in `pkg/config/env.go` and defaults in `pkg/config/default.go`
+- All config consumed via `config.C` global — no direct `os.Getenv` calls outside `pkg/config`
+- Add new config fields to `Config` struct in `pkg/config/env.go`
 
 ### HTTP Handlers (Echo v5)
 - Handlers live in `internal/api/handler/` package (one file per domain) with struct-based pattern
@@ -196,7 +196,7 @@ export const PersonSchema = z.object({
 - **Integration tests**: Use real SQLite database (e.g., `:memory:` or temp file)
 - **Service tests**: `internal/{domain}/service_test.go` — test business logic with real repo
 - **No mocks**: Prefer real dependencies over mocks for confidence in actual behavior
-- **Test files**: 15 test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts
+- **Test files**: 26+ test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts, work_history, settings, audit, metrics, monica
 - **Total Go tests**: 159 tests passing with race detector enabled
 
 ### React Frontend Tests
@@ -307,7 +307,7 @@ No AI references in commit messages.
 ## File Upload Patterns
 
 ### Avatar Upload Flow
-1. **Handler** (`internal/api/handlers_people.go`):
+1. **Handler** (`internal/api/handler/people.go`):
    - Limit request body: `http.MaxBytesReader(w, r.Body, 6*1024*1024)` (5MB file + 1MB overhead)
    - Extract multipart file: `c.FormFile("avatar")`
    - Delegate to service: `h.Svc.UploadAvatar(ctx, personID, file, header)`

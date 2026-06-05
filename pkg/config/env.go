@@ -1,18 +1,10 @@
 package config
 
 import (
-	"errors"
-	"fmt"
-	"io/fs"
-	"os"
 	"time"
 
 	"github.com/jinzhu/copier"
-	"github.com/knadh/koanf/parsers/dotenv"
-	"github.com/knadh/koanf/providers/confmap"
-	"github.com/knadh/koanf/providers/env"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/v2"
+	"github.com/nhymxu/gommon/cfgloader"
 )
 
 // EnvConfigMap define mapping struct field and environment field
@@ -51,35 +43,34 @@ func (c *EnvConfigMap) Sanitized() EnvConfigMap {
 	return cc
 }
 
+// configDefaults holds default values for all config fields.
+// Nested struct fields use dot-separated koanf tag paths (e.g. "SENTRY.DSN").
+var configDefaults = map[string]any{
+	"DEBUG":      false,
+	"SENTRY.DSN": "",
+	"TOKEN_AUTH": "",
+
+	// Database
+	"DB_PATH":         "data/kith.db",
+	"DB_AUTO_MIGRATE": true,
+
+	// File Storage
+	"AVATAR_STORAGE_PATH": "data/avatars",
+	"GIFT_STORAGE_PATH":   "data/gifts",
+
+	// Auth — SESSION_SECRET must be set in production via environment (≥32 bytes)
+	"SESSION_SECRET":    "",
+	"APP_PASSWORD_HASH": "",
+	"BEHIND_TLS":        false,
+	"SESSION_LIFETIME":  30 * 24 * time.Hour,
+}
+
 // ENV is global variable for using config in other place
 var ENV EnvConfigMap
 
-// LoadConfig read env file and loaded to environment and global ENV variable
+// LoadConfig reads env file and loads to environment and global ENV variable
 func LoadConfig(cfgFile string) error {
-	k := koanf.New(".")
-
-	// Load defaults first (lowest precedence)
-	if err := k.Load(confmap.Provider(configDefaults, "."), nil); err != nil {
-		return fmt.Errorf("failed to load default config: %w", err)
-	}
-
-	configFile := ".env"
-	if cfgFile != "" {
-		configFile = cfgFile
-	}
-
-	// ParserEnv with "." delimiter unflatens dotted keys (e.g. JWT.SECRET → JWT → SECRET)
-	err := k.Load(file.Provider(configFile), dotenv.ParserEnv("", ".", nil))
-	if err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", configFile)
-	} else if !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("failed to load config file %s: %w", configFile, err)
-	}
-
-	// Override with actual environment variables (highest precedence)
-	if err := k.Load(env.Provider("", ".", nil), nil); err != nil {
-		return err
-	}
-
-	return k.Unmarshal("", &ENV)
+	var err error
+	ENV, err = cfgloader.LoadConfig[EnvConfigMap](cfgFile, configDefaults)
+	return err
 }

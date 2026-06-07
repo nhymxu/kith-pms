@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/lmittmann/tint"
 	slogmulti "github.com/samber/slog-multi"
 	slogsentry "github.com/samber/slog-sentry/v2"
 	"github.com/urfave/cli/v3"
@@ -53,7 +54,10 @@ func dependencyInit(cfgFile string) {
 
 func newBaseHandler() slog.Handler {
 	if config.C.Debug {
-		return slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+		return tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      slog.LevelDebug,
+			TimeFormat: "15:04:05.000",
+		})
 	}
 
 	return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})

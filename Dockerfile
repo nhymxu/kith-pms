@@ -1,6 +1,8 @@
 # Stage 1: Build the React SPA
 FROM node:24-alpine AS spa-builder
 
+ENV CI=true
+
 WORKDIR /app/web
 
 # Install pnpm via corepack

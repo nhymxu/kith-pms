@@ -37,92 +37,42 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 
-dockers:
-  - use: buildx
+dockers_v2:
+  - id: kith-pms-distroless
     ids:
       - kith-pms
-    goos: linux
-    goarch: amd64
     dockerfile: Dockerfile.goreleaser
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-amd64"
-      - "ghcr.io/nhymxu/kith-pms:latest-amd64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
+    images:
+      - "ghcr.io/nhymxu/kith-pms"
+    tags:
+      - "{{ .Version }}"
+      - "latest"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
 
-  - use: buildx
+  - id: kith-pms-slim
     ids:
       - kith-pms
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile.goreleaser
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-arm64"
-      - "ghcr.io/nhymxu/kith-pms:latest-arm64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64/v8"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-
-  - use: buildx
-    ids:
-      - kith-pms
-    goos: linux
-    goarch: amd64
     dockerfile: Dockerfile.goreleaser-debian-slim
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-amd64"
-      - "ghcr.io/nhymxu/kith-pms:latest-slim-amd64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-
-  - use: buildx
-    ids:
-      - kith-pms
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile.goreleaser-debian-slim
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-arm64"
-      - "ghcr.io/nhymxu/kith-pms:latest-slim-arm64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64/v8"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-
-docker_manifests:
-  - name_template: "ghcr.io/nhymxu/kith-pms:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-amd64"
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/nhymxu/kith-pms:latest"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:latest-amd64"
-      - "ghcr.io/nhymxu/kith-pms:latest-arm64"
-  - name_template: "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-amd64"
-      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-arm64"
-  - name_template: "ghcr.io/nhymxu/kith-pms:latest-slim"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:latest-slim-amd64"
-      - "ghcr.io/nhymxu/kith-pms:latest-slim-arm64"
+    images:
+      - "ghcr.io/nhymxu/kith-pms"
+    tags:
+      - "{{ .Version }}-slim"
+      - "latest-slim"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
 
 changelog:
   disable: true

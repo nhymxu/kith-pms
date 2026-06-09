@@ -1,6 +1,7 @@
 FROM gcr.io/distroless/static-debian12
 
-COPY kith-pms /kith-pms
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/kith-pms /kith-pms
 
 USER 65532:65532
 

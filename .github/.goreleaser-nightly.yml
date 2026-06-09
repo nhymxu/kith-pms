@@ -37,80 +37,40 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 
-dockers:
-  - use: buildx
+dockers_v2:
+  - id: kith-pms-distroless
     ids:
       - kith-pms
-    goos: linux
-    goarch: amd64
     dockerfile: Dockerfile.goreleaser
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-amd64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly"
+    images:
+      - "ghcr.io/nhymxu/kith-pms"
+    tags:
+      - "nightly"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "nightly"
 
-  - use: buildx
+  - id: kith-pms-slim
     ids:
       - kith-pms
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile.goreleaser
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-arm64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64/v8"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly"
-
-  - use: buildx
-    ids:
-      - kith-pms
-    goos: linux
-    goarch: amd64
     dockerfile: Dockerfile.goreleaser-debian-slim
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-slim-amd64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly"
-
-  - use: buildx
-    ids:
-      - kith-pms
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile.goreleaser-debian-slim
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-slim-arm64"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64/v8"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version=nightly"
-
-docker_manifests:
-  - name_template: "ghcr.io/nhymxu/kith-pms:nightly"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-amd64"
-      - "ghcr.io/nhymxu/kith-pms:nightly-arm64"
-  - name_template: "ghcr.io/nhymxu/kith-pms:nightly-slim"
-    image_templates:
-      - "ghcr.io/nhymxu/kith-pms:nightly-slim-amd64"
-      - "ghcr.io/nhymxu/kith-pms:nightly-slim-arm64"
+    images:
+      - "ghcr.io/nhymxu/kith-pms"
+    tags:
+      - "nightly-slim"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "nightly"
 
 changelog:
   disable: true

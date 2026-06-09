@@ -4,7 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY kith-pms /kith-pms
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/kith-pms /kith-pms
 
 RUN useradd --uid 65532 --no-create-home --shell /usr/sbin/nologin nonroot
 USER 65532:65532

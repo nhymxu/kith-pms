@@ -38,10 +38,10 @@ checksum:
   algorithm: sha256
 
 dockers_v2:
-  - id: kith-pms-distroless
+  - id: kith-pms-slim
     ids:
       - kith-pms
-    dockerfile: Dockerfile.goreleaser
+    dockerfile: Dockerfile.goreleaser-debian-slim
     images:
       - "ghcr.io/nhymxu/kith-pms"
     tags:
@@ -55,14 +55,14 @@ dockers_v2:
       "org.opencontainers.image.revision": "{{.FullCommit}}"
       "org.opencontainers.image.version": "nightly"
 
-  - id: kith-pms-slim
+  - id: kith-pms-distroless
     ids:
       - kith-pms
-    dockerfile: Dockerfile.goreleaser-debian-slim
+    dockerfile: Dockerfile.goreleaser
     images:
       - "ghcr.io/nhymxu/kith-pms"
     tags:
-      - "nightly-slim"
+      - "nightly-distroless"
     platforms:
       - linux/amd64
       - linux/arm64

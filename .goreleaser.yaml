@@ -72,6 +72,40 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
 
+  - use: buildx
+    ids:
+      - kith-pms
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile.goreleaser-debian-slim
+    image_templates:
+      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-amd64"
+      - "ghcr.io/nhymxu/kith-pms:latest-slim-amd64"
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
+  - use: buildx
+    ids:
+      - kith-pms
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser-debian-slim
+    image_templates:
+      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-arm64"
+      - "ghcr.io/nhymxu/kith-pms:latest-slim-arm64"
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64/v8"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+
 docker_manifests:
   - name_template: "ghcr.io/nhymxu/kith-pms:{{ .Version }}"
     image_templates:
@@ -81,6 +115,14 @@ docker_manifests:
     image_templates:
       - "ghcr.io/nhymxu/kith-pms:latest-amd64"
       - "ghcr.io/nhymxu/kith-pms:latest-arm64"
+  - name_template: "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim"
+    image_templates:
+      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-amd64"
+      - "ghcr.io/nhymxu/kith-pms:{{ .Version }}-slim-arm64"
+  - name_template: "ghcr.io/nhymxu/kith-pms:latest-slim"
+    image_templates:
+      - "ghcr.io/nhymxu/kith-pms:latest-slim-amd64"
+      - "ghcr.io/nhymxu/kith-pms:latest-slim-arm64"
 
 changelog:
   disable: true

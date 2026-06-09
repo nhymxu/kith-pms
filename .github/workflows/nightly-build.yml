@@ -63,6 +63,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create and push Docker multi-arch manifests
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/nhymxu/kith-pms:nightly \
+            ghcr.io/nhymxu/kith-pms:nightly-amd64 \
+            ghcr.io/nhymxu/kith-pms:nightly-arm64
+
+          docker buildx imagetools create \
+            -t ghcr.io/nhymxu/kith-pms:nightly-slim \
+            ghcr.io/nhymxu/kith-pms:nightly-slim-amd64 \
+            ghcr.io/nhymxu/kith-pms:nightly-slim-arm64
+
       - name: Delete existing nightly release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

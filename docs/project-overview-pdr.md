@@ -13,15 +13,16 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 ## Core Feature Areas (Implemented)
 
 ### Contacts & Relationships
-- Store people: name, date of birth, relationship type, contact methods, addresses
+- Store people: name, date of birth, gender, relationship type, contact methods, addresses
 - Self-profile designation: mark one person as "Me" for personal journal filtering
 - Track interaction history via journal entries linked to people
 - Tag relationships with color-coded labels
-- Upload profile avatars (JPEG, PNG, GIF, WebP)
-- Important dates tracking (birthdays, anniversaries, milestones)
-- Reminders for follow-up and staying in touch
+- Upload profile avatars (JPEG, PNG, GIF, WebP; max 5MB)
+- Important dates tracking (birthdays, anniversaries, milestones with recurring support)
+- Reminders for follow-up with 7 recurrence types (daily, weekly, monthly, yearly, custom, day-of-week, relative-to-last-contact)
 - Many-to-many person-to-person relationships with customizable, optionally-paired types
 - Last contact timestamp tracking (manual & auto-update from journal entries)
+- Employment history tracking per person (positions, dates, notes)
 
 ### Life Journal / Log
 - Date-stamped entries with title and content
@@ -57,9 +58,16 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Auto-spawn next occurrence when reminder marked complete
 - Optional end date cutoff to prevent spawning after specified date
 
+### OpenAPI/Swagger Documentation
+- Interactive Swagger UI at `/swagger/index.html` with 28 endpoints documented
+- OpenAPI 2.0 spec generation from swaggo annotations in all handler files
+- Zero external Swagger dependencies (custom Echo v5 handler)
+
 ### Goreleaser Multi-Platform Releases
 - Automated binary builds for Linux, macOS, Windows (amd64, arm64)
 - GitHub Actions CI/CD integration for release automation
+- Nightly snapshot builds for development testing
+- Multi-platform Docker images to GHCR (distroless + debian-slim variants)
 
 ## Tech Stack (Implemented)
 
@@ -68,23 +76,24 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Language         | Go 1.26.4, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
 | HTTP             | Echo v5.1.1                                 | Lightweight HTTP framework, minimal magic                                |
 | Database         | SQLite (modernc.org/sqlite v1.50.1)         | Pure Go, no CGO, single-file database, WAL mode                          |
-| ORM              | uptrace/bun v1.2.18                         | Lightweight query builder; raw SQL queries retained; no model layer      |
-| Frontend         | React 19, TanStack Router v1                | CSR SPA with file-based routing; full client-side interactivity          |
+| ORM              | uptrace/bun v1.2.18+                        | Lightweight query builder; raw SQL queries; no model layer               |
+| Frontend         | React 19.2, TanStack Router 1.168+          | CSR SPA with file-based routing; full client-side interactivity          |
 | Data Fetching    | TanStack Query v5                           | Cache-first data fetching, stale-while-revalidate, per-component refresh |
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
-| UI Components    | Local shadcn-style primitives + Base UI     | Accessible local component APIs with Tailwind theming                    |
-| Styling          | Tailwind CSS v4                             | Utility-first CSS with Indigo/Zinc design tokens                          |
+| UI Components    | Local shadcn-style primitives + Base UI 1.5 | Accessible local component APIs with Tailwind theming                    |
+| Styling          | Tailwind CSS 4.3                            | Utility-first CSS with Indigo-600 accent, Zinc surfaces                  |
 | Build            | Vite 8                                      | Fast bundler; code splitting, lazy loading, HMR                          |
-| Linter/Formatter | Biome 2.4.5                                 | Rust-based linter + formatter for JS/TS                                  |
-| Package Manager  | pnpm 11                                     | Fast, disk-efficient workspaces                                          |
+| Linter/Formatter | Biome 2.4.16+                               | Rust-based linter + formatter for JS/TS                                  |
+| Package Manager  | pnpm (latest)                               | Fast, disk-efficient workspaces                                          |
 | CLI              | urfave/cli v3                               | Simple CLI scaffolding for subcommands                                   |
-| Config           | koanf v2                                    | Layered config: defaults → .env file → env vars                          |
-| Logging          | slog                                        | Standard library structured logging (Go 1.21+)                           |
-| Error Monitoring | slog-sentry                                 | Fan-out errors to Sentry without replacing slog                          |
+| Config           | nhymxu/gommon/cfgloader                     | Three-layer config: defaults → .env file → env vars (replaces koanf)    |
+| Logging          | slog + tint                                 | Standard library structured logging with colored debug output             |
+| Error Monitoring | slog-sentry                                 | Fan-out errors to Sentry without replacing slog (optional)              |
 | Auth             | bcrypt + HMAC sessions                      | Password hashing + signed HttpOnly cookie sessions                       |
+| API Docs         | Swagger/OpenAPI 2.0                         | Interactive API documentation at `/swagger/index.html`                  |
 | Search           | SQLite FTS5                                 | Full-text search with auto-update triggers                               |
-| Charts           | Recharts v3.8.1                             | Interactive dashboard visualizations                                     |
+| Charts           | Recharts 3.8.1+                             | Interactive dashboard visualizations                                     |
 
 ## Design System
 
@@ -99,9 +108,16 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 - All assets (CSS, JS, images) bundled; no external file dependencies
 
 ### Docker Deployment
-- Multi-stage Dockerfile: Node.js (build SPA) → Go (compile binary) → distroless (runtime)
+- Multi-stage Dockerfile: Node.js 24-alpine (build SPA) → Go 1.26-alpine (compile) → distroless (runtime)
 - `docker-compose.dev.yml` for local development; production stack in `deploy/compose/docker-compose.yml` with Litestream sidecar
+- Multi-platform images pushed to GHCR (linux/amd64, linux/arm64) for both distroless and debian-slim variants
 - Automatic migrations on startup (configurable via `DB_AUTO_MIGRATE`)
+
+### Kubernetes Deployment
+- Kustomize manifests in `deploy/k8s/` with base layer + optional components (Ingress, ServiceMonitor)
+- Non-root user (65532), read-only root filesystem, dropped capabilities
+- Litestream init + sidecar for continuous S3-compatible backup and restore-on-empty pattern
+- Single replica with Recreate strategy to prevent SQLite multi-writer corruption
 
 ### Data Storage
 - SQLite database: `data/kith.db` (configurable via `DB_PATH`)

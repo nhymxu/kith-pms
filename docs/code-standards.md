@@ -67,8 +67,10 @@ type Repo struct {
   - Errors logged to slog automatically propagate to Sentry if configured
 
 ### Configuration Access
-- All config consumed via `config.C` global — no direct `os.Getenv` calls outside `pkg/config`
+- All config consumed via `config.C` global (not `ENV`) — no direct `os.Getenv` calls outside `pkg/config`
 - Add new config fields to `Config` struct in `pkg/config/env.go`
+- Config loading via `config.Load()` function (not `LoadConfig`) using nhymxu/gommon/cfgloader
+- Three-layer merge: hardcoded defaults → .env file → environment variables
 
 ### HTTP Handlers (Echo v5)
 - Handlers live in `internal/api/handler/` package (one file per domain) with struct-based pattern
@@ -154,9 +156,9 @@ export const PersonSchema = z.object({
 ```
 
 ### Styling
-- **Tailwind CSS v4** with Linear/Stripe minimal design tokens
+- **Tailwind CSS 4.3** with Linear/Stripe minimal design tokens (Indigo-600 accent)
 - Local UI components use indigo-600 accent, zinc surfaces, hairline borders, no shadows
-- **Recharts v3.8.1** for dashboard charts
+- **Recharts 3.8+** for dashboard charts with custom Indigo/Zinc theme
 - Design tokens in `web/src/styles.css` (:root CSS variables)
 
 ### Authentication
@@ -180,9 +182,10 @@ export const PersonSchema = z.object({
 - Use discriminated unions for type safety
 
 ### Biome Configuration
-- Linter + formatter in `web/biome.json`
+- Linter + formatter in `web/biome.json` (Biome 2.4.16+)
 - Run `pnpm check` to verify lint/format
 - Run `pnpm format` to auto-fix formatting issues
+- Enforced on `make lint` via `pnpm --dir web check`
 
 ### Imports
 - Group: stdlib → external → internal (separated by blank lines)
@@ -256,7 +259,8 @@ make test-coverage     # generate coverage report
 | Target          | Command                                                         | Purpose                                      |
 |-----------------|-----------------------------------------------------------------|----------------------------------------------|
 | `web`           | `pnpm install && pnpm build && copy to internal/api/spa/public` | Build React SPA (Vite) and copy to embed dir |
-| `build`         | `make web && CGO_ENABLED=0 go build -o bin/kith-pms ./cmd`      | Full build (SPA + static Go binary)          |
+| `swagger`       | `swag init -g cmd/doc.go -o internal/api/swagger`              | Generate OpenAPI 2.0 spec from swaggo annotations |
+| `build`         | `make swagger && make web && CGO_ENABLED=0 go build ...`        | Full build (Swagger + SPA + static Go binary) |
 | `dev`           | `make dev`                                                      | Run `go run ./cmd` with file watching        |
 | `deps`          | `go mod download && go mod tidy`                                | Download and tidy Go dependencies            |
 | `fmt`           | `gofmt -w .`                                                    | Auto-format Go files                         |

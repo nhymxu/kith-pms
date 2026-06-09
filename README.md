@@ -121,7 +121,7 @@ The production compose binds to `127.0.0.1` by default — put a TLS-terminating
 
 ```bash
 # From repo root
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f compose.dev.yml up -d
 ```
 
 > **Note**: The Docker image runs as non-root (UID 65532). It uses `gcr.io/distroless/static-debian12` — no shell is available inside the container; use `docker logs` for debugging.

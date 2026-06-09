@@ -117,10 +117,10 @@ kith-pms/
 │   │       ├── spa.go            # //go:embed all:public; Handler() with catch-all fallback
 │   │       └── public/           # Populated by `make web` (gitignored except placeholder.txt)
 ├── pkg/                          # Shared packages
-│   ├── config/                   # Configuration management
-│   │   ├── env.go                # Load(), Config struct, environment parsing
-│   │   ├── const.go              # Application constants
-│   │   └── default.go            # Default config values
+│   ├── config/                   # Configuration management (cfgloader-based)
+│   │   ├── env.go                # Load() function, Config struct, environment parsing
+│   │   ├── const.go              # Application constants and configuration keys
+│   │   └── default.go            # Default config values for all settings
 │   └── errors/                   # Custom error types
 ├── internal/db/migrations/       # SQL schema files
 │   ├── 0001_init.sql             # Initial schema (users, people, labels)
@@ -294,12 +294,13 @@ kith-pms/
 
 ### OpenAPI/Swagger Documentation
 
-**Generation**: `make swagger` runs `swag init -g cmd/doc.go -o docs` to generate OpenAPI 2.0 spec from swaggo annotations.
+**Generation**: `make swagger` runs `swag init -g cmd/doc.go -o internal/api/swagger` to generate OpenAPI 2.0 spec from swaggo annotations.
 
 **Files**:
-- **cmd/doc.go**: Swaggo package-level annotations defining API title, version, base path (`/v1`), security definitions (CookieAuth + CSRFHeader)
-- **docs/swagger.json**: Generated OpenAPI 2.0 spec (28 paths, ~61 endpoints); auto-generated, not committed
-- **docs/swagger.yaml**: Generated OpenAPI 2.0 spec in YAML format; auto-generated, not committed
+- **cmd/doc.go**: Swaggo package-level annotations defining API title, version, base path (`/v1`), security definitions (CookieAuth + Bearer token)
+- **internal/api/swagger/swagger.json**: Generated OpenAPI 2.0 spec (28 paths, ~61 endpoints); committed to repo
+- **internal/api/swagger/swagger.yaml**: Generated OpenAPI 2.0 spec in YAML format; committed to repo
+- **internal/api/swagger/docs.go**: Go package with embedded spec
 - **internal/api/swagger_handler.go**: Custom Echo v5 handler serving Swagger UI at `/swagger/*` and spec at `/swagger/doc.json`; wraps `swaggo/files/v2` embedded assets; no external `labstack/echo-swagger` dependency
 
 **Annotations**: All 16 handler files in `internal/api/handler/` include swaggo comments on endpoint methods documenting request/response schemas, parameters, and security requirements.
@@ -308,7 +309,7 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-**Stack**: React 19 CSR SPA with TanStack Router v1 (file-based routing, not React Router v6), TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI, Tailwind CSS v4 Indigo/Zinc tokens, Biome 2.4.5, Vite 8, pnpm 11.
+**Stack**: React 19.2 CSR SPA with TanStack Router 1.168+, TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI 1.5, Tailwind CSS 4.3, Biome 2.4.16, Vite 8, pnpm (latest).
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
@@ -383,10 +384,13 @@ styles.css               # Tailwind + design tokens (:root variables)
 | `uptrace/bun/extra/bundebug` | v1.2.18+ | Query debug logging hook |
 | `modernc.org/sqlite` | v1.50.1+ | Pure Go SQLite driver (no CGO) |
 | `golang.org/x/crypto` | latest | bcrypt password hashing |
-| `knadh/koanf/v2` | v2.3.4+ | Layered config loading |
+| `nhymxu/gommon/cfgloader` | latest | Three-layer config merging (replaces koanf) |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
 | `samber/slog-multi` | v1.8.0+ | slog fan-out to multiple handlers |
+| `lmittmann/tint` | v1.1.3+ | Colored output for debug logs |
 | `go.uber.org/automaxprocs` | v1.6.0+ | Auto GOMAXPROCS in containers |
+| `swaggo/swag/v2` | v1.16.4+ | Swagger/OpenAPI annotation parser |
+| `swaggo/files/v2` | latest | Swagger UI assets (no external v4 dependency) |
 
 ## Module & Build
 

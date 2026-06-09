@@ -65,8 +65,8 @@
 Entry: `main.go` → `urfave/cli.NewApp().Run(os.Args)`
 
 All subcommands inherit from root command's `Before` hook:
-1. **Config loading**: `config.LoadConfig()` — three-layer merge (defaults → .env → env vars)
-2. **Logging**: Initialize slog with either text (DEBUG=true) or JSON (DEBUG=false) format
+1. **Config loading**: `config.Load()` — three-layer merge via nhymxu/gommon/cfgloader (defaults → .env → env vars)
+2. **Logging**: Initialize slog with either text (DEBUG=true) or JSON (DEBUG=false) format; colored output via tint package when DEBUG=true
 3. **Sentry (optional)**: If `SENTRY.DSN` set, integrate slog with Sentry error reporting
 
 Subcommands after dependency init:
@@ -80,15 +80,15 @@ Subcommands after dependency init:
 
 ## Configuration & Environment
 
-Three-layer merge via koanf (lowest → highest precedence):
+Three-layer merge via nhymxu/gommon/cfgloader (lowest → highest precedence):
 
 ```
-1. configDefaults (hardcoded)     ← baseline
-2. .env file (dotenv)             ← optional, skipped if missing
-3. Environment variables          ← always wins
+1. Hardcoded defaults (configDefaults)  ← baseline
+2. .env file (optional, skipped if missing)
+3. Environment variables               ← always wins
 ```
 
-Result unmarshals to global `config.C` (`Config`).
+Result unmarshals to global `config.C` (Config struct). Load via `config.Load()` function.
 
 ### Supported Environment Variables
 
@@ -331,6 +331,23 @@ export function PersonForm() {
 **Settings** — `GET /settings`, `PUT /settings` (user preferences including audit log retention days)
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
+
+### OpenAPI/Swagger Documentation
+
+**Endpoint**: `/swagger/index.html` — interactive Swagger UI (no authentication required)
+
+**Generation**:
+- Annotations: All 16 handler files in `internal/api/handler/` include swaggo v2 comments documenting request/response schemas, parameters, and security
+- Package-level annotations: `cmd/doc.go` defines API title, version, base path (`/v1`), security schemes (CookieAuth + Bearer token)
+- Generation: `make swagger` runs `swag init -g cmd/doc.go -o docs` to generate OpenAPI 2.0 spec
+- Integration: Build pipeline includes `make swagger` before final binary compilation
+
+**Spec Files** (auto-generated, committed to repo):
+- `internal/api/swagger/swagger.json` — OpenAPI 2.0 spec in JSON format
+- `internal/api/swagger/swagger.yaml` — OpenAPI 2.0 spec in YAML format
+- `internal/api/swagger/docs.go` — Go package with embedded spec
+
+**Custom Handler**: `internal/api/swagger_handler.go` provides Echo v5-compatible handler wrapping `swaggo/files/v2` embedded assets; no external `labstack/echo-swagger` v4 dependency.
 
 ### Session & Auth Flow
 
@@ -577,11 +594,27 @@ person_relationship (N)
 ### Container (multi-stage Dockerfile)
 - Stage 1: `node:24-alpine` — `pnpm install --frozen-lockfile && pnpm build`
 - Stage 2: `golang:1.26.4-alpine` — copies SPA into embed path, runs `go build`
-- Stage 3: `gcr.io/distroless/static-debian12` — minimal runtime, non-root UID 65532
+- Stage 3: `gcr.io/distroless/static-debian12` — minimal runtime, non-root UID 65532 (also `debian-slim` variant available)
 - `go.uber.org/automaxprocs` auto-sets GOMAXPROCS to match container CPU quota
 - Database: Mount volume at `/data` for persistent storage
+
+### Docker Compose
+- **Development**: `compose.dev.yml` at repository root for local setup
+- **Production**: `deploy/compose/docker-compose.yml` with Litestream sidecar for continuous SQLite replication to S3-compatible storage
+- **Legacy**: `compose.yml` at repository root (use `compose.dev.yml` for development)
+- **Litestream Init Pattern**: Init container restores database from S3 before app starts; replicate sidecar streams WAL frames continuously
+- **Multi-platform**: Built and pushed to GitHub Container Registry (GHCR) on release
+
+### Kubernetes Deployment
+- **Manifests**: `deploy/k8s/base/` with Kustomize base layer (Namespace, Deployment, Service, PVC, Secret, ConfigMap)
+- **Optional Components**: `deploy/k8s/components/` for Ingress (cert-manager), ServiceMonitor (Prometheus Operator)
+- **Overlays**: Example overlay at `deploy/k8s/overlays/example/` for flexible composition
+- **Security**: Non-root user (65532), read-only root filesystem, dropped capabilities
+- **Database**: PVC for persistent SQLite storage; Litestream sidecar for backup to S3
+- **Replicas**: Hard-coded to 1 with `Recreate` strategy to prevent SQLite corruption from multi-writer conflicts
 
 ### Safety Features
 - Automatic migrations on startup (if DB_AUTO_MIGRATE=true)
 - Backup via VACUUM INTO (safe while server running)
 - Restore with 30-second server-activity heuristic (prevents data loss)
+- Health check at `/health` and readiness check at `/ready` for container orchestration

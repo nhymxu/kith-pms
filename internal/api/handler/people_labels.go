@@ -6,12 +6,12 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/nhymxu/kith-pms/internal/labels"
+	"github.com/nhymxu/kith-pms/internal/people"
 )
 
 // PeopleLabelsAPI handles /v1/people/:id/labels endpoints.
 type PeopleLabelsAPI struct {
-	Svc *labels.Service
+	Svc *people.LabelService
 }
 
 // Attach handles POST /v1/people/:id/labels.

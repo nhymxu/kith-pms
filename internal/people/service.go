@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
-	"github.com/nhymxu/kith-pms/internal/labels"
 )
 
 const defaultPageSize = 50
@@ -28,12 +27,12 @@ type Service struct {
 	Contacts    ContactRepo
 	Locations   LocationRepo
 	FileService FileService
-	LabelsSvc   LabelService   // optional; nil = no label loading
+	LabelsSvc   LabelLoader    // optional; nil = no label loading
 	Audit       *audit.Service // optional; nil = no audit logging
 }
 
-type LabelService interface {
-	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]labels.Label, error)
+type LabelLoader interface {
+	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error)
 }
 
 type FileService interface {
@@ -151,7 +150,7 @@ func (s *Service) Get(ctx context.Context, id int64) (*Person, error) {
 		if lbls, ok := labelsMap[id]; ok {
 			p.Labels = lbls
 		} else {
-			p.Labels = []labels.Label{}
+			p.Labels = []Label{}
 		}
 	}
 

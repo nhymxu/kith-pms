@@ -98,8 +98,16 @@ func (r *sqlActivityRepo) buildActivityQuery(params ListParams) *bun.SelectQuery
 
 	if len(params.LabelIDs) > 0 {
 		q = q.Where(
-			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN person_label pl ON pl.person_id = ap.person_id WHERE pl.label_id IN (?))", //nolint:lll
+			"activity.id IN (SELECT ap.activity_id FROM activity_person ap JOIN people_label_assignment pla ON pla.person_id = ap.person_id WHERE pla.label_id IN (?))", //nolint:lll
 			bun.List(params.LabelIDs),
+		)
+	}
+
+	// JournalLabelIDs: OR within (entry matches ANY listed journal label); AND with other filters.
+	if len(params.JournalLabelIDs) > 0 {
+		q = q.Where(
+			"activity.id IN (SELECT activity_id FROM journal_label_assignment WHERE label_id IN (?))",
+			bun.List(params.JournalLabelIDs),
 		)
 	}
 

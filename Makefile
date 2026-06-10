@@ -37,10 +37,11 @@ migrate: ## Apply database migrations
 	./bin/$(APP_NAME) migrate up
 
 .PHONY: dev
-dev: ## Run dev servers (pnpm dev + go run serve) — SPA proxies /v1 to :8000
+dev: ## Run dev servers (go run serve + pnpm dev) — SPA proxies /v1 to :8000
 	@trap 'kill 0' EXIT INT TERM; \
-	pnpm --dir web dev 2>&1 | sed 's/^/[web] /' & \
 	CGO_ENABLED=0 go run ./cmd serve 2>&1 | sed 's/^/[api] /' & \
+	sleep 2; \
+	pnpm --dir web dev 2>&1 | sed 's/^/[web] /' & \
 	wait
 
 .PHONY: deps

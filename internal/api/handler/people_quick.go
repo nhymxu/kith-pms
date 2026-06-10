@@ -101,7 +101,7 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 		}
 	}
 
-	id, err := h.JournalSvc.Create(c.Request().Context(), activity, personIDs)
+	id, err := h.JournalSvc.Create(c.Request().Context(), activity, personIDs, nil)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "failed to save journal entry")
 	}

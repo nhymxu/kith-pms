@@ -17,7 +17,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
-	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/monica"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
@@ -54,6 +53,11 @@ func monicaImportCommand() *cli.Command {
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fromPath := cmd.String("from")
 			dryRun := cmd.Bool("dry-run")
+
+			const maxExportBytes = 200 * 1024 * 1024
+			if fi, err := os.Stat(fromPath); err == nil && fi.Size() > maxExportBytes {
+				fmt.Printf("Warning: export file is %.0f MB (>200 MB). The importer reads the whole file into memory — ensure sufficient RAM.\n", float64(fi.Size())/(1024*1024))
+			}
 
 			f, err := os.Open(fromPath)
 			if err != nil {
@@ -92,8 +96,9 @@ func monicaImportCommand() *cli.Command {
 			}
 
 			peopleSvc := people.NewService(database)
-			labelsSvc := labels.NewService(database)
+			labelsSvc := people.NewLabelService(database)
 			journalSvc := journal.NewService(database)
+			journalLabelSvc := journal.NewLabelService(database)
 			remindersSvc := reminders.NewService(database)
 			datesSvc := dates.NewService(database)
 			giftsSvc := gifts.NewService(database)
@@ -109,6 +114,7 @@ func monicaImportCommand() *cli.Command {
 				peopleSvc,
 				labelsSvc,
 				journalSvc,
+				journalLabelSvc,
 				remindersSvc,
 				datesSvc,
 				giftsSvc,
@@ -125,14 +131,26 @@ func runImport(
 	options monica.ImportOptions,
 	filesSvc *files.LocalFileService,
 	peopleSvc *people.Service,
-	labelsSvc *labels.Service,
+	labelsSvc *people.LabelService,
 	journalSvc *journal.Service,
+	journalLabelSvc *journal.LabelService,
 	remindersSvc *reminders.Service,
 	datesSvc *dates.Service,
 	giftsSvc *gifts.Service,
 	workSvc *work_history.Service,
 	relSvc *relationships.Service,
 ) error {
+	// Seed journal labels once; fail fast — labels are a precondition for conversation/life-event tagging.
+	convLabelID, err := journalLabelSvc.FindOrCreate(ctx, monica.LabelConversation, "#6366f1")
+	if err != nil {
+		return fmt.Errorf("monica-import: seed CONVERSATION journal label: %w", err)
+	}
+
+	lifeLabelID, err := journalLabelSvc.FindOrCreate(ctx, monica.LabelLifeEvent, "#a855f7")
+	if err != nil {
+		return fmt.Errorf("monica-import: seed LIFE_EVENT journal label: %w", err)
+	}
+
 	existingLabels, err := labelsSvc.List(ctx)
 	if err != nil {
 		return fmt.Errorf("monica-import: load labels: %w", err)
@@ -193,8 +211,22 @@ func runImport(
 
 		// Journal entries.
 		for _, act := range rec.Activities {
-			if _, err := journalSvc.Create(ctx, act, []int64{personID}); err != nil {
+			if _, err := journalSvc.Create(ctx, act, []int64{personID}, nil); err != nil {
 				slog.Warn("monica-import: failed to create activity", "person_id", personID, "err", err)
+			}
+		}
+
+		// Conversations → journal entries tagged CONVERSATION.
+		for _, act := range rec.ConversationActivities {
+			if _, err := journalSvc.Create(ctx, act, []int64{personID}, []int64{convLabelID}); err != nil {
+				slog.Warn("monica-import: failed to create conversation activity", "person_id", personID, "err", err)
+			}
+		}
+
+		// Life events → journal entries tagged LIFE_EVENT.
+		for _, act := range rec.LifeEventActivities {
+			if _, err := journalSvc.Create(ctx, act, []int64{personID}, []int64{lifeLabelID}); err != nil {
+				slog.Warn("monica-import: failed to create life event activity", "person_id", personID, "err", err)
 			}
 		}
 
@@ -435,7 +467,7 @@ func importAccountJournalEntries(ctx context.Context, export *monica.Export, jou
 	var imported, errCount int
 
 	for _, act := range monica.MapAccountJournalEntries(export.AccountJournalEntries) {
-		if _, err := journalSvc.Create(ctx, act, nil); err != nil {
+		if _, err := journalSvc.Create(ctx, act, nil, nil); err != nil {
 			slog.Warn("monica-import: failed to create account journal entry", "title", act.Title, "err", err)
 
 			errCount++
@@ -451,6 +483,7 @@ func importAccountJournalEntries(ctx context.Context, export *monica.Export, jou
 
 func printDryRunSummary(export *monica.Export, options monica.ImportOptions) error {
 	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels, totalAvatars int //nolint:lll
+	var totalConversations, totalMessages, totalLifeEvents int
 
 	for _, c := range export.Contacts {
 		rec := monica.MapContactWithOptions(c, options)
@@ -462,8 +495,12 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 		totalDates += len(rec.Dates)
 		totalGifts += len(rec.Gifts)
 		totalWork += len(rec.WorkHistory)
-
 		totalRels += len(rec.Relationships)
+		totalConversations += len(rec.ConversationActivities)
+		totalLifeEvents += len(rec.LifeEventActivities)
+		for _, conv := range c.Conversations {
+			totalMessages += len(conv.Messages)
+		}
 		if rec.AvatarDataURL != "" {
 			totalAvatars++
 		}
@@ -475,6 +512,8 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 	fmt.Printf("  Locations:           %d\n", totalLocations)
 	fmt.Printf("  Tags (labels):       %d\n", totalTags)
 	fmt.Printf("  Journal entries:     %d\n", totalActivities)
+	fmt.Printf("  Conversations:       %d (%d messages → CONVERSATION label)\n", totalConversations, totalMessages)
+	fmt.Printf("  Life events:         %d (→ LIFE_EVENT label + ImportantDate)\n", totalLifeEvents)
 
 	if options.ImportAccountJournalEntries {
 		fmt.Printf("  Account journals:    %d\n", len(monica.MapAccountJournalEntries(export.AccountJournalEntries)))

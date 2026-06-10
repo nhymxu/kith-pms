@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 )
 
 // Export is the top-level decoded result from a Monica v4 export:
@@ -90,6 +91,35 @@ type v4ContactData struct {
 	Calls         v4CountColl[v4Call]         `json:"calls"`
 	Tasks         v4CountColl[v4Task]         `json:"tasks"`
 	Gifts         v4CountColl[v4Gift]         `json:"gifts"`
+	Conversations v4CountColl[v4Conversation] `json:"conversations"`
+	LifeEvents    v4CountColl[v4LifeEvent]    `json:"life_events"`
+}
+
+type v4Conversation struct {
+	UUID       string `json:"uuid"`
+	Properties struct {
+		HappenedAt       string       `json:"happened_at"`
+		ContactFieldType string       `json:"contact_field_type"`
+		Messages         []v4Message  `json:"messages"`
+	} `json:"properties"`
+}
+
+type v4Message struct {
+	Properties struct {
+		Content     string `json:"content"`
+		WrittenAt   string `json:"written_at"`
+		WrittenByMe bool   `json:"written_by_me"`
+	} `json:"properties"`
+}
+
+type v4LifeEvent struct {
+	UUID       string `json:"uuid"`
+	Properties struct {
+		Name       string `json:"name"`
+		Note       string `json:"note"`
+		HappenedAt string `json:"happened_at"`
+		Type       string `json:"type"`
+	} `json:"properties"`
 }
 
 // v4CountColl is a collection that embeds items directly.
@@ -215,7 +245,9 @@ type Contact struct {
 	Relationships []MRelationship `json:"-"`
 	// AvatarDataURL is a "data:<mime>;base64,..." string resolved from account photos.
 	// Only set when avatar_source == "photo" and the referenced photo UUID is found.
-	AvatarDataURL string `json:"-"`
+	AvatarDataURL string         `json:"-"`
+	Conversations []MConversation `json:"-"`
+	LifeEvents    []MLifeEvent    `json:"-"`
 }
 
 type Information struct {
@@ -289,6 +321,25 @@ type MRelationship struct {
 	TypeName      string `json:"type_name"`
 	ToContactUUID string `json:"to_contact_uuid"`
 	ToContactName string `json:"to_contact_name"` // resolved after all contacts parsed
+}
+
+type MConversation struct {
+	HappenedAt string
+	Channel    string // contact_field_type UUID; blank = unresolved
+	Messages   []MMessage
+}
+
+type MMessage struct {
+	Content     string
+	WrittenAt   string // ISO 8601
+	WrittenByMe bool
+}
+
+type MLifeEvent struct {
+	Name       string
+	Note       string
+	HappenedAt string
+	Type       string // life_event_type UUID
 }
 
 type MAccountJournal struct {
@@ -534,6 +585,41 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		}
 	}
 
+	conversations := make([]MConversation, 0, len(c.Data.Conversations.Data))
+	for _, conv := range c.Data.Conversations.Data {
+		cp := conv.Properties
+		msgs := make([]MMessage, 0, len(cp.Messages))
+		for _, m := range cp.Messages {
+			msgs = append(msgs, MMessage{
+				Content:     m.Properties.Content,
+				WrittenAt:   m.Properties.WrittenAt,
+				WrittenByMe: m.Properties.WrittenByMe,
+			})
+		}
+		if len(msgs) == 0 {
+			continue
+		}
+		conversations = append(conversations, MConversation{
+			HappenedAt: cp.HappenedAt,
+			Channel:    cp.ContactFieldType,
+			Messages:   msgs,
+		})
+	}
+
+	lifeEvents := make([]MLifeEvent, 0, len(c.Data.LifeEvents.Data))
+	for _, le := range c.Data.LifeEvents.Data {
+		lp := le.Properties
+		if strings.TrimSpace(lp.Name) == "" {
+			continue
+		}
+		lifeEvents = append(lifeEvents, MLifeEvent{
+			Name:       lp.Name,
+			Note:       lp.Note,
+			HappenedAt: lp.HappenedAt,
+			Type:       lp.Type,
+		})
+	}
+
 	return Contact{
 		ID:            c.UUID,
 		FirstName:     p.FirstName,
@@ -555,5 +641,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		Gifts:         gifts,
 		Relationships: rels,
 		AvatarDataURL: avatarDataURL,
+		Conversations: conversations,
+		LifeEvents:    lifeEvents,
 	}
 }

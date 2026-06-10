@@ -129,7 +129,7 @@ func buildOrderBy(sort string) string {
 func buildLabelIntersect(labelIDs []int64) string {
 	parts := make([]string, len(labelIDs))
 	for i := range labelIDs {
-		parts[i] = "SELECT person_id FROM person_label WHERE label_id = ?"
+		parts[i] = "SELECT person_id FROM people_label_assignment WHERE label_id = ?"
 	}
 
 	return strings.Join(parts, " INTERSECT ")

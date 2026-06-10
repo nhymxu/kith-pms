@@ -61,6 +61,7 @@ describe("buildDashboardViewModel", () => {
 						people: [
 							{ person_id: 1, name: "Alex Kim", nickname: "", avatar_path: "" },
 						],
+						labels: [],
 					},
 				],
 				total: 1,

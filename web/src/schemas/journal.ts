@@ -7,16 +7,34 @@ export const activityPersonSchema = z.object({
 	avatar_path: z.string().optional().default(""),
 });
 
+// Lightweight label shape for embedding in activity responses.
+const activityLabelSchema = z.object({
+	id: z.number(),
+	name: z.string(),
+	color: z.string(),
+});
+
+export type ActivityLabel = z.infer<typeof activityLabelSchema>;
+
 export const journalActivitySchema = z.object({
 	id: z.number(),
 	title: z.string(),
 	occurred_at_date: z.string(),
-	occurred_at_time: z.string().optional().default(""),
+	occurred_at_time: z
+		.string()
+		.nullable()
+		.optional()
+		.transform((v) => v ?? ""),
 	content: z.string().optional().default(""),
 	created_at: z.string(),
 	updated_at: z.string(),
 	people: z
 		.array(activityPersonSchema)
+		.nullable()
+		.optional()
+		.transform((v) => v ?? []),
+	labels: z
+		.array(activityLabelSchema)
 		.nullable()
 		.optional()
 		.transform((v) => v ?? []),
@@ -39,6 +57,7 @@ export const journalRequestSchema = z.object({
 	occurred_at_date: z.string(),
 	occurred_at_time: z.string().optional().default(""),
 	person_ids: z.array(z.number()).optional().default([]),
+	label_ids: z.array(z.number()).optional().default([]),
 });
 
 export type JournalRequest = z.infer<typeof journalRequestSchema>;

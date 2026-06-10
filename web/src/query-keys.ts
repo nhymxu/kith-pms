@@ -69,10 +69,15 @@ export const keys = {
 		list: (personId: number) => ["dates", "list", personId] as const,
 		upcoming: () => ["dates", "upcoming"] as const,
 	},
-	labels: {
-		all: ["labels"] as const,
-		list: () => ["labels", "list"] as const,
-		detail: (id: number) => ["labels", "detail", id] as const,
+	peopleLabels: {
+		all: ["people-labels"] as const,
+		list: () => ["people-labels", "list"] as const,
+		detail: (id: number) => ["people-labels", "detail", id] as const,
+	},
+	journalLabels: {
+		all: ["journal-labels"] as const,
+		list: () => ["journal-labels", "list"] as const,
+		detail: (id: number) => ["journal-labels", "detail", id] as const,
 	},
 	relationshipTypes: {
 		all: ["relationship-types"] as const,

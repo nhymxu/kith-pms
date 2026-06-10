@@ -15,7 +15,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
-	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
@@ -28,8 +27,9 @@ import (
 type Deps struct {
 	DB                   *bun.DB
 	PeopleService        *people.Service
-	LabelsService        *labels.Service
+	LabelsService        *people.LabelService
 	JournalService       *journal.Service
+	JournalLabelsService *journal.LabelService
 	RemindersService     *reminders.Service
 	WorkHistoryService   *work_history.Service
 	DatesService         *dates.Service
@@ -70,8 +70,9 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountAuth(v1, deps)
 	mountMe(v1, deps)
 	mountPeople(v1, deps)
-	mountLabels(v1, deps)
+	mountPeopleLabelsCRUD(v1, deps)
 	mountJournal(v1, deps)
+	mountJournalLabels(v1, deps)
 	mountReminders(v1, deps)
 	mountWorkHistory(v1, deps)
 	mountDates(v1, deps)
@@ -98,13 +99,13 @@ func mountPeople(g *echo.Group, deps Deps) {
 	g.DELETE("/people/:id", h.Delete)
 }
 
-func mountLabels(g *echo.Group, deps Deps) {
-	h := &handler.LabelsAPI{Svc: deps.LabelsService}
-	g.GET("/labels", h.List)
-	g.POST("/labels", h.Create)
-	g.GET("/labels/:id", h.Get)
-	g.PUT("/labels/:id", h.Update)
-	g.DELETE("/labels/:id", h.Delete)
+func mountPeopleLabelsCRUD(g *echo.Group, deps Deps) {
+	h := &handler.PeopleLabelsCRUD{Svc: deps.LabelsService}
+	g.GET("/people-labels", h.List)
+	g.POST("/people-labels", h.Create)
+	g.GET("/people-labels/:id", h.Get)
+	g.PUT("/people-labels/:id", h.Update)
+	g.DELETE("/people-labels/:id", h.Delete)
 }
 
 func mountJournal(g *echo.Group, deps Deps) {
@@ -114,6 +115,15 @@ func mountJournal(g *echo.Group, deps Deps) {
 	g.GET("/journal/:id", h.Get)
 	g.PUT("/journal/:id", h.Update)
 	g.DELETE("/journal/:id", h.Delete)
+}
+
+func mountJournalLabels(g *echo.Group, deps Deps) {
+	h := &handler.JournalLabelsAPI{Svc: deps.JournalLabelsService}
+	g.GET("/journal-labels", h.List)
+	g.POST("/journal-labels", h.Create)
+	g.GET("/journal-labels/:id", h.Get)
+	g.PUT("/journal-labels/:id", h.Update)
+	g.DELETE("/journal-labels/:id", h.Delete)
 }
 
 func mountReminders(g *echo.Group, deps Deps) {

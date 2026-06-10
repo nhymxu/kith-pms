@@ -1,6 +1,7 @@
-// Journal create/edit form — TanStack Form + Zod, people multi-select
+// Journal create/edit form — TanStack Form + Zod, people + label multi-select
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
@@ -9,6 +10,7 @@ import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
+import { listJournalLabels } from "#/endpoints/journal-labels";
 import { listPeople } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 import {
@@ -38,6 +40,11 @@ export function JournalForm({
 		queryFn: () => listPeople({ q: searchQ || undefined, page_size: 50 }),
 	});
 
+	const { data: allLabels } = useQuery({
+		queryKey: keys.journalLabels.list(),
+		queryFn: listJournalLabels,
+	});
+
 	const form = useForm({
 		defaultValues: {
 			title: initial?.title ?? "",
@@ -48,6 +55,7 @@ export function JournalForm({
 			person_ids:
 				initial?.people?.map((p) => p.person_id) ??
 				(defaultPersonId ? [defaultPersonId] : []),
+			label_ids: initial?.labels?.map((l) => l.id) ?? [],
 		} satisfies JournalRequest,
 		validators: {
 			onSubmit: ({ value }) => {
@@ -160,6 +168,79 @@ export function JournalForm({
 									</div>
 								)}
 							</div>
+						</div>
+					);
+				}}
+			</form.Field>
+
+			{/* Labels multi-select */}
+			<form.Field name="label_ids">
+				{(f) => {
+					const selectedIds: number[] = Array.isArray(f.state.value)
+						? f.state.value
+						: [];
+					const selected = allLabels?.filter((l) =>
+						selectedIds.includes(l.id),
+					) ?? [];
+					const unselected = allLabels?.filter(
+						(l) => !selectedIds.includes(l.id),
+					) ?? [];
+
+					return (
+						<div className="space-y-2">
+							<Label>Labels</Label>
+							{selected.length > 0 && (
+								<div className="flex flex-wrap gap-1">
+									{selected.map((l) => (
+										<Badge
+											key={l.id}
+											variant="neutral"
+											className="flex items-center gap-1"
+											style={{ borderColor: l.color }}
+										>
+											{l.name}
+											<button
+												type="button"
+												onClick={() =>
+													f.handleChange(
+														selectedIds.filter((id) => id !== l.id),
+													)
+												}
+												className="ml-0.5 hover:text-destructive"
+											>
+												<X className="size-3" />
+											</button>
+										</Badge>
+									))}
+								</div>
+							)}
+							{allLabels && allLabels.length > 0 ? (
+								unselected.length > 0 && (
+									<div className="flex flex-wrap gap-1">
+										{unselected.map((l) => (
+											<button
+												key={l.id}
+												type="button"
+												onClick={() => f.handleChange([...selectedIds, l.id])}
+												className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
+											>
+												<Plus className="size-3" />
+												{l.name}
+											</button>
+										))}
+									</div>
+								)
+							) : (
+								<p className="text-[12px] text-zinc-400">
+									No labels yet. Create some in{" "}
+									<Link
+										to="/settings/journal-labels"
+										className="text-indigo-600 hover:underline"
+									>
+										Settings → Journal Labels
+									</Link>
+								</p>
+							)}
 						</div>
 					);
 				}}

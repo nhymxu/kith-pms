@@ -6,8 +6,8 @@ import { DataTable } from "#/components/data-table/data-table";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { listLabels } from "#/endpoints/labels";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
+import { listPeopleLabels } from "#/endpoints/people-labels";
 import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
@@ -169,8 +169,8 @@ export function PeopleTable({
 	});
 
 	const { data: allLabelsData } = useQuery({
-		queryKey: keys.labels.list(),
-		queryFn: listLabels,
+		queryKey: keys.peopleLabels.list(),
+		queryFn: listPeopleLabels,
 	});
 
 	const rows = data?.items ?? [];

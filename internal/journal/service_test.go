@@ -51,7 +51,7 @@ func insertPerson(t *testing.T, db *bun.DB, name string) int64 {
 func insertLabel(t *testing.T, db *bun.DB, name string) int64 {
 	t.Helper()
 
-	res, err := db.Exec(`INSERT INTO label (name, color) VALUES (?, '#aabbcc')`, name)
+	res, err := db.Exec(`INSERT INTO people_label (name, color) VALUES (?, '#aabbcc')`, name)
 	if err != nil {
 		t.Fatalf("insert label %q: %v", name, err)
 	}
@@ -66,7 +66,7 @@ func attachLabel(t *testing.T, db *bun.DB, personID, labelID int64) {
 	t.Helper()
 
 	if _, err := db.Exec(
-		`INSERT INTO person_label (person_id, label_id) VALUES (?, ?)`,
+		`INSERT INTO people_label_assignment (person_id, label_id) VALUES (?, ?)`,
 		personID,
 		labelID,
 	); err != nil {
@@ -78,7 +78,7 @@ func attachLabel(t *testing.T, db *bun.DB, personID, labelID int64) {
 func mustCreate(t *testing.T, svc *journal.Service, a journal.Activity, personIDs []int64) int64 {
 	t.Helper()
 
-	id, err := svc.Create(context.Background(), a, personIDs)
+	id, err := svc.Create(context.Background(), a, personIDs, nil)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestUpdate_FTSUpdated(t *testing.T) {
 		Title:          "Work meeting",
 		OccurredAtDate: "2024-08-15",
 		Content:        "Talked about new product launch.",
-	}, nil)
+	}, nil, nil)
 	if err != nil {
 		t.Fatalf("Update: %v", err)
 	}

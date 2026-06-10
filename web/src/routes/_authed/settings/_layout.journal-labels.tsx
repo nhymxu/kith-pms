@@ -1,0 +1,256 @@
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { FormField } from "#/components/form/form-field";
+import { SubmitButton } from "#/components/form/submit-button";
+import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
+import {
+	createJournalLabel,
+	deleteJournalLabel,
+	listJournalLabels,
+	updateJournalLabel,
+} from "#/endpoints/journal-labels";
+import { keys } from "#/query-keys";
+import {
+	type JournalLabel,
+	type JournalLabelRequest,
+	journalLabelRequestSchema,
+} from "#/schemas/journal-label";
+
+export const Route = createFileRoute(
+	"/_authed/settings/_layout/journal-labels",
+)({
+	component: JournalLabelsPage,
+});
+
+interface LabelFormDialogProps {
+	initial?: JournalLabel;
+	onClose: () => void;
+}
+
+function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
+	const qc = useQueryClient();
+	const [apiError, setApiError] = useState<string | null>(null);
+
+	const mutation = useMutation({
+		mutationFn: (body: JournalLabelRequest) =>
+			initial
+				? updateJournalLabel(initial.id, body)
+				: createJournalLabel(body).then(() => undefined),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.journalLabels.all });
+			onClose();
+		},
+		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
+	});
+
+	const form = useForm({
+		defaultValues: {
+			name: initial?.name ?? "",
+			color: initial?.color ?? "#9ea096",
+		} satisfies JournalLabelRequest,
+		validators: {
+			onSubmit: ({ value }) => {
+				const r = journalLabelRequestSchema.safeParse(value);
+				return r.success
+					? undefined
+					: r.error.issues.map((i) => i.message).join(", ");
+			},
+		},
+		onSubmit: async ({ value }) =>
+			mutation.mutateAsync(value as JournalLabelRequest),
+	});
+
+	return (
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				form.handleSubmit();
+			}}
+			className="space-y-4"
+		>
+			{apiError && (
+				<Alert variant="destructive">
+					<AlertDescription>{apiError}</AlertDescription>
+				</Alert>
+			)}
+			<form.Field name="name">
+				{(f) => (
+					<FormField field={f} label="Name *" placeholder="e.g. CONVERSATION" />
+				)}
+			</form.Field>
+			<form.Field name="color">
+				{(f) => (
+					<FormField
+						field={f}
+						label="Color (hex)"
+						placeholder="#9ea096"
+						type="color"
+					/>
+				)}
+			</form.Field>
+			<DialogFooter>
+				<Button type="button" variant="neutral" onClick={onClose}>
+					Cancel
+				</Button>
+				<form.Subscribe selector={(s) => s.isSubmitting}>
+					{(isSubmitting) => (
+						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
+							{initial ? "Save changes" : "Create label"}
+						</SubmitButton>
+					)}
+				</form.Subscribe>
+			</DialogFooter>
+		</form>
+	);
+}
+
+function DeleteLabelDialog({
+	label,
+	onClose,
+}: {
+	label: JournalLabel;
+	onClose: () => void;
+}) {
+	const qc = useQueryClient();
+	const mutation = useMutation({
+		mutationFn: () => deleteJournalLabel(label.id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.journalLabels.all });
+			onClose();
+		},
+	});
+	return (
+		<>
+			<DialogHeader>
+				<DialogTitle>Delete label?</DialogTitle>
+				<DialogDescription>
+					Permanently delete "{label.name}"? Journal entries with this label
+					will be unaffected (label detached).
+				</DialogDescription>
+			</DialogHeader>
+			<DialogFooter>
+				<Button variant="neutral" onClick={onClose}>
+					Cancel
+				</Button>
+				<Button
+					variant="destructive"
+					onClick={() => mutation.mutate()}
+					disabled={mutation.isPending}
+				>
+					{mutation.isPending ? "Deleting…" : "Delete"}
+				</Button>
+			</DialogFooter>
+		</>
+	);
+}
+
+type DialogMode =
+	| { kind: "create" }
+	| { kind: "edit"; label: JournalLabel }
+	| { kind: "delete"; label: JournalLabel }
+	| null;
+
+function JournalLabelsPage() {
+	const [dialog, setDialog] = useState<DialogMode>(null);
+	const { data, isPending } = useQuery({
+		queryKey: keys.journalLabels.list(),
+		queryFn: listJournalLabels,
+	});
+
+	return (
+		<div className="space-y-4 max-w-xl">
+			<div className="flex items-center justify-between">
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Journal Labels
+				</h1>
+				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
+					<Plus className="size-3 mr-1" /> New Label
+				</Button>
+			</div>
+
+			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
+
+			{data && data.length === 0 && (
+				<p className="text-[13px] text-zinc-500">
+					No labels yet. Create one to start tagging journal entries.
+				</p>
+			)}
+
+			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
+				{data?.map((label) => (
+					<li key={label.id} className="flex items-center gap-3 px-4 py-3">
+						<span
+							className="size-3 rounded-full shrink-0"
+							style={{ backgroundColor: label.color }}
+						/>
+						<span className="text-[13px] text-zinc-900">{label.name}</span>
+						{label.count !== undefined && label.count > 0 && (
+							<span className="font-mono text-[11px] text-zinc-400">
+								{label.count} entries
+							</span>
+						)}
+						<div className="ml-auto flex gap-1">
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => setDialog({ kind: "edit", label })}
+							>
+								<Pencil className="size-3.5" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={() => setDialog({ kind: "delete", label })}
+							>
+								<Trash2 className="size-3.5" />
+							</Button>
+						</div>
+					</li>
+				))}
+			</ul>
+
+			<Dialog
+				open={dialog?.kind === "create" || dialog?.kind === "edit"}
+				onOpenChange={(v) => !v && setDialog(null)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							{dialog?.kind === "edit" ? "Edit label" : "New label"}
+						</DialogTitle>
+					</DialogHeader>
+					<LabelFormDialog
+						initial={dialog?.kind === "edit" ? dialog.label : undefined}
+						onClose={() => setDialog(null)}
+					/>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={dialog?.kind === "delete"}
+				onOpenChange={(v) => !v && setDialog(null)}
+			>
+				<DialogContent>
+					{dialog?.kind === "delete" && (
+						<DeleteLabelDialog
+							label={dialog.label}
+							onClose={() => setDialog(null)}
+						/>
+					)}
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
+}

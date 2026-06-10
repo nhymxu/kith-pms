@@ -14,6 +14,13 @@ import (
 	"github.com/nhymxu/kith-pms/internal/work_history"
 )
 
+const (
+	LabelConversation = "CONVERSATION"
+	LabelLifeEvent    = "LIFE_EVENT"
+	maxConvBodyRunes  = 8000
+	maxMsgsPerConv    = 2000
+)
+
 // ImportRecord holds all kith-pms domain objects for a single Monica contact.
 type ImportRecord struct {
 	Person      people.Person
@@ -21,10 +28,14 @@ type ImportRecord struct {
 	Locations   []people.Location
 	TagNames    []string // label names to create-or-find and attach
 	Activities  []journal.Activity
-	Reminders   []reminders.Reminder
-	Dates       []dates.ImportantDate
-	WorkHistory []work_history.WorkEntry
-	Gifts       []gifts.Gift
+	// ConversationActivities are mapped from Monica conversations; attach CONVERSATION label on create.
+	ConversationActivities []journal.Activity
+	// LifeEventActivities are mapped from Monica life events; attach LIFE_EVENT label on create.
+	LifeEventActivities []journal.Activity
+	Reminders           []reminders.Reminder
+	Dates               []dates.ImportantDate
+	WorkHistory         []work_history.WorkEntry
+	Gifts               []gifts.Gift
 	// Relationships are resolved after all persons are inserted (UUID→ID mapping needed).
 	Relationships []MRelationship
 	// AvatarDataURL is non-empty when the contact has a photo avatar in the Monica export.
@@ -38,18 +49,26 @@ func MapContact(c Contact) ImportRecord {
 }
 
 func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
+	convActivities := mapConversations(c)
+	leActivities, leDates := mapLifeEvents(c)
+
+	allDates := mapDates(c.Information)
+	allDates = append(allDates, leDates...)
+
 	return ImportRecord{
-		Person:        mapPerson(c),
-		Contacts:      mapContactInfo(c.ContactInfo),
-		Locations:     mapLocations(c.Addresses),
-		TagNames:      mapTags(c.Tags),
-		Activities:    mapActivities(c),
-		Reminders:     mapReminders(c.Reminders, c.Tasks, options),
-		Dates:         mapDates(c.Information),
-		WorkHistory:   mapWorkHistory(c),
-		Gifts:         mapGifts(c.Gifts),
-		Relationships: c.Relationships,
-		AvatarDataURL: c.AvatarDataURL,
+		Person:                 mapPerson(c),
+		Contacts:               mapContactInfo(c.ContactInfo),
+		Locations:              mapLocations(c.Addresses),
+		TagNames:               mapTags(c.Tags),
+		Activities:             mapActivities(c),
+		ConversationActivities: convActivities,
+		LifeEventActivities:    leActivities,
+		Reminders:              mapReminders(c.Reminders, c.Tasks, options),
+		Dates:                  allDates,
+		WorkHistory:            mapWorkHistory(c),
+		Gifts:                  mapGifts(c.Gifts),
+		Relationships:          c.Relationships,
+		AvatarDataURL:          c.AvatarDataURL,
 	}
 }
 
@@ -370,6 +389,88 @@ func mapGifts(mgifts []MGift) []gifts.Gift {
 	}
 
 	return out
+}
+
+// sanitizeContent strips NUL and C0 control characters (except \n and \t) from untrusted input.
+func sanitizeContent(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r == '\n' || r == '\t' || r >= 0x20 {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// mapConversations converts Monica conversations to journal activities (one per conversation).
+func mapConversations(c Contact) []journal.Activity {
+	var out []journal.Activity
+	for _, conv := range c.Conversations {
+		msgs := conv.Messages
+		if len(msgs) > maxMsgsPerConv {
+			msgs = msgs[:maxMsgsPerConv]
+		}
+		if len(msgs) == 0 {
+			continue
+		}
+
+		happenedAt := dateFromISO(conv.HappenedAt)
+		title := LabelConversation + " " + happenedAt
+
+		lines := make([]string, 0, len(msgs))
+		for _, m := range msgs {
+			author := "them"
+			if m.WrittenByMe {
+				author = "me"
+			}
+			ts := ""
+			if len(m.WrittenAt) >= 16 {
+				ts = ", " + m.WrittenAt[11:16]
+			}
+			lines = append(lines, "MESSAGE ["+author+ts+"] "+sanitizeContent(m.Content))
+		}
+
+		body := truncate(strings.Join(lines, "\n"), maxConvBodyRunes)
+
+		out = append(out, journal.Activity{
+			Title:          title,
+			Content:        body,
+			OccurredAtDate: happenedAt,
+		})
+	}
+	return out
+}
+
+// mapLifeEvents converts Monica life events to journal activities and ImportantDate records.
+func mapLifeEvents(c Contact) ([]journal.Activity, []dates.ImportantDate) {
+	var activities []journal.Activity
+	var importantDates []dates.ImportantDate
+
+	for _, le := range c.LifeEvents {
+		name := strings.TrimSpace(le.Name)
+		if name == "" {
+			continue
+		}
+
+		happenedAt := dateFromISO(le.HappenedAt)
+		note := truncate(sanitizeContent(le.Note), maxConvBodyRunes)
+
+		activities = append(activities, journal.Activity{
+			Title:          LabelLifeEvent + " " + name,
+			Content:        note,
+			OccurredAtDate: happenedAt,
+		})
+
+		importantDates = append(importantDates, dates.ImportantDate{
+			Kind:      string(dates.KindOther),
+			Label:     name,
+			DateValue: happenedAt,
+			Recurring: false,
+		})
+	}
+
+	return activities, importantDates
 }
 
 // truncate returns the first n runes of s (UTF-8 safe).

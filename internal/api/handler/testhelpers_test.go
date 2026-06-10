@@ -16,7 +16,6 @@ import (
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
-	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 )
@@ -153,8 +152,8 @@ func newPeopleService(db *bun.DB) *people.Service {
 	return svc
 }
 
-func newLabelsService(db *bun.DB) *labels.Service {
-	return labels.NewService(db)
+func newLabelsService(db *bun.DB) *people.LabelService {
+	return people.NewLabelService(db)
 }
 
 func newRelationshipsService(db *bun.DB) *relationships.Service {

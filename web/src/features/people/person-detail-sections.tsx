@@ -53,6 +53,7 @@ function OverviewSection({
 	onCancel,
 }: OverviewSectionProps) {
 	const qc = useQueryClient();
+	const [name, setName] = useState(person.name);
 	const [nickname, setNickname] = useState(person.nickname);
 	const [gender, setGender] = useState(person.gender ?? "");
 	const [relationshipType, setRelationshipType] = useState(
@@ -64,7 +65,7 @@ function OverviewSection({
 	const saveMutation = useMutation({
 		mutationFn: () =>
 			updatePerson(person.id, {
-				name: person.name,
+				name,
 				nickname,
 				gender,
 				relationship_type: relationshipType,
@@ -125,6 +126,14 @@ function OverviewSection({
 
 			{editing ? (
 				<div className="space-y-3">
+					<div>
+						<Label>Full name</Label>
+						<Input
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="Full name"
+						/>
+					</div>
 					<div>
 						<Label>Nickname</Label>
 						<Input

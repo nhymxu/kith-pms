@@ -765,9 +765,15 @@ func TestParseV4ActivityResolution(t *testing.T) {
 					]
 				}]},
 				{"type": "activity", "count": 3, "values": [
-					{"uuid": "act-1", "properties": {"summary": "Coffee chat", "description": "Caught up over coffee", "happened_at": "2021-05-10T00:00:00.000000Z"}},
-					{"uuid": "act-2", "properties": {"summary": "", "description": "Long walk in the park", "happened_at": "2021-06-15T00:00:00.000000Z"}},
-					{"uuid": "act-3", "properties": {"summary": "Not linked", "description": "This activity has no contact link", "happened_at": "2021-07-01T00:00:00.000000Z"}}
+					{"uuid": "act-1", "properties": {
+						"summary": "Coffee chat", "description": "Caught up over coffee",
+						"happened_at": "2021-05-10T00:00:00.000000Z"}},
+					{"uuid": "act-2", "properties": {
+						"summary": "", "description": "Long walk in the park",
+						"happened_at": "2021-06-15T00:00:00.000000Z"}},
+					{"uuid": "act-3", "properties": {
+						"summary": "Not linked", "description": "This activity has no contact link",
+						"happened_at": "2021-07-01T00:00:00.000000Z"}}
 				]}
 			],
 			"properties": {"journal_entries": []}
@@ -791,6 +797,7 @@ func TestParseV4ActivityResolution(t *testing.T) {
 	if acts[0].Summary != "Coffee chat" {
 		t.Errorf("expected 'Coffee chat', got %q", acts[0].Summary)
 	}
+
 	if acts[0].HappenedAt != "2021-05-10" {
 		t.Errorf("expected '2021-05-10', got %q", acts[0].HappenedAt)
 	}

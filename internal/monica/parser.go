@@ -514,14 +514,18 @@ func parseV4(acc *v4Account) (*Export, error) {
 		if a.UUID == "" {
 			continue
 		}
+
 		ap := a.Properties
+
 		title := strings.TrimSpace(ap.Summary)
 		if title == "" {
 			title = truncate(ap.Description, 60)
 		}
+
 		if title == "" {
 			continue
 		}
+
 		activityByUUID[a.UUID] = MActivity{
 			Summary:     title,
 			Description: ap.Description,
@@ -574,7 +578,12 @@ func normaliseV4AccountJournal(entries []v4JournalEntry) []MAccountJournal {
 	return out
 }
 
-func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]string, activityByUUID map[string]MActivity) Contact {
+func normaliseV4Contact(
+	c v4Contact,
+	rels []MRelationship,
+	photoURLs map[string]string,
+	activityByUUID map[string]MActivity,
+) Contact {
 	p := c.Properties
 
 	info := Information{}
@@ -780,12 +789,14 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 
 	// Resolve per-contact activity UUIDs against the account-level activity map.
 	rawActivityUUIDs := c.Data.values("activity")
+
 	activities := make([]MActivity, 0, len(rawActivityUUIDs))
 	for _, raw := range rawActivityUUIDs {
 		var uuid string
 		if err := json.Unmarshal(raw, &uuid); err != nil || uuid == "" {
 			continue
 		}
+
 		if act, ok := activityByUUID[uuid]; ok {
 			activities = append(activities, act)
 		}

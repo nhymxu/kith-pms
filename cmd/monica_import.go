@@ -49,6 +49,11 @@ func monicaImportCommand() *cli.Command {
 				Usage: "How to handle account-level Monica journal entries: ask, skip, or unlinked",
 				Value: "ask",
 			},
+			&cli.StringFlag{
+				Name:  "self-profile",
+				Usage: "How to handle self-profile selection: ask or skip",
+				Value: "ask",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fromPath := cmd.String("from")
@@ -80,6 +85,7 @@ func monicaImportCommand() *cli.Command {
 				export,
 				cmd.String("inactive-reminders"),
 				cmd.String("account-journal"),
+				cmd.String("self-profile"),
 			)
 			if err != nil {
 				return err
@@ -170,6 +176,16 @@ func runImport(
 		labelMap[strings.ToLower(l.Name)] = l.ID
 	}
 
+	// If a self-profile was selected, move that contact to the front so it is created first.
+	if options.SelfContactUUID != "" {
+		for i, c := range export.Contacts {
+			if c.ID == options.SelfContactUUID {
+				export.Contacts[0], export.Contacts[i] = export.Contacts[i], export.Contacts[0]
+				break
+			}
+		}
+	}
+
 	// First pass: insert all persons and build UUID→personID map for relationship resolution.
 	uuidToPersonID := make(map[string]int64, len(export.Contacts))
 
@@ -205,6 +221,14 @@ func runImport(
 
 		if c.ID != "" {
 			uuidToPersonID[c.ID] = personID
+		}
+
+		if options.SelfContactUUID != "" && c.ID == options.SelfContactUUID {
+			if err := peopleSvc.SetSelf(ctx, personID); err != nil {
+				slog.Warn("monica-import: failed to mark self-profile", "person_id", personID, "err", err)
+			} else {
+				slog.Info("monica-import: self-profile set", "name", rec.Person.Name, "person_id", personID)
+			}
 		}
 
 		// Attach labels.
@@ -413,7 +437,7 @@ func importRelationships(
 
 func resolveMonicaImportOptions(
 	export *monica.Export,
-	inactiveMode, accountJournalMode string,
+	inactiveMode, accountJournalMode, selfProfileMode string,
 ) (monica.ImportOptions, error) {
 	options := monica.ImportOptions{}
 	reader := bufio.NewReader(os.Stdin)
@@ -455,7 +479,68 @@ func resolveMonicaImportOptions(
 		options.ImportAccountJournalEntries = answer
 	}
 
+	if len(export.Contacts) > 0 && strings.ToLower(strings.TrimSpace(selfProfileMode)) != "skip" {
+		uuid, err := resolveSelfProfile(reader, export)
+		if err != nil {
+			return options, err
+		}
+
+		options.SelfContactUUID = uuid
+	}
+
 	return options, nil
+}
+
+// resolveSelfProfile asks the user whether to designate one contact as the self-profile.
+// Returns the chosen contact UUID, or "" if the user declines.
+func resolveSelfProfile(reader *bufio.Reader, export *monica.Export) (string, error) {
+	want, err := askYesNo(reader, fmt.Sprintf("Select a self-profile from %d contacts?", len(export.Contacts)))
+	if err != nil || !want {
+		return "", err
+	}
+
+	fmt.Println("\nContacts:")
+
+	for i, c := range export.Contacts {
+		name := strings.TrimSpace(strings.Join([]string{c.FirstName, c.MiddleName, c.LastName}, " "))
+		if name == "" {
+			name = c.Nickname
+		}
+
+		if name == "" {
+			name = "(no name)"
+		}
+
+		fmt.Printf("  %3d. %s\n", i+1, name)
+	}
+
+	for {
+		fmt.Printf("Enter number (1-%d): ", len(export.Contacts))
+
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return "", fmt.Errorf("monica-import: read self-profile choice: %w", err)
+		}
+
+		line = strings.TrimSpace(line)
+
+		var n int
+		if _, scanErr := fmt.Sscanf(line, "%d", &n); scanErr != nil || n < 1 || n > len(export.Contacts) {
+			fmt.Printf("Please enter a number between 1 and %d.\n", len(export.Contacts))
+			continue
+		}
+
+		chosen := export.Contacts[n-1]
+
+		name := strings.TrimSpace(strings.Join([]string{chosen.FirstName, chosen.MiddleName, chosen.LastName}, " "))
+		if name == "" {
+			name = chosen.Nickname
+		}
+
+		fmt.Printf("Self-profile set to: %s\n", name)
+
+		return chosen.ID, nil
+	}
 }
 
 func resolveChoice(reader *bufio.Reader, mode, yesMode, noMode, question string) (bool, error) {

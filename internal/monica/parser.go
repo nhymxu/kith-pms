@@ -51,6 +51,9 @@ type Export struct {
 type ImportOptions struct {
 	ImportInactiveReminders     bool
 	ImportAccountJournalEntries bool
+	// SelfContactUUID, when non-empty, identifies the Monica contact to mark as the self-profile.
+	// That contact is imported first and flagged is_self = true in the database.
+	SelfContactUUID string
 }
 
 // ---- v4 array-of-groups wire types ------------------------------------------

@@ -809,7 +809,7 @@ func TestParseV4ActivityResolution(t *testing.T) {
 
 	// act-3 is not linked to the contact → should not appear
 	rec := MapContact(exp.Contacts[0])
-	if len(rec.Activities) != 2 {
-		t.Errorf("expected 2 activities in ImportRecord, got %d", len(rec.Activities))
+	if len(rec.ActivityEntries) != 2 {
+		t.Errorf("expected 2 activity entries in ImportRecord, got %d", len(rec.ActivityEntries))
 	}
 }

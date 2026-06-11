@@ -173,6 +173,15 @@ func runImport(
 	// First pass: insert all persons and build UUID→personID map for relationship resolution.
 	uuidToPersonID := make(map[string]int64, len(export.Contacts))
 
+	// pendingActivities accumulates UUID-keyed Monica activities across contacts so that
+	// activities with multiple participants are created as a single journal entry.
+	type pendingActivity struct {
+		Activity  journal.Activity
+		PersonIDs []int64
+	}
+
+	pendingActivities := make(map[string]*pendingActivity)
+
 	var imported, errCount, avatarImported, avatarSkipped int
 
 	for _, c := range export.Contacts {
@@ -218,10 +227,22 @@ func runImport(
 			}
 		}
 
-		// Journal entries.
+		// Per-contact journal entries (notes, calls) — always unique to this contact.
 		for _, act := range rec.Activities {
 			if _, err := journalSvc.Create(ctx, act, []int64{personID}, nil); err != nil {
 				slog.Warn("monica-import: failed to create activity", "person_id", personID, "err", err)
+			}
+		}
+
+		// UUID-keyed Monica activities: accumulate participants for deduplication.
+		for _, entry := range rec.ActivityEntries {
+			if p, ok := pendingActivities[entry.UUID]; ok {
+				p.PersonIDs = append(p.PersonIDs, personID)
+			} else {
+				pendingActivities[entry.UUID] = &pendingActivity{
+					Activity:  entry.Activity,
+					PersonIDs: []int64{personID},
+				}
 			}
 		}
 
@@ -290,6 +311,13 @@ func runImport(
 		imported++
 
 		slog.Info("monica-import: imported contact", "name", rec.Person.Name, "person_id", personID)
+	}
+
+	// Create deduplicated Monica activities with all participants combined.
+	for _, p := range pendingActivities {
+		if _, err := journalSvc.Create(ctx, p.Activity, p.PersonIDs, nil); err != nil {
+			slog.Warn("monica-import: failed to create activity", "err", err)
+		}
 	}
 
 	// Second pass: resolve and insert relationships now that all persons exist.
@@ -505,7 +533,7 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 		totalContacts += len(rec.Contacts)
 		totalLocations += len(rec.Locations)
 		totalTags += len(rec.TagNames)
-		totalActivities += len(rec.Activities)
+		totalActivities += len(rec.Activities) + len(rec.ActivityEntries)
 		totalReminders += len(rec.Reminders)
 		totalDates += len(rec.Dates)
 		totalGifts += len(rec.Gifts)

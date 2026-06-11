@@ -22,13 +22,24 @@ const (
 	maxMsgsPerConv    = 2000
 )
 
+// ActivityEntry pairs a Monica activity UUID with its mapped journal.Activity.
+// Activities shared between multiple contacts carry the same UUID and are deduplicated
+// during import so only one journal entry is created per Monica activity.
+type ActivityEntry struct {
+	UUID     string
+	Activity journal.Activity
+}
+
 // ImportRecord holds all kith-pms domain objects for a single Monica contact.
 type ImportRecord struct {
-	Person     people.Person
-	Contacts   []people.ContactInfo
-	Locations  []people.Location
-	TagNames   []string // label names to create-or-find and attach
+	Person    people.Person
+	Contacts  []people.ContactInfo
+	Locations []people.Location
+	TagNames  []string // label names to create-or-find and attach
+	// Activities holds per-contact entries (notes, calls) that are always unique to this contact.
 	Activities []journal.Activity
+	// ActivityEntries holds UUID-keyed Monica activities shared across contacts; deduplicated on import.
+	ActivityEntries []ActivityEntry
 	// ConversationActivities are mapped from Monica conversations; attach CONVERSATION label on create.
 	ConversationActivities []journal.Activity
 	// LifeEventActivities are mapped from Monica life events; attach LIFE_EVENT label on create.
@@ -63,7 +74,8 @@ func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 		Contacts:               mapContactInfo(c.ContactInfo),
 		Locations:              mapLocations(c.Addresses),
 		TagNames:               mapTags(c.Tags),
-		Activities:             mapActivities(c),
+		Activities:             mapNoteCallActivities(c),
+		ActivityEntries:        mapActivityEntries(c),
 		ConversationActivities: convActivities,
 		LifeEventActivities:    leActivities,
 		Reminders:              mapReminders(c.Reminders, c.Tasks, options),
@@ -215,7 +227,9 @@ func MapAccountJournalEntries(entries []MAccountJournal) []journal.Activity {
 	return out
 }
 
-func mapActivities(c Contact) []journal.Activity {
+// mapNoteCallActivities converts per-contact notes and calls to journal entries.
+// These are always unique to a single contact and do not need deduplication.
+func mapNoteCallActivities(c Contact) []journal.Activity {
 	var out []journal.Activity
 
 	for _, n := range c.Notes {
@@ -227,23 +241,6 @@ func mapActivities(c Contact) []journal.Activity {
 			Title:          truncate(n.Body, 60),
 			Content:        n.Body,
 			OccurredAtDate: dateFromISO(n.CreatedAt),
-		})
-	}
-
-	for _, a := range c.Activities {
-		title := strings.TrimSpace(a.Summary)
-		if title == "" {
-			title = truncate(a.Description, 60)
-		}
-
-		if title == "" {
-			continue
-		}
-
-		out = append(out, journal.Activity{
-			Title:          title,
-			Content:        a.Description,
-			OccurredAtDate: a.HappenedAt,
 		})
 	}
 
@@ -262,6 +259,39 @@ func mapActivities(c Contact) []journal.Activity {
 			Title:          title,
 			Content:        call.Content,
 			OccurredAtDate: dateFromISO(call.CalledAt),
+		})
+	}
+
+	return out
+}
+
+// mapActivityEntries converts UUID-keyed Monica activities to ActivityEntry values.
+// These can be shared across contacts; the importer deduplicates by UUID so only
+// one journal entry is created per activity regardless of how many participants it has.
+func mapActivityEntries(c Contact) []ActivityEntry {
+	var out []ActivityEntry
+
+	for _, a := range c.Activities {
+		if a.UUID == "" {
+			continue
+		}
+
+		title := strings.TrimSpace(a.Summary)
+		if title == "" {
+			title = truncate(a.Description, 60)
+		}
+
+		if title == "" {
+			continue
+		}
+
+		out = append(out, ActivityEntry{
+			UUID: a.UUID,
+			Activity: journal.Activity{
+				Title:          title,
+				Content:        a.Description,
+				OccurredAtDate: a.HappenedAt,
+			},
 		})
 	}
 

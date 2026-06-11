@@ -361,6 +361,7 @@ type Note struct {
 }
 
 type MActivity struct {
+	UUID        string `json:"uuid"`
 	Summary     string `json:"summary"`
 	Description string `json:"description"`
 	HappenedAt  string `json:"happened_at"` // "YYYY-MM-DD"
@@ -798,6 +799,7 @@ func normaliseV4Contact(
 		}
 
 		if act, ok := activityByUUID[uuid]; ok {
+			act.UUID = uuid
 			activities = append(activities, act)
 		}
 	}

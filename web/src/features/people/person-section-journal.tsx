@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
+import { PersonChip } from "#/features/journal/person-label-chip";
 import { keys } from "#/query-keys";
 import { QuickJournalDialog } from "./quick-actions";
 
@@ -63,12 +64,7 @@ export function JournalSection({ personId }: JournalSectionProps) {
 									{e.people
 										.filter((p) => p.person_id !== personId)
 										.map((p) => (
-											<span
-												key={p.person_id}
-												className="text-[11px] text-zinc-400"
-											>
-												{p.name}
-											</span>
+											<PersonChip key={p.person_id} p={p} />
 										))}
 								</div>
 							)}

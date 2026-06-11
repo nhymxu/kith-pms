@@ -122,3 +122,4 @@ data/
 .claude/
 CLAUDE.local.md
 .agents/
+.playwright-mcp/

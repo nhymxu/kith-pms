@@ -21,6 +21,7 @@ type journalRequest struct {
 	OccurredAtDate string  `json:"occurred_at_date"` // "YYYY-MM-DD"
 	OccurredAtTime string  `json:"occurred_at_time"` // "HH:MM" or ""
 	PersonIDs      []int64 `json:"person_ids"`
+	LabelIDs       []int64 `json:"label_ids"`
 }
 
 // List godoc
@@ -65,6 +66,15 @@ func (h *JournalAPI) List(c *echo.Context) error {
 			id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
 			if err == nil && id > 0 {
 				params.PersonIDs = append(params.PersonIDs, id)
+			}
+		}
+	}
+
+	if raw := c.QueryParam("labels"); raw != "" {
+		for _, s := range strings.Split(raw, ",") {
+			id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
+			if err == nil && id > 0 {
+				params.JournalLabelIDs = append(params.JournalLabelIDs, id)
 			}
 		}
 	}
@@ -137,7 +147,7 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 		OccurredAtTime: nullableString(req.OccurredAtTime),
 	}
 
-	id, err := h.Svc.Create(c.Request().Context(), a, req.PersonIDs)
+	id, err := h.Svc.Create(c.Request().Context(), a, req.PersonIDs, req.LabelIDs)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
@@ -182,7 +192,7 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 		OccurredAtTime: nullableString(req.OccurredAtTime),
 	}
 
-	if err := h.Svc.Update(c.Request().Context(), a, req.PersonIDs); err != nil {
+	if err := h.Svc.Update(c.Request().Context(), a, req.PersonIDs, req.LabelIDs); err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 

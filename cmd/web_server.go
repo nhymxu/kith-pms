@@ -20,7 +20,6 @@ import (
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
-	"github.com/nhymxu/kith-pms/internal/labels"
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
@@ -117,11 +116,12 @@ Can scale later.`,
 			fileSvc := files.NewLocalFileService(avatarPath)
 			peopleSvc.FileService = fileSvc
 
-			labelsSvc := labels.NewService(db)
+			labelsSvc := people.NewLabelService(db)
 			peopleSvc.LabelsSvc = labelsSvc
 
 			journalSvc := journal.NewService(db)
 			journalSvc.PeopleSvc = &api.JournalPeopleAdapter{Svc: peopleSvc}
+			journalLabelsSvc := journal.NewLabelService(db)
 
 			datesSvc := dates.NewService(db)
 
@@ -167,6 +167,7 @@ Can scale later.`,
 				PeopleService:        peopleSvc,
 				LabelsService:        labelsSvc,
 				JournalService:       journalSvc,
+				JournalLabelsService: journalLabelsSvc,
 				DatesService:         datesSvc,
 				RemindersService:     remindersSvc,
 				WorkHistoryService:   workHistorySvc,

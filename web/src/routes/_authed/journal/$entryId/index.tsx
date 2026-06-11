@@ -12,10 +12,11 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { deleteJournalEntry, getJournalEntry } from "#/endpoints/journal";
+import { LabelChip, PersonChip } from "#/features/journal/person-label-chip";
 import { formatDate, formatTime } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
-export const Route = createFileRoute("/_authed/journal/$entryId")({
+export const Route = createFileRoute("/_authed/journal/$entryId/")({
 	component: JournalEntryPage,
 });
 
@@ -82,21 +83,26 @@ function JournalEntryPage() {
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
+					{data.labels.length > 0 && (
+						<div>
+							<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+								Labels
+							</p>
+							<div className="flex flex-wrap gap-1.5">
+								{data.labels.map((l) => (
+									<LabelChip key={l.id} label={l} />
+								))}
+							</div>
+						</div>
+					)}
 					<div>
 						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
 							People
 						</p>
 						{data.people.length > 0 ? (
-							<div className="flex flex-wrap gap-2">
+							<div className="flex flex-wrap gap-1.5">
 								{data.people.map((p) => (
-									<Link
-										key={p.person_id}
-										to="/people/$personId"
-										params={{ personId: String(p.person_id) }}
-										className="font-mono text-[12px] text-indigo-600 hover:underline"
-									>
-										@{p.name}
-									</Link>
+									<PersonChip key={p.person_id} p={p} />
 								))}
 							</div>
 						) : (

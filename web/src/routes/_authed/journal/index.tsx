@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
+import { listJournalLabels } from "#/endpoints/journal-labels";
 import { listPeople } from "#/endpoints/people";
 import { JournalTimeline } from "#/features/journal/journal-timeline";
 import { keys } from "#/query-keys";
@@ -14,6 +15,7 @@ const searchSchema = z.object({
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
 	people: z.array(z.coerce.number()).optional(),
+	labels: z.array(z.coerce.number()).optional(),
 });
 
 export const Route = createFileRoute("/_authed/journal/")({
@@ -25,7 +27,7 @@ function JournalPage() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
-	const { data, isPending, isError } = useQuery({
+	const { data, isPending, isError, error } = useQuery({
 		queryKey: keys.journal.list({
 			page: search.page,
 			page_size: search.page_size,
@@ -41,6 +43,7 @@ function JournalPage() {
 				from_date: search.from_date,
 				to_date: search.to_date,
 				person_ids: search.people,
+				labels: search.labels,
 			}),
 	});
 
@@ -49,12 +52,19 @@ function JournalPage() {
 		queryFn: () => listPeople({ page_size: 200 }),
 	});
 
-	if (isError)
+	const { data: allJournalLabels } = useQuery({
+		queryKey: keys.journalLabels.list(),
+		queryFn: listJournalLabels,
+	});
+
+	if (isError) {
+		console.error("[journal] load error:", error);
 		return (
 			<p className="text-sm font-base text-destructive">
 				Failed to load journal.
 			</p>
 		);
+	}
 
 	return (
 		<div className="space-y-4">
@@ -190,6 +200,57 @@ function JournalPage() {
 									void navigate({
 										to: "/journal",
 										search: { ...search, people: undefined, page: 1 },
+									})
+								}
+								className="text-xs text-zinc-400 hover:text-zinc-700"
+							>
+								Clear
+							</button>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* Journal label filter */}
+			{allJournalLabels && allJournalLabels.length > 0 && (
+				<div className="space-y-1">
+					<p className="text-[11px] font-medium text-zinc-500">
+						Filter by label
+					</p>
+					<div className="flex flex-wrap gap-2">
+						{allJournalLabels.map((l) => {
+							const active = (search.labels ?? []).includes(l.id);
+							return (
+								<button
+									key={l.id}
+									type="button"
+									onClick={() => {
+										const next = active
+											? (search.labels ?? []).filter((id) => id !== l.id)
+											: [...(search.labels ?? []), l.id];
+										void navigate({
+											to: "/journal",
+											search: {
+												...search,
+												labels: next.length ? next : undefined,
+												page: 1,
+											},
+										});
+									}}
+									className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+									style={active ? { borderColor: l.color } : undefined}
+								>
+									{l.name}
+								</button>
+							);
+						})}
+						{(search.labels?.length ?? 0) > 0 && (
+							<button
+								type="button"
+								onClick={() =>
+									void navigate({
+										to: "/journal",
+										search: { ...search, labels: undefined, page: 1 },
 									})
 								}
 								className="text-xs text-zinc-400 hover:text-zinc-700"

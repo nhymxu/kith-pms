@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { listJournal } from "#/endpoints/journal";
+import { PersonChip } from "#/features/journal/person-label-chip";
 import { keys } from "#/query-keys";
 import type { JournalActivity } from "#/schemas/journal";
 
@@ -23,9 +24,7 @@ function JournalCard({ entry }: { entry: JournalActivity }) {
 			{entry.people.length > 0 && (
 				<div className="mt-1 flex flex-wrap gap-1.5">
 					{entry.people.slice(0, 3).map((p) => (
-						<span key={p.person_id} className="text-[10px] text-indigo-600">
-							@{p.name}
-						</span>
+						<PersonChip key={p.person_id} p={p} />
 					))}
 					{entry.people.length > 3 && (
 						<span className="text-[10px] text-zinc-400">

@@ -462,6 +462,7 @@ func TestMarkComplete_Recurring_Daily_Spawns(t *testing.T) {
 
 	if spawned == nil {
 		t.Fatal("expected a non-completed spawned reminder")
+		return
 	}
 
 	wantDue := time.Date(2026, 5, 21, 0, 0, 0, 0, time.UTC)

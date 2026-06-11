@@ -19,6 +19,8 @@ type Activity struct {
 
 	// Populated separately via activity_person JOIN — not stored in activity table
 	People []ActivityPerson `bun:"-" json:"people"`
+	// Populated separately via journal_label_assignment JOIN — not stored in activity table
+	Labels []Label `bun:"-" json:"labels"`
 }
 
 // ActivityPerson is a JOIN DTO — not a bun model; scanned from activity_person + person tables.

@@ -4,7 +4,7 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
-import { Link2, Settings, Shield, Tag } from "lucide-react";
+import { BookOpen, Link2, Settings, Shield, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/settings/_layout")({
 	component: SettingsLayout,
@@ -12,7 +12,12 @@ export const Route = createFileRoute("/_authed/settings/_layout")({
 
 const NAV_ITEMS = [
 	{ to: "/settings/general" as const, icon: Settings, label: "General" },
-	{ to: "/settings/labels" as const, icon: Tag, label: "Labels" },
+	{ to: "/settings/people-labels" as const, icon: Tag, label: "People Labels" },
+	{
+		to: "/settings/journal-labels" as const,
+		icon: BookOpen,
+		label: "Journal Labels",
+	},
 	{
 		to: "/settings/relationship-types" as const,
 		icon: Link2,

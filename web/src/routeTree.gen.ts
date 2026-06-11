@@ -27,17 +27,20 @@ import { Route as AuthedPeopleNewRouteImport } from './routes/_authed/people/new
 import { Route as AuthedPeoplePersonIdRouteImport } from './routes/_authed/people/$personId'
 import { Route as AuthedMeSetupRouteImport } from './routes/_authed/me/setup'
 import { Route as AuthedJournalNewRouteImport } from './routes/_authed/journal/new'
-import { Route as AuthedJournalEntryIdRouteImport } from './routes/_authed/journal/$entryId'
 import { Route as AuthedGiftsNewRouteImport } from './routes/_authed/gifts/new'
+import { Route as AuthedJournalEntryIdRouteRouteImport } from './routes/_authed/journal/$entryId/route'
 import { Route as AuthedGiftsGiftIdRouteRouteImport } from './routes/_authed/gifts/$giftId/route'
+import { Route as AuthedJournalEntryIdIndexRouteImport } from './routes/_authed/journal/$entryId/index'
 import { Route as AuthedGiftsGiftIdIndexRouteImport } from './routes/_authed/gifts/$giftId/index'
 import { Route as AuthedSettingsLayoutSecurityRouteImport } from './routes/_authed/settings/_layout.security'
 import { Route as AuthedSettingsLayoutRelationshipTypesRouteImport } from './routes/_authed/settings/_layout.relationship-types'
+import { Route as AuthedSettingsLayoutPeopleLabelsRouteImport } from './routes/_authed/settings/_layout.people-labels'
 import { Route as AuthedSettingsLayoutLabelsRouteImport } from './routes/_authed/settings/_layout.labels'
+import { Route as AuthedSettingsLayoutJournalLabelsRouteImport } from './routes/_authed/settings/_layout.journal-labels'
 import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
 import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
 import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
-import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId.edit'
+import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId/edit'
 import { Route as AuthedGiftsGiftIdEditRouteImport } from './routes/_authed/gifts/$giftId/edit'
 
 const LoginRoute = LoginRouteImport.update({
@@ -130,21 +133,28 @@ const AuthedJournalNewRoute = AuthedJournalNewRouteImport.update({
   path: '/journal/new',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedJournalEntryIdRoute = AuthedJournalEntryIdRouteImport.update({
-  id: '/journal/$entryId',
-  path: '/journal/$entryId',
-  getParentRoute: () => AuthedRoute,
-} as any)
 const AuthedGiftsNewRoute = AuthedGiftsNewRouteImport.update({
   id: '/gifts/new',
   path: '/gifts/new',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedJournalEntryIdRouteRoute =
+  AuthedJournalEntryIdRouteRouteImport.update({
+    id: '/journal/$entryId',
+    path: '/journal/$entryId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedGiftsGiftIdRouteRoute = AuthedGiftsGiftIdRouteRouteImport.update({
   id: '/gifts/$giftId',
   path: '/gifts/$giftId',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedJournalEntryIdIndexRoute =
+  AuthedJournalEntryIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedJournalEntryIdRouteRoute,
+  } as any)
 const AuthedGiftsGiftIdIndexRoute = AuthedGiftsGiftIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -162,10 +172,22 @@ const AuthedSettingsLayoutRelationshipTypesRoute =
     path: '/relationship-types',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
+const AuthedSettingsLayoutPeopleLabelsRoute =
+  AuthedSettingsLayoutPeopleLabelsRouteImport.update({
+    id: '/people-labels',
+    path: '/people-labels',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
 const AuthedSettingsLayoutLabelsRoute =
   AuthedSettingsLayoutLabelsRouteImport.update({
     id: '/labels',
     path: '/labels',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
+const AuthedSettingsLayoutJournalLabelsRoute =
+  AuthedSettingsLayoutJournalLabelsRouteImport.update({
+    id: '/journal-labels',
+    path: '/journal-labels',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
 const AuthedSettingsLayoutGeneralRoute =
@@ -190,7 +212,7 @@ const AuthedJournalEntryIdEditRoute =
   AuthedJournalEntryIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
-    getParentRoute: () => AuthedJournalEntryIdRoute,
+    getParentRoute: () => AuthedJournalEntryIdRouteRoute,
   } as any)
 const AuthedGiftsGiftIdEditRoute = AuthedGiftsGiftIdEditRouteImport.update({
   id: '/edit',
@@ -202,8 +224,8 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/gifts/$giftId': typeof AuthedGiftsGiftIdRouteRouteWithChildren
+  '/journal/$entryId': typeof AuthedJournalEntryIdRouteRouteWithChildren
   '/gifts/new': typeof AuthedGiftsNewRoute
-  '/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/journal/new': typeof AuthedJournalNewRoute
   '/me/setup': typeof AuthedMeSetupRoute
   '/people/$personId': typeof AuthedPeoplePersonIdRouteWithChildren
@@ -224,16 +246,18 @@ export interface FileRoutesByFullPath {
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
+  '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/settings/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsLayoutSecurityRoute
   '/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
+  '/journal/$entryId/': typeof AuthedJournalEntryIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthedIndexRoute
   '/gifts/new': typeof AuthedGiftsNewRoute
-  '/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/journal/new': typeof AuthedJournalNewRoute
   '/me/setup': typeof AuthedMeSetupRoute
   '/people/$personId': typeof AuthedPeoplePersonIdRouteWithChildren
@@ -253,10 +277,13 @@ export interface FileRoutesByTo {
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
+  '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/settings/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsLayoutSecurityRoute
   '/gifts/$giftId': typeof AuthedGiftsGiftIdIndexRoute
+  '/journal/$entryId': typeof AuthedJournalEntryIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -264,8 +291,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/gifts/$giftId': typeof AuthedGiftsGiftIdRouteRouteWithChildren
+  '/_authed/journal/$entryId': typeof AuthedJournalEntryIdRouteRouteWithChildren
   '/_authed/gifts/new': typeof AuthedGiftsNewRoute
-  '/_authed/journal/$entryId': typeof AuthedJournalEntryIdRouteWithChildren
   '/_authed/journal/new': typeof AuthedJournalNewRoute
   '/_authed/me/setup': typeof AuthedMeSetupRoute
   '/_authed/people/$personId': typeof AuthedPeoplePersonIdRouteWithChildren
@@ -286,10 +313,13 @@ export interface FileRoutesById {
   '/_authed/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/_authed/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/_authed/settings/_layout/general': typeof AuthedSettingsLayoutGeneralRoute
+  '/_authed/settings/_layout/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/_authed/settings/_layout/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/_authed/settings/_layout/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/_authed/settings/_layout/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/_authed/settings/_layout/security': typeof AuthedSettingsLayoutSecurityRoute
   '/_authed/gifts/$giftId/': typeof AuthedGiftsGiftIdIndexRoute
+  '/_authed/journal/$entryId/': typeof AuthedJournalEntryIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -297,8 +327,8 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/gifts/$giftId'
-    | '/gifts/new'
     | '/journal/$entryId'
+    | '/gifts/new'
     | '/journal/new'
     | '/me/setup'
     | '/people/$personId'
@@ -319,16 +349,18 @@ export interface FileRouteTypes {
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
     | '/settings/general'
+    | '/settings/journal-labels'
     | '/settings/labels'
+    | '/settings/people-labels'
     | '/settings/relationship-types'
     | '/settings/security'
     | '/gifts/$giftId/'
+    | '/journal/$entryId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/'
     | '/gifts/new'
-    | '/journal/$entryId'
     | '/journal/new'
     | '/me/setup'
     | '/people/$personId'
@@ -348,18 +380,21 @@ export interface FileRouteTypes {
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
     | '/settings/general'
+    | '/settings/journal-labels'
     | '/settings/labels'
+    | '/settings/people-labels'
     | '/settings/relationship-types'
     | '/settings/security'
     | '/gifts/$giftId'
+    | '/journal/$entryId'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/_authed/'
     | '/_authed/gifts/$giftId'
-    | '/_authed/gifts/new'
     | '/_authed/journal/$entryId'
+    | '/_authed/gifts/new'
     | '/_authed/journal/new'
     | '/_authed/me/setup'
     | '/_authed/people/$personId'
@@ -380,10 +415,13 @@ export interface FileRouteTypes {
     | '/_authed/people/$personId/edit'
     | '/_authed/reminders/$reminderId/edit'
     | '/_authed/settings/_layout/general'
+    | '/_authed/settings/_layout/journal-labels'
     | '/_authed/settings/_layout/labels'
+    | '/_authed/settings/_layout/people-labels'
     | '/_authed/settings/_layout/relationship-types'
     | '/_authed/settings/_layout/security'
     | '/_authed/gifts/$giftId/'
+    | '/_authed/journal/$entryId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -519,18 +557,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJournalNewRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/journal/$entryId': {
-      id: '/_authed/journal/$entryId'
-      path: '/journal/$entryId'
-      fullPath: '/journal/$entryId'
-      preLoaderRoute: typeof AuthedJournalEntryIdRouteImport
-      parentRoute: typeof AuthedRoute
-    }
     '/_authed/gifts/new': {
       id: '/_authed/gifts/new'
       path: '/gifts/new'
       fullPath: '/gifts/new'
       preLoaderRoute: typeof AuthedGiftsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/journal/$entryId': {
+      id: '/_authed/journal/$entryId'
+      path: '/journal/$entryId'
+      fullPath: '/journal/$entryId'
+      preLoaderRoute: typeof AuthedJournalEntryIdRouteRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/gifts/$giftId': {
@@ -539,6 +577,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gifts/$giftId'
       preLoaderRoute: typeof AuthedGiftsGiftIdRouteRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/journal/$entryId/': {
+      id: '/_authed/journal/$entryId/'
+      path: '/'
+      fullPath: '/journal/$entryId/'
+      preLoaderRoute: typeof AuthedJournalEntryIdIndexRouteImport
+      parentRoute: typeof AuthedJournalEntryIdRouteRoute
     }
     '/_authed/gifts/$giftId/': {
       id: '/_authed/gifts/$giftId/'
@@ -561,11 +606,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsLayoutRelationshipTypesRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
+    '/_authed/settings/_layout/people-labels': {
+      id: '/_authed/settings/_layout/people-labels'
+      path: '/people-labels'
+      fullPath: '/settings/people-labels'
+      preLoaderRoute: typeof AuthedSettingsLayoutPeopleLabelsRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
+    }
     '/_authed/settings/_layout/labels': {
       id: '/_authed/settings/_layout/labels'
       path: '/labels'
       fullPath: '/settings/labels'
       preLoaderRoute: typeof AuthedSettingsLayoutLabelsRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
+    }
+    '/_authed/settings/_layout/journal-labels': {
+      id: '/_authed/settings/_layout/journal-labels'
+      path: '/journal-labels'
+      fullPath: '/settings/journal-labels'
+      preLoaderRoute: typeof AuthedSettingsLayoutJournalLabelsRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
     '/_authed/settings/_layout/general': {
@@ -594,7 +653,7 @@ declare module '@tanstack/react-router' {
       path: '/edit'
       fullPath: '/journal/$entryId/edit'
       preLoaderRoute: typeof AuthedJournalEntryIdEditRouteImport
-      parentRoute: typeof AuthedJournalEntryIdRoute
+      parentRoute: typeof AuthedJournalEntryIdRouteRoute
     }
     '/_authed/gifts/$giftId/edit': {
       id: '/_authed/gifts/$giftId/edit'
@@ -622,16 +681,21 @@ const AuthedGiftsGiftIdRouteRouteWithChildren =
     AuthedGiftsGiftIdRouteRouteChildren,
   )
 
-interface AuthedJournalEntryIdRouteChildren {
+interface AuthedJournalEntryIdRouteRouteChildren {
   AuthedJournalEntryIdEditRoute: typeof AuthedJournalEntryIdEditRoute
+  AuthedJournalEntryIdIndexRoute: typeof AuthedJournalEntryIdIndexRoute
 }
 
-const AuthedJournalEntryIdRouteChildren: AuthedJournalEntryIdRouteChildren = {
-  AuthedJournalEntryIdEditRoute: AuthedJournalEntryIdEditRoute,
-}
+const AuthedJournalEntryIdRouteRouteChildren: AuthedJournalEntryIdRouteRouteChildren =
+  {
+    AuthedJournalEntryIdEditRoute: AuthedJournalEntryIdEditRoute,
+    AuthedJournalEntryIdIndexRoute: AuthedJournalEntryIdIndexRoute,
+  }
 
-const AuthedJournalEntryIdRouteWithChildren =
-  AuthedJournalEntryIdRoute._addFileChildren(AuthedJournalEntryIdRouteChildren)
+const AuthedJournalEntryIdRouteRouteWithChildren =
+  AuthedJournalEntryIdRouteRoute._addFileChildren(
+    AuthedJournalEntryIdRouteRouteChildren,
+  )
 
 interface AuthedPeoplePersonIdRouteChildren {
   AuthedPeoplePersonIdEditRoute: typeof AuthedPeoplePersonIdEditRoute
@@ -660,14 +724,19 @@ const AuthedRemindersReminderIdRouteWithChildren =
 
 interface AuthedSettingsLayoutRouteChildren {
   AuthedSettingsLayoutGeneralRoute: typeof AuthedSettingsLayoutGeneralRoute
+  AuthedSettingsLayoutJournalLabelsRoute: typeof AuthedSettingsLayoutJournalLabelsRoute
   AuthedSettingsLayoutLabelsRoute: typeof AuthedSettingsLayoutLabelsRoute
+  AuthedSettingsLayoutPeopleLabelsRoute: typeof AuthedSettingsLayoutPeopleLabelsRoute
   AuthedSettingsLayoutRelationshipTypesRoute: typeof AuthedSettingsLayoutRelationshipTypesRoute
   AuthedSettingsLayoutSecurityRoute: typeof AuthedSettingsLayoutSecurityRoute
 }
 
 const AuthedSettingsLayoutRouteChildren: AuthedSettingsLayoutRouteChildren = {
   AuthedSettingsLayoutGeneralRoute: AuthedSettingsLayoutGeneralRoute,
+  AuthedSettingsLayoutJournalLabelsRoute:
+    AuthedSettingsLayoutJournalLabelsRoute,
   AuthedSettingsLayoutLabelsRoute: AuthedSettingsLayoutLabelsRoute,
+  AuthedSettingsLayoutPeopleLabelsRoute: AuthedSettingsLayoutPeopleLabelsRoute,
   AuthedSettingsLayoutRelationshipTypesRoute:
     AuthedSettingsLayoutRelationshipTypesRoute,
   AuthedSettingsLayoutSecurityRoute: AuthedSettingsLayoutSecurityRoute,
@@ -679,8 +748,8 @@ const AuthedSettingsLayoutRouteWithChildren =
 interface AuthedRouteChildren {
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedGiftsGiftIdRouteRoute: typeof AuthedGiftsGiftIdRouteRouteWithChildren
+  AuthedJournalEntryIdRouteRoute: typeof AuthedJournalEntryIdRouteRouteWithChildren
   AuthedGiftsNewRoute: typeof AuthedGiftsNewRoute
-  AuthedJournalEntryIdRoute: typeof AuthedJournalEntryIdRouteWithChildren
   AuthedJournalNewRoute: typeof AuthedJournalNewRoute
   AuthedMeSetupRoute: typeof AuthedMeSetupRoute
   AuthedPeoplePersonIdRoute: typeof AuthedPeoplePersonIdRouteWithChildren
@@ -701,8 +770,8 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedGiftsGiftIdRouteRoute: AuthedGiftsGiftIdRouteRouteWithChildren,
+  AuthedJournalEntryIdRouteRoute: AuthedJournalEntryIdRouteRouteWithChildren,
   AuthedGiftsNewRoute: AuthedGiftsNewRoute,
-  AuthedJournalEntryIdRoute: AuthedJournalEntryIdRouteWithChildren,
   AuthedJournalNewRoute: AuthedJournalNewRoute,
   AuthedMeSetupRoute: AuthedMeSetupRoute,
   AuthedPeoplePersonIdRoute: AuthedPeoplePersonIdRouteWithChildren,

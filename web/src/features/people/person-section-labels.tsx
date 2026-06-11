@@ -10,8 +10,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { listLabels } from "#/endpoints/labels";
 import { attachLabel, detachLabel } from "#/endpoints/people";
+import { listPeopleLabels } from "#/endpoints/people-labels";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
 
@@ -31,8 +31,8 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 	const qc = useQueryClient();
 	const [confirmDetachId, setConfirmDetachId] = useState<number | null>(null);
 	const { data: allLabels } = useQuery({
-		queryKey: keys.labels.list(),
-		queryFn: listLabels,
+		queryKey: keys.peopleLabels.list(),
+		queryFn: listPeopleLabels,
 	});
 	const attached = person.labels ?? [];
 	const attachedIds = new Set(attached.map((l) => l.id));
@@ -41,14 +41,14 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 		mutationFn: (labelId: number) => attachLabel(person.id, labelId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) });
-			qc.invalidateQueries({ queryKey: keys.labels.all });
+			qc.invalidateQueries({ queryKey: keys.peopleLabels.all });
 		},
 	});
 	const detach = useMutation({
 		mutationFn: (labelId: number) => detachLabel(person.id, labelId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.people.detail(person.id) });
-			qc.invalidateQueries({ queryKey: keys.labels.all });
+			qc.invalidateQueries({ queryKey: keys.peopleLabels.all });
 		},
 	});
 

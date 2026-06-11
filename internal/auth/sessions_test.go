@@ -56,6 +56,7 @@ func TestIssueAndLookup(t *testing.T) {
 
 	if sess == nil {
 		t.Fatal("expected session, got nil")
+		return
 	}
 
 	if sess.UserID != 1 {

@@ -15,13 +15,14 @@ const defaultPageSize = 30
 
 // ListParams holds filter and pagination parameters for listing activities.
 type ListParams struct {
-	Query     string
-	PersonIDs []int64
-	LabelIDs  []int64
-	FromDate  string // "YYYY-MM-DD"
-	ToDate    string // "YYYY-MM-DD"
-	Page      int
-	PageSize  int // default 30
+	Query           string
+	PersonIDs       []int64
+	LabelIDs        []int64 // filters by people-label (activities whose linked people have these labels)
+	JournalLabelIDs []int64 // filters by journal-label (OR within; AND with other filters)
+	FromDate        string  // "YYYY-MM-DD"
+	ToDate          string  // "YYYY-MM-DD"
+	Page            int
+	PageSize        int // default 30
 }
 
 // Service provides business logic for managing journal activities.
@@ -29,6 +30,8 @@ type Service struct {
 	DB         *bun.DB
 	Activities ActivityRepo
 	Links      ActivityPersonRepo
+	Labels     LabelRepo
+	LabelLinks LabelAssignmentRepo
 	Audit      *audit.Service // optional; nil = no audit logging
 	PeopleSvc  PeopleServiceInterface
 }
@@ -52,11 +55,19 @@ func NewService(db *bun.DB) *Service {
 		DB:         db,
 		Activities: NewActivityRepo(db),
 		Links:      NewActivityPersonRepo(db),
+		Labels:     NewLabelRepo(db),
+		LabelLinks: NewLabelAssignmentRepo(db),
 	}
 }
 
-// Create inserts a new activity and links people in a single transaction.
-func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (int64, error) {
+// Create inserts a new activity and links people + labels in a single transaction.
+func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64, labelIDs []int64) (int64, error) {
+	// Validate label IDs before opening the transaction to avoid SQLite read-inside-write deadlock.
+	validLabelIDs, err := s.filterLabelIDs(ctx, labelIDs)
+	if err != nil {
+		return 0, err
+	}
+
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("journal: begin tx: %w", err)
@@ -70,6 +81,12 @@ func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (in
 
 	if err := s.Links.ReplaceAll(ctx, tx, id, personIDs); err != nil {
 		return 0, err
+	}
+
+	if s.LabelLinks != nil {
+		if err := s.LabelLinks.ReplaceAll(ctx, tx, id, validLabelIDs); err != nil {
+			return 0, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -90,8 +107,14 @@ func (s *Service) Create(ctx context.Context, a Activity, personIDs []int64) (in
 	return id, nil
 }
 
-// Update replaces an activity's fields and all person links in a single transaction.
-func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) error {
+// Update replaces an activity's fields and all person links + labels in a single transaction.
+func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64, labelIDs []int64) error {
+	// Validate label IDs before opening the transaction to avoid SQLite read-inside-write deadlock.
+	validLabelIDs, err := s.filterLabelIDs(ctx, labelIDs)
+	if err != nil {
+		return err
+	}
+
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("journal: begin tx: %w", err)
@@ -104,6 +127,12 @@ func (s *Service) Update(ctx context.Context, a Activity, personIDs []int64) err
 
 	if err := s.Links.ReplaceAll(ctx, tx, a.ID, personIDs); err != nil {
 		return err
+	}
+
+	if s.LabelLinks != nil {
+		if err := s.LabelLinks.ReplaceAll(ctx, tx, a.ID, validLabelIDs); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -179,6 +208,16 @@ func (s *Service) updateLastContactForParticipants(ctx context.Context, a Activi
 	return nil
 }
 
+// filterLabelIDs returns only label IDs that exist in journal_label (drops unknown ones).
+// Returns nil when Labels repo is not wired or input is empty.
+func (s *Service) filterLabelIDs(ctx context.Context, ids []int64) ([]int64, error) {
+	if s.Labels == nil || len(ids) == 0 {
+		return nil, nil
+	}
+
+	return s.Labels.FilterExisting(ctx, ids)
+}
+
 // parseActivityTimestamp converts occurred_at_date + occurred_at_time to time.Time.
 // If time is empty, uses midnight UTC.
 func parseActivityTimestamp(date, timeStr string) (time.Time, error) {
@@ -222,6 +261,21 @@ func (s *Service) Get(ctx context.Context, id int64) (*Activity, error) {
 	}
 
 	a.People = people
+
+	if s.LabelLinks != nil {
+		labels, err := s.LabelLinks.ListByActivityID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		if labels == nil {
+			labels = []Label{}
+		}
+
+		a.Labels = labels
+	} else {
+		a.Labels = []Label{}
+	}
 
 	return a, nil
 }
@@ -274,6 +328,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (*ActivityList, e
 		items = []Activity{}
 	}
 
+	// Batch-load people for all activities.
 	for i := range items {
 		people, err := s.Links.ListByActivity(ctx, items[i].ID)
 		if err != nil {
@@ -285,6 +340,32 @@ func (s *Service) List(ctx context.Context, params ListParams) (*ActivityList, e
 		}
 
 		items[i].People = people
+	}
+
+	// Batch-load journal labels (single query, no N+1).
+	if s.LabelLinks != nil && len(items) > 0 {
+		ids := make([]int64, len(items))
+		for i, item := range items {
+			ids[i] = item.ID
+		}
+
+		labelMap, err := s.LabelLinks.ListByActivityIDs(ctx, ids)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range items {
+			labels := labelMap[items[i].ID]
+			if labels == nil {
+				labels = []Label{}
+			}
+
+			items[i].Labels = labels
+		}
+	} else {
+		for i := range items {
+			items[i].Labels = []Label{}
+		}
 	}
 
 	return &ActivityList{

@@ -17,6 +17,7 @@ export interface JournalListParams {
 	from_date?: string;
 	to_date?: string;
 	person_ids?: number[];
+	labels?: number[];
 }
 
 export async function listJournal(
@@ -30,6 +31,7 @@ export async function listJournal(
 	if (params.to_date) qs.set("to_date", params.to_date);
 	if (params.person_ids?.length)
 		qs.set("person_ids", params.person_ids.join(","));
+	if (params.labels?.length) qs.set("labels", params.labels.join(","));
 
 	const query = qs.toString();
 	const res = await apiFetch<Envelope<unknown>>(

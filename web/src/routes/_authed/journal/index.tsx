@@ -31,7 +31,7 @@ function JournalPage() {
 	const search = Route.useSearch();
 
 	const [onlyWithJournal, setOnlyWithJournal] = useState<boolean>(
-		() => localStorage.getItem(PEOPLE_FILTER_KEY) === "true",
+		() => localStorage.getItem(PEOPLE_FILTER_KEY) !== "false",
 	);
 
 	const { data, isPending, isError, error } = useQuery({

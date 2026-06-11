@@ -76,7 +76,7 @@ func TestResolveMonicaImportOptionsWithExplicitModes(t *testing.T) {
 		},
 	}
 
-	options, err := resolveMonicaImportOptions(export, "completed", "unlinked", "skip")
+	options, err := resolveMonicaImportOptions(export, "completed", "unlinked", "skip", "western")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestResolveMonicaImportOptionsWithExplicitModes(t *testing.T) {
 		t.Fatalf("expected both explicit import options enabled, got %+v", options)
 	}
 
-	options, err = resolveMonicaImportOptions(export, "skip", "skip", "skip")
+	options, err = resolveMonicaImportOptions(export, "skip", "skip", "skip", "western")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

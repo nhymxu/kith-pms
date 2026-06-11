@@ -48,12 +48,20 @@ type Export struct {
 	AccountDocumentCount int `json:"-"`
 }
 
+// NameOrderWestern joins name parts as first + middle + last (e.g. "John Michael Smith").
+const NameOrderWestern = "western"
+
+// NameOrderEastern joins name parts as last + middle + first (e.g. "Smith Michael John").
+const NameOrderEastern = "eastern"
+
 type ImportOptions struct {
 	ImportInactiveReminders     bool
 	ImportAccountJournalEntries bool
 	// SelfContactUUID, when non-empty, identifies the Monica contact to mark as the self-profile.
 	// That contact is imported first and flagged is_self = true in the database.
 	SelfContactUUID string
+	// NameOrder controls how first/middle/last are joined: "western" (default) or "eastern".
+	NameOrder string
 }
 
 // ---- v4 array-of-groups wire types ------------------------------------------

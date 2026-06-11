@@ -70,7 +70,7 @@ func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 	allDates = append(allDates, leDates...)
 
 	return ImportRecord{
-		Person:                 mapPerson(c),
+		Person:                 mapPerson(c, options.NameOrder),
 		Contacts:               mapContactInfo(c.ContactInfo),
 		Locations:              mapLocations(c.Addresses),
 		TagNames:               mapTags(c.Tags),
@@ -88,18 +88,29 @@ func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 	}
 }
 
-func mapPerson(c Contact) people.Person {
-	parts := []string{c.FirstName, c.MiddleName, c.LastName}
+// BuildFullName joins first/middle/last according to nameOrder ("eastern" = last+middle+first,
+// default/western = first+middle+last). Empty parts are omitted.
+func BuildFullName(first, middle, last, nameOrder string) string {
+	var order []string
+	if nameOrder == NameOrderEastern {
+		order = []string{last, middle, first}
+	} else {
+		order = []string{first, middle, last}
+	}
 
-	var nameParts []string
+	var parts []string
 
-	for _, p := range parts {
+	for _, p := range order {
 		if s := strings.TrimSpace(p); s != "" {
-			nameParts = append(nameParts, s)
+			parts = append(parts, s)
 		}
 	}
 
-	name := strings.Join(nameParts, " ")
+	return strings.Join(parts, " ")
+}
+
+func mapPerson(c Contact, nameOrder string) people.Person {
+	name := BuildFullName(c.FirstName, c.MiddleName, c.LastName, nameOrder)
 	if name == "" {
 		name = c.Nickname
 	}

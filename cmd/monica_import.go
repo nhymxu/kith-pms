@@ -54,6 +54,11 @@ func monicaImportCommand() *cli.Command {
 				Usage: "How to handle self-profile selection: ask or skip",
 				Value: "ask",
 			},
+			&cli.StringFlag{
+				Name:  "name-order",
+				Usage: "How to combine name parts: ask, western (first middle last), or eastern (last middle first)",
+				Value: "ask",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fromPath := cmd.String("from")
@@ -86,6 +91,7 @@ func monicaImportCommand() *cli.Command {
 				cmd.String("inactive-reminders"),
 				cmd.String("account-journal"),
 				cmd.String("self-profile"),
+				cmd.String("name-order"),
 			)
 			if err != nil {
 				return err
@@ -437,10 +443,17 @@ func importRelationships(
 
 func resolveMonicaImportOptions(
 	export *monica.Export,
-	inactiveMode, accountJournalMode, selfProfileMode string,
+	inactiveMode, accountJournalMode, selfProfileMode, nameOrderMode string,
 ) (monica.ImportOptions, error) {
 	options := monica.ImportOptions{}
 	reader := bufio.NewReader(os.Stdin)
+
+	nameOrder, err := resolveNameOrder(reader, export, nameOrderMode)
+	if err != nil {
+		return options, err
+	}
+
+	options.NameOrder = nameOrder
 
 	inactiveCount := countInactiveReminders(export)
 	if inactiveCount > 0 {
@@ -480,7 +493,7 @@ func resolveMonicaImportOptions(
 	}
 
 	if len(export.Contacts) > 0 && strings.ToLower(strings.TrimSpace(selfProfileMode)) != "skip" {
-		uuid, err := resolveSelfProfile(reader, export)
+		uuid, err := resolveSelfProfile(reader, export, nameOrder)
 		if err != nil {
 			return options, err
 		}
@@ -491,9 +504,67 @@ func resolveMonicaImportOptions(
 	return options, nil
 }
 
+// resolveNameOrder asks how to combine first/middle/last into a full name.
+// Returns monica.NameOrderWestern or monica.NameOrderEastern.
+func resolveNameOrder(reader *bufio.Reader, export *monica.Export, mode string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case monica.NameOrderWestern:
+		return monica.NameOrderWestern, nil
+	case monica.NameOrderEastern:
+		return monica.NameOrderEastern, nil
+	case "", "ask":
+		// fall through to interactive prompt
+	default:
+		return "", fmt.Errorf("monica-import: invalid --name-order %q, expected ask, western, or eastern", mode)
+	}
+
+	// Build an example from the first contact that has at least two name parts.
+	exFirst, exMiddle, exLast := "John", "", "Smith"
+
+	for _, c := range export.Contacts {
+		first := strings.TrimSpace(c.FirstName)
+
+		last := strings.TrimSpace(c.LastName)
+		if first != "" && last != "" {
+			exFirst = first
+			exMiddle = strings.TrimSpace(c.MiddleName)
+			exLast = last
+
+			break
+		}
+	}
+
+	westernExample := monica.BuildFullName(exFirst, exMiddle, exLast, monica.NameOrderWestern)
+	easternExample := monica.BuildFullName(exFirst, exMiddle, exLast, monica.NameOrderEastern)
+
+	fmt.Println("\nHow should full names be combined from first / middle / last?")
+	fmt.Printf("  1. Western order  (first middle last)  e.g. %q\n", westernExample)
+	fmt.Printf("  2. Eastern order  (last middle first)   e.g. %q\n", easternExample)
+
+	for {
+		fmt.Print("Enter 1 or 2: ")
+
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return "", fmt.Errorf("monica-import: read name-order choice: %w", err)
+		}
+
+		switch strings.TrimSpace(line) {
+		case "1":
+			fmt.Printf("Name order: Western (%s)\n", westernExample)
+			return monica.NameOrderWestern, nil
+		case "2":
+			fmt.Printf("Name order: Eastern (%s)\n", easternExample)
+			return monica.NameOrderEastern, nil
+		default:
+			fmt.Println("Please enter 1 or 2.")
+		}
+	}
+}
+
 // resolveSelfProfile asks the user whether to designate one contact as the self-profile.
 // Returns the chosen contact UUID, or "" if the user declines.
-func resolveSelfProfile(reader *bufio.Reader, export *monica.Export) (string, error) {
+func resolveSelfProfile(reader *bufio.Reader, export *monica.Export, nameOrder string) (string, error) {
 	want, err := askYesNo(reader, fmt.Sprintf("Select a self-profile from %d contacts?", len(export.Contacts)))
 	if err != nil || !want {
 		return "", err
@@ -501,8 +572,8 @@ func resolveSelfProfile(reader *bufio.Reader, export *monica.Export) (string, er
 
 	fmt.Println("\nContacts:")
 
-	for i, c := range export.Contacts {
-		name := strings.TrimSpace(strings.Join([]string{c.FirstName, c.MiddleName, c.LastName}, " "))
+	contactName := func(c monica.Contact) string {
+		name := monica.BuildFullName(c.FirstName, c.MiddleName, c.LastName, nameOrder)
 		if name == "" {
 			name = c.Nickname
 		}
@@ -511,7 +582,11 @@ func resolveSelfProfile(reader *bufio.Reader, export *monica.Export) (string, er
 			name = "(no name)"
 		}
 
-		fmt.Printf("  %3d. %s\n", i+1, name)
+		return name
+	}
+
+	for i, c := range export.Contacts {
+		fmt.Printf("  %3d. %s\n", i+1, contactName(c))
 	}
 
 	for {
@@ -532,12 +607,7 @@ func resolveSelfProfile(reader *bufio.Reader, export *monica.Export) (string, er
 
 		chosen := export.Contacts[n-1]
 
-		name := strings.TrimSpace(strings.Join([]string{chosen.FirstName, chosen.MiddleName, chosen.LastName}, " "))
-		if name == "" {
-			name = chosen.Nickname
-		}
-
-		fmt.Printf("Self-profile set to: %s\n", name)
+		fmt.Printf("Self-profile set to: %s\n", contactName(chosen))
 
 		return chosen.ID, nil
 	}

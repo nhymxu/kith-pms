@@ -8,12 +8,12 @@ import (
 	"strings"
 )
 
-// Export is the top-level decoded result from a Monica v4 export:
-//
-//	{"account": {"data": {"contacts": [...]}}}
+// Export is the top-level decoded result from a Monica v4 export.
 type Export struct {
 	Contacts              []Contact         `json:"contacts"`
 	AccountJournalEntries []MAccountJournal `json:"-"`
+	// AccountDocumentCount is the number of account-level documents with no contact link (all skipped).
+	AccountDocumentCount int `json:"-"`
 }
 
 type ImportOptions struct {
@@ -21,21 +21,54 @@ type ImportOptions struct {
 	ImportAccountJournalEntries bool
 }
 
-// ---- v4 wire types ----------------------------------------------------------
+// ---- v4 array-of-groups wire types ------------------------------------------
 
 type v4Root struct {
 	Account *v4Account `json:"account"`
 }
 
 type v4Account struct {
-	Data       v4Data       `json:"data"`
+	Data       v4Groups     `json:"data"`
 	Properties v4Properties `json:"properties"`
 }
 
-type v4Data struct {
-	Contacts      []v4Contact      `json:"contacts"`
-	Relationships []v4Relationship `json:"relationships"`
-	Photos        []v4Photo        `json:"photos"`
+// v4Group is one named group in the array-of-groups wire format.
+type v4Group struct {
+	Type   string            `json:"type"`
+	Count  int               `json:"count"`
+	Values []json.RawMessage `json:"values"`
+}
+
+// v4Groups is the array-of-groups container used for both account.data and contact.data.
+type v4Groups []v4Group
+
+// values returns raw JSON values for the first group matching t, or nil if absent.
+func (g v4Groups) values(t string) []json.RawMessage {
+	for _, grp := range g {
+		if grp.Type == t {
+			return grp.Values
+		}
+	}
+
+	return nil
+}
+
+// decodeGroup decodes all values in the named group into typed structs, skipping malformed entries.
+func decodeGroup[T any](groups v4Groups, typeName string) []T {
+	raws := groups.values(typeName)
+
+	out := make([]T, 0, len(raws))
+	for _, raw := range raws {
+		var v T
+		if err := json.Unmarshal(raw, &v); err != nil {
+			slog.Debug("monica-import: skip malformed entry", "type", typeName, "err", err)
+			continue
+		}
+
+		out = append(out, v)
+	}
+
+	return out
 }
 
 type v4Photo struct {
@@ -54,7 +87,7 @@ type v4Contact struct {
 	CreatedAt  string         `json:"created_at"`
 	UpdatedAt  string         `json:"updated_at"`
 	Properties v4ContactProps `json:"properties"`
-	Data       v4ContactData  `json:"data"`
+	Data       v4Groups       `json:"data"`
 }
 
 type v4ContactProps struct {
@@ -71,28 +104,17 @@ type v4ContactProps struct {
 	DeceasedDate *v4SpecDate `json:"deceased_date"`
 	FirstMetDate *v4SpecDate `json:"first_met_date"`
 	Tags         []string    `json:"tags"`
-	// Avatar fields
-	AvatarSource string `json:"avatar_source"` // gravatar|adorable|default|external|photo
-	AvatarPhoto  string `json:"avatar_photo"`  // UUID ref to account-level Photo object
+	// Avatar fields in real Monica 4.x exports are nested under "avatar".
+	Avatar struct {
+		AvatarSource string `json:"avatar_source"` // gravatar|adorable|default|external|photo
+		AvatarPhoto  string `json:"avatar_photo"`  // UUID ref to account-level Photo object
+	} `json:"avatar"`
 }
 
 type v4SpecDate struct {
 	IsAgeBase     bool   `json:"is_age_based"`
 	IsYearUnknown bool   `json:"is_year_unknown"`
-	Date          string `json:"date"` // "YYYY-MM-DD"
-}
-
-type v4ContactData struct {
-	Notes         v4CountColl[v4Note]         `json:"notes"`
-	Activities    v4UUIDColl                  `json:"activities"`
-	Reminders     v4CountColl[v4Reminder]     `json:"reminders"`
-	Addresses     v4CountColl[v4Address]      `json:"addresses"`
-	ContactFields v4CountColl[v4ContactField] `json:"contact_fields"`
-	Calls         v4CountColl[v4Call]         `json:"calls"`
-	Tasks         v4CountColl[v4Task]         `json:"tasks"`
-	Gifts         v4CountColl[v4Gift]         `json:"gifts"`
-	Conversations v4CountColl[v4Conversation] `json:"conversations"`
-	LifeEvents    v4CountColl[v4LifeEvent]    `json:"life_events"`
+	Date          string `json:"date"` // RFC3339 or "YYYY-MM-DD"
 }
 
 type v4Conversation struct {
@@ -120,16 +142,6 @@ type v4LifeEvent struct {
 		HappenedAt string `json:"happened_at"`
 		Type       string `json:"type"`
 	} `json:"properties"`
-}
-
-// v4CountColl is a collection that embeds items directly.
-type v4CountColl[T any] struct {
-	Data []T `json:"data"`
-}
-
-// v4UUIDColl is a collection of UUID strings only.
-type v4UUIDColl struct {
-	Data []string `json:"data"`
 }
 
 type v4Note struct {
@@ -211,6 +223,17 @@ type v4Relationship struct {
 	} `json:"properties"`
 }
 
+type v4Document struct {
+	UUID       string `json:"uuid"`
+	Properties struct {
+		OriginalFilename string `json:"original_filename"`
+		Filesize         int64  `json:"filesize"`
+		Type             string `json:"type"`
+		MimeType         string `json:"mime_type"`
+		DataURL          string `json:"dataUrl"`
+	} `json:"properties"`
+}
+
 type v4JournalEntry struct {
 	UUID       string `json:"uuid"`
 	CreatedAt  string `json:"created_at"`
@@ -220,6 +243,8 @@ type v4JournalEntry struct {
 		Date  string `json:"date"`
 	} `json:"properties"`
 }
+
+// ---- normalized domain types ------------------------------------------------
 
 // Contact is the normalised contact used by the mapper.
 type Contact struct {
@@ -241,6 +266,7 @@ type Contact struct {
 	Calls       []MCall        `json:"calls"`
 	Tasks       []MTask        `json:"tasks"`
 	Gifts       []MGift        `json:"gifts"`
+	Documents   []MDocument    `json:"-"`
 	// v4 relationship data resolved at parse time
 	Relationships []MRelationship `json:"-"`
 	// AvatarDataURL is a "data:<mime>;base64,..." string resolved from account photos.
@@ -317,6 +343,13 @@ type MGift struct {
 	Date    string  `json:"date"`
 }
 
+type MDocument struct {
+	OriginalFilename string
+	MimeType         string
+	Filesize         int64
+	DataURL          string
+}
+
 type MRelationship struct {
 	TypeName      string `json:"type_name"`
 	ToContactUUID string `json:"to_contact_uuid"`
@@ -370,9 +403,11 @@ func Parse(r io.Reader) (*Export, error) {
 }
 
 func parseV4(acc *v4Account) (*Export, error) {
-	// Build UUID→name lookup for relationship resolution
-	uuidToName := make(map[string]string, len(acc.Data.Contacts))
-	for _, c := range acc.Data.Contacts {
+	contacts := decodeGroup[v4Contact](acc.Data, "contact")
+
+	// Build UUID→name lookup for relationship resolution.
+	uuidToName := make(map[string]string, len(contacts))
+	for _, c := range contacts {
 		name := c.Properties.FirstName
 		if c.Properties.LastName != "" {
 			if name != "" {
@@ -389,9 +424,11 @@ func parseV4(acc *v4Account) (*Export, error) {
 		uuidToName[c.UUID] = name
 	}
 
-	// Build UUID→[]MRelationship from account-level relationships
-	uuidToRels := make(map[string][]MRelationship, len(acc.Data.Relationships))
-	for _, r := range acc.Data.Relationships {
+	// Build UUID→[]MRelationship from account-level relationships.
+	rawRels := decodeGroup[v4Relationship](acc.Data, "relationship")
+
+	uuidToRels := make(map[string][]MRelationship, len(rawRels))
+	for _, r := range rawRels {
 		p := r.Properties
 		if p.ContactIs == "" || p.OfContact == "" {
 			continue
@@ -405,21 +442,27 @@ func parseV4(acc *v4Account) (*Export, error) {
 	}
 
 	// Build UUID→dataURL map from account-level photos for avatar resolution.
-	photoURLs := make(map[string]string, len(acc.Data.Photos))
-	for _, p := range acc.Data.Photos {
+	rawPhotos := decodeGroup[v4Photo](acc.Data, "photo")
+
+	photoURLs := make(map[string]string, len(rawPhotos))
+	for _, p := range rawPhotos {
 		if p.UUID != "" && p.Properties.DataURL != "" {
 			photoURLs[p.UUID] = p.Properties.DataURL
 		}
 	}
 
-	contacts := make([]Contact, 0, len(acc.Data.Contacts))
-	for _, c := range acc.Data.Contacts {
-		contacts = append(contacts, normaliseV4Contact(c, uuidToRels[c.UUID], photoURLs))
+	// Count account-level documents (no contact link; all are skipped by design).
+	accountDocCount := len(acc.Data.values("document"))
+
+	normalContacts := make([]Contact, 0, len(contacts))
+	for _, c := range contacts {
+		normalContacts = append(normalContacts, normaliseV4Contact(c, uuidToRels[c.UUID], photoURLs))
 	}
 
 	return &Export{
-		Contacts:              contacts,
+		Contacts:              normalContacts,
 		AccountJournalEntries: normaliseV4AccountJournal(acc.Properties.JournalEntries),
+		AccountDocumentCount:  accountDocCount,
 	}, nil
 }
 
@@ -458,12 +501,12 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 
 	info := Information{}
 	if p.Birthdate != nil && p.Birthdate.Date != "" {
-		info.Birthdate = p.Birthdate.Date
+		info.Birthdate = normDate(p.Birthdate.Date)
 		info.IsYearUnknown = p.Birthdate.IsYearUnknown
 	}
 
 	if p.FirstMetDate != nil && p.FirstMetDate.Date != "" {
-		info.FirstMetDate = p.FirstMetDate.Date
+		info.FirstMetDate = normDate(p.FirstMetDate.Date)
 	}
 
 	tags := make([]Tag, 0, len(p.Tags))
@@ -471,8 +514,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		tags = append(tags, Tag{Name: t})
 	}
 
-	addresses := make([]Address, 0, len(c.Data.Addresses.Data))
-	for _, a := range c.Data.Addresses.Data {
+	rawAddresses := decodeGroup[v4Address](c.Data, "address")
+
+	addresses := make([]Address, 0, len(rawAddresses))
+	for _, a := range rawAddresses {
 		ap := a.Properties
 		addresses = append(addresses, Address{
 			Name:       ap.Name,
@@ -484,8 +529,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	contactInfo := make([]ContactField, 0, len(c.Data.ContactFields.Data))
-	for _, cf := range c.Data.ContactFields.Data {
+	rawCFs := decodeGroup[v4ContactField](c.Data, "contact_field")
+
+	contactInfo := make([]ContactField, 0, len(rawCFs))
+	for _, cf := range rawCFs {
 		if cf.Properties.Data == "" {
 			continue
 		}
@@ -496,8 +543,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	notes := make([]Note, 0, len(c.Data.Notes.Data))
-	for _, n := range c.Data.Notes.Data {
+	rawNotes := decodeGroup[v4Note](c.Data, "note")
+
+	notes := make([]Note, 0, len(rawNotes))
+	for _, n := range rawNotes {
 		if n.Properties.Body == "" {
 			continue
 		}
@@ -508,8 +557,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	reminders := make([]MReminder, 0, len(c.Data.Reminders.Data))
-	for _, r := range c.Data.Reminders.Data {
+	rawReminders := decodeGroup[v4Reminder](c.Data, "reminder")
+
+	reminders := make([]MReminder, 0, len(rawReminders))
+	for _, r := range rawReminders {
 		rp := r.Properties
 		if rp.Title == "" || rp.InitialDate == "" {
 			continue
@@ -518,14 +569,16 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		reminders = append(reminders, MReminder{
 			Title:         rp.Title,
 			Description:   rp.Description,
-			InitialDate:   rp.InitialDate,
+			InitialDate:   normDate(rp.InitialDate),
 			FrequencyType: rp.FrequencyType,
 			Inactive:      rp.Inactive,
 		})
 	}
 
-	calls := make([]MCall, 0, len(c.Data.Calls.Data))
-	for _, call := range c.Data.Calls.Data {
+	rawCalls := decodeGroup[v4Call](c.Data, "call")
+
+	calls := make([]MCall, 0, len(rawCalls))
+	for _, call := range rawCalls {
 		cp := call.Properties
 
 		ts := cp.CalledAt
@@ -539,8 +592,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	tasks := make([]MTask, 0, len(c.Data.Tasks.Data))
-	for _, task := range c.Data.Tasks.Data {
+	rawTasks := decodeGroup[v4Task](c.Data, "task")
+
+	tasks := make([]MTask, 0, len(rawTasks))
+	for _, task := range rawTasks {
 		tp := task.Properties
 		if tp.Title == "" {
 			continue
@@ -554,8 +609,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	gifts := make([]MGift, 0, len(c.Data.Gifts.Data))
-	for _, g := range c.Data.Gifts.Data {
+	rawGifts := decodeGroup[v4Gift](c.Data, "gift")
+
+	gifts := make([]MGift, 0, len(rawGifts))
+	for _, g := range rawGifts {
 		gp := g.Properties
 		if gp.Name == "" {
 			continue
@@ -566,27 +623,44 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 			Comment: gp.Comment,
 			Amount:  gp.Amount,
 			Status:  gp.Status,
-			Date:    gp.Date,
+			Date:    normDate(gp.Date),
+		})
+	}
+
+	rawDocs := decodeGroup[v4Document](c.Data, "document")
+
+	documents := make([]MDocument, 0, len(rawDocs))
+	for _, d := range rawDocs {
+		dp := d.Properties
+		if dp.DataURL == "" {
+			continue
+		}
+
+		documents = append(documents, MDocument{
+			OriginalFilename: dp.OriginalFilename,
+			MimeType:         dp.MimeType,
+			Filesize:         dp.Filesize,
+			DataURL:          dp.DataURL,
 		})
 	}
 
 	// Resolve avatar: only import when source is "photo" and UUID resolves to a dataUrl.
 	var avatarDataURL string
-	if p.AvatarSource == "photo" && p.AvatarPhoto != "" {
-		avatarDataURL = photoURLs[p.AvatarPhoto]
+	if p.Avatar.AvatarSource == "photo" && p.Avatar.AvatarPhoto != "" {
+		avatarDataURL = photoURLs[p.Avatar.AvatarPhoto]
 		if avatarDataURL == "" {
 			slog.Debug(
 				"monica-import: avatar photo UUID not found in export",
-				"contact",
-				c.UUID,
-				"photo_uuid",
-				p.AvatarPhoto,
+				"contact", c.UUID,
+				"photo_uuid", p.Avatar.AvatarPhoto,
 			)
 		}
 	}
 
-	conversations := make([]MConversation, 0, len(c.Data.Conversations.Data))
-	for _, conv := range c.Data.Conversations.Data {
+	rawConvs := decodeGroup[v4Conversation](c.Data, "conversation")
+
+	conversations := make([]MConversation, 0, len(rawConvs))
+	for _, conv := range rawConvs {
 		cp := conv.Properties
 
 		msgs := make([]MMessage, 0, len(cp.Messages))
@@ -609,8 +683,10 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
-	lifeEvents := make([]MLifeEvent, 0, len(c.Data.LifeEvents.Data))
-	for _, le := range c.Data.LifeEvents.Data {
+	rawLEs := decodeGroup[v4LifeEvent](c.Data, "life_event")
+
+	lifeEvents := make([]MLifeEvent, 0, len(rawLEs))
+	for _, le := range rawLEs {
 		lp := le.Properties
 		if strings.TrimSpace(lp.Name) == "" {
 			continue
@@ -643,9 +719,20 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		Calls:         calls,
 		Tasks:         tasks,
 		Gifts:         gifts,
+		Documents:     documents,
 		Relationships: rels,
 		AvatarDataURL: avatarDataURL,
 		Conversations: conversations,
 		LifeEvents:    lifeEvents,
 	}
+}
+
+// normDate normalizes an RFC3339 timestamp to "YYYY-MM-DD" by trimming.
+// Strings shorter than 10 chars (empty, partial) are returned unchanged.
+func normDate(s string) string {
+	if len(s) > 10 {
+		return s[:10]
+	}
+
+	return s
 }

@@ -17,6 +17,7 @@ import (
 const (
 	LabelConversation = "CONVERSATION"
 	LabelLifeEvent    = "LIFE_EVENT"
+	LabelDocument     = "DOCUMENT"
 	maxConvBodyRunes  = 8000
 	maxMsgsPerConv    = 2000
 )
@@ -41,6 +42,8 @@ type ImportRecord struct {
 	// AvatarDataURL is non-empty when the contact has a photo avatar in the Monica export.
 	// Format: "data:<mime>;base64,<encoded>"
 	AvatarDataURL string
+	// Documents holds embedded documents to be stored and linked as DOCUMENT journal entries.
+	Documents []MDocument
 }
 
 // MapContact converts a Monica Contact into an ImportRecord.
@@ -69,6 +72,7 @@ func MapContactWithOptions(c Contact, options ImportOptions) ImportRecord {
 		Gifts:                  mapGifts(c.Gifts),
 		Relationships:          c.Relationships,
 		AvatarDataURL:          c.AvatarDataURL,
+		Documents:              c.Documents,
 	}
 }
 

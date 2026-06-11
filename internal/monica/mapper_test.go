@@ -1,6 +1,7 @@
 package monica
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -260,44 +261,33 @@ func TestMapContactFirstMetDate(t *testing.T) {
 }
 
 func TestParseV4AvatarResolution(t *testing.T) {
-	// Photo source with matching UUID should populate AvatarDataURL.
+	// Array-of-groups format: photo source with matching UUID should populate AvatarDataURL.
 	jsonStr := `{
 		"account": {
-			"data": {
-				"contacts": [{
-					"uuid": "contact-1",
-					"properties": {
-						"first_name": "Alice",
-						"avatar_source": "photo",
-						"avatar_photo": "photo-uuid-1"
+			"data": [
+				{"type": "contact", "count": 2, "values": [
+					{
+						"uuid": "contact-1",
+						"properties": {
+							"first_name": "Alice",
+							"avatar": {"avatar_source": "photo", "avatar_photo": "photo-uuid-1"}
+						},
+						"data": []
 					},
-					"data": {
-						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
-						"reminders": {"data": []}, "calls": {"data": []}, "tasks": {"data": []},
-						"gifts": {"data": []}, "activities": {"data": []}
+					{
+						"uuid": "contact-2",
+						"properties": {
+							"first_name": "Bob",
+							"avatar": {"avatar_source": "gravatar", "avatar_photo": ""}
+						},
+						"data": []
 					}
-				}, {
-					"uuid": "contact-2",
-					"properties": {
-						"first_name": "Bob",
-						"avatar_source": "gravatar",
-						"avatar_photo": ""
-					},
-					"data": {
-						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
-						"reminders": {"data": []}, "calls": {"data": []}, "tasks": {"data": []},
-						"gifts": {"data": []}, "activities": {"data": []}
-					}
-				}],
-				"relationships": [],
-				"photos": [{
-					"uuid": "photo-uuid-1",
-					"properties": {
-						"mime_type": "image/jpeg",
-						"dataUrl": "data:image/jpeg;base64,abc123"
-					}
-				}]
-			},
+				]},
+				{"type": "relationship", "count": 0, "values": []},
+				{"type": "photo", "count": 1, "values": [
+					{"uuid": "photo-uuid-1", "properties": {"dataUrl": "data:image/jpeg;base64,abc123"}}
+				]}
+			],
 			"properties": {"journal_entries": []}
 		}
 	}`
@@ -571,27 +561,29 @@ func TestMapContactWithOptions_LifeEventDatesIncluded(t *testing.T) {
 }
 
 func TestParseV4PreservesPromptedData(t *testing.T) {
-	json := `{
+	jsonStr := `{
 		"account": {
-			"data": {
-				"contacts": [{
-					"uuid": "contact-1",
-					"properties": {"first_name": "Alice"},
-					"data": {
-						"reminders": {"data": [{"properties": {"title": "Paused", "initial_date": "2024-06-01", "inactive": true}}]},
-						"addresses": {"data": []}, "contact_fields": {"data": []}, "notes": {"data": []},
-						"calls": {"data": []}, "tasks": {"data": []}, "gifts": {"data": []}, "activities": {"data": []}
+			"data": [
+				{"type": "contact", "count": 1, "values": [
+					{
+						"uuid": "contact-1",
+						"properties": {"first_name": "Alice"},
+						"data": [
+							{"type": "reminder", "count": 1, "values": [
+								{"properties": {"title": "Paused", "initial_date": "2024-06-01", "inactive": true}}
+							]}
+						]
 					}
-				}],
-				"relationships": []
-			},
+				]},
+				{"type": "relationship", "count": 0, "values": []}
+			],
 			"properties": {"journal_entries": [
 				{"created_at": "2024-01-02T00:00:00Z", "properties": {"title": "Private", "post": "Account note"}}
 			]}
 		}
 	}`
 
-	exp, err := Parse(strings.NewReader(json))
+	exp, err := Parse(strings.NewReader(jsonStr))
 	if err != nil {
 		t.Fatalf("Parse error: %v", err)
 	}
@@ -602,5 +594,161 @@ func TestParseV4PreservesPromptedData(t *testing.T) {
 
 	if len(exp.AccountJournalEntries) != 1 || exp.AccountJournalEntries[0].Title != "Private" {
 		t.Fatalf("expected account journal preserved, got %+v", exp.AccountJournalEntries)
+	}
+}
+
+// ---- group decoder tests ----------------------------------------------------
+
+func TestV4GroupsValues(t *testing.T) {
+	groups := v4Groups{
+		{Type: "contact", Values: []json.RawMessage{[]byte(`"a"`), []byte(`"b"`)}},
+		{Type: "photo", Values: []json.RawMessage{[]byte(`"c"`)}},
+	}
+
+	if v := groups.values("contact"); len(v) != 2 {
+		t.Errorf("expected 2 values for 'contact', got %d", len(v))
+	}
+
+	if v := groups.values("photo"); len(v) != 1 {
+		t.Errorf("expected 1 value for 'photo', got %d", len(v))
+	}
+
+	if v := groups.values("absent"); v != nil {
+		t.Errorf("expected nil for absent type, got %v", v)
+	}
+}
+
+func TestNormDate(t *testing.T) {
+	tests := []struct{ input, want string }{
+		{"1997-09-17T00:00:00.000000Z", "1997-09-17"},
+		{"2024-06-01T12:34:56Z", "2024-06-01"},
+		{"2024-06-01", "2024-06-01"},
+		{"0000-05-15", "0000-05-15"},
+		{"", ""},
+		{"2024", "2024"},
+	}
+	for _, tt := range tests {
+		got := normDate(tt.input)
+		if got != tt.want {
+			t.Errorf("normDate(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestParseV4DateNormalization(t *testing.T) {
+	// RFC3339 timestamps in birthdate and reminder should be trimmed to YYYY-MM-DD.
+	jsonStr := `{
+		"account": {
+			"data": [
+				{"type": "contact", "count": 1, "values": [{
+					"uuid": "c1",
+					"properties": {
+						"first_name": "Test",
+						"birthdate": {"date": "1990-03-15T00:00:00.000000Z", "is_year_unknown": false},
+						"first_met_date": {"date": "2010-07-20T08:00:00Z"}
+					},
+					"data": [
+						{"type": "reminder", "count": 1, "values": [
+							{"properties": {"title": "Birthday call", "initial_date": "2024-06-01T00:00:00Z", "inactive": false}}
+						]},
+						{"type": "gift", "count": 1, "values": [
+							{"properties": {"name": "Book", "date": "2023-12-25T00:00:00.000000Z"}}
+						]}
+					]
+				}]},
+				{"type": "relationship", "count": 0, "values": []}
+			],
+			"properties": {"journal_entries": []}
+		}
+	}`
+
+	exp, err := Parse(strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	if len(exp.Contacts) != 1 {
+		t.Fatalf("expected 1 contact, got %d", len(exp.Contacts))
+	}
+
+	c := exp.Contacts[0]
+	if c.Information.Birthdate != "1990-03-15" {
+		t.Errorf("birthdate: got %q, want %q", c.Information.Birthdate, "1990-03-15")
+	}
+
+	if c.Information.FirstMetDate != "2010-07-20" {
+		t.Errorf("first_met_date: got %q, want %q", c.Information.FirstMetDate, "2010-07-20")
+	}
+
+	if len(c.Reminders) != 1 || c.Reminders[0].InitialDate != "2024-06-01" {
+		t.Errorf("reminder initial_date: got %+v", c.Reminders)
+	}
+
+	if len(c.Gifts) != 1 || c.Gifts[0].Date != "2023-12-25" {
+		t.Errorf("gift date: got %+v", c.Gifts)
+	}
+}
+
+func TestParseV4DocumentGroup(t *testing.T) {
+	jsonStr := `{
+		"account": {
+			"data": [
+				{"type": "contact", "count": 1, "values": [{
+					"uuid": "c1",
+					"properties": {"first_name": "Alice"},
+					"data": [
+						{"type": "document", "count": 1, "values": [
+							{"uuid": "doc-1", "properties": {
+								"original_filename": "memory.jpg",
+								"filesize": 1234,
+								"mime_type": "image/jpeg",
+								"dataUrl": "data:image/jpeg;base64,abc"
+							}}
+						]}
+					]
+				}]},
+				{"type": "document", "count": 1, "values": [
+					{"uuid": "acct-doc-1", "properties": {
+						"original_filename": "report.pdf",
+						"dataUrl": "data:application/pdf;base64,xyz"
+					}}
+				]}
+			],
+			"properties": {"journal_entries": []}
+		}
+	}`
+
+	exp, err := Parse(strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Parse error: %v", err)
+	}
+
+	if len(exp.Contacts) != 1 {
+		t.Fatalf("expected 1 contact, got %d", len(exp.Contacts))
+	}
+
+	docs := exp.Contacts[0].Documents
+	if len(docs) != 1 {
+		t.Fatalf("expected 1 document on contact, got %d", len(docs))
+	}
+
+	d := docs[0]
+	if d.OriginalFilename != "memory.jpg" || d.MimeType != "image/jpeg" || d.Filesize != 1234 {
+		t.Errorf("unexpected document metadata: %+v", d)
+	}
+
+	if d.DataURL != "data:image/jpeg;base64,abc" {
+		t.Errorf("unexpected document dataURL: %q", d.DataURL)
+	}
+
+	// Account-level document with no contact link should be counted but not attached.
+	if exp.AccountDocumentCount != 1 {
+		t.Errorf("expected AccountDocumentCount == 1, got %d", exp.AccountDocumentCount)
+	}
+
+	// Documents carry through to ImportRecord.
+	rec := MapContact(exp.Contacts[0])
+	if len(rec.Documents) != 1 {
+		t.Errorf("expected 1 document in ImportRecord, got %d", len(rec.Documents))
 	}
 }

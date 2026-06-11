@@ -261,6 +261,17 @@ type v4Document struct {
 	} `json:"properties"`
 }
 
+// UnmarshalJSON tolerates Monica exports that store document entries as bare
+// strings (UUID references) rather than full objects; those are left empty
+// and filtered out downstream by the DataURL check.
+func (d *v4Document) UnmarshalJSON(b []byte) error {
+	if len(b) > 0 && b[0] == '"' {
+		return nil
+	}
+	type plain v4Document
+	return json.Unmarshal(b, (*plain)(d))
+}
+
 type v4JournalEntry struct {
 	UUID       string `json:"uuid"`
 	CreatedAt  string `json:"created_at"`

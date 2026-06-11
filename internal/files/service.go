@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	maxAvatarSize = 5 * 1024 * 1024 // 5MB
+	maxAvatarSize   = 5 * 1024 * 1024  // 5MB
+	maxDocumentSize = 50 * 1024 * 1024 // 50MB — any file type, no mime allowlist
 )
 
 var allowedMimeTypes = map[string]bool{
@@ -30,6 +31,9 @@ type FileService interface {
 	GetAvatarPath(personID int64) string
 	SaveGiftImage(giftID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
 	DeleteGiftImage(giftID int64, path string) error
+	// SaveDocument stores any file type (no mime allowlist) under documents/<personID>/.
+	// Returns the relative path within the base directory.
+	SaveDocument(personID int64, data []byte, originalName string) (path string, err error)
 }
 
 type LocalFileService struct {
@@ -179,6 +183,69 @@ func (s *LocalFileService) SaveAvatarBytes(personID int64, data []byte, mimeType
 	}
 
 	return filepath.Join(fmt.Sprintf("%d", personID), filename), nil
+}
+
+// SaveDocument stores raw document bytes under documents/<personID>/ with a random filename.
+// Any file type is accepted (no mime allowlist); max size is 50 MB.
+// Safety is provided by filename sanitization, random prefix, and base-dir containment.
+func (s *LocalFileService) SaveDocument(personID int64, data []byte, originalName string) (string, error) {
+	if int64(len(data)) > maxDocumentSize {
+		return "", fmt.Errorf("document size %d exceeds maximum %d bytes", len(data), maxDocumentSize)
+	}
+
+	ext := filepath.Ext(originalName)
+	if ext == "" {
+		ext = ".bin"
+	}
+
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("generate random filename: %w", err)
+	}
+
+	base := sanitizeFilename(strings.TrimSuffix(originalName, ext))
+	if base == "" {
+		base = "document"
+	}
+
+	filename := fmt.Sprintf("%s-%s%s", hex.EncodeToString(randomBytes), base, ext)
+
+	docDir := filepath.Join(s.BaseDir, "documents", fmt.Sprintf("%d", personID))
+	if err := os.MkdirAll(docDir, 0755); err != nil {
+		return "", fmt.Errorf("create directory: %w", err)
+	}
+
+	destPath := filepath.Join(docDir, filename)
+	// Verify path stays within base dir (guards against ext traversal edge cases)
+	if !strings.HasPrefix(filepath.Clean(destPath), filepath.Clean(s.BaseDir)) {
+		return "", fmt.Errorf("invalid path: outside base directory")
+	}
+
+	tempPath := destPath + ".tmp"
+
+	dest, err := os.Create(tempPath)
+	if err != nil {
+		return "", fmt.Errorf("create temp file: %w", err)
+	}
+
+	defer func() { _ = dest.Close() }()
+
+	if _, err := dest.Write(data); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("write file: %w", err)
+	}
+
+	if err := dest.Sync(); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("sync file: %w", err)
+	}
+
+	if err := os.Rename(tempPath, destPath); err != nil {
+		_ = os.Remove(tempPath)
+		return "", fmt.Errorf("rename file: %w", err)
+	}
+
+	return filepath.Join("documents", fmt.Sprintf("%d", personID), filename), nil
 }
 
 func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {

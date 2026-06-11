@@ -38,6 +38,9 @@ func (s *stubFileService) SaveGiftImage(_ int64, _ multipart.File, _ *multipart.
 	return "", nil
 }
 func (s *stubFileService) DeleteGiftImage(_ int64, _ string) error { return nil }
+func (s *stubFileService) SaveDocument(_ int64, _ []byte, _ string) (string, error) {
+	return "", nil
+}
 
 // ---- helpers ----------------------------------------------------------------
 

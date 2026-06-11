@@ -13,7 +13,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 ## Core Feature Areas (Implemented)
 
 ### Contacts & Relationships
-- Store people: name, date of birth, gender, relationship type, contact methods, addresses
+- Store people: name, date of birth, gender (male/female/other), relationship type, contact methods, addresses
 - Self-profile designation: mark one person as "Me" for personal journal filtering
 - Track interaction history via journal entries linked to people
 - Tag relationships with color-coded labels

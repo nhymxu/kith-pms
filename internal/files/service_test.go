@@ -230,6 +230,69 @@ func TestSanitizeFilename(t *testing.T) {
 	}
 }
 
+func TestLocalFileService_SaveDocument(t *testing.T) {
+	tempDir := t.TempDir()
+	svc := NewLocalFileService(tempDir)
+
+	data := []byte("fake-pdf-content")
+
+	path, err := svc.SaveDocument(42, data, "report.pdf")
+	if err != nil {
+		t.Fatalf("SaveDocument: %v", err)
+	}
+
+	if path == "" {
+		t.Fatal("expected non-empty path")
+	}
+
+	if !strings.HasPrefix(path, "documents/42/") {
+		t.Errorf("path = %q, want prefix 'documents/42/'", path)
+	}
+
+	if !strings.HasSuffix(path, ".pdf") {
+		t.Errorf("path = %q, want .pdf extension", path)
+	}
+
+	fullPath := filepath.Join(tempDir, path)
+
+	saved, err := os.ReadFile(fullPath)
+	if err != nil {
+		t.Fatalf("read saved file: %v", err)
+	}
+
+	if !bytes.Equal(saved, data) {
+		t.Error("saved content does not match")
+	}
+}
+
+func TestLocalFileService_SaveDocument_SizeLimit(t *testing.T) {
+	tempDir := t.TempDir()
+	svc := NewLocalFileService(tempDir)
+
+	data := make([]byte, maxDocumentSize+1)
+
+	_, err := svc.SaveDocument(1, data, "big.bin")
+	if err == nil {
+		t.Error("expected error for oversized document")
+	}
+
+	if !strings.Contains(err.Error(), "exceeds maximum") {
+		t.Errorf("error = %v, want 'exceeds maximum'", err)
+	}
+}
+
+func TestLocalFileService_SaveDocument_AnyMimeType(t *testing.T) {
+	tempDir := t.TempDir()
+	svc := NewLocalFileService(tempDir)
+
+	// Any file type must be accepted (no mime allowlist for documents).
+	for _, name := range []string{"doc.pdf", "spreadsheet.xlsx", "archive.zip", "image.png"} {
+		if _, err := svc.SaveDocument(1, []byte("data"), name); err != nil {
+			t.Errorf("SaveDocument(%q) unexpected error: %v", name, err)
+		}
+	}
+}
+
 func TestMimeTypeToExt(t *testing.T) {
 	tests := []struct {
 		mimeType string

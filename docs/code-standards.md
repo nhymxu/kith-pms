@@ -336,6 +336,25 @@ No AI references in commit messages.
 - File naming: Gift ID as filename (e.g., `123.jpg`)
 - Endpoints: `POST /v1/gifts/:id/image`, `GET /v1/gifts/:id/image`, `DELETE /v1/gifts/:id/image`
 
+### Document Storage Flow (Monica Import)
+1. **Import Handler** (`cmd/monica_import.go`):
+   - Decodes base64 dataURL from Monica export
+   - Delegates to FileService: `filesSvc.SaveDocument(personID, data, originalName)`
+   - Creates DOCUMENT-labelled journal entry linking document to person
+
+2. **FileService** (`internal/files/service.go`):
+   - `SaveDocument(personID, data, originalName)` — raw bytes, any MIME type, 50MB max
+   - No MIME allowlist (unlike avatars); accepts any file type (PDF, Excel, Word, images, etc.)
+   - Sanitizes filename; generates 8-byte random hex prefix for uniqueness
+   - Stores in: `{DOCUMENT_STORAGE_PATH}/documents/{personID}/{randomStr}-{sanitized-name}.{ext}`
+   - Returns relative path for DB storage
+
+**Configuration**:
+- Documents stored under `data/` directory (same base as avatars)
+- Separate `documents/` subdirectory per person
+- 50MB per file limit (vs. 5MB for avatars)
+- No MIME type validation — accepts all file types from trusted Monica imports
+
 ### Security Controls
 - **MIME validation**: Dual-check (HTTP header + magic number) prevents spoofed uploads
 - **Size limit**: 5MB enforced at handler + service layer

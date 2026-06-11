@@ -144,7 +144,7 @@ func runImport(
 	workSvc *work_history.Service,
 	relSvc *relationships.Service,
 ) error {
-	// Seed journal labels once; fail fast — labels are a precondition for conversation/life-event tagging.
+	// Seed journal labels once; fail fast — labels are a precondition for conversation/life-event/document tagging.
 	convLabelID, err := journalLabelSvc.FindOrCreate(ctx, monica.LabelConversation, "#6366f1")
 	if err != nil {
 		return fmt.Errorf("monica-import: seed CONVERSATION journal label: %w", err)
@@ -153,6 +153,11 @@ func runImport(
 	lifeLabelID, err := journalLabelSvc.FindOrCreate(ctx, monica.LabelLifeEvent, "#a855f7")
 	if err != nil {
 		return fmt.Errorf("monica-import: seed LIFE_EVENT journal label: %w", err)
+	}
+
+	docLabelID, err := journalLabelSvc.FindOrCreate(ctx, monica.LabelDocument, "#f59e0b")
+	if err != nil {
+		return fmt.Errorf("monica-import: seed DOCUMENT journal label: %w", err)
 	}
 
 	existingLabels, err := labelsSvc.List(ctx)
@@ -275,6 +280,11 @@ func runImport(
 			} else {
 				avatarSkipped++
 			}
+		}
+
+		// Documents: decode and store each embedded document, then create a DOCUMENT journal entry.
+		for _, doc := range rec.Documents {
+			saveMonicaDocument(ctx, journalSvc, filesSvc, personID, docLabelID, doc)
 		}
 
 		imported++
@@ -486,7 +496,7 @@ func importAccountJournalEntries(ctx context.Context, export *monica.Export, jou
 }
 
 func printDryRunSummary(export *monica.Export, options monica.ImportOptions) error {
-	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels, totalAvatars int //nolint:lll
+	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels, totalAvatars, totalDocuments int //nolint:lll
 
 	var totalConversations, totalMessages, totalLifeEvents int
 
@@ -502,6 +512,7 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 		totalWork += len(rec.WorkHistory)
 		totalRels += len(rec.Relationships)
 		totalConversations += len(rec.ConversationActivities)
+		totalDocuments += len(rec.Documents)
 
 		totalLifeEvents += len(rec.LifeEventActivities)
 		for _, conv := range c.Conversations {
@@ -539,6 +550,11 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 	fmt.Printf("  Work history:        %d\n", totalWork)
 	fmt.Printf("  Relationships:       %d\n", totalRels)
 	fmt.Printf("  Avatars:             %d\n", totalAvatars)
+	fmt.Printf("  Documents:           %d (→ DOCUMENT journal entries)\n", totalDocuments)
+
+	if export.AccountDocumentCount > 0 {
+		fmt.Printf("  Account documents:   0 (%d skipped — no contact link)\n", export.AccountDocumentCount)
+	}
 
 	return nil
 }
@@ -599,8 +615,14 @@ func saveAvatar(
 	return true
 }
 
-// parseDataURL splits a "data:<mime>;base64,<encoded>" string into its parts.
+// parseDataURL splits a "data:<mime>;base64,..." string using the avatar (5 MB) size limit.
 func parseDataURL(dataURL string) (mimeType string, data []byte, err error) {
+	const maxAvatarBytes = 5 * 1024 * 1024
+	return parseDataURLLimit(dataURL, maxAvatarBytes)
+}
+
+// parseDataURLLimit splits a "data:<mime>;base64,..." string, rejecting payloads over maxBytes.
+func parseDataURLLimit(dataURL string, maxBytes int) (mimeType string, data []byte, err error) {
 	const prefix = "data:"
 	if !strings.HasPrefix(dataURL, prefix) {
 		return "", nil, fmt.Errorf("not a data URL")
@@ -613,15 +635,13 @@ func parseDataURL(dataURL string) (mimeType string, data []byte, err error) {
 		return "", nil, fmt.Errorf("not a base64 data URL")
 	}
 
-	// Reject oversized payloads before allocating: base64 expands 3→4, so
-	// a 5 MB decoded image is at most ~6.7 MB encoded (+4 for padding).
-	const maxAvatarSize = 5 * 1024 * 1024
-	if len(encoded) > maxAvatarSize*4/3+4 {
-		return "", nil, fmt.Errorf("avatar data URL exceeds size limit")
+	// Reject oversized payloads before allocating: base64 encodes 3 bytes as 4 chars.
+	if len(encoded) > maxBytes*4/3+4 {
+		return "", nil, fmt.Errorf("data URL exceeds size limit")
 	}
 
-	// Try standard encoding first; fall back to raw (no-padding) for Monica
-	// exports that may omit trailing '=' characters.
+	// Try standard encoding first; fall back to raw (no-padding) for Monica exports
+	// that may omit trailing '=' characters.
 	data, err = base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		data, err = base64.RawStdEncoding.DecodeString(encoded)
@@ -632,4 +652,49 @@ func parseDataURL(dataURL string) (mimeType string, data []byte, err error) {
 	}
 
 	return mimeType, data, nil
+}
+
+// saveMonicaDocument decodes an embedded document dataUrl, stores it to disk, and creates a
+// DOCUMENT-labelled journal entry linking it to the person.
+func saveMonicaDocument(
+	ctx context.Context,
+	journalSvc *journal.Service,
+	filesSvc *files.LocalFileService,
+	personID int64,
+	docLabelID int64,
+	doc monica.MDocument,
+) {
+	const maxDocBytes = 50 * 1024 * 1024
+
+	_, data, err := parseDataURLLimit(doc.DataURL, maxDocBytes)
+	if err != nil {
+		slog.Warn("monica-import: skip document, bad data URL",
+			"person_id", personID, "filename", doc.OriginalFilename, "err", err)
+
+		return
+	}
+
+	path, err := filesSvc.SaveDocument(personID, data, doc.OriginalFilename)
+	if err != nil {
+		slog.Warn("monica-import: skip document, save failed",
+			"person_id", personID, "filename", doc.OriginalFilename, "err", err)
+
+		return
+	}
+
+	title := monica.LabelDocument + " " + doc.OriginalFilename
+	body := fmt.Sprintf(
+		"Imported Monica document. file=%s type=%s size=%d",
+		path, doc.MimeType, len(data),
+	)
+
+	act := journal.Activity{
+		Title:   title,
+		Content: body,
+	}
+
+	if _, err := journalSvc.Create(ctx, act, []int64{personID}, []int64{docLabelID}); err != nil {
+		slog.Warn("monica-import: failed to create document journal entry",
+			"person_id", personID, "filename", doc.OriginalFilename, "err", err)
+	}
 }

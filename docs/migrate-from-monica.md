@@ -110,11 +110,13 @@ The import is safe to re-run on a fresh database. Running it twice on the same d
 
 ---
 
-## Step 5 — Verify avatars
+## Step 5 — Verify avatars and documents
 
-After import, avatars that were stored as photos in Monica (`avatar_source: photo`) are automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`). The dry-run summary includes an `Avatars:` count showing how many photos will be imported. Check that the path exists and is writable before running the import if you expect avatars to be present.
+After import, avatars and documents are handled as follows:
 
-Contacts whose avatars use gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page.
+**Avatars**: Contacts whose avatars were stored as photos in Monica (`avatar_source: photo`) have their photos automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`). The dry-run summary includes an `Avatars:` count. Contact avatars using gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page.
+
+**Documents**: Each imported document is decoded from the export and stored under `DOCUMENT_STORAGE_PATH` (default: `data/documents`), organized per-person. A `DOCUMENT`-labelled journal entry is created for each document, containing the filename and metadata. This makes imported documents discoverable via journal search and filters. The actual document files are available under the person's folder for download if needed.
 
 ## Step 6 — Verify all data
 
@@ -128,13 +130,14 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 
 - People list has all your contacts
 - Labels/tags are created and attached correctly
-- Journal entries appear per person (notes + activities + calls)
+- Journal entries appear per person (notes + activities + calls + documents)
 - Important dates (birthdays, first-met) are present
 - Reminders are listed (includes incomplete tasks from Monica)
 - Gifts are listed per person
 - Work history entries are present
 - Relationships between contacts are linked
 - Avatars appear for contacts that had locally-uploaded photos in Monica (the import summary prints `Avatars: N imported` if any were found)
+- Documents appear as `DOCUMENT`-labelled journal entries linked to each person
 
 ---
 
@@ -167,7 +170,6 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | Monica data | Reason |
 |---|---|
 | Gravatar / adorable / external avatars | Only locally-uploaded Monica photos (`avatar_source: photo`) are imported. Other avatar types have no file data in the export. |
-| Documents | Same reason as photos — base64 embedded; no equivalent feature in kith. |
 | Conversations / messages | No equivalent feature in kith. |
 | Life events | No equivalent feature in kith. |
 | Pets | No equivalent feature in kith. |
@@ -177,6 +179,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | Audit logs | Internal Monica data, not relevant to kith. |
 | Sync tokens / vCard data | Internal Monica data, not relevant to kith. |
 | Inactive reminders | Prompted by default; use `--inactive-reminders=completed` to import them as completed reminders or `--inactive-reminders=skip` to omit them. |
+| Documents (account-level) | Account-level documents with no contact link are skipped; per-contact documents are imported. |
 
 ---
 

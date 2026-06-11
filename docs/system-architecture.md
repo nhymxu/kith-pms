@@ -393,29 +393,44 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
 
 The file storage layer handles avatar uploads with security and durability guarantees:
 
-**FileService Interface**:
-- `SaveAvatar(personID, file, header)` → saves file, returns relative path
+**FileService Interface (Avatars & Documents)**:
+- `SaveAvatar(personID, file, header)` → saves file (multipart), returns relative path (5MB limit, MIME allowlist)
+- `SaveAvatarBytes(personID, data, mimeType)` → saves raw bytes for imports (5MB limit, MIME allowlist)
+- `SaveDocument(personID, data, originalName)` → saves document (any MIME type, 50MB limit, no allowlist)
 - `DeleteAvatar(personID, path)` → removes file and cleans up empty directories
 - `GetAvatarPath(personID)` → returns base directory for person's avatars
 
 **LocalFileService Implementation**:
-- **Base directory**: Configured via `AVATAR_STORAGE_PATH` (default: `data/avatars`)
-- **Directory structure**: `data/avatars/{personID}/{randomStr}-{sanitized-name}.{ext}`
+- **Avatar base directory**: Configured via `AVATAR_STORAGE_PATH` (default: `data/avatars`)
+- **Avatar structure**: `data/avatars/{personID}/{randomStr}-{sanitized-name}.{ext}`
+- **Document base directory**: Uses same base `data/` with `documents/` subdirectory
+- **Document structure**: `data/avatars/documents/{personID}/{randomStr}-{sanitized-name}.{ext}` (stored under avatars base for simplicity)
 - **Atomic writes**: Temp file → sync → rename (prevents partial uploads)
 - **Path traversal prevention**: Validates clean path stays within base directory
 
-**Security Controls**:
+**Security Controls (Avatars)**:
 - **MIME validation**: Dual-check (HTTP header + magic number via `http.DetectContentType`)
-- **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
+- **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp` only
 - **Size limit**: 5MB per file (enforced at handler + service layer)
 - **Filename sanitization**: Alphanumeric + dash/underscore only; max 50 chars
 - **Random prefix**: 8-byte hex prefix prevents filename collisions and guessing
 
-**Integration with People Service**:
+**Security Controls (Documents)**:
+- **No MIME allowlist**: Accepts any file type (since documents come from trusted Monica exports)
+- **Size limit**: 50MB per file (much higher than avatars for diverse document types)
+- **Filename sanitization**: Preserves original extension; removes special chars from base name
+- **Random prefix**: 8-byte hex prefix for uniqueness
+
+**Integration with People Service (Avatars)**:
 - Service stores avatar metadata in database: `avatar_path`, `avatar_mime_type`, `avatar_size`, `avatar_uploaded_at`
 - On upload: saves file first, then updates DB in transaction; rolls back file on DB error
 - On delete: clears DB metadata, then removes file (best-effort cleanup)
 - On replace: saves new file, updates DB, then deletes old file (old file survives DB errors)
+
+**Integration with Monica Import (Documents)**:
+- During `monica-import`, documents extracted from Monica export are saved via `SaveDocument()`
+- Each document becomes a DOCUMENT-labelled journal entry linked to the contact
+- No database metadata beyond the journal entry itself; documents stored for archival/reference
 
 ### Gift Image Storage Architecture
 

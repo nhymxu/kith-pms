@@ -11,7 +11,7 @@ import { Badge } from "#/components/ui/badge";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listJournalLabels } from "#/endpoints/journal-labels";
-import { listPeople } from "#/endpoints/people";
+import { getAvatarUrl, listPeople } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 import {
 	type JournalActivity,
@@ -123,12 +123,24 @@ export function JournalForm({
 							{selectedPeople.length > 0 && (
 								<div className="flex flex-wrap gap-1">
 									{selectedPeople.map((p) => (
-										<Badge
+										<span
 											key={p.id}
-											variant="neutral"
-											className="flex items-center gap-1"
+											className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5"
 										>
-											{p.name}
+											<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+												{p.avatar_path ? (
+													<img
+														src={getAvatarUrl(p.id)}
+														alt={p.name}
+														className="size-full object-cover"
+													/>
+												) : (
+													p.name.charAt(0).toUpperCase()
+												)}
+											</span>
+											<span className="text-[11px] text-zinc-700 leading-none">
+												{p.nickname || p.name}
+											</span>
 											<button
 												type="button"
 												onClick={() =>
@@ -140,7 +152,7 @@ export function JournalForm({
 											>
 												<X className="size-3" />
 											</button>
-										</Badge>
+										</span>
 									))}
 								</div>
 							)}
@@ -159,10 +171,23 @@ export function JournalForm({
 												key={p.id}
 												type="button"
 												onClick={() => f.handleChange([...selectedIds, p.id])}
-												className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
+												className="flex items-center gap-1.5 rounded-full border border-dashed border-zinc-300 bg-white px-2 py-0.5 hover:border-main transition-colors"
 											>
-												<Plus className="size-3" />
-												{p.name}
+												<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+													{p.avatar_path ? (
+														<img
+															src={getAvatarUrl(p.id)}
+															alt={p.name}
+															className="size-full object-cover"
+														/>
+													) : (
+														p.name.charAt(0).toUpperCase()
+													)}
+												</span>
+												<span className="text-[11px] text-zinc-700 leading-none">
+													{p.nickname || p.name}
+												</span>
+												<Plus className="size-3 text-zinc-400" />
 											</button>
 										))}
 									</div>

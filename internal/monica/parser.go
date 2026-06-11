@@ -110,6 +110,16 @@ type v4Photo struct {
 	} `json:"properties"`
 }
 
+type v4Activity struct {
+	UUID       string `json:"uuid"`
+	CreatedAt  string `json:"created_at"`
+	Properties struct {
+		Summary     string `json:"summary"`
+		Description string `json:"description"`
+		HappenedAt  string `json:"happened_at"`
+	} `json:"properties"`
+}
+
 type v4Properties struct {
 	JournalEntries []v4JournalEntry `json:"journal_entries"`
 }
@@ -496,12 +506,35 @@ func parseV4(acc *v4Account) (*Export, error) {
 		}
 	}
 
+	// Build UUID→MActivity map from account-level activities for per-contact resolution.
+	rawActivities := decodeGroup[v4Activity](acc.Data, "activity")
+
+	activityByUUID := make(map[string]MActivity, len(rawActivities))
+	for _, a := range rawActivities {
+		if a.UUID == "" {
+			continue
+		}
+		ap := a.Properties
+		title := strings.TrimSpace(ap.Summary)
+		if title == "" {
+			title = truncate(ap.Description, 60)
+		}
+		if title == "" {
+			continue
+		}
+		activityByUUID[a.UUID] = MActivity{
+			Summary:     title,
+			Description: ap.Description,
+			HappenedAt:  normDate(ap.HappenedAt),
+		}
+	}
+
 	// Count account-level documents (no contact link; all are skipped by design).
 	accountDocCount := len(acc.Data.values("document"))
 
 	normalContacts := make([]Contact, 0, len(contacts))
 	for _, c := range contacts {
-		normalContacts = append(normalContacts, normaliseV4Contact(c, uuidToRels[c.UUID], photoURLs))
+		normalContacts = append(normalContacts, normaliseV4Contact(c, uuidToRels[c.UUID], photoURLs, activityByUUID))
 	}
 
 	return &Export{
@@ -541,7 +574,7 @@ func normaliseV4AccountJournal(entries []v4JournalEntry) []MAccountJournal {
 	return out
 }
 
-func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]string) Contact {
+func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]string, activityByUUID map[string]MActivity) Contact {
 	p := c.Properties
 
 	info := Information{}
@@ -745,6 +778,19 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		})
 	}
 
+	// Resolve per-contact activity UUIDs against the account-level activity map.
+	rawActivityUUIDs := c.Data.values("activity")
+	activities := make([]MActivity, 0, len(rawActivityUUIDs))
+	for _, raw := range rawActivityUUIDs {
+		var uuid string
+		if err := json.Unmarshal(raw, &uuid); err != nil || uuid == "" {
+			continue
+		}
+		if act, ok := activityByUUID[uuid]; ok {
+			activities = append(activities, act)
+		}
+	}
+
 	return Contact{
 		ID:            c.UUID,
 		FirstName:     p.FirstName,
@@ -758,7 +804,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		Addresses:     addresses,
 		ContactInfo:   contactInfo,
 		Notes:         notes,
-		Activities:    nil, // v4 activities are account-level; per-contact only has UUIDs
+		Activities:    activities,
 		Reminders:     reminders,
 		Tags:          tags,
 		Calls:         calls,

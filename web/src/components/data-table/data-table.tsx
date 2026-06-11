@@ -27,6 +27,10 @@ interface DataTableProps<T> {
 	emptyState?: ReactNode;
 	toolbarActions?: ReactNode;
 	rowClassName?: (row: { original: T }) => string;
+	// Server-side pagination — provide all three to enable manual mode
+	totalCount?: number;
+	pageIndex?: number;
+	onPageChange?: (pageIndex: number) => void;
 }
 
 export function DataTable<T>({
@@ -36,16 +40,41 @@ export function DataTable<T>({
 	emptyState,
 	toolbarActions,
 	rowClassName,
+	totalCount,
+	pageIndex,
+	onPageChange,
 }: DataTableProps<T>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
 
+	const isServerPaginated =
+		totalCount !== undefined &&
+		pageIndex !== undefined &&
+		onPageChange !== undefined;
+
 	const table = useReactTable({
 		data,
 		columns,
-		state: { sorting, globalFilter },
+		state: {
+			sorting,
+			globalFilter,
+			...(isServerPaginated && {
+				pagination: { pageIndex, pageSize },
+			}),
+		},
 		onSortingChange: setSorting,
 		onGlobalFilterChange: setGlobalFilter,
+		...(isServerPaginated && {
+			manualPagination: true,
+			rowCount: totalCount,
+			onPaginationChange: (updater) => {
+				const next =
+					typeof updater === "function"
+						? updater({ pageIndex, pageSize })
+						: updater;
+				onPageChange(next.pageIndex);
+			},
+		}),
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),

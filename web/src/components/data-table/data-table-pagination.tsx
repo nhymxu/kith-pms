@@ -15,8 +15,14 @@ export function DataTablePagination<T>({ table }: DataTablePaginationProps<T>) {
 	return (
 		<div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200">
 			<p className="font-mono text-[12px] text-zinc-500">
-				{table.getFilteredSelectedRowModel().rows.length} of{" "}
-				{table.getFilteredRowModel().rows.length} rows
+				{table.options.manualPagination
+					? table.getRowModel().rows.length
+					: table.getFilteredSelectedRowModel().rows.length}{" "}
+				of{" "}
+				{table.options.manualPagination
+					? (table.options.rowCount ?? table.getFilteredRowModel().rows.length)
+					: table.getFilteredRowModel().rows.length}{" "}
+				rows
 			</p>
 
 			<div className="flex items-center gap-2">

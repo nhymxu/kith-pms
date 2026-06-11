@@ -28,6 +28,7 @@ interface PeopleTableProps {
 	page_size?: number;
 	onSearchChange: (q: string) => void;
 	onLabelsChange: (labels: number[]) => void;
+	onPageChange: (page: number) => void;
 }
 
 const columns: ColumnDef<Person>[] = [
@@ -135,6 +136,7 @@ export function PeopleTable({
 	page_size = 20,
 	onSearchChange,
 	onLabelsChange,
+	onPageChange,
 }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
@@ -219,6 +221,9 @@ export function PeopleTable({
 				columns={columns}
 				data={rows}
 				pageSize={page_size}
+				totalCount={data?.total}
+				pageIndex={page - 1}
+				onPageChange={(idx) => onPageChange(idx + 1)}
 				emptyState={
 					isLoading ? (
 						<span className="text-sm font-base text-foreground/50">

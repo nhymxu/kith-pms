@@ -14,11 +14,12 @@ import (
 const defaultPageSize = 50
 
 type ListParams struct {
-	Query    string
-	Page     int
-	PageSize int
-	LabelIDs []int64 // AND-semantics: person must have ALL listed labels
-	Sort     string  // sort parameter: name, -name, last_contact, -last_contact
+	Query      string
+	Page       int
+	PageSize   int
+	LabelIDs   []int64 // AND-semantics: person must have ALL listed labels
+	Sort       string  // sort parameter: name, -name, last_contact, -last_contact
+	HasJournal bool    // when true, only return people linked to at least one journal entry
 }
 
 type Service struct {
@@ -174,12 +175,12 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 
 	offset := (page - 1) * pageSize
 
-	total, err := s.People.Count(ctx, params.Query, params.LabelIDs)
+	total, err := s.People.Count(ctx, params.Query, params.LabelIDs, params.HasJournal)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := s.People.List(ctx, params.Query, params.LabelIDs, pageSize, offset, params.Sort)
+	items, err := s.People.List(ctx, params.Query, params.LabelIDs, params.HasJournal, pageSize, offset, params.Sort)
 	if err != nil {
 		return nil, err
 	}

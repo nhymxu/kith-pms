@@ -12,8 +12,15 @@ import (
 )
 
 type PersonRepo interface {
-	List(ctx context.Context, q string, labelIDs []int64, limit, offset int, sort string) ([]Person, error)
-	Count(ctx context.Context, q string, labelIDs []int64) (int, error)
+	List(
+		ctx context.Context,
+		q string,
+		labelIDs []int64,
+		hasJournal bool,
+		limit, offset int,
+		sort string,
+	) ([]Person, error)
+	Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, db bun.IDB, p Person) (int64, error)
@@ -48,6 +55,7 @@ func (r *sqlPersonRepo) List(
 	ctx context.Context,
 	q string,
 	labelIDs []int64,
+	hasJournal bool,
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
@@ -73,6 +81,10 @@ func (r *sqlPersonRepo) List(
 		sq = sq.Where("id IN ("+sub+")", args...)
 	}
 
+	if hasJournal {
+		sq = sq.Where(`EXISTS (SELECT 1 FROM activity_person WHERE person_id = "p"."id")`)
+	}
+
 	sq = sq.OrderExpr(buildOrderBy(sort)).Limit(limit).Offset(offset)
 
 	if err := sq.Scan(ctx); err != nil {
@@ -82,7 +94,7 @@ func (r *sqlPersonRepo) List(
 	return people, nil
 }
 
-func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (int, error) {
+func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool) (int, error) {
 	sq := r.db.NewSelect().Model((*Person)(nil))
 
 	if q != "" {
@@ -99,6 +111,10 @@ func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (
 		}
 
 		sq = sq.Where("id IN ("+sub+")", args...)
+	}
+
+	if hasJournal {
+		sq = sq.Where(`EXISTS (SELECT 1 FROM activity_person WHERE person_id = "p"."id")`)
 	}
 
 	total, err := sq.Count(ctx)

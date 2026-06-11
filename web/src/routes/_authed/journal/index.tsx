@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
@@ -23,9 +24,15 @@ export const Route = createFileRoute("/_authed/journal/")({
 	component: JournalPage,
 });
 
+const PEOPLE_FILTER_KEY = "journal.filter.people_with_journal";
+
 function JournalPage() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
+
+	const [onlyWithJournal, setOnlyWithJournal] = useState<boolean>(
+		() => localStorage.getItem(PEOPLE_FILTER_KEY) === "true",
+	);
 
 	const { data, isPending, isError, error } = useQuery({
 		queryKey: keys.journal.list({
@@ -48,8 +55,12 @@ function JournalPage() {
 	});
 
 	const { data: allPeople } = useQuery({
-		queryKey: keys.people.list({ page_size: 200 }),
-		queryFn: () => listPeople({ page_size: 200 }),
+		queryKey: keys.people.list({
+			page_size: 500,
+			has_journal: onlyWithJournal || undefined,
+		}),
+		queryFn: () =>
+			listPeople({ page_size: 500, has_journal: onlyWithJournal || undefined }),
 	});
 
 	const { data: allJournalLabels } = useQuery({
@@ -149,11 +160,26 @@ function JournalPage() {
 			</div>
 
 			{/* People filter */}
-			{allPeople?.items && allPeople.items.length > 0 && (
-				<div className="space-y-1">
+			<div className="space-y-1">
+				<div className="flex items-center justify-between">
 					<p className="text-[11px] font-medium text-zinc-500">
 						Filter by person
 					</p>
+					<label className="flex items-center gap-1.5 cursor-pointer select-none">
+						<input
+							type="checkbox"
+							checked={onlyWithJournal}
+							onChange={(e) => {
+								const val = e.target.checked;
+								setOnlyWithJournal(val);
+								localStorage.setItem(PEOPLE_FILTER_KEY, String(val));
+							}}
+							className="accent-indigo-600 size-3"
+						/>
+						<span className="text-[11px] text-zinc-500">With journal only</span>
+					</label>
+				</div>
+				{allPeople?.items && allPeople.items.length > 0 && (
 					<div className="flex flex-wrap gap-2">
 						{allPeople.items.map((p) => {
 							const active = (search.people ?? []).includes(p.id);
@@ -208,8 +234,8 @@ function JournalPage() {
 							</button>
 						)}
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 
 			{/* Journal label filter */}
 			{allJournalLabels && allJournalLabels.length > 0 && (

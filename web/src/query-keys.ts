@@ -6,6 +6,7 @@ export type PeopleFilters = {
 	page?: number;
 	page_size?: number;
 	labels?: number[];
+	has_journal?: boolean;
 };
 
 export type JournalFilters = {

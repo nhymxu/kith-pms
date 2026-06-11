@@ -253,17 +253,17 @@ kith-pms/
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
-- **service.go**: LocalFileService with methods for avatar uploads and imports; `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes (used by Monica import); `SaveAvatar(personID, file)` handles multipart upload; all methods include MIME validation, size limits, path traversal prevention
-- **service_test.go**: File service unit tests
+- **service.go**: LocalFileService with methods for avatar uploads/imports and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 5MB); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic number, size limits, path traversal prevention, atomic writes)
+- **service_test.go**: File service unit tests (avatar uploads, document storage, path traversal prevention)
 
 ### `internal/metrics` — Prometheus metrics & observability
 - **metrics.go**: Custom Registry with Go runtime + process collectors; HTTP middleware (request count + latency by method/route/status); GaugeFunc collectors for DB size (PRAGMA page_count) and active sessions; build info gauge; promhttp handler for `/metrics` endpoint
 - **metrics_test.go**: Unit tests for route-template label cardinality, unknown route handling, scrape format validation
 
 ### `internal/monica` — Monica PRM data import
-- **parser.go**: Unmarshals Monica JSON export format (contacts, activities, reminders, tags, photos, etc.) into typed structs; parses `account.data.photos` into UUID→dataURL map; adds `AvatarDataURL` field to `Contact` struct resolved when `avatar_source == "photo"`
-- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream processing
-- **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication)
+- **parser.go**: Unmarshals Monica JSON export format (array-of-groups wire format; contacts, activities, reminders, tags, photos, documents, etc.) into typed structs; parses `account.data.photos` into UUID→dataURL map; adds `AvatarDataURL` field to `Contact` struct resolved when `avatar_source == "photo"` (5MB limit); parses documents with embedded base64 dataURLs (50MB limit via `parseDataURLLimit`)
+- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream avatar processing; includes `MDocument` list for document storage
+- **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication, document import coverage)
 
 ### `internal/api` — HTTP API handlers & server
 - **handler/ package** — HTTP handler structs with injected services (struct-based pattern)
@@ -401,21 +401,22 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Test Coverage
 
-26 test files across all domains using shared `testutil.NewDB(t *testing.T)` helper:
+29 test files across all domains using shared `testutil.NewDB(t *testing.T)` helper:
 - `auth`: password hashing, session tokens, CSRF token generation
 - `audit`: logging behavior, list queries, actor attribution
 - `people`: CRUD, search, label associations
 - `labels`: CRUD, many-to-many associations
 - `journal`: CRUD, FTS5 full-text search
 - `dates`: important dates, OnThisDay queries, recurring logic
-- `files`: avatar upload, MIME validation, path traversal prevention
+- `files`: avatar upload, document storage, MIME validation, path traversal prevention (expanded with document tests in this release)
 - `reminders`: CRUD, completion tracking, status filtering, recurrence logic
 - `gifts`: CRUD, image operations, debt tracking
 - `relationships`: paired rows, self-loop guards, FK constraints
 - `settings`: configuration get/update, validation
 - `work_history`: CRUD operations
+- `monica` (mapper): Monica-to-domain type mapping, edge cases (birthdate year handling, contact type, tag deduplication, document coverage)
 
-**Total**: 159 Go tests passing with race detector. Run all: `make tests`
+**Total**: 180+ Go tests passing with race detector. Run all: `make tests`
 
 **Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 18 migrations applied, providing clean per-test isolation.
 

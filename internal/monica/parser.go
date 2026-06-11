@@ -5,8 +5,35 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strconv"
 	"strings"
 )
+
+// stringOrFloat unmarshals a JSON value that Monica may export as either a
+// bare number (2.5) or a quoted string ("2.5").
+type stringOrFloat float64
+
+func (f *stringOrFloat) UnmarshalJSON(b []byte) error {
+	var n float64
+	if err := json.Unmarshal(b, &n); err == nil {
+		*f = stringOrFloat(n)
+		return nil
+	}
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if s == "" {
+		*f = 0
+		return nil
+	}
+	n, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	*f = stringOrFloat(n)
+	return nil
+}
 
 // Export is the top-level decoded result from a Monica v4 export.
 type Export struct {
@@ -205,10 +232,10 @@ type v4Task struct {
 type v4Gift struct {
 	UUID       string `json:"uuid"`
 	Properties struct {
-		Name    string  `json:"name"`
-		Comment string  `json:"comment"`
-		URL     string  `json:"url"`
-		Amount  float64 `json:"amount"`
+		Name    string        `json:"name"`
+		Comment string        `json:"comment"`
+		URL     string        `json:"url"`
+		Amount  stringOrFloat `json:"amount"`
 		Status  string  `json:"status"`
 		Date    string  `json:"date"`
 	} `json:"properties"`
@@ -621,7 +648,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		gifts = append(gifts, MGift{
 			Name:    gp.Name,
 			Comment: gp.Comment,
-			Amount:  gp.Amount,
+			Amount:  float64(gp.Amount),
 			Status:  gp.Status,
 			Date:    normDate(gp.Date),
 		})

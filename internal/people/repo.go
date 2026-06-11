@@ -56,7 +56,8 @@ func (r *sqlPersonRepo) List(
 	sq := r.db.NewSelect().Model(&people)
 
 	if q != "" {
-		sq = sq.Where("name_lower LIKE ?", "%"+strings.ToLower(q)+"%")
+		ql := "%" + strings.ToLower(q) + "%"
+		sq = sq.Where("name_lower LIKE ? OR nickname_lower LIKE ?", ql, ql)
 	}
 
 	// AND-semantics: person must have ALL listed labels.
@@ -85,7 +86,8 @@ func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64) (
 	sq := r.db.NewSelect().Model((*Person)(nil))
 
 	if q != "" {
-		sq = sq.Where("name_lower LIKE ?", "%"+strings.ToLower(q)+"%")
+		ql := "%" + strings.ToLower(q) + "%"
+		sq = sq.Where("name_lower LIKE ? OR nickname_lower LIKE ?", ql, ql)
 	}
 
 	if len(labelIDs) > 0 {

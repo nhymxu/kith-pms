@@ -19,19 +19,24 @@ func (f *stringOrFloat) UnmarshalJSON(b []byte) error {
 		*f = stringOrFloat(n)
 		return nil
 	}
+
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
+
 	if s == "" {
 		*f = 0
 		return nil
 	}
+
 	n, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return err
 	}
+
 	*f = stringOrFloat(n)
+
 	return nil
 }
 
@@ -236,8 +241,8 @@ type v4Gift struct {
 		Comment string        `json:"comment"`
 		URL     string        `json:"url"`
 		Amount  stringOrFloat `json:"amount"`
-		Status  string  `json:"status"`
-		Date    string  `json:"date"`
+		Status  string        `json:"status"`
+		Date    string        `json:"date"`
 	} `json:"properties"`
 }
 
@@ -268,7 +273,9 @@ func (d *v4Document) UnmarshalJSON(b []byte) error {
 	if len(b) > 0 && b[0] == '"' {
 		return nil
 	}
+
 	type plain v4Document
+
 	return json.Unmarshal(b, (*plain)(d))
 }
 

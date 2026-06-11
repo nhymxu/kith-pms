@@ -341,20 +341,25 @@ func TestMapConversation_TranscriptFormat(t *testing.T) {
 			},
 		},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	act := acts[0]
 	if act.Title != "CONVERSATION 2024-03-10" {
 		t.Errorf("unexpected title: %q", act.Title)
 	}
+
 	if act.OccurredAtDate != "2024-03-10" {
 		t.Errorf("unexpected date: %q", act.OccurredAtDate)
 	}
+
 	if !strings.Contains(act.Content, "MESSAGE [me, 14:00] Hi there") {
 		t.Errorf("expected me author line, got:\n%s", act.Content)
 	}
+
 	if !strings.Contains(act.Content, "MESSAGE [them, 14:05] Hello back") {
 		t.Errorf("expected them author line, got:\n%s", act.Content)
 	}
@@ -367,6 +372,7 @@ func TestMapConversation_EmptyMessagesSkipped(t *testing.T) {
 			{HappenedAt: "2024-03-10", Messages: nil},
 		},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 0 {
 		t.Errorf("expected 0 activities for empty-message conversation, got %d", len(acts))
@@ -383,10 +389,12 @@ func TestMapConversation_NoWrittenAtTimestamp(t *testing.T) {
 			},
 		},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	if !strings.Contains(acts[0].Content, "MESSAGE [them] Hey") {
 		t.Errorf("expected no timestamp when WrittenAt empty, got:\n%s", acts[0].Content)
 	}
@@ -402,13 +410,16 @@ func TestMapConversation_ControlCharStripping(t *testing.T) {
 			},
 		},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	if strings.ContainsAny(acts[0].Content, "\x00\x01\x02") {
 		t.Errorf("expected control chars stripped, got: %q", acts[0].Content)
 	}
+
 	if !strings.Contains(acts[0].Content, "helloworld") {
 		t.Errorf("expected content preserved after stripping, got: %q", acts[0].Content)
 	}
@@ -419,14 +430,17 @@ func TestMapConversation_MessagesPerConvCap(t *testing.T) {
 	for i := range msgs {
 		msgs[i] = MMessage{Content: "msg", WrittenByMe: true}
 	}
+
 	c := Contact{
 		FirstName:     "Eve",
 		Conversations: []MConversation{{HappenedAt: "2024-01-01", Messages: msgs}},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	lineCount := strings.Count(acts[0].Content, "MESSAGE")
 	if lineCount > maxMsgsPerConv {
 		t.Errorf("expected at most %d MESSAGE lines, got %d", maxMsgsPerConv, lineCount)
@@ -441,10 +455,12 @@ func TestMapConversation_BodyLengthCap(t *testing.T) {
 			{HappenedAt: "2024-01-01", Messages: []MMessage{{Content: bigContent, WrittenByMe: true}}},
 		},
 	}
+
 	acts := mapConversations(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	if len([]rune(acts[0].Content)) > maxConvBodyRunes {
 		t.Errorf("expected body capped at %d runes, got %d", maxConvBodyRunes, len([]rune(acts[0].Content)))
 	}
@@ -459,22 +475,28 @@ func TestMapLifeEvents_JournalAndImportantDate(t *testing.T) {
 			{Name: "Got married", Note: "Beautiful ceremony", HappenedAt: "2020-06-15T00:00:00Z"},
 		},
 	}
+
 	acts, importantDates := mapLifeEvents(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	if acts[0].Title != "LIFE_EVENT Got married" {
 		t.Errorf("unexpected title: %q", acts[0].Title)
 	}
+
 	if acts[0].Content != "Beautiful ceremony" {
 		t.Errorf("unexpected content: %q", acts[0].Content)
 	}
+
 	if acts[0].OccurredAtDate != "2020-06-15" {
 		t.Errorf("unexpected date: %q", acts[0].OccurredAtDate)
 	}
+
 	if len(importantDates) != 1 {
 		t.Fatalf("expected 1 ImportantDate, got %d", len(importantDates))
 	}
+
 	d := importantDates[0]
 	if d.Kind != "other" || d.Label != "Got married" || d.DateValue != "2020-06-15" || d.Recurring {
 		t.Errorf("unexpected ImportantDate: %+v", d)
@@ -486,6 +508,7 @@ func TestMapLifeEvents_EmptyNameSkipped(t *testing.T) {
 		FirstName:  "Hank",
 		LifeEvents: []MLifeEvent{{Name: "   ", Note: "ignored", HappenedAt: "2020-01-01"}},
 	}
+
 	acts, dates := mapLifeEvents(c)
 	if len(acts) != 0 || len(dates) != 0 {
 		t.Errorf("expected empty-name life event skipped, got %d activities %d dates", len(acts), len(dates))
@@ -497,6 +520,7 @@ func TestMapLifeEvents_MissingHappenedAtFallback(t *testing.T) {
 		FirstName:  "Iris",
 		LifeEvents: []MLifeEvent{{Name: "New job", HappenedAt: ""}},
 	}
+
 	acts, _ := mapLifeEvents(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
@@ -512,10 +536,12 @@ func TestMapLifeEvents_ControlCharInNote(t *testing.T) {
 		FirstName:  "Jake",
 		LifeEvents: []MLifeEvent{{Name: "Event", Note: "note\x00with\x01nul"}},
 	}
+
 	acts, _ := mapLifeEvents(c)
 	if len(acts) != 1 {
 		t.Fatalf("expected 1 activity, got %d", len(acts))
 	}
+
 	if strings.ContainsAny(acts[0].Content, "\x00\x01") {
 		t.Errorf("expected control chars stripped from note, got: %q", acts[0].Content)
 	}
@@ -523,7 +549,7 @@ func TestMapLifeEvents_ControlCharInNote(t *testing.T) {
 
 func TestMapContactWithOptions_LifeEventDatesIncluded(t *testing.T) {
 	c := Contact{
-		FirstName: "Kate",
+		FirstName:   "Kate",
 		Information: Information{Birthdate: "1990-05-20"},
 		LifeEvents: []MLifeEvent{
 			{Name: "Moved abroad", HappenedAt: "2015-09-01"},
@@ -532,11 +558,13 @@ func TestMapContactWithOptions_LifeEventDatesIncluded(t *testing.T) {
 	rec := MapContactWithOptions(c, ImportOptions{})
 	// Expect both birthday (from Information) and life-event date
 	var hasLifeEventDate bool
+
 	for _, d := range rec.Dates {
 		if d.Kind == "other" && d.Label == "Moved abroad" {
 			hasLifeEventDate = true
 		}
 	}
+
 	if !hasLifeEventDate {
 		t.Errorf("expected life-event ImportantDate in rec.Dates, got: %+v", rec.Dates)
 	}

@@ -179,12 +179,10 @@ export function JournalForm({
 					const selectedIds: number[] = Array.isArray(f.state.value)
 						? f.state.value
 						: [];
-					const selected = allLabels?.filter((l) =>
-						selectedIds.includes(l.id),
-					) ?? [];
-					const unselected = allLabels?.filter(
-						(l) => !selectedIds.includes(l.id),
-					) ?? [];
+					const selected =
+						allLabels?.filter((l) => selectedIds.includes(l.id)) ?? [];
+					const unselected =
+						allLabels?.filter((l) => !selectedIds.includes(l.id)) ?? [];
 
 					return (
 						<div className="space-y-2">

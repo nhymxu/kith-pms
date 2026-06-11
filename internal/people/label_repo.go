@@ -26,8 +26,8 @@ type PersonLabelRepo interface {
 	ListByPersonID(ctx context.Context, personID int64) ([]Label, error)
 }
 
-// PeopleLabelAssignment is the join table model for people_label_assignment.
-type PeopleLabelAssignment struct {
+// LabelAssignment is the join table model for people_label_assignment.
+type LabelAssignment struct {
 	bun.BaseModel `bun:"table:people_label_assignment"`
 
 	PersonID int64 `bun:"person_id"`
@@ -190,7 +190,7 @@ type sqlPersonLabelRepo struct{ db *bun.DB }
 func NewPersonLabelRepo(db *bun.DB) PersonLabelRepo { return &sqlPersonLabelRepo{db: db} }
 
 func (r *sqlPersonLabelRepo) Attach(ctx context.Context, personID, labelID int64) error {
-	pla := &PeopleLabelAssignment{PersonID: personID, LabelID: labelID}
+	pla := &LabelAssignment{PersonID: personID, LabelID: labelID}
 
 	_, err := r.db.NewInsert().
 		Model(pla).
@@ -205,7 +205,7 @@ func (r *sqlPersonLabelRepo) Attach(ctx context.Context, personID, labelID int64
 
 func (r *sqlPersonLabelRepo) Detach(ctx context.Context, personID, labelID int64) error {
 	_, err := r.db.NewDelete().
-		Model((*PeopleLabelAssignment)(nil)).
+		Model((*LabelAssignment)(nil)).
 		Where("person_id = ? AND label_id = ?", personID, labelID).
 		Exec(ctx)
 	if err != nil {

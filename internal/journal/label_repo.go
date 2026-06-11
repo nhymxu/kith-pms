@@ -225,7 +225,10 @@ func (r *sqlLabelAssignmentRepo) ListByActivityID(ctx context.Context, activityI
 	return labels, nil
 }
 
-func (r *sqlLabelAssignmentRepo) ListByActivityIDs(ctx context.Context, activityIDs []int64) (map[int64][]Label, error) {
+func (r *sqlLabelAssignmentRepo) ListByActivityIDs(
+	ctx context.Context,
+	activityIDs []int64,
+) (map[int64][]Label, error) {
 	if len(activityIDs) == 0 {
 		return make(map[int64][]Label), nil
 	}

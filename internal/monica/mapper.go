@@ -23,11 +23,11 @@ const (
 
 // ImportRecord holds all kith-pms domain objects for a single Monica contact.
 type ImportRecord struct {
-	Person      people.Person
-	Contacts    []people.ContactInfo
-	Locations   []people.Location
-	TagNames    []string // label names to create-or-find and attach
-	Activities  []journal.Activity
+	Person     people.Person
+	Contacts   []people.ContactInfo
+	Locations  []people.Location
+	TagNames   []string // label names to create-or-find and attach
+	Activities []journal.Activity
 	// ConversationActivities are mapped from Monica conversations; attach CONVERSATION label on create.
 	ConversationActivities []journal.Activity
 	// LifeEventActivities are mapped from Monica life events; attach LIFE_EVENT label on create.
@@ -395,22 +395,26 @@ func mapGifts(mgifts []MGift) []gifts.Gift {
 func sanitizeContent(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
+
 	for _, r := range s {
 		if r == '\n' || r == '\t' || r >= 0x20 {
 			b.WriteRune(r)
 		}
 	}
+
 	return b.String()
 }
 
 // mapConversations converts Monica conversations to journal activities (one per conversation).
 func mapConversations(c Contact) []journal.Activity {
 	var out []journal.Activity
+
 	for _, conv := range c.Conversations {
 		msgs := conv.Messages
 		if len(msgs) > maxMsgsPerConv {
 			msgs = msgs[:maxMsgsPerConv]
 		}
+
 		if len(msgs) == 0 {
 			continue
 		}
@@ -424,10 +428,12 @@ func mapConversations(c Contact) []journal.Activity {
 			if m.WrittenByMe {
 				author = "me"
 			}
+
 			ts := ""
 			if len(m.WrittenAt) >= 16 {
 				ts = ", " + m.WrittenAt[11:16]
 			}
+
 			lines = append(lines, "MESSAGE ["+author+ts+"] "+sanitizeContent(m.Content))
 		}
 
@@ -439,13 +445,16 @@ func mapConversations(c Contact) []journal.Activity {
 			OccurredAtDate: happenedAt,
 		})
 	}
+
 	return out
 }
 
 // mapLifeEvents converts Monica life events to journal activities and ImportantDate records.
 func mapLifeEvents(c Contact) ([]journal.Activity, []dates.ImportantDate) {
-	var activities []journal.Activity
-	var importantDates []dates.ImportantDate
+	var (
+		activities     []journal.Activity
+		importantDates []dates.ImportantDate
+	)
 
 	for _, le := range c.LifeEvents {
 		name := strings.TrimSpace(le.Name)

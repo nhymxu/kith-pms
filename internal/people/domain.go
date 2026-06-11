@@ -38,9 +38,9 @@ type Person struct {
 	UpdatedAt        time.Time  `bun:"updated_at"           json:"updated_at"`
 
 	// Computed/relation fields — populated separately, not stored in person table
-	Contacts  []ContactInfo  `bun:"-" json:"contacts"`
-	Locations []Location     `bun:"-" json:"locations"`
-	Labels    []Label `bun:"-" json:"labels"`
+	Contacts  []ContactInfo `bun:"-" json:"contacts"`
+	Locations []Location    `bun:"-" json:"locations"`
+	Labels    []Label       `bun:"-" json:"labels"`
 }
 
 // GetLastContactAt returns the last contact timestamp (for interface compatibility).

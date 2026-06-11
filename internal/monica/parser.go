@@ -98,9 +98,9 @@ type v4ContactData struct {
 type v4Conversation struct {
 	UUID       string `json:"uuid"`
 	Properties struct {
-		HappenedAt       string       `json:"happened_at"`
-		ContactFieldType string       `json:"contact_field_type"`
-		Messages         []v4Message  `json:"messages"`
+		HappenedAt       string      `json:"happened_at"`
+		ContactFieldType string      `json:"contact_field_type"`
+		Messages         []v4Message `json:"messages"`
 	} `json:"properties"`
 }
 
@@ -245,7 +245,7 @@ type Contact struct {
 	Relationships []MRelationship `json:"-"`
 	// AvatarDataURL is a "data:<mime>;base64,..." string resolved from account photos.
 	// Only set when avatar_source == "photo" and the referenced photo UUID is found.
-	AvatarDataURL string         `json:"-"`
+	AvatarDataURL string          `json:"-"`
 	Conversations []MConversation `json:"-"`
 	LifeEvents    []MLifeEvent    `json:"-"`
 }
@@ -588,6 +588,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 	conversations := make([]MConversation, 0, len(c.Data.Conversations.Data))
 	for _, conv := range c.Data.Conversations.Data {
 		cp := conv.Properties
+
 		msgs := make([]MMessage, 0, len(cp.Messages))
 		for _, m := range cp.Messages {
 			msgs = append(msgs, MMessage{
@@ -596,9 +597,11 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 				WrittenByMe: m.Properties.WrittenByMe,
 			})
 		}
+
 		if len(msgs) == 0 {
 			continue
 		}
+
 		conversations = append(conversations, MConversation{
 			HappenedAt: cp.HappenedAt,
 			Channel:    cp.ContactFieldType,
@@ -612,6 +615,7 @@ func normaliseV4Contact(c v4Contact, rels []MRelationship, photoURLs map[string]
 		if strings.TrimSpace(lp.Name) == "" {
 			continue
 		}
+
 		lifeEvents = append(lifeEvents, MLifeEvent{
 			Name:       lp.Name,
 			Note:       lp.Note,

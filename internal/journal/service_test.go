@@ -293,6 +293,7 @@ func TestGet_PopulatesPeople(t *testing.T) {
 
 	if a == nil {
 		t.Fatal("expected activity, got nil")
+		return
 	}
 
 	if len(a.People) != 2 {

@@ -10,16 +10,19 @@ import (
 func newLabelSvc(t *testing.T) (*journal.LabelService, *journal.Service) {
 	t.Helper()
 	db := openTestDB(t)
+
 	return journal.NewLabelService(db), journal.NewService(db)
 }
 
 // insertJournalLabel inserts a journal_label row and returns its ID.
 func insertJournalLabel(t *testing.T, svc *journal.LabelService, name, color string) int64 {
 	t.Helper()
+
 	id, err := svc.Create(context.Background(), name, color)
 	if err != nil {
 		t.Fatalf("insertJournalLabel %q: %v", name, err)
 	}
+
 	return id
 }
 
@@ -117,6 +120,7 @@ func TestJournalLabel_ReplaceAll_Idempotent(t *testing.T) {
 	ctx := context.Background()
 
 	lid := insertJournalLabel(t, svc, "Idem", "#aabbcc")
+
 	actID, err := jSvc.Create(ctx, journal.Activity{
 		Title:          "Idem test",
 		OccurredAtDate: "2024-01-01",
@@ -200,8 +204,11 @@ func TestJournalLabel_DeleteActivityCascades(t *testing.T) {
 
 	// Verify assignment exists.
 	var count int
-	_ = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM journal_label_assignment WHERE activity_id = ?`, actID).Scan(&count)
-	// Note: this uses a separate DB; use jSvc's DB via service Delete and then verify via Get.
+
+	_ = db.QueryRowContext(ctx, `SELECT COUNT(*) FROM journal_label_assignment WHERE activity_id = ?`, actID).
+		Scan(&count)
+
+		// Note: this uses a separate DB; use jSvc's DB via service Delete and then verify via Get.
 
 	if err := jSvc.Delete(ctx, actID); err != nil {
 		t.Fatalf("Delete: %v", err)

@@ -56,7 +56,11 @@ func monicaImportCommand() *cli.Command {
 
 			const maxExportBytes = 200 * 1024 * 1024
 			if fi, err := os.Stat(fromPath); err == nil && fi.Size() > maxExportBytes {
-				fmt.Printf("Warning: export file is %.0f MB (>200 MB). The importer reads the whole file into memory — ensure sufficient RAM.\n", float64(fi.Size())/(1024*1024))
+				fmt.Printf(
+					"Warning: export file is %.0f MB (>200 MB).\n"+
+						"The importer reads the whole file into memory — ensure sufficient RAM.\n",
+					float64(fi.Size())/(1024*1024),
+				)
 			}
 
 			f, err := os.Open(fromPath)
@@ -483,6 +487,7 @@ func importAccountJournalEntries(ctx context.Context, export *monica.Export, jou
 
 func printDryRunSummary(export *monica.Export, options monica.ImportOptions) error {
 	var totalContacts, totalLocations, totalTags, totalActivities, totalReminders, totalDates, totalGifts, totalWork, totalRels, totalAvatars int //nolint:lll
+
 	var totalConversations, totalMessages, totalLifeEvents int
 
 	for _, c := range export.Contacts {
@@ -497,10 +502,12 @@ func printDryRunSummary(export *monica.Export, options monica.ImportOptions) err
 		totalWork += len(rec.WorkHistory)
 		totalRels += len(rec.Relationships)
 		totalConversations += len(rec.ConversationActivities)
+
 		totalLifeEvents += len(rec.LifeEventActivities)
 		for _, conv := range c.Conversations {
 			totalMessages += len(conv.Messages)
 		}
+
 		if rec.AvatarDataURL != "" {
 			totalAvatars++
 		}

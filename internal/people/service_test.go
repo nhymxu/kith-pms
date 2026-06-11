@@ -93,6 +93,7 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 
 	if got == nil {
 		t.Fatal("Get returned nil")
+		return
 	}
 
 	// Core fields.

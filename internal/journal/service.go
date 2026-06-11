@@ -15,14 +15,14 @@ const defaultPageSize = 30
 
 // ListParams holds filter and pagination parameters for listing activities.
 type ListParams struct {
-	Query          string
-	PersonIDs      []int64
-	LabelIDs       []int64  // filters by people-label (activities whose linked people have these labels)
+	Query           string
+	PersonIDs       []int64
+	LabelIDs        []int64 // filters by people-label (activities whose linked people have these labels)
 	JournalLabelIDs []int64 // filters by journal-label (OR within; AND with other filters)
-	FromDate       string   // "YYYY-MM-DD"
-	ToDate         string   // "YYYY-MM-DD"
-	Page           int
-	PageSize       int // default 30
+	FromDate        string  // "YYYY-MM-DD"
+	ToDate          string  // "YYYY-MM-DD"
+	Page            int
+	PageSize        int // default 30
 }
 
 // Service provides business logic for managing journal activities.

@@ -71,6 +71,7 @@ func TestPeopleLabel_Create_ValidationErrors(t *testing.T) {
 			}
 
 			found := false
+
 			e := err
 			for e != nil {
 				if e == tc.wantErr {

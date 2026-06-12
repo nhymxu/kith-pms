@@ -2,19 +2,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-
-// Convert an ISO/RFC3339 string from the API to the "YYYY-MM-DDTHH:MM" format
-// required by <input type="datetime-local">. Returns "" for empty/invalid input.
-function toDatetimeLocal(val: string): string {
-	if (!val) return "";
-	// Already in datetime-local format
-	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) return val;
-	const d = new Date(val);
-	if (Number.isNaN(d.getTime())) return val.slice(0, 16);
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
@@ -30,6 +17,7 @@ import {
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
+import { datetimeLocalToUtc, utcToDatetimeLocal } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import {
 	type RecurrenceRule,
@@ -87,7 +75,7 @@ export function ReminderForm({
 		defaultValues: {
 			title: initial?.title ?? "",
 			notes: initial?.notes ?? "",
-			due_date: toDatetimeLocal(initial?.due_date ?? ""),
+			due_date: utcToDatetimeLocal(initial?.due_date ?? ""),
 			person_id: initial?.person_id ?? null,
 			important_date_id: initial?.important_date_id ?? null,
 			recurrence_rule: initial?.recurrence_rule ?? null,
@@ -107,6 +95,7 @@ export function ReminderForm({
 			try {
 				const payload: ReminderRequest = {
 					...value,
+					due_date: datetimeLocalToUtc(value.due_date),
 					recurrence_rule: recurring ? value.recurrence_rule : null,
 					recurrence_end_date: recurring ? value.recurrence_end_date : null,
 				};

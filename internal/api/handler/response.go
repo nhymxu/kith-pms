@@ -39,10 +39,11 @@ func nullableString(s string) *string {
 }
 
 // parseDateOrDatetime accepts "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM" (datetime-local format).
+// Frontend always sends UTC values, so parse in UTC.
 func parseDateOrDatetime(s string) (time.Time, error) {
 	if len(s) > 10 {
-		return time.ParseInLocation("2006-01-02T15:04", s, time.Local)
+		return time.ParseInLocation("2006-01-02T15:04", s, time.UTC)
 	}
 
-	return time.ParseInLocation("2006-01-02", s, time.Local)
+	return time.ParseInLocation("2006-01-02", s, time.UTC)
 }

@@ -39,7 +39,9 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			nickname: initial?.nickname ?? "",
 			gender: initial?.gender ?? "",
 			relationship_type: initial?.relationship_type ?? "",
-			date_of_birth: initial?.date_of_birth ?? "",
+			date_of_birth: initial?.date_of_birth
+				? initial.date_of_birth.slice(0, 10)
+				: "",
 			last_contact_at: utcToDatetimeLocal(initial?.last_contact_at),
 			other_notes: initial?.other_notes ?? "",
 			contacts: (initial?.contacts ?? []).map((c) => ({

@@ -63,7 +63,9 @@ function OverviewSection({
 	const [relationshipType, setRelationshipType] = useState(
 		person.relationship_type,
 	);
-	const [dob, setDob] = useState(person.date_of_birth ?? "");
+	const [dob, setDob] = useState(
+		person.date_of_birth ? person.date_of_birth.slice(0, 10) : "",
+	);
 	const [lastContactAt, setLastContactAt] = useState(
 		utcToDatetimeLocal(person.last_contact_at),
 	);
@@ -258,7 +260,7 @@ function OverviewSection({
 						{person.date_of_birth && (
 							<>
 								<dt className="font-medium text-zinc-500">Date of birth</dt>
-								<dd>{person.date_of_birth}</dd>
+								<dd>{formatDate(person.date_of_birth)}</dd>
 							</>
 						)}
 						{person.gender && (

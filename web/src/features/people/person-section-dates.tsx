@@ -180,7 +180,7 @@ export function ImportantDatesSection({
 					<div className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2 bg-zinc-50">
 						<Badge variant="neutral">Birthday</Badge>
 						<span className="font-mono text-[12px] text-zinc-500 flex-1">
-							{person.date_of_birth}
+							{person.date_of_birth?.slice(0, 10)}
 						</span>
 						<Lock className="size-3 text-zinc-300" />
 					</div>

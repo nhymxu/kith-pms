@@ -354,7 +354,7 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
 ```
 1. SPA calls POST /v1/auth/login with JSON {password}
    ↓
-2. Handler validates password (bcrypt verify vs users table)
+2. Handler validates password (Argon2id verify vs users table)
    ↓
 3. Create session token:
    - Generate cryptographic session ID
@@ -376,7 +376,7 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
    ↓
 6. Password change (POST /v1/auth/password):
    - Verify current password
-   - Hash new password with bcrypt (golang.org/x/crypto/bcrypt)
+   - Hash new password with Argon2id (golang.org/x/crypto/argon2)
    - Invalidate all sessions for that user
    - Rate limited: 5 attempts per 15 minutes
    ↓
@@ -519,7 +519,15 @@ err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT row
 | `0017_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
 | `0018_person_gender.sql` | gender TEXT column on person table |
 
+**Total Migrations**: 18 migrations applied in order; tracked via schema_migrations table.
+
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
+
+### Reminder Recurrence & Settings Notes
+
+**Reminders**: Support 7 recurrence types (daily, weekly, monthly, yearly, custom interval, day-of-week, relative-to-last-contact) with optional end date cutoff. Auto-spawn next occurrence on completion via pure `computeNextDue()` function.
+
+**Settings Persistence**: Key-value settings stored in `user_setting` table (server-side) with matching localStorage keys in frontend for date format, timezone, and other user preferences. Ensures settings persist across sessions and are loaded on app initialization.
 
 ### FTS5 Full-Text Search
 

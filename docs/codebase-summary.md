@@ -217,10 +217,11 @@ kith-pms/
 - **service_test.go**: Integration tests for many-to-many logic
 
 ### `internal/journal` — Activity log with full-text search
-- **domain.go**: Entry (title, content, date, author), EntryLink (link to People via FK)
-- **service.go**: CRUD; full-text search via FTS5; link entries to multiple people; auto-update last_contact_at for participants when self is included and activity date is newer
-- **repo.go**: Queries including FTS5 search; maintains FTS5 trigger-based index
-- **service_test.go**: Integration tests for FTS5 search
+- **domain.go**: Entry (title, content, date, author), EntryLink (link to People via FK), predefined labels (CONVERSATION, LIFE_EVENT, DOCUMENT, etc.)
+- **journal/labels** (sub-package): Label management for journal categorization with color support
+- **service.go**: CRUD; full-text search via FTS5; link entries to multiple people; auto-update last_contact_at for participants when self is included and activity date is newer; label assignment and filtering
+- **repo.go**: Queries including FTS5 search; maintains FTS5 trigger-based index; label association queries
+- **service_test.go**: Integration tests for FTS5 search and label operations
 
 ### `internal/dates` — Important dates & milestones
 - **domain.go**: ImportantDate (kind, label, date_value, recurring), OnThisDayItem (date + person info)

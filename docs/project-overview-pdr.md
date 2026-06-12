@@ -69,6 +69,16 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Nightly snapshot builds for development testing
 - Multi-platform Docker images to GHCR (distroless + debian-slim variants)
 
+### Journal Labels with Color
+- Labeled journal entry categories (CONVERSATION, LIFE_EVENT, DOCUMENT, etc.)
+- Color-coded labels for visual organization
+- Multi-label support per journal entry
+
+### Footer Version & Metadata
+- App version display in footer
+- Page load time tracking and display
+- Current timezone indicator for context
+
 ## Tech Stack (Implemented)
 
 | Layer            | Technology                                  | Rationale                                                                |
@@ -90,7 +100,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Config           | nhymxu/gommon/cfgloader                     | Three-layer config: defaults → .env file → env vars (replaces koanf)    |
 | Logging          | slog + tint                                 | Standard library structured logging with colored debug output             |
 | Error Monitoring | slog-sentry                                 | Fan-out errors to Sentry without replacing slog (optional)              |
-| Auth             | bcrypt + HMAC sessions                      | Password hashing + signed HttpOnly cookie sessions                       |
+| Auth             | Argon2id + HMAC sessions                    | Password hashing + signed HttpOnly cookie sessions                       |
 | API Docs         | Swagger/OpenAPI 2.0                         | Interactive API documentation at `/swagger/index.html`                  |
 | Search           | SQLite FTS5                                 | Full-text search with auto-update triggers                               |
 | Charts           | Recharts 3.8.1+                             | Interactive dashboard visualizations                                     |
@@ -133,7 +143,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 ## Security Model
 
 ### Authentication
-- Single-user password-based authentication (bcrypt hashing)
+- Single-user password-based authentication (Argon2id hashing)
 - HMAC-SHA256 session tokens stored server-side
 - HttpOnly SameSite=Lax cookies (Secure when behind TLS)
 - Session lifetime: 30 days (configurable via `SESSION_LIFETIME`)

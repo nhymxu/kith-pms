@@ -61,14 +61,16 @@ All configuration is via environment variables or a `.env` file in the working d
 | Variable              | Default          | Required | Description                                               |
 |-----------------------|------------------|----------|-----------------------------------------------------------|
 | `SESSION_SECRET`      | —                | **Yes**  | Cookie signing secret, min 32 bytes                       |
+| `DEBUG`               | `false`          | No       | `true` → text logs + debug level                          |
+| `SENTRY.DSN`          | —                | No       | Sentry DSN; omit to disable error reporting               |
 | `DB_PATH`             | `data/kith.db`   | No       | Path to the SQLite database file                          |
 | `DB_AUTO_MIGRATE`     | `true`           | No       | Run migrations automatically on startup                   |
+| `TOKEN_AUTH`          | —                | No       | Bearer token for any future JSON API endpoints            |
+| `APP_PASSWORD_HASH`   | —                | No       | Pre-hashed Argon2id password for Docker/headless setup    |
 | `AVATAR_STORAGE_PATH` | `data/avatars`   | No       | Directory for storing avatar files                        |
+| `GIFT_STORAGE_PATH`   | `data/gifts`     | No       | Directory for storing gift image files                    |
 | `BEHIND_TLS`          | `false`          | No       | Set `true` when serving behind TLS (marks cookies Secure) |
 | `SESSION_LIFETIME`    | `720h` (30 days) | No       | How long a login session stays valid                      |
-| `TOKEN_AUTH`          | —                | No       | Bearer token for any future JSON API endpoints            |
-| `DEBUG`               | `false`          | No       | `true` → text logs + debug level                          |
-| `SENTRY_DSN`          | —                | No       | Sentry DSN; omit to disable error reporting               |
 
 Environment variables take precedence over `.env` file values.
 

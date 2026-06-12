@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "#/components/ui/sheet";
 import { RequireAuth } from "#/lib/auth-context";
+import { Footer } from "./footer";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
@@ -38,6 +39,7 @@ function AppShellInner({ children }: AppShellProps) {
 					{children}
 				</div>
 			</main>
+			<Footer />
 		</div>
 	);
 }

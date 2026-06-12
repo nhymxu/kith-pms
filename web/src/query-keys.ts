@@ -94,4 +94,8 @@ export const keys = {
 		profile: () => ["me", "profile"] as const,
 		auth: () => ["me", "auth"] as const,
 	},
+	app: {
+		all: ["app"] as const,
+		info: () => ["app", "info"] as const,
+	},
 } as const;

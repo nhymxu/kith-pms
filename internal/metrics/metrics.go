@@ -74,24 +74,28 @@ func RegisterAppCollectors(db *bun.DB, sessions SessionCounter) {
 	)
 }
 
-// RegisterBuildInfo registers a build-info gauge (value always 1).
-func RegisterBuildInfo() {
-	version := "dev"
-	commit := "unknown"
-
+// GetBuildInfo returns the app version and short commit hash from build metadata.
+// Returns ("dev", "unknown") when build info is unavailable (e.g. go run).
+func GetBuildInfo() (version, commit string) {
+	version, commit = "dev", "unknown"
 	if info, ok := debug.ReadBuildInfo(); ok {
 		version = info.Main.Version
 		for _, s := range info.Settings {
 			if s.Key == "vcs.revision" {
-				if len(s.Value) > 8 {
-					commit = s.Value[:8]
-				} else {
-					commit = s.Value
+				commit = s.Value
+				if len(commit) > 8 {
+					commit = commit[:8]
 				}
 			}
 		}
 	}
 
+	return
+}
+
+// RegisterBuildInfo registers a build-info gauge (value always 1).
+func RegisterBuildInfo() {
+	version, commit := GetBuildInfo()
 	Registry.MustRegister(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Name:        "kith_build_info",
 		Help:        "Build metadata (value is always 1).",

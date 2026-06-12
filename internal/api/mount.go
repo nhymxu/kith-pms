@@ -83,6 +83,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountPeopleAvatars(v1, deps)
 	mountPeopleQuick(v1, deps)
 	mountSettings(v1, deps)
+	mountAppInfo(v1)
 
 	e.Use(sessionLoader, injectAuditActor())
 
@@ -248,6 +249,10 @@ func mountSettings(g *echo.Group, deps Deps) {
 	h := &handler.SettingsAPI{Svc: deps.SettingsService}
 	g.GET("/settings", h.Get)
 	g.PUT("/settings", h.Update)
+}
+
+func mountAppInfo(g *echo.Group) {
+	g.GET("/app/info", handler.GetAppInfo)
 }
 
 func mountPeopleQuick(g *echo.Group, deps Deps) {

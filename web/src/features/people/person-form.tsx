@@ -10,6 +10,7 @@ import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
 import { createPerson, updatePerson } from "#/endpoints/people";
+import { datetimeLocalToUtc, utcToDatetimeLocal } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import {
 	genderOptions,
@@ -37,6 +38,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			gender: initial?.gender ?? "",
 			relationship_type: initial?.relationship_type ?? "",
 			date_of_birth: initial?.date_of_birth ?? "",
+			last_contact_at: utcToDatetimeLocal(initial?.last_contact_at),
 			other_notes: initial?.other_notes ?? "",
 			contacts: (initial?.contacts ?? []).map((c) => ({
 				type: c.type,
@@ -64,7 +66,12 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 		onSubmit: async ({ value }) => {
 			setApiError(null);
 			try {
-				const parsed = personRequestSchema.parse(value);
+				const parsed = personRequestSchema.parse({
+					...value,
+					last_contact_at: value.last_contact_at
+						? datetimeLocalToUtc(value.last_contact_at)
+						: null,
+				});
 				if (mode === "create") {
 					const id = await createPerson(parsed);
 					navigate({
@@ -137,6 +144,11 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 						{(f) => <FormField field={f} label="Date of birth" type="date" />}
 					</form.Field>
 				</div>
+				<form.Field name="last_contact_at">
+					{(f) => (
+						<FormField field={f} label="Last contact" type="datetime-local" />
+					)}
+				</form.Field>
 				<form.Field name="gender">
 					{(f) => (
 						<div className="space-y-1.5">

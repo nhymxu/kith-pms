@@ -100,6 +100,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 				date_of_birth: person.date_of_birth
 					? person.date_of_birth.slice(0, 10)
 					: "",
+				last_contact_at: person.last_contact_at ?? null,
 				other_notes: person.other_notes,
 				contacts: contacts.map((c, i) => ({
 					type: c.type,

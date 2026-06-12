@@ -88,6 +88,7 @@ export const personRequestSchema = z.object({
 	gender: z.string().optional().default(""),
 	relationship_type: z.string().optional().default(""),
 	date_of_birth: z.string().optional().default(""),
+	last_contact_at: z.string().nullable().optional().default(""),
 	other_notes: z.string().optional().default(""),
 	contacts: z
 		.array(

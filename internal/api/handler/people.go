@@ -20,7 +20,8 @@ type personRequest struct {
 	Nickname         string            `json:"nickname"`
 	Gender           string            `json:"gender"` // "" | "male" | "female" | "rather_not_say"
 	RelationshipType string            `json:"relationship_type"`
-	DateOfBirth      string            `json:"date_of_birth"` // "YYYY-MM-DD" or ""
+	DateOfBirth      string            `json:"date_of_birth"`   // "YYYY-MM-DD" or ""
+	LastContactAt    string            `json:"last_contact_at"` // RFC3339 UTC or ""
 	OtherNotes       string            `json:"other_notes"`
 	Contacts         []contactRequest  `json:"contacts"`
 	Locations        []locationRequest `json:"locations"`
@@ -281,6 +282,14 @@ func mapPersonRequest(id int64, req personRequest) (people.Person, []people.Cont
 		t, err := time.Parse("2006-01-02", req.DateOfBirth)
 		if err == nil {
 			p.DateOfBirth = &t
+		}
+	}
+
+	if req.LastContactAt != "" {
+		t, err := time.Parse(time.RFC3339, req.LastContactAt)
+		if err == nil {
+			utc := t.UTC()
+			p.LastContactAt = &utc
 		}
 	}
 

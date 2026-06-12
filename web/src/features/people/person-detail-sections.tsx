@@ -70,6 +70,7 @@ function OverviewSection({
 				gender,
 				relationship_type: relationshipType,
 				date_of_birth: dob,
+				last_contact_at: person.last_contact_at ?? null,
 				other_notes: notes,
 				contacts: person.contacts.map((c, i) => ({
 					type: c.type,

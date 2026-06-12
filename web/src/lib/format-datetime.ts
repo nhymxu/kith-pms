@@ -127,3 +127,59 @@ export function formatDateTime(isoStr: string | null | undefined): string {
 
 	return `${datePart} ${timePart}`;
 }
+
+// Convert a UTC ISO string to "YYYY-MM-DDTHH:MM" in the user's timezone for datetime-local inputs.
+export function utcToDatetimeLocal(
+	isoStr: string | null | undefined,
+	tz?: string,
+): string {
+	if (!isoStr) return "";
+	const d = new Date(isoStr);
+	if (Number.isNaN(d.getTime())) return "";
+	const timezone = tz ?? getUserPrefs().timezone;
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: timezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(d);
+	const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+	const h = get("hour") === "24" ? "00" : get("hour");
+	return `${get("year")}-${get("month")}-${get("day")}T${h}:${get("minute")}`;
+}
+
+// Convert a "YYYY-MM-DDTHH:MM" value (in the given timezone) back to a UTC ISO string.
+export function datetimeLocalToUtc(localStr: string, tz?: string): string {
+	if (!localStr) return "";
+	const timezone = tz ?? getUserPrefs().timezone;
+	const [datePart, timePart = "00:00"] = localStr.split("T");
+	const [year, month, day] = datePart.split("-").map(Number);
+	const [hours, minutes] = timePart.split(":").map(Number);
+
+	// Treat the input as UTC to get a reference point, then find the offset.
+	const refUtc = Date.UTC(year, month - 1, day, hours, minutes);
+	const fmt = new Intl.DateTimeFormat("en-CA", {
+		timeZone: timezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	});
+	const p = fmt.formatToParts(new Date(refUtc));
+	const g = (type: string) => p.find((x) => x.type === type)?.value ?? "0";
+	const tzH = g("hour") === "24" ? 0 : Number(g("hour"));
+	const tzLocalMs = Date.UTC(
+		Number(g("year")),
+		Number(g("month")) - 1,
+		Number(g("day")),
+		tzH,
+		Number(g("minute")),
+	);
+	const offsetMs = tzLocalMs - refUtc;
+	return new Date(refUtc - offsetMs).toISOString();
+}

@@ -8,7 +8,11 @@ import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
 import { getPerson, updatePerson } from "#/endpoints/people";
-import { formatDate } from "#/lib/format-datetime";
+import {
+	datetimeLocalToUtc,
+	formatDate,
+	utcToDatetimeLocal,
+} from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
 import { genderOptions } from "#/schemas/person";
@@ -60,6 +64,9 @@ function OverviewSection({
 		person.relationship_type,
 	);
 	const [dob, setDob] = useState(person.date_of_birth ?? "");
+	const [lastContactAt, setLastContactAt] = useState(
+		utcToDatetimeLocal(person.last_contact_at),
+	);
 	const [notes, setNotes] = useState(person.other_notes);
 
 	const saveMutation = useMutation({
@@ -70,7 +77,9 @@ function OverviewSection({
 				gender,
 				relationship_type: relationshipType,
 				date_of_birth: dob,
-				last_contact_at: person.last_contact_at ?? null,
+				last_contact_at: lastContactAt
+					? datetimeLocalToUtc(lastContactAt)
+					: null,
 				other_notes: notes,
 				contacts: person.contacts.map((c, i) => ({
 					type: c.type,
@@ -159,6 +168,27 @@ function OverviewSection({
 							type="date"
 							value={dob}
 							onChange={(e) => setDob(e.target.value)}
+						/>
+					</div>
+					<div>
+						<div className="flex items-center justify-between mb-1.5">
+							<Label>Last contact</Label>
+							{lastContactAt && (
+								<Button
+									type="button"
+									variant="neutral"
+									size="sm"
+									className="h-6 px-2 text-xs"
+									onClick={() => setLastContactAt("")}
+								>
+									<X className="size-3" /> Clear
+								</Button>
+							)}
+						</div>
+						<Input
+							type="datetime-local"
+							value={lastContactAt}
+							onChange={(e) => setLastContactAt(e.target.value)}
 						/>
 					</div>
 					<div>

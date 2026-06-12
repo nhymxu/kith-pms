@@ -1,11 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
 import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
@@ -146,7 +148,20 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				</div>
 				<form.Field name="last_contact_at">
 					{(f) => (
-						<FormField field={f} label="Last contact" type="datetime-local" />
+						<div>
+							<FormField field={f} label="Last contact" type="datetime-local" />
+							{f.state.value && (
+								<Button
+									type="button"
+									variant="neutral"
+									size="sm"
+									className="mt-1.5 h-6 px-2 text-xs"
+									onClick={() => f.handleChange("")}
+								>
+									<X className="size-3" /> Clear last contact
+								</Button>
+							)}
+						</div>
 					)}
 				</form.Field>
 				<form.Field name="gender">

@@ -15,6 +15,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { apiFetch } from "#/lib/api-client";
+import { formatDateTime } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
 interface QuickActionsProps {
@@ -164,13 +165,16 @@ export function QuickGiftDialog({
 export function QuickActions({ personId }: QuickActionsProps) {
 	const [journalOpen, setJournalOpen] = useState(false);
 	const [giftOpen, setGiftOpen] = useState(false);
+	const [confirmLastContact, setConfirmLastContact] = useState(false);
 	const qc = useQueryClient();
 
 	const lastContactMutation = useMutation({
 		mutationFn: () =>
 			apiFetch(`/v1/people/${personId}/last-contact`, { method: "POST" }),
-		onSuccess: () =>
-			qc.invalidateQueries({ queryKey: keys.people.detail(personId) }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			setConfirmLastContact(false);
+		},
 	});
 
 	return (
@@ -189,10 +193,9 @@ export function QuickActions({ personId }: QuickActionsProps) {
 				<Button
 					variant="neutral"
 					size="sm"
-					disabled={lastContactMutation.isPending}
-					onClick={() => lastContactMutation.mutate()}
+					onClick={() => setConfirmLastContact(true)}
 				>
-					<Clock className="size-3" /> Update last contact
+					<Clock className="size-3" /> Update last contact to today
 				</Button>
 			</div>
 
@@ -206,6 +209,39 @@ export function QuickActions({ personId }: QuickActionsProps) {
 				open={giftOpen}
 				onClose={() => setGiftOpen(false)}
 			/>
+
+			<Dialog
+				open={confirmLastContact}
+				onOpenChange={(v) => !v && setConfirmLastContact(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Update last contact?</DialogTitle>
+					</DialogHeader>
+					<p className="text-sm text-zinc-600">
+						This will set the last contact date to{" "}
+						<span className="font-medium">
+							{formatDateTime(new Date().toISOString())}
+						</span>
+						. Continue?
+					</p>
+					<DialogFooter>
+						<Button
+							variant="neutral"
+							onClick={() => setConfirmLastContact(false)}
+						>
+							Cancel
+						</Button>
+						<SubmitButton
+							isPending={lastContactMutation.isPending}
+							onClick={() => lastContactMutation.mutate()}
+							type="button"
+						>
+							Confirm
+						</SubmitButton>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }

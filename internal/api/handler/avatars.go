@@ -2,6 +2,7 @@ package handler
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -184,7 +185,7 @@ func (h *AvatarsAPI) Get(c *echo.Context) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	mt := p.AvatarMimeType
+	mt := mime.TypeByExtension(filepath.Ext(cleanPath))
 	if mt == "" {
 		mt = "application/octet-stream"
 	}

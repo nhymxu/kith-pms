@@ -310,10 +310,9 @@ func (s *Service) UploadAvatar(
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	mimeType := header.Header.Get("Content-Type")
 	size := header.Size
 
-	if err := s.People.UpdateAvatar(ctx, tx, personID, path, mimeType, size); err != nil {
+	if err := s.People.UpdateAvatar(ctx, tx, personID, path, size); err != nil {
 		_ = s.FileService.DeleteAvatar(personID, path)
 		return err
 	}

@@ -14,7 +14,6 @@ export const giftSchema = z.object({
 	currency: z.string().optional().default("USD"),
 	debt_type: giftDebtTypeSchema.optional().default(""),
 	image_path: z.string().optional().default(""),
-	image_mime_type: z.string().optional().default(""),
 	created_at: z.string(),
 	updated_at: z.string(),
 });

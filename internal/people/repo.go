@@ -28,7 +28,7 @@ type PersonRepo interface {
 	Delete(ctx context.Context, id int64) error
 	SetSelf(ctx context.Context, db bun.IDB, personID int64) error
 	ClearSelf(ctx context.Context, db bun.IDB) error
-	UpdateAvatar(ctx context.Context, db bun.IDB, personID int64, path, mimeType string, size int64) error
+	UpdateAvatar(ctx context.Context, db bun.IDB, personID int64, path string, size int64) error
 	ClearAvatar(ctx context.Context, db bun.IDB, personID int64) error
 	UpdateLastContact(ctx context.Context, db bun.IDB, personID int64, contactTime time.Time) error
 }
@@ -251,21 +251,20 @@ func (r *sqlPersonRepo) UpdateAvatar(
 	ctx context.Context,
 	db bun.IDB,
 	personID int64,
-	path, mimeType string,
+	path string,
 	size int64,
 ) error {
 	now := time.Now().UTC()
 	p := &Person{
 		ID:               personID,
 		AvatarPath:       path,
-		AvatarMimeType:   mimeType,
 		AvatarSize:       size,
 		AvatarUploadedAt: &now,
 		UpdatedAt:        now,
 	}
 
 	_, err := db.NewUpdate().Model(p).WherePK().
-		Column("avatar_path", "avatar_mime_type", "avatar_size", "avatar_uploaded_at", "updated_at").
+		Column("avatar_path", "avatar_size", "avatar_uploaded_at", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: update avatar: %w", err)
@@ -282,7 +281,7 @@ func (r *sqlPersonRepo) ClearAvatar(ctx context.Context, db bun.IDB, personID in
 	}
 
 	_, err := db.NewUpdate().Model(p).WherePK().
-		Column("avatar_path", "avatar_mime_type", "avatar_size", "avatar_uploaded_at", "updated_at").
+		Column("avatar_path", "avatar_size", "avatar_uploaded_at", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: clear avatar: %w", err)

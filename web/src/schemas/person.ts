@@ -45,7 +45,6 @@ export const personSchema = z.object({
 	relationship_type: z.string().optional().default(""),
 	other_notes: z.string().optional().default(""),
 	avatar_path: z.string().optional().default(""),
-	avatar_mime_type: z.string().optional().default(""),
 	avatar_size: z.number().optional().default(0),
 	avatar_uploaded_at: z.string().nullable().optional(),
 	last_contact_at: z.string().nullable().optional(),

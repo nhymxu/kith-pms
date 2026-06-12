@@ -29,7 +29,6 @@ type Person struct {
 	RelationshipType string     `bun:"relationship_type"    json:"relationship_type"`
 	OtherNotes       string     `bun:"other_notes"          json:"other_notes"`
 	AvatarPath       string     `bun:"avatar_path"          json:"avatar_path"`
-	AvatarMimeType   string     `bun:"avatar_mime_type"     json:"avatar_mime_type"`
 	AvatarSize       int64      `bun:"avatar_size"          json:"avatar_size"`
 	AvatarUploadedAt *time.Time `bun:"avatar_uploaded_at"   json:"avatar_uploaded_at"`
 	LastContactAt    *time.Time `bun:"last_contact_at"      json:"last_contact_at"`

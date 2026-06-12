@@ -162,15 +162,13 @@ func (s *Service) UploadImage(
 		return fmt.Errorf("save gift image: %w", err)
 	}
 
-	mimeType := header.Header.Get("Content-Type")
-
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if err := s.repo.UpdateImage(ctx, tx, giftID, path, mimeType); err != nil {
+	if err := s.repo.UpdateImage(ctx, tx, giftID, path); err != nil {
 		return err
 	}
 
@@ -203,7 +201,7 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if err := s.repo.UpdateImage(ctx, tx, giftID, "", ""); err != nil {
+	if err := s.repo.UpdateImage(ctx, tx, giftID, ""); err != nil {
 		return err
 	}
 

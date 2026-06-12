@@ -40,7 +40,6 @@ func setupTestDB(t *testing.T) *bun.DB {
 			currency        TEXT    NOT NULL DEFAULT 'USD',
 			debt_type       TEXT    NOT NULL DEFAULT '',
 			image_path      TEXT    NOT NULL DEFAULT '',
-			image_mime_type TEXT    NOT NULL DEFAULT '',
 			created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
 			updated_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 		);
@@ -303,7 +302,7 @@ func TestGiftsImageFields(t *testing.T) {
 	tx, _ := db.BeginTx(ctx, nil)
 
 	repo := NewRepo(db)
-	if err := repo.UpdateImage(ctx, tx, id, "gifts/1/abc.jpg", "image/jpeg"); err != nil {
+	if err := repo.UpdateImage(ctx, tx, id, "gifts/1/abc.jpg"); err != nil {
 		tx.Rollback()
 		t.Fatalf("UpdateImage: %v", err)
 	}
@@ -325,7 +324,7 @@ func TestGiftsImageFields(t *testing.T) {
 
 	// Clear image via repo.
 	tx2, _ := db.BeginTx(ctx, nil)
-	if err := repo.UpdateImage(ctx, tx2, id, "", ""); err != nil {
+	if err := repo.UpdateImage(ctx, tx2, id, ""); err != nil {
 		tx2.Rollback()
 		t.Fatalf("UpdateImage clear: %v", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"io"
 	"math"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -286,7 +287,7 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	mt := g.ImageMimeType
+	mt := mime.TypeByExtension(filepath.Ext(cleanPath))
 	if mt == "" {
 		mt = "application/octet-stream"
 	}

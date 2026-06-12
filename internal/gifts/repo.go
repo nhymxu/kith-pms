@@ -146,10 +146,9 @@ func (r *Repo) Update(ctx context.Context, tx bun.Tx, g *Gift) error {
 	return nil
 }
 
-func (r *Repo) UpdateImage(ctx context.Context, tx bun.Tx, id int64, imagePath, imageMimeType string) error {
+func (r *Repo) UpdateImage(ctx context.Context, tx bun.Tx, id int64, imagePath string) error {
 	_, err := tx.NewUpdate().Model((*Gift)(nil)).
 		Set("image_path = ?", imagePath).
-		Set("image_mime_type = ?", imageMimeType).
 		Set("updated_at = ?", time.Now().UTC()).
 		Where("id = ?", id).
 		Exec(ctx)

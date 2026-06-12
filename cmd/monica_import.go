@@ -779,7 +779,6 @@ func saveAvatar(
 		tx,
 		personID,
 		path,
-		mimeType,
 		int64(len(data)),
 	); err != nil {
 		_ = filesSvc.DeleteAvatar(personID, path)

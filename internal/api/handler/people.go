@@ -281,7 +281,8 @@ func mapPersonRequest(id int64, req personRequest) (people.Person, []people.Cont
 	if req.DateOfBirth != "" {
 		t, err := time.Parse("2006-01-02", req.DateOfBirth)
 		if err == nil {
-			p.DateOfBirth = &t
+			d := people.NewDateOnly(t)
+			p.DateOfBirth = &d
 		}
 	}
 

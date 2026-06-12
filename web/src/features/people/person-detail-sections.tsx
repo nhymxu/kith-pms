@@ -63,9 +63,7 @@ function OverviewSection({
 	const [relationshipType, setRelationshipType] = useState(
 		person.relationship_type,
 	);
-	const [dob, setDob] = useState(
-		person.date_of_birth ? person.date_of_birth.slice(0, 10) : "",
-	);
+	const [dob, setDob] = useState(person.date_of_birth ?? "");
 	const [lastContactAt, setLastContactAt] = useState(
 		utcToDatetimeLocal(person.last_contact_at),
 	);

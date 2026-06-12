@@ -59,7 +59,8 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 	svc := newSvc(t)
 	ctx := context.Background()
 
-	dob := time.Date(1990, 6, 15, 0, 0, 0, 0, time.UTC)
+	dobTime := time.Date(1990, 6, 15, 0, 0, 0, 0, time.UTC)
+	dob := people.NewDateOnly(dobTime)
 	p := people.Person{
 		Prefix:           "Dr",
 		Name:             "Alice Example",
@@ -115,7 +116,7 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 
 	if got.DateOfBirth == nil {
 		t.Error("DateOfBirth: got nil, want non-nil")
-	} else if !got.DateOfBirth.Equal(dob) {
+	} else if got.DateOfBirth.String() != dob.String() {
 		t.Errorf("DateOfBirth: got %v, want %v", got.DateOfBirth, dob)
 	}
 

@@ -144,7 +144,8 @@ func mapPerson(c Contact, nameOrder string) people.Person {
 	// Parse birthdate for Person.DateOfBirth (year-having only).
 	if c.Information.Birthdate != "" && !c.Information.IsYearUnknown {
 		if t, err := time.Parse("2006-01-02", c.Information.Birthdate); err == nil {
-			p.DateOfBirth = &t
+			d := people.NewDateOnly(t)
+			p.DateOfBirth = &d
 		}
 	}
 

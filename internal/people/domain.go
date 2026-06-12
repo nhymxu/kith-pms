@@ -25,7 +25,7 @@ type Person struct {
 	Name             string     `bun:"name"                 json:"name"`
 	Nickname         string     `bun:"nickname"             json:"nickname"`
 	Gender           string     `bun:"gender"               json:"gender"`
-	DateOfBirth      *time.Time `bun:"date_of_birth"        json:"date_of_birth"`
+	DateOfBirth      *DateOnly  `bun:"date_of_birth"        json:"date_of_birth"`
 	RelationshipType string     `bun:"relationship_type"    json:"relationship_type"`
 	OtherNotes       string     `bun:"other_notes"          json:"other_notes"`
 	AvatarPath       string     `bun:"avatar_path"          json:"avatar_path"`

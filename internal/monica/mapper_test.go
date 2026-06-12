@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestMapContactBasicName(t *testing.T) {
@@ -39,9 +38,8 @@ func TestMapContactBirthdateWithYear(t *testing.T) {
 		t.Fatal("expected DateOfBirth to be set")
 	}
 
-	expected := time.Date(1990, 6, 15, 0, 0, 0, 0, time.UTC)
-	if !rec.Person.DateOfBirth.Equal(expected) {
-		t.Errorf("expected %v, got %v", expected, rec.Person.DateOfBirth)
+	if rec.Person.DateOfBirth.String() != "1990-06-15" {
+		t.Errorf("expected 1990-06-15, got %v", rec.Person.DateOfBirth)
 	}
 	// Should also produce an ImportantDate birthday entry
 	found := false

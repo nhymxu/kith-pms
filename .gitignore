@@ -123,3 +123,6 @@ data/
 CLAUDE.local.md
 .agents/
 .playwright-mcp/
+
+# Air live-reload build cache
+tmp/

@@ -143,8 +143,19 @@ make test-coverage # generate coverage profile (HTML report)
 make tidy          # fmt + go mod tidy
 make clean         # remove web/dist and internal/web/spa/public
 make vuln-check    # scan for known vulnerabilities
+make dev           # Go live-reload (air) + Vite HMR
 make gosec         # security static analysis
 ```
+
+### Local dev with hot-reload (recommended)
+
+```bash
+make dev
+```
+
+This runs:
+- **air** — watches Go files, auto-rebuilds and restarts the API on `:8000`
+- **Vite** — frontend dev server on `:3000` with HMR, proxying `/v1/*` to `:8000`
 
 ### Local dev (SPA + API separately)
 

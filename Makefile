@@ -37,9 +37,11 @@ migrate: ## Apply database migrations
 	./bin/$(APP_NAME) migrate up
 
 .PHONY: dev
-dev: ## Run dev servers (go run serve + pnpm dev) — SPA proxies /v1 to :8000
+dev: ## Run dev servers with Go live-reload (air) + Vite HMR
+	@echo "Installing air if not present..."
+	@command -v air >/dev/null 2>&1 || go install github.com/air-verse/air@latest
 	@trap 'kill 0' EXIT INT TERM; \
-	CGO_ENABLED=0 go run ./cmd serve 2>&1 | sed 's/^/[api] /' & \
+	air 2>&1 | sed 's/^/[api] /' & \
 	sleep 2; \
 	pnpm --dir web dev 2>&1 | sed 's/^/[web] /' & \
 	wait

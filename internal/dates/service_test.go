@@ -103,7 +103,8 @@ func setupTestDB(t *testing.T) *bun.DB {
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL,
-			nickname TEXT NOT NULL DEFAULT ''
+			nickname TEXT NOT NULL DEFAULT '',
+			date_of_birth TEXT
 		)
 	`)
 	if err != nil {
@@ -371,6 +372,85 @@ func TestService_Upcoming(t *testing.T) {
 
 	if items[1].Date.Label != "Anniversary" {
 		t.Errorf("second item label = %q, want Anniversary", items[1].Date.Label)
+	}
+}
+
+// TestService_DoBFallback verifies that person.date_of_birth is picked up by
+// Upcoming and OnThisDay when no birthday row exists in important_date.
+func TestService_DoBFallback(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	// Person with DoB only in person table (no important_date birthday row)
+	res, _ := db.ExecContext(ctx,
+		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Dana", "1998-07-03",
+	)
+	personIDDana, _ := res.LastInsertId()
+
+	// Person with birthday in both person.date_of_birth and important_date — no duplicate expected
+	res, _ = db.ExecContext(ctx,
+		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Eve", "1990-07-10",
+	)
+	personIDEve, _ := res.LastInsertId()
+
+	err := svc.ReplaceForPerson(ctx, personIDEve, []ImportantDate{
+		{Kind: "birthday", Label: "Birthday", DateValue: "1990-07-10", Recurring: true},
+	})
+	if err != nil {
+		t.Fatalf("ReplaceForPerson: %v", err)
+	}
+
+	// Upcoming: 30 days from 2026-06-28 (Dana's birthday 07-03 is 5 days away)
+	today := time.Date(2026, 6, 28, 0, 0, 0, 0, time.UTC)
+
+	items, err := svc.Upcoming(ctx, today, 30)
+	if err != nil {
+		t.Fatalf("Upcoming: %v", err)
+	}
+
+	var foundDana, foundEve int
+	for _, item := range items {
+		if item.Person.ID == personIDDana {
+			foundDana++
+		}
+		if item.Person.ID == personIDEve {
+			foundEve++
+		}
+	}
+
+	if foundDana != 1 {
+		t.Errorf("Dana's birthday (DoB only) found %d times, want 1", foundDana)
+	}
+	if foundEve != 1 {
+		t.Errorf("Eve's birthday (DoB + important_date) found %d times, want 1 (no duplicate)", foundEve)
+	}
+
+	// OnThisDay: Dana's birthday is 07-03
+	onThisDay, err := svc.OnThisDay(ctx, time.Date(2026, 7, 3, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("OnThisDay: %v", err)
+	}
+
+	var danaFound bool
+	for _, item := range onThisDay {
+		if item.Person.ID == personIDDana {
+			danaFound = true
+			if item.Date.Kind != "birthday" {
+				t.Errorf("Dana's date kind = %q, want birthday", item.Date.Kind)
+			}
+			if item.YearsSince != 28 {
+				t.Errorf("Dana YearsSince = %d, want 28", item.YearsSince)
+			}
+		}
+	}
+
+	if !danaFound {
+		t.Error("Dana's birthday not found in OnThisDay results")
 	}
 }
 

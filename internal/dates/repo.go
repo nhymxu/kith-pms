@@ -67,6 +67,8 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dat
 // OnThisDay uses raw SQL because it JOINs important_date with person and scans
 // into a non-model DTO (OnThisDayItem) with nullable nickname and computed YearsSince.
 func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]OnThisDayItem, error) {
+	// The UNION includes synthetic birthday rows from person.date_of_birth for people
+	// who have no explicit birthday entry in important_date, to avoid duplicates.
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
 		       d.notes, d.position, d.created_at,
@@ -75,10 +77,21 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		  JOIN person p ON p.id = d.person_id
 		 WHERE d.month_day = ?
 		   AND (d.recurring = 1 OR d.date_value = ?)
-		 ORDER BY p.name COLLATE NOCASE
+		UNION ALL
+		SELECT 0, p.id, 'birthday', 'Birthday', p.date_of_birth, 1,
+		       '', 0, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+		       p.id, p.name, p.nickname
+		  FROM person p
+		 WHERE p.date_of_birth IS NOT NULL AND p.date_of_birth != ''
+		   AND substr(p.date_of_birth, 6) = ?
+		   AND NOT EXISTS (
+		     SELECT 1 FROM important_date d2
+		      WHERE d2.person_id = p.id AND d2.kind = 'birthday'
+		   )
+		 ORDER BY name COLLATE NOCASE
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, monthDay, todayISO)
+	rows, err := r.db.QueryContext(ctx, query, monthDay, todayISO, monthDay)
 	if err != nil {
 		return nil, fmt.Errorf("query on this day: %w", err)
 	}
@@ -144,13 +157,25 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 // ListAll uses raw SQL because it JOINs important_date with person and scans
 // into a non-model DTO (OnThisDayItem) with nullable nickname.
 func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
+	// The UNION includes synthetic birthday rows from person.date_of_birth for people
+	// who have no explicit birthday entry in important_date, to avoid duplicates.
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
 		       d.notes, d.position, d.created_at,
 		       p.id, p.name, p.nickname
 		  FROM important_date d
 		  JOIN person p ON p.id = d.person_id
-		 ORDER BY d.month_day, p.name COLLATE NOCASE
+		UNION ALL
+		SELECT 0, p.id, 'birthday', 'Birthday', p.date_of_birth, 1,
+		       '', 0, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+		       p.id, p.name, p.nickname
+		  FROM person p
+		 WHERE p.date_of_birth IS NOT NULL AND p.date_of_birth != ''
+		   AND NOT EXISTS (
+		     SELECT 1 FROM important_date d2
+		      WHERE d2.person_id = p.id AND d2.kind = 'birthday'
+		   )
+		 ORDER BY name COLLATE NOCASE
 	`
 
 	rows, err := r.db.QueryContext(ctx, query)

@@ -116,7 +116,7 @@ After import, avatars and documents are handled as follows:
 
 **Avatars**: Contacts whose avatars were stored as photos in Monica (`avatar_source: photo`) have their photos automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`). The dry-run summary includes an `Avatars:` count. Contact avatars using gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page.
 
-**Documents**: Each imported document is decoded from the export and stored under `DOCUMENT_STORAGE_PATH` (default: `data/documents`), organized per-person. A `DOCUMENT`-labelled journal entry is created for each document, containing the filename and metadata. This makes imported documents discoverable via journal search and filters. The actual document files are available under the person's folder for download if needed.
+**Documents**: Each imported document is decoded from the export and stored under the `AVATAR_STORAGE_PATH` base directory in a `documents/<personID>/` subfolder. A `DOCUMENT`-labelled journal entry is created for each document, containing the filename and metadata. This makes imported documents discoverable via journal search and filters.
 
 ## Step 6 — Verify all data
 
@@ -164,6 +164,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | gifts | Gifts | status mapped to given/received/planned; amount converted to cents |
 | relationships | Person relationships | Relationship type names are created automatically |
 | avatar (photo source) | Person avatar | Automatically imported when Monica `avatar_source` is `"photo"` and the photo data exists in the export. Photos are decoded from dataURL and saved to `AVATAR_STORAGE_PATH` (default: `data/avatars`). Gravatar, adorable, and external avatars are skipped. |
+| documents (per-contact) | Journal entries + files | Documents are decoded from base64 dataURL, saved under `AVATAR_STORAGE_PATH/documents/<personID>/`, and linked via DOCUMENT-labelled journal entries. Dry-run reports document count. |
 
 ### What does NOT migrate
 
@@ -179,7 +180,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | Audit logs | Internal Monica data, not relevant to kith. |
 | Sync tokens / vCard data | Internal Monica data, not relevant to kith. |
 | Inactive reminders | Prompted by default; use `--inactive-reminders=completed` to import them as completed reminders or `--inactive-reminders=skip` to omit them. |
-| Documents (account-level) | Account-level documents with no contact link are skipped; per-contact documents are imported. |
+| Account-level documents | Account-level documents with no contact link are skipped; per-contact documents are imported as DOCUMENT-labelled journal entries. |
 
 ---
 

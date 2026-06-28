@@ -15,7 +15,7 @@
 │  │  └─ restore --from   → replace database                 │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Web Layer (Echo v5.1.1 JSON API + React 19 SPA)          │   │
+│  │ Web Layer (Echo v5.2.1 JSON API + React 19 SPA)          │   │
 │  │  ├─ /health        → Liveness probe (no auth)            │   │
 │  │  ├─ /swagger/*     → Swagger UI + OpenAPI spec (no auth) │   │
 │  │  ├─ /v1/*          → JSON REST API (SessionOrBearer)     │   │
@@ -41,8 +41,9 @@
 │  │  └─ GET /audit, /me/setup                               │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Service Layer (auth, people, labels, journal, dates,     │   │
-│  │                reminders, gifts, files, audit)            │   │
+│  │ Service Layer (auth, people, labels, journal_labels,     │   │
+│  │                journal, dates, reminders, gifts, files,   │   │
+│  │                audit)                                      │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -80,7 +81,7 @@ Subcommands after dependency init:
 
 ## Configuration & Environment
 
-Three-layer merge via nhymxu/gommon/cfgloader (lowest → highest precedence):
+Three-layer merge via `nhymxu/gommon/cfgloader` (lowest → highest precedence):
 
 ```
 1. Hardcoded defaults (configDefaults)  ← baseline
@@ -185,9 +186,9 @@ routes/
 ### Components & Styling
 
 **Component Library**: Shared UI primitives in `web/src/components/ui` use `@base-ui/react` for accessible behavior where primitives are needed, with shadcn-style component APIs restyled for Linear/Stripe minimal:
-- **Accent**: Indigo-600 (#4f46e5)
-- **Surfaces**: Zinc palette (white, #fafafa muted, #e4e4e7 borders)
-- **Borders**: Hairline (1px) zinc-200; no box shadows
+- **Accent**: Indigo-600 (#4f46e5) — primary actions, links, and interactive elements
+- **Surfaces**: Zinc palette (white background, #fafafa muted, #e4e4e7 borders)
+- **Borders**: Hairline (1px) zinc-200 throughout; no box shadows
 - **Radius**: 0.375rem (compact aesthetic)
 - **Typography**: Inter primary, JetBrains Mono for numerics; font-weight 600 headings
 
@@ -259,7 +260,7 @@ export function PersonForm() {
 
 ---
 
-## HTTP Server (Echo v5.1.1)
+## HTTP Server (Echo v5.2.1)
 
 ### Handler Architecture
 
@@ -459,6 +460,8 @@ Gift images are stored separately from avatars with similar security patterns:
 - On delete: clears DB metadata, removes file from disk
 - On retrieve: serves from disk with cache headers
 
+**MIME Type Detection**: File type is detected from file extension at serve time, not stored in database. This simplifies schema and avoids MIME type spoofing attacks.
+
 ## Database Layer & ORM
 
 ### SQLite Configuration
@@ -519,7 +522,7 @@ err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT row
 | `0017_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
 | `0018_person_gender.sql` | gender TEXT column on person table |
 
-**Total Migrations**: 18 migrations applied in order; tracked via schema_migrations table.
+**Total Migrations**: 22 migrations applied in order; tracked via schema_migrations table.
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

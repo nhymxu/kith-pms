@@ -19,7 +19,7 @@
 - **ORM**: uptrace/bun (query builder + model mapping)
 - **ORM Models**: Domain structs embed `bun.BaseModel` with `bun:"table:..."` tags; bun handles column mapping, time serialization, and struct scanning automatically
 - **Query Builder**: Use `db.NewSelect()`, `db.NewInsert()`, `db.NewUpdate()`, `db.NewDelete()` throughout repos; raw SQL fragments allowed in `Where()`/`Join()`/`OrderExpr()` for FTS5, INTERSECT, and SQLite-specific functions
-- **FTS5 Queries**: Journal full-text search uses bun `Where("activity_fts MATCH ?", ...)` + `Join("JOIN activity_fts ...")` — raw SQL fragments inside the query builder, not `db.NewRaw()`
+- **FTS5 Queries**: Journal full-text search uses raw SQL with bun: `db.NewRaw("SELECT ... WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH ?)", term)`
 - **Parameterized Queries**: Always use `?` placeholders — bun enforces this via its API; use `bun.List(slice)` for IN clauses
 - **Transaction Pattern**: Write methods accept `bun.IDB` (satisfied by `*bun.DB` or `bun.Tx`) for unified transaction handling
 - **Migration Files**: `0NNN_description.sql` in `internal/db/migrations/`; load programmatically in `internal/db/migrations.go`
@@ -199,8 +199,8 @@ export const PersonSchema = z.object({
 - **Integration tests**: Use real SQLite database (e.g., `:memory:` or temp file)
 - **Service tests**: `internal/{domain}/service_test.go` — test business logic with real repo
 - **No mocks**: Prefer real dependencies over mocks for confidence in actual behavior
-- **Test files**: 26+ test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts, work_history, settings, audit, metrics, monica
-- **Total Go tests**: 159 tests passing with race detector enabled
+- **Test files**: 29 test files across auth, people, labels, journal, dates, files, reminders, relationships, gifts, work_history, settings, audit, metrics, monica
+- **Total Go tests**: 200+ tests passing with race detector enabled
 
 ### React Frontend Tests
 - **Framework**: Vitest + @testing-library/react

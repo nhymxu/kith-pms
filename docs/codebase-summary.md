@@ -17,7 +17,7 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (18 migrations)
+│   │   └── migrations/           # SQL schema files (22 migrations)
 │   ├── testutil/                 # Test utilities
 │   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management
@@ -140,7 +140,11 @@ kith-pms/
 │   ├── 0015_relationship_type.sql   # relationship_type + person_relationship tables
 │   ├── 0016_user_setting.sql     # user_setting table (key, value) for user preferences
 │   ├── 0017_reminder_recurrence.sql # recurrence_rule + recurrence_end_date columns on reminder
-│   └── 0018_person_gender.sql    # gender column on person
+│   ├── 0018_person_gender.sql    # gender column on person
+│   ├── 0019_rename_people_labels.sql # renamed label table to people_labels
+│   ├── 0020_journal_label.sql    # journal-specific labels (separate from people labels)
+│   ├── 0021_person_nickname_lower.sql # generated lowercase column for search
+│   └── 0022_drop_mime_type_columns.sql # MIME type now detected from file extension
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -377,7 +381,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `labstack/echo/v5` | v5.1.1+ | HTTP framework |
+| `labstack/echo/v5` | v5.2.1+ | HTTP framework |
 | `urfave/cli/v3` | v3.8.0+ | CLI subcommands |
 | `uptrace/bun` | v1.2.18+ | Query builder + struct scanning |
 | `uptrace/bun/dialect/sqlitedialect` | v1.2.18+ | SQLite dialect for bun |
@@ -385,7 +389,8 @@ styles.css               # Tailwind + design tokens (:root variables)
 | `uptrace/bun/extra/bundebug` | v1.2.18+ | Query debug logging hook |
 | `modernc.org/sqlite` | v1.50.1+ | Pure Go SQLite driver (no CGO) |
 | `golang.org/x/crypto` | latest | bcrypt password hashing |
-| `nhymxu/gommon/cfgloader` | latest | Three-layer config merging (replaces koanf) |
+| `nhymxu/gommon/cfgloader` | v0.0.0-20260605025023 | Three-layer config merging (replaces koanf) |
+| `koanf` | (indirect) | Used transitively via dependencies (not direct) |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
 | `samber/slog-multi` | v1.8.0+ | slog fan-out to multiple handlers |
 | `lmittmann/tint` | v1.1.3+ | Colored output for debug logs |
@@ -417,8 +422,8 @@ styles.css               # Tailwind + design tokens (:root variables)
 - `work_history`: CRUD operations
 - `monica` (mapper): Monica-to-domain type mapping, edge cases (birthdate year handling, contact type, tag deduplication, document coverage)
 
-**Total**: 180+ Go tests passing with race detector. Run all: `make tests`
+**Total**: 200+ Go tests passing with race detector. Run all: `make tests`
 
-**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 18 migrations applied, providing clean per-test isolation.
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 22 migrations applied, providing clean per-test isolation.
 
-React frontend tests: Vitest + @testing-library/react; run via `pnpm --dir web test`
+**React Frontend Tests**: Vitest + @testing-library/react; run via `pnpm --dir web test`

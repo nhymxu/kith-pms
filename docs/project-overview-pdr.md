@@ -70,9 +70,15 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Multi-platform Docker images to GHCR (distroless + debian-slim variants)
 
 ### Journal Labels with Color
-- Labeled journal entry categories (CONVERSATION, LIFE_EVENT, DOCUMENT, etc.)
+- Colored labels for journal entries (CONVERSATION, LIFE_EVENT, DOCUMENT, etc.) — separate from people labels
 - Color-coded labels for visual organization
 - Multi-label support per journal entry
+- Managed under `/settings/journal-labels`
+
+### People Labels (Tags)
+- Color-coded labels for categorizing contacts (e.g., "friend", "family", "colleague")
+- Managed under `/settings/people-labels`
+- Many-to-many associations with people
 
 ### Footer Version & Metadata
 - App version display in footer
@@ -84,7 +90,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Layer            | Technology                                  | Rationale                                                                |
 |------------------|---------------------------------------------|--------------------------------------------------------------------------|
 | Language         | Go 1.26.4, CGO_ENABLED=0                    | Compiled binary, low overhead, easy self-hosting                         |
-| HTTP             | Echo v5.1.1                                 | Lightweight HTTP framework, minimal magic                                |
+| HTTP             | Echo v5.2.1                                 | Lightweight HTTP framework, minimal magic                                |
 | Database         | SQLite (modernc.org/sqlite v1.50.1)         | Pure Go, no CGO, single-file database, WAL mode                          |
 | ORM              | uptrace/bun v1.2.18+                        | Lightweight query builder; raw SQL queries; no model layer               |
 | Frontend         | React 19.2, TanStack Router 1.168+          | CSR SPA with file-based routing; full client-side interactivity          |

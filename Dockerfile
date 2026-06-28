@@ -45,7 +45,7 @@ EXPOSE 8000
 ENTRYPOINT ["/kith-pms", "serve"]
 
 # Stage 3b: Debian slim runtime image
-FROM debian:12-slim AS debian-slim
+FROM debian:13-slim AS debian-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \

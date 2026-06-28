@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -26,6 +27,7 @@ func (s *Service) Log(ctx context.Context, entityType EntityType, entityID int64
 		EntityName: entityName,
 		Action:     action,
 		ActorID:    ActorFromCtx(ctx),
+		CreatedAt:  time.Now().UTC(),
 	}
 	if err := s.repo.Insert(ctx, s.db, e); err != nil {
 		slog.WarnContext(ctx, "audit log failed", "err", err,

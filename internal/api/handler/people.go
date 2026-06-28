@@ -93,12 +93,15 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 
 	hasJournal := c.QueryParam("has_journal") == "true"
 
+	sort := c.QueryParam("sort")
+
 	list, err := h.Svc.List(c.Request().Context(), people.ListParams{
 		Query:      q,
 		Page:       page,
 		PageSize:   pageSize,
 		LabelIDs:   labelIDs,
 		HasJournal: hasJournal,
+		Sort:       sort,
 	})
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")

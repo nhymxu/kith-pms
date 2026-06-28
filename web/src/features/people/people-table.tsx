@@ -12,6 +12,15 @@ import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
 
+const SORT_OPTIONS = [
+	{ value: "name", label: "Name A→Z" },
+	{ value: "-name", label: "Name Z→A" },
+	{ value: "-last_contact", label: "Last contact: newest" },
+	{ value: "last_contact", label: "Last contact: oldest" },
+] as const;
+
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+
 function useDebounce<T>(value: T, ms = 300): T {
 	const [debounced, setDebounced] = useState(value);
 	useEffect(() => {
@@ -26,9 +35,11 @@ interface PeopleTableProps {
 	labels?: number[];
 	page?: number;
 	page_size?: number;
+	sort?: string;
 	onSearchChange: (q: string) => void;
 	onLabelsChange: (labels: number[]) => void;
 	onPageChange: (page: number) => void;
+	onSortChange: (sort: SortValue) => void;
 }
 
 const columns: ColumnDef<Person>[] = [
@@ -134,9 +145,11 @@ export function PeopleTable({
 	labels = [],
 	page = 1,
 	page_size = 20,
+	sort = "name",
 	onSearchChange,
 	onLabelsChange,
 	onPageChange,
+	onSortChange,
 }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
@@ -160,6 +173,7 @@ export function PeopleTable({
 			labels: labels.length ? labels : undefined,
 			page,
 			page_size,
+			sort,
 		}),
 		queryFn: () =>
 			listPeople({
@@ -167,6 +181,7 @@ export function PeopleTable({
 				labels: labels.length ? labels : undefined,
 				page,
 				page_size,
+				sort,
 			}),
 	});
 
@@ -179,12 +194,25 @@ export function PeopleTable({
 
 	return (
 		<div className="space-y-3">
-			<Input
-				placeholder="Search people…"
-				value={localQ}
-				onChange={(e) => setLocalQ(e.target.value)}
-				className="max-w-xs"
-			/>
+			<div className="flex items-center gap-3">
+				<Input
+					placeholder="Search people…"
+					value={localQ}
+					onChange={(e) => setLocalQ(e.target.value)}
+					className="max-w-xs"
+				/>
+				<select
+					value={sort}
+					onChange={(e) => onSortChange(e.target.value as SortValue)}
+					className="text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground"
+				>
+					{SORT_OPTIONS.map((opt) => (
+						<option key={opt.value} value={opt.value}>
+							{opt.label}
+						</option>
+					))}
+				</select>
+			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
 				<div className="flex flex-wrap gap-2">
 					{allLabelsData.map((l) => {

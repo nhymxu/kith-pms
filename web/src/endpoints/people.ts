@@ -22,6 +22,7 @@ export interface PeopleListParams {
 	page_size?: number;
 	labels?: number[];
 	has_journal?: boolean;
+	sort?: string;
 }
 
 export async function listPeople(
@@ -33,6 +34,7 @@ export async function listPeople(
 	if (params.page_size) qs.set("page_size", String(params.page_size));
 	if (params.labels?.length) qs.set("labels", params.labels.join(","));
 	if (params.has_journal) qs.set("has_journal", "true");
+	if (params.sort) qs.set("sort", params.sort);
 
 	const query = qs.toString();
 	const res = await apiFetch<Envelope<unknown>>(

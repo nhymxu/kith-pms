@@ -414,10 +414,12 @@ func TestService_DoBFallback(t *testing.T) {
 	}
 
 	var foundDana, foundEve int
+
 	for _, item := range items {
 		if item.Person.ID == personIDDana {
 			foundDana++
 		}
+
 		if item.Person.ID == personIDEve {
 			foundEve++
 		}
@@ -426,6 +428,7 @@ func TestService_DoBFallback(t *testing.T) {
 	if foundDana != 1 {
 		t.Errorf("Dana's birthday (DoB only) found %d times, want 1", foundDana)
 	}
+
 	if foundEve != 1 {
 		t.Errorf("Eve's birthday (DoB + important_date) found %d times, want 1 (no duplicate)", foundEve)
 	}
@@ -437,12 +440,15 @@ func TestService_DoBFallback(t *testing.T) {
 	}
 
 	var danaFound bool
+
 	for _, item := range onThisDay {
 		if item.Person.ID == personIDDana {
 			danaFound = true
+
 			if item.Date.Kind != "birthday" {
 				t.Errorf("Dana's date kind = %q, want birthday", item.Date.Kind)
 			}
+
 			if item.YearsSince != 28 {
 				t.Errorf("Dana YearsSince = %d, want 28", item.YearsSince)
 			}

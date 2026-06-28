@@ -4,11 +4,15 @@ import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { PeopleTable } from "#/features/people/people-table";
 
+const VALID_SORTS = ["name", "-name", "last_contact", "-last_contact"] as const;
+type SortValue = (typeof VALID_SORTS)[number];
+
 const searchSchema = z.object({
 	q: z.string().optional(),
 	page: z.coerce.number().min(1).optional().default(1),
 	page_size: z.coerce.number().min(1).max(100).optional().default(20),
 	labels: z.array(z.coerce.number()).optional(),
+	sort: z.enum(VALID_SORTS).optional().default("name"),
 });
 
 export const Route = createFileRoute("/_authed/people/")({
@@ -23,6 +27,7 @@ function PeoplePage() {
 		q: searchQ,
 		labels: searchLabels,
 		page_size: searchPageSize,
+		sort: searchSort,
 	} = search;
 
 	// Each handler only captures the fields it reads — excludes `page` so identity
@@ -37,10 +42,11 @@ function PeoplePage() {
 					page: 1,
 					page_size: searchPageSize,
 					labels: searchLabels,
+					sort: searchSort,
 				},
 			});
 		},
-		[searchLabels, searchPageSize, navigate],
+		[searchLabels, searchPageSize, searchSort, navigate],
 	);
 
 	const handleLabelsChange = useCallback(
@@ -52,10 +58,11 @@ function PeoplePage() {
 					page: 1,
 					page_size: searchPageSize,
 					labels: labels.length ? labels : undefined,
+					sort: searchSort,
 				},
 			});
 		},
-		[searchQ, searchPageSize, navigate],
+		[searchQ, searchPageSize, searchSort, navigate],
 	);
 
 	const handlePageChange = useCallback(
@@ -67,6 +74,23 @@ function PeoplePage() {
 					page,
 					page_size: searchPageSize,
 					labels: searchLabels,
+					sort: searchSort,
+				},
+			});
+		},
+		[searchQ, searchLabels, searchPageSize, searchSort, navigate],
+	);
+
+	const handleSortChange = useCallback(
+		(sort: SortValue) => {
+			void navigate({
+				to: "/people",
+				search: {
+					q: searchQ || undefined,
+					page: 1,
+					page_size: searchPageSize,
+					labels: searchLabels,
+					sort,
 				},
 			});
 		},
@@ -88,9 +112,11 @@ function PeoplePage() {
 				labels={search.labels}
 				page={search.page}
 				page_size={search.page_size}
+				sort={search.sort}
 				onSearchChange={handleSearchChange}
 				onLabelsChange={handleLabelsChange}
 				onPageChange={handlePageChange}
+				onSortChange={handleSortChange}
 			/>
 		</div>
 	);

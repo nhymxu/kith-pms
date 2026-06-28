@@ -1,4 +1,4 @@
-// Upcoming dates list: grouped by month, shows person name, date type, days-until badge
+// Upcoming dates list: grouped by month, shows person name, date type, exact date + days-until badge
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { listUpcomingDates } from "#/endpoints/dates";
@@ -19,23 +19,49 @@ function monthLabel(dateStr: string): string {
 	return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-function DaysUntilBadge({ days }: { days: number }) {
+function exactDateLabel(dateStr: string): string {
+	const d = new Date(dateStr);
+	const currentYear = new Date().getFullYear();
+	if (d.getFullYear() === currentYear) {
+		return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+	}
+	return d.toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
+	const exact = exactDateLabel(dateStr);
 	if (days === 0)
 		return (
-			<span className="font-mono text-[11px] text-indigo-600 font-medium">
-				Today
-			</span>
+			<div className="flex flex-col items-end gap-0.5">
+				<span className="font-mono text-[11px] text-indigo-600 font-medium">
+					Today
+				</span>
+				<span className="text-[10px] text-zinc-400">{exact}</span>
+			</div>
 		);
 	if (days <= 7)
 		return (
-			<span className="font-mono text-[11px] text-amber-600">In {days}d</span>
+			<div className="flex flex-col items-end gap-0.5">
+				<span className="font-mono text-[11px] text-amber-600">In {days}d</span>
+				<span className="text-[10px] text-zinc-400">{exact}</span>
+			</div>
 		);
 	if (days <= 30)
 		return (
-			<span className="font-mono text-[11px] text-zinc-500">In {days}d</span>
+			<div className="flex flex-col items-end gap-0.5">
+				<span className="font-mono text-[11px] text-zinc-500">In {days}d</span>
+				<span className="text-[10px] text-zinc-400">{exact}</span>
+			</div>
 		);
 	return (
-		<span className="font-mono text-[11px] text-zinc-400">In {days}d</span>
+		<div className="flex flex-col items-end gap-0.5">
+			<span className="font-mono text-[11px] text-zinc-400">In {days}d</span>
+			<span className="text-[10px] text-zinc-400">{exact}</span>
+		</div>
 	);
 }
 
@@ -94,7 +120,7 @@ export function DatesList() {
 												: ""}
 										</p>
 									</div>
-									<DaysUntilBadge days={days} />
+									<DaysUntilBadge days={days} dateStr={item.next_occurrence} />
 								</div>
 							);
 						})}

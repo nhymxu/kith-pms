@@ -41,17 +41,11 @@ func TestMapContactBirthdateWithYear(t *testing.T) {
 	if rec.Person.DateOfBirth.String() != "1990-06-15" {
 		t.Errorf("expected 1990-06-15, got %v", rec.Person.DateOfBirth)
 	}
-	// Should also produce an ImportantDate birthday entry
-	found := false
 
 	for _, d := range rec.Dates {
-		if d.Kind == "birthday" && d.DateValue == "1990-06-15" {
-			found = true
+		if d.Kind == "birthday" {
+			t.Error("birthday must not appear in ImportantDate; use person.date_of_birth")
 		}
-	}
-
-	if !found {
-		t.Error("expected ImportantDate birthday with full date")
 	}
 }
 
@@ -65,20 +59,18 @@ func TestMapContactBirthdateYearUnknown(t *testing.T) {
 	}
 
 	rec := MapContact(c)
-	if rec.Person.DateOfBirth != nil {
-		t.Error("expected DateOfBirth to be nil when year unknown")
+	if rec.Person.DateOfBirth == nil {
+		t.Fatal("expected DateOfBirth to be set for yearless birthday")
 	}
 
-	found := false
+	if rec.Person.DateOfBirth.String() != "--05-15" {
+		t.Errorf("expected '--05-15', got %v", rec.Person.DateOfBirth)
+	}
 
 	for _, d := range rec.Dates {
-		if d.Kind == "birthday" && d.DateValue == "--05-15" {
-			found = true
+		if d.Kind == "birthday" {
+			t.Error("birthday must not appear in ImportantDate; use person.date_of_birth")
 		}
-	}
-
-	if !found {
-		t.Errorf("expected yearless ImportantDate '--05-15', got %+v", rec.Dates)
 	}
 }
 

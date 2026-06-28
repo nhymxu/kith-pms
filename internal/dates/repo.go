@@ -67,8 +67,8 @@ func (r *sqlRepo) ReplaceAll(ctx context.Context, tx bun.Tx, personID int64, dat
 // OnThisDay uses raw SQL because it JOINs important_date with person and scans
 // into a non-model DTO (OnThisDayItem) with nullable nickname and computed YearsSince.
 func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]OnThisDayItem, error) {
-	// The UNION includes synthetic birthday rows from person.date_of_birth for people
-	// who have no explicit birthday entry in important_date, to avoid duplicates.
+	// Birthday always comes from person.date_of_birth — never from important_date.
+	// substr uses length-relative offset to handle both YYYY-MM-DD and --MM-DD formats.
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
 		       d.notes, d.position, d.created_at,
@@ -83,11 +83,7 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 		       p.id, p.name, p.nickname
 		  FROM person p
 		 WHERE p.date_of_birth IS NOT NULL AND p.date_of_birth != ''
-		   AND substr(p.date_of_birth, 6) = ?
-		   AND NOT EXISTS (
-		     SELECT 1 FROM important_date d2
-		      WHERE d2.person_id = p.id AND d2.kind = 'birthday'
-		   )
+		   AND substr(p.date_of_birth, length(p.date_of_birth) - 4) = ?
 		 ORDER BY name COLLATE NOCASE
 	`
 
@@ -157,8 +153,7 @@ func (r *sqlRepo) OnThisDay(ctx context.Context, monthDay, todayISO string) ([]O
 // ListAll uses raw SQL because it JOINs important_date with person and scans
 // into a non-model DTO (OnThisDayItem) with nullable nickname.
 func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
-	// The UNION includes synthetic birthday rows from person.date_of_birth for people
-	// who have no explicit birthday entry in important_date, to avoid duplicates.
+	// Birthday always comes from person.date_of_birth — never from important_date.
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
 		       d.notes, d.position, d.created_at,
@@ -171,10 +166,6 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 		       p.id, p.name, p.nickname
 		  FROM person p
 		 WHERE p.date_of_birth IS NOT NULL AND p.date_of_birth != ''
-		   AND NOT EXISTS (
-		     SELECT 1 FROM important_date d2
-		      WHERE d2.person_id = p.id AND d2.kind = 'birthday'
-		   )
 		 ORDER BY name COLLATE NOCASE
 	`
 

@@ -29,6 +29,12 @@ func (s *Service) ListByPerson(ctx context.Context, personID int64) ([]Important
 }
 
 func (s *Service) ReplaceForPerson(ctx context.Context, personID int64, dates []ImportantDate) error {
+	for _, d := range dates {
+		if d.Kind == "birthday" {
+			return fmt.Errorf("birthday kind is not allowed in important_date; use person.date_of_birth instead")
+		}
+	}
+
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)

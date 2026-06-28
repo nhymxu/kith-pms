@@ -152,8 +152,8 @@ func TestService_ReplaceForPerson(t *testing.T) {
 
 	// Replace with 2 dates
 	dates := []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
-		{Kind: "anniversary", Label: "Met", DateValue: "--03-14", Recurring: true, Position: 1},
+		{Kind: "anniversary", Label: "Met", DateValue: "1990-05-01", Recurring: true, Position: 0},
+		{Kind: "other", Label: "Custom", DateValue: "--03-14", Recurring: true, Position: 1},
 	}
 
 	err = svc.ReplaceForPerson(ctx, personID, dates)
@@ -193,7 +193,7 @@ func TestService_ReplaceForPerson(t *testing.T) {
 
 	// Replace with 1 date (remove one)
 	dates = []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
+		{Kind: "anniversary", Label: "Met", DateValue: "1990-05-01", Recurring: true, Position: 0},
 	}
 
 	err = svc.ReplaceForPerson(ctx, personID, dates)
@@ -208,6 +208,28 @@ func TestService_ReplaceForPerson(t *testing.T) {
 
 	if len(got) != 1 {
 		t.Fatalf("got %d dates, want 1", len(got))
+	}
+}
+
+func TestService_ReplaceForPerson_RejectsBirthdayKind(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name) VALUES (?)", "Alice")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	err = svc.ReplaceForPerson(ctx, personID, []ImportantDate{
+		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true},
+	})
+	if err == nil {
+		t.Fatal("expected error for birthday kind, got nil")
 	}
 }
 
@@ -227,7 +249,7 @@ func TestService_CascadeDelete(t *testing.T) {
 	personID, _ := res.LastInsertId()
 
 	dates := []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "1985-12-25", Recurring: true, Position: 0},
+		{Kind: "anniversary", Label: "Christmas Event", DateValue: "1985-12-25", Recurring: true, Position: 0},
 	}
 
 	err = svc.ReplaceForPerson(ctx, personID, dates)
@@ -261,29 +283,26 @@ func TestService_OnThisDay(t *testing.T) {
 	ctx := context.Background()
 	svc := NewService(db)
 
-	// Insert test people
-	res1, _ := db.ExecContext(ctx, "INSERT INTO person (name, nickname) VALUES (?, ?)", "Alice", "Ali")
+	// Insert test people — birthday goes in date_of_birth, not important_date
+	res1, _ := db.ExecContext(ctx,
+		"INSERT INTO person (name, nickname, date_of_birth) VALUES (?, ?, ?)", "Alice", "Ali", "1990-05-01")
 	person1ID, _ := res1.LastInsertId()
-	res2, _ := db.ExecContext(ctx, "INSERT INTO person (name) VALUES (?)", "Bob")
+	res2, _ := db.ExecContext(ctx,
+		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)", "Bob", "2026-05-01")
 	person2ID, _ := res2.LastInsertId()
 
-	// Insert dates
-	dates1 := []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "1990-05-01", Recurring: true, Position: 0},
-		{Kind: "anniversary", Label: "Met", DateValue: "--05-01", Recurring: true, Position: 1},
-	}
-
-	err := svc.ReplaceForPerson(ctx, person1ID, dates1)
+	// Alice: anniversary on same day as birthday to verify both show up
+	err := svc.ReplaceForPerson(ctx, person1ID, []ImportantDate{
+		{Kind: "anniversary", Label: "Met", DateValue: "--05-01", Recurring: true, Position: 0},
+	})
 	if err != nil {
 		t.Fatalf("ReplaceForPerson person1: %v", err)
 	}
 
-	dates2 := []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "2026-05-01", Recurring: false, Position: 0},
-		{Kind: "other", Label: "Past event", DateValue: "2024-05-01", Recurring: false, Position: 1},
-	}
-
-	err = svc.ReplaceForPerson(ctx, person2ID, dates2)
+	// Bob: a past non-recurring event that should not appear
+	err = svc.ReplaceForPerson(ctx, person2ID, []ImportantDate{
+		{Kind: "other", Label: "Past event", DateValue: "2024-05-01", Recurring: false, Position: 0},
+	})
 	if err != nil {
 		t.Fatalf("ReplaceForPerson person2: %v", err)
 	}
@@ -296,8 +315,8 @@ func TestService_OnThisDay(t *testing.T) {
 		t.Fatalf("OnThisDay: %v", err)
 	}
 
-	// Should match: Alice's birthday (recurring), Alice's met (yearless recurring),
-	// Bob's birthday (non-recurring exact match)
+	// Should match: Alice's birthday (from date_of_birth), Alice's anniversary (yearless recurring),
+	// Bob's birthday (from date_of_birth, year-having exact match → recurring in UNION)
 	// Should NOT match: Bob's past event (non-recurring past date)
 	if len(items) != 3 {
 		t.Fatalf("got %d items, want 3", len(items))
@@ -334,19 +353,16 @@ func TestService_Upcoming(t *testing.T) {
 	ctx := context.Background()
 	svc := NewService(db)
 
-	// Insert test person
-	res, _ := db.ExecContext(ctx, "INSERT INTO person (name) VALUES (?)", "Charlie")
+	// Birthday goes in date_of_birth (yearless); other dates in important_date
+	res, _ := db.ExecContext(ctx,
+		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)", "Charlie", "--05-10")
 	personID, _ := res.LastInsertId()
 
-	// Insert dates
-	dates := []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "--05-10", Recurring: true, Position: 0},
-		{Kind: "anniversary", Label: "Anniversary", DateValue: "--05-20", Recurring: true, Position: 1},
-		{Kind: "other", Label: "Future", DateValue: "2026-06-15", Recurring: false, Position: 2},
-		{Kind: "other", Label: "Past", DateValue: "2026-04-01", Recurring: false, Position: 3},
-	}
-
-	err := svc.ReplaceForPerson(ctx, personID, dates)
+	err := svc.ReplaceForPerson(ctx, personID, []ImportantDate{
+		{Kind: "anniversary", Label: "Anniversary", DateValue: "--05-20", Recurring: true, Position: 0},
+		{Kind: "other", Label: "Future", DateValue: "2026-06-15", Recurring: false, Position: 1},
+		{Kind: "other", Label: "Past", DateValue: "2026-04-01", Recurring: false, Position: 2},
+	})
 	if err != nil {
 		t.Fatalf("ReplaceForPerson: %v", err)
 	}
@@ -375,35 +391,20 @@ func TestService_Upcoming(t *testing.T) {
 	}
 }
 
-// TestService_DoBFallback verifies that person.date_of_birth is picked up by
-// Upcoming and OnThisDay when no birthday row exists in important_date.
-func TestService_DoBFallback(t *testing.T) {
+// TestService_BirthdayFromDoB verifies that person.date_of_birth is the sole source
+// for birthday entries in Upcoming and OnThisDay.
+func TestService_BirthdayFromDoB(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 
 	ctx := context.Background()
 	svc := NewService(db)
 
-	// Person with DoB only in person table (no important_date birthday row)
 	res, _ := db.ExecContext(ctx,
 		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
 		"Dana", "1998-07-03",
 	)
 	personIDDana, _ := res.LastInsertId()
-
-	// Person with birthday in both person.date_of_birth and important_date — no duplicate expected
-	res, _ = db.ExecContext(ctx,
-		"INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
-		"Eve", "1990-07-10",
-	)
-	personIDEve, _ := res.LastInsertId()
-
-	err := svc.ReplaceForPerson(ctx, personIDEve, []ImportantDate{
-		{Kind: "birthday", Label: "Birthday", DateValue: "1990-07-10", Recurring: true},
-	})
-	if err != nil {
-		t.Fatalf("ReplaceForPerson: %v", err)
-	}
 
 	// Upcoming: 30 days from 2026-06-28 (Dana's birthday 07-03 is 5 days away)
 	today := time.Date(2026, 6, 28, 0, 0, 0, 0, time.UTC)
@@ -413,24 +414,16 @@ func TestService_DoBFallback(t *testing.T) {
 		t.Fatalf("Upcoming: %v", err)
 	}
 
-	var foundDana, foundEve int
+	var foundDana int
 
 	for _, item := range items {
 		if item.Person.ID == personIDDana {
 			foundDana++
 		}
-
-		if item.Person.ID == personIDEve {
-			foundEve++
-		}
 	}
 
 	if foundDana != 1 {
-		t.Errorf("Dana's birthday (DoB only) found %d times, want 1", foundDana)
-	}
-
-	if foundEve != 1 {
-		t.Errorf("Eve's birthday (DoB + important_date) found %d times, want 1 (no duplicate)", foundEve)
+		t.Errorf("Dana's birthday found %d times in Upcoming, want 1", foundDana)
 	}
 
 	// OnThisDay: Dana's birthday is 07-03

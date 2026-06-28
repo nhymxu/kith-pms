@@ -141,11 +141,23 @@ func mapPerson(c Contact, nameOrder string) people.Person {
 
 	p.OtherNotes = strings.Join(notesParts, "\n")
 
-	// Parse birthdate for Person.DateOfBirth (year-having only).
-	if c.Information.Birthdate != "" && !c.Information.IsYearUnknown {
-		if t, err := time.Parse("2006-01-02", c.Information.Birthdate); err == nil {
-			d := people.NewDateOnly(t)
-			p.DateOfBirth = &d
+	// Parse birthdate into Person.DateOfBirth (both year-having and yearless).
+	if c.Information.Birthdate != "" {
+		var raw string
+
+		if c.Information.IsYearUnknown {
+			// Monica stores yearless as "0000-MM-DD"; convert to "--MM-DD".
+			if len(c.Information.Birthdate) == 10 {
+				raw = "--" + c.Information.Birthdate[5:]
+			}
+		} else {
+			raw = c.Information.Birthdate
+		}
+
+		if raw != "" {
+			if d, err := people.ParseDateOnly(raw); err == nil {
+				p.DateOfBirth = &d
+			}
 		}
 	}
 
@@ -356,23 +368,6 @@ func mapReminders(mrs []MReminder, tasks []MTask, options ImportOptions) []remin
 
 func mapDates(info Information) []dates.ImportantDate {
 	var out []dates.ImportantDate
-
-	if info.Birthdate != "" {
-		d := dates.ImportantDate{Kind: string(dates.KindBirthday), Recurring: true}
-
-		if info.IsYearUnknown {
-			// "0000-MM-DD" → "--MM-DD"
-			if len(info.Birthdate) == 10 {
-				d.DateValue = "--" + info.Birthdate[5:]
-			}
-		} else {
-			d.DateValue = info.Birthdate
-		}
-
-		if d.DateValue != "" {
-			out = append(out, d)
-		}
-	}
 
 	if info.FirstMetDate != "" {
 		out = append(out, dates.ImportantDate{

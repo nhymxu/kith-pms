@@ -13,7 +13,6 @@ import (
 type Kind string
 
 const (
-	KindBirthday    Kind = "birthday"
 	KindAnniversary Kind = "anniversary"
 	KindMet         Kind = "met"
 	KindOther       Kind = "other"

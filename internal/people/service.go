@@ -23,17 +23,23 @@ type ListParams struct {
 }
 
 type Service struct {
-	DB          *bun.DB
-	People      PersonRepo
-	Contacts    ContactRepo
-	Locations   LocationRepo
-	FileService FileService
-	LabelsSvc   LabelLoader    // optional; nil = no label loading
-	Audit       *audit.Service // optional; nil = no audit logging
+	DB           *bun.DB
+	People       PersonRepo
+	Contacts     ContactRepo
+	Locations    LocationRepo
+	FileService  FileService
+	LabelsSvc    LabelLoader            // optional; nil = no label loading
+	Audit        *audit.Service         // optional; nil = no audit logging
+	BirthdaySync BirthdayReminderSyncer // optional; nil = no birthday sync
 }
 
 type LabelLoader interface {
 	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error)
+}
+
+// BirthdayReminderSyncer is satisfied by an adapter over reminders.Service (handler layer).
+type BirthdayReminderSyncer interface {
+	SyncBirthdayRemindersForPerson(ctx context.Context, personID int64, newDOB *DateOnly) error
 }
 
 type FileService interface {
@@ -106,6 +112,10 @@ func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, 
 
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityPerson, p.ID, p.Name, audit.ActionUpdate)
+	}
+
+	if s.BirthdaySync != nil {
+		_ = s.BirthdaySync.SyncBirthdayRemindersForPerson(ctx, p.ID, p.DateOfBirth)
 	}
 
 	return nil

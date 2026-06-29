@@ -34,6 +34,15 @@ interface ReminderFormProps {
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const DAYS_BEFORE_OPTIONS = [
+	{ value: 0, label: "On the day" },
+	{ value: 1, label: "1 day before" },
+	{ value: 3, label: "3 days before" },
+	{ value: 7, label: "1 week before" },
+	{ value: 14, label: "2 weeks before" },
+	{ value: 30, label: "1 month before" },
+];
+
 function recurrenceLabel(rule: RecurrenceRule): string {
 	switch (rule.type) {
 		case "daily":
@@ -64,7 +73,14 @@ export function ReminderForm({
 	submitLabel = "Save Reminder",
 }: ReminderFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null);
-	const [recurring, setRecurring] = useState(!!initial?.recurrence_rule);
+	const isBirthdayInitial = initial?.recurrence_rule?.type === "birthday";
+	const [isBirthday, setIsBirthday] = useState(isBirthdayInitial);
+	const [recurring, setRecurring] = useState(
+		!!initial?.recurrence_rule && !isBirthdayInitial,
+	);
+	const [daysBefore, setDaysBefore] = useState(
+		initial?.recurrence_rule?.days_before_dob ?? 0,
+	);
 
 	const { data: peopleList } = useQuery({
 		queryKey: keys.people.list({}),
@@ -93,12 +109,25 @@ export function ReminderForm({
 		onSubmit: async ({ value }) => {
 			setApiError(null);
 			try {
-				const payload: ReminderRequest = {
-					...value,
-					due_date: datetimeLocalToUtc(value.due_date),
-					recurrence_rule: recurring ? value.recurrence_rule : null,
-					recurrence_end_date: recurring ? value.recurrence_end_date : null,
-				};
+				let payload: ReminderRequest;
+				if (isBirthday) {
+					payload = {
+						...value,
+						due_date: "",
+						recurrence_rule: {
+							type: "birthday",
+							days_before_dob: daysBefore,
+						},
+						recurrence_end_date: null,
+					};
+				} else {
+					payload = {
+						...value,
+						due_date: datetimeLocalToUtc(value.due_date),
+						recurrence_rule: recurring ? value.recurrence_rule : null,
+						recurrence_end_date: recurring ? value.recurrence_end_date : null,
+					};
+				}
 				await onSubmit(payload as ReminderRequest);
 			} catch (err) {
 				setApiError(
@@ -128,11 +157,13 @@ export function ReminderForm({
 				)}
 			</form.Field>
 
-			<form.Field name="due_date">
-				{(field) => (
-					<FormField field={field} label="Due Date" type="datetime-local" />
-				)}
-			</form.Field>
+			{!isBirthday && (
+				<form.Field name="due_date">
+					{(field) => (
+						<FormField field={field} label="Due Date" type="datetime-local" />
+					)}
+				</form.Field>
+			)}
 
 			{/* Person picker (optional) */}
 			<div className="space-y-1.5">
@@ -177,23 +208,69 @@ export function ReminderForm({
 				</form.Field>
 			</div>
 
-			{/* Recurrence toggle */}
+			{/* Birthday reminder toggle */}
 			<div className="flex items-center gap-2">
 				<Switch
-					id="recurring-toggle"
-					checked={recurring}
+					id="birthday-toggle"
+					checked={isBirthday}
 					onCheckedChange={(checked) => {
-						setRecurring(checked);
-						if (!checked) {
+						setIsBirthday(checked);
+						if (checked) {
+							setRecurring(false);
 							form.setFieldValue("recurrence_rule", null);
 							form.setFieldValue("recurrence_end_date", null);
-						} else {
-							form.setFieldValue("recurrence_rule", { type: "weekly" });
 						}
 					}}
 				/>
-				<Label htmlFor="recurring-toggle">Recurring</Label>
+				<Label htmlFor="birthday-toggle">Birthday reminder</Label>
 			</div>
+
+			{isBirthday && (
+				<div className="space-y-3 rounded-md border border-zinc-200 p-3">
+					<p className="text-sm text-zinc-500">
+						Select a person with a date of birth. Due date is computed
+						automatically.
+					</p>
+					<div className="space-y-1.5">
+						<Label>Remind me</Label>
+						<Select
+							value={String(daysBefore)}
+							onValueChange={(v) => setDaysBefore(Number(v))}
+						>
+							<SelectTrigger>
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{DAYS_BEFORE_OPTIONS.map((opt) => (
+									<SelectItem key={opt.value} value={String(opt.value)}>
+										{opt.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+				</div>
+			)}
+
+			{/* Recurrence toggle — mutually exclusive with birthday */}
+			{!isBirthday && (
+				<div className="flex items-center gap-2">
+					<Switch
+						id="recurring-toggle"
+						checked={recurring}
+						onCheckedChange={(checked) => {
+							setRecurring(checked);
+							if (!checked) {
+								form.setFieldValue("recurrence_rule", null);
+								form.setFieldValue("recurrence_end_date", null);
+							} else {
+								form.setFieldValue("recurrence_rule", { type: "weekly" });
+							}
+						}}
+					/>
+					<Label htmlFor="recurring-toggle">Recurring</Label>
+				</div>
+			)}
 
 			{recurring && (
 				<div className="space-y-3 rounded-md border border-zinc-200 p-3">

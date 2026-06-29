@@ -2,12 +2,13 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
@@ -22,6 +23,41 @@ import {
 } from "#/schemas/person";
 import { PersonFormContacts } from "./person-form-contacts";
 import { PersonFormLocations } from "./person-form-locations";
+
+// Extracted to avoid calling form field setters inside a Subscribe render callback.
+function BirthdayCheckbox({
+	checked,
+	onChange,
+	dobSet,
+	onDobClear,
+}: {
+	checked: boolean;
+	onChange: (v: boolean) => void;
+	dobSet: boolean;
+	onDobClear: () => void;
+}) {
+	useEffect(() => {
+		if (!dobSet && checked) onDobClear();
+	}, [dobSet, checked, onDobClear]);
+
+	if (!dobSet) return null;
+
+	return (
+		<div className="flex items-center gap-2">
+			<Checkbox
+				id="create_birthday_reminder"
+				checked={checked}
+				onCheckedChange={(v) => onChange(v === true)}
+			/>
+			<Label
+				htmlFor="create_birthday_reminder"
+				className="font-normal cursor-pointer"
+			>
+				Create an annual birthday reminder
+			</Label>
+		</div>
+	);
+}
 
 interface PersonFormProps {
 	mode: "create" | "edit";
@@ -40,6 +76,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			gender: initial?.gender ?? "",
 			relationship_type: initial?.relationship_type ?? "",
 			date_of_birth: initial?.date_of_birth ?? "",
+			create_birthday_reminder: initial?.has_birthday_reminder ?? false,
 			last_contact_at: utcToDatetimeLocal(initial?.last_contact_at),
 			other_notes: initial?.other_notes ?? "",
 			contacts: (initial?.contacts ?? []).map((c) => ({
@@ -146,6 +183,28 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 						{(f) => <FormField field={f} label="Date of birth" type="date" />}
 					</form.Field>
 				</div>
+
+				{/* Birthday reminder checkbox — only shown when DOB is set */}
+				<form.Subscribe
+					selector={(s) => ({
+						dob: s.values.date_of_birth,
+						checked: s.values.create_birthday_reminder,
+					})}
+				>
+					{({ dob, checked }) => (
+						<BirthdayCheckbox
+							checked={checked}
+							onChange={(v) =>
+								form.setFieldValue("create_birthday_reminder", v)
+							}
+							dobSet={!!dob}
+							onDobClear={() =>
+								form.setFieldValue("create_birthday_reminder", false)
+							}
+						/>
+					)}
+				</form.Subscribe>
+
 				<form.Field name="last_contact_at">
 					{(f) => (
 						<div>

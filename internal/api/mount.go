@@ -67,6 +67,12 @@ func Mount(e *echo.Echo, deps Deps) {
 		injectAPIActor(),
 	)
 
+	// Cross-wire birthday services before mounting routes.
+	if deps.PeopleService != nil && deps.RemindersService != nil {
+		deps.RemindersService.PersonDOB = handler.NewPersonDOBLookup(deps.PeopleService)
+		deps.PeopleService.BirthdaySync = handler.NewBirthdayReminderSyncer(deps.RemindersService)
+	}
+
 	mountAuth(v1, deps)
 	mountMe(v1, deps)
 	mountPeople(v1, deps)
@@ -92,7 +98,7 @@ func Mount(e *echo.Echo, deps Deps) {
 }
 
 func mountPeople(g *echo.Group, deps Deps) {
-	h := &handler.PeopleAPI{Svc: deps.PeopleService}
+	h := &handler.PeopleAPI{Svc: deps.PeopleService, ReminderSvc: deps.RemindersService}
 	g.GET("/people", h.List)
 	g.POST("/people", h.Create)
 	g.GET("/people/:id", h.Get)

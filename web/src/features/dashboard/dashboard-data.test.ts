@@ -27,6 +27,7 @@ describe("buildDashboardViewModel", () => {
 					{
 						id: 1,
 						is_self: false,
+						has_birthday_reminder: false,
 						prefix: "",
 						name: "Alex Kim",
 						nickname: "",

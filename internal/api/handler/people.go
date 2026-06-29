@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,22 +10,49 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/internal/reminders"
 )
 
+// birthdayReminderSyncer adapts reminders.Service to people.BirthdayReminderSyncer.
+type birthdayReminderSyncer struct {
+	svc *reminders.Service
+}
+
+func (b *birthdayReminderSyncer) SyncBirthdayRemindersForPerson(
+	ctx context.Context,
+	personID int64,
+	newDOB *people.DateOnly,
+) error {
+	return b.svc.SyncBirthdayRemindersForPerson(ctx, personID, newDOB)
+}
+
+// NewBirthdayReminderSyncer creates a people.BirthdayReminderSyncer backed by reminders.Service.
+func NewBirthdayReminderSyncer(svc *reminders.Service) people.BirthdayReminderSyncer {
+	return &birthdayReminderSyncer{svc: svc}
+}
+
 type PeopleAPI struct {
-	Svc *people.Service
+	Svc         *people.Service
+	ReminderSvc *reminders.Service // optional; nil = birthday checkbox no-op
+}
+
+// PersonDetail wraps Person with birthday reminder presence flag.
+type PersonDetail struct {
+	*people.Person
+	HasBirthdayReminder bool `json:"has_birthday_reminder"`
 }
 
 type personRequest struct {
-	Name             string            `json:"name"`
-	Nickname         string            `json:"nickname"`
-	Gender           string            `json:"gender"` // "" | "male" | "female" | "rather_not_say"
-	RelationshipType string            `json:"relationship_type"`
-	DateOfBirth      string            `json:"date_of_birth"`   // "YYYY-MM-DD" or ""
-	LastContactAt    string            `json:"last_contact_at"` // RFC3339 UTC or ""
-	OtherNotes       string            `json:"other_notes"`
-	Contacts         []contactRequest  `json:"contacts"`
-	Locations        []locationRequest `json:"locations"`
+	Name                   string            `json:"name"`
+	Nickname               string            `json:"nickname"`
+	Gender                 string            `json:"gender"` // "" | "male" | "female" | "rather_not_say"
+	RelationshipType       string            `json:"relationship_type"`
+	DateOfBirth            string            `json:"date_of_birth"`   // "YYYY-MM-DD" or ""
+	LastContactAt          string            `json:"last_contact_at"` // RFC3339 UTC or ""
+	OtherNotes             string            `json:"other_notes"`
+	Contacts               []contactRequest  `json:"contacts"`
+	Locations              []locationRequest `json:"locations"`
+	CreateBirthdayReminder bool              `json:"create_birthday_reminder"`
 }
 
 type contactRequest struct {
@@ -137,7 +165,12 @@ func (h *PeopleAPI) Get(c *echo.Context) error {
 		return apiErr(c, http.StatusNotFound, "not found")
 	}
 
-	return ok(c, p)
+	detail := PersonDetail{Person: p}
+	if h.ReminderSvc != nil {
+		detail.HasBirthdayReminder, _ = h.ReminderSvc.HasBirthdayReminderForPerson(c.Request().Context(), id)
+	}
+
+	return ok(c, detail)
 }
 
 // Create godoc
@@ -174,6 +207,10 @@ func (h *PeopleAPI) Create(c *echo.Context) error {
 	id, err := h.Svc.Create(c.Request().Context(), p, contacts, locations)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if req.CreateBirthdayReminder && req.DateOfBirth != "" && h.ReminderSvc != nil {
+		_ = h.ReminderSvc.EnsureBirthdayReminder(c.Request().Context(), id)
 	}
 
 	return created(c, map[string]any{"id": id})
@@ -228,6 +265,14 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 
 	if err := h.Svc.Update(c.Request().Context(), p, contacts, locations); err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if h.ReminderSvc != nil {
+		if !req.CreateBirthdayReminder {
+			_ = h.ReminderSvc.DeleteBirthdayRemindersForPerson(c.Request().Context(), id)
+		} else if req.DateOfBirth != "" {
+			_ = h.ReminderSvc.EnsureBirthdayReminder(c.Request().Context(), id)
+		}
 	}
 
 	return ok(c, map[string]any{"id": id})

@@ -37,6 +37,7 @@ export type GenderValue = "" | "male" | "female" | "rather_not_say";
 export const personSchema = z.object({
 	id: z.number(),
 	is_self: z.boolean().optional().default(false),
+	has_birthday_reminder: z.boolean().optional().default(false),
 	prefix: z.string().optional().default(""),
 	name: z.string(),
 	nickname: z.string().optional().default(""),
@@ -87,6 +88,7 @@ export const personRequestSchema = z.object({
 	gender: z.string().optional().default(""),
 	relationship_type: z.string().optional().default(""),
 	date_of_birth: z.string().optional().default(""),
+	create_birthday_reminder: z.boolean().optional().default(false),
 	last_contact_at: z.string().nullable().optional().default(""),
 	other_notes: z.string().optional().default(""),
 	contacts: z

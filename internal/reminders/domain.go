@@ -16,13 +16,19 @@ const (
 	RecurrenceCustom          RecurrenceType = "custom"
 	RecurrenceRelativeContact RecurrenceType = "relative_contact"
 	RecurrenceDayOfWeek       RecurrenceType = "day_of_week"
+	RecurrenceBirthday        RecurrenceType = "birthday"
 )
 
 type RecurrenceRule struct {
-	Type      RecurrenceType `json:"type"`
-	Interval  int            `json:"interval,omitempty"`
-	Unit      string         `json:"unit,omitempty"`
-	DayOfWeek *int           `json:"day_of_week,omitempty"`
+	Type          RecurrenceType `json:"type"`
+	Interval      int            `json:"interval,omitempty"`
+	Unit          string         `json:"unit,omitempty"`
+	DayOfWeek     *int           `json:"day_of_week,omitempty"`
+	DaysBeforeDob *int           `json:"days_before_dob,omitempty"`
+}
+
+func (r *Reminder) IsBirthday() bool {
+	return r.RecurrenceRule != nil && r.RecurrenceRule.Type == RecurrenceBirthday
 }
 
 type Reminder struct {

@@ -252,6 +252,58 @@ func (r *Repo) MarkComplete(ctx context.Context, tx bun.Tx, id int64, completedA
 	return nil
 }
 
+// FindBirthdayRemindersByPersonID returns PENDING birthday reminders for a person.
+func (r *Repo) FindBirthdayRemindersByPersonID(ctx context.Context, personID int64) ([]*Reminder, error) {
+	var rows []reminderRow
+
+	err := r.db.NewSelect().
+		TableExpr("reminder r").
+		ColumnExpr("r.*, r.recurrence_rule AS recurrence_rule").
+		Where("r.person_id = ?", personID).
+		Where("r.completed = ?", false).
+		Where("json_extract(r.recurrence_rule, '$.type') = ?", "birthday").
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("find birthday reminders: %w", err)
+	}
+
+	rems := make([]*Reminder, 0, len(rows))
+	for i := range rows {
+		rems = append(rems, rows[i].toReminder())
+	}
+
+	return rems, nil
+}
+
+// DeleteBirthdayRemindersByPersonID deletes ALL birthday reminders (pending + completed) for a person.
+func (r *Repo) DeleteBirthdayRemindersByPersonID(ctx context.Context, tx bun.Tx, personID int64) error {
+	_, err := tx.NewDelete().
+		TableExpr("reminder").
+		Where("person_id = ? AND json_extract(recurrence_rule, '$.type') = ?", personID, "birthday").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("delete birthday reminders: %w", err)
+	}
+
+	return nil
+}
+
+// HasBirthdayReminderForPerson returns true if the person has at least one non-completed birthday reminder.
+func (r *Repo) HasBirthdayReminderForPerson(ctx context.Context, personID int64) (bool, error) {
+	var count int
+
+	err := r.db.NewSelect().
+		TableExpr("reminder").
+		ColumnExpr("COUNT(*)").
+		Where("person_id = ? AND completed = ? AND json_extract(recurrence_rule, '$.type') = ?", personID, false, "birthday").
+		Scan(ctx, &count)
+	if err != nil {
+		return false, fmt.Errorf("check birthday reminder: %w", err)
+	}
+
+	return count > 0, nil
+}
+
 func (r *Repo) CountByStatus(ctx context.Context, status string) (int, error) {
 	q := r.db.NewSelect().TableExpr("reminder").ColumnExpr("COUNT(*)")
 

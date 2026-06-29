@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
+import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import { getPerson, updatePerson } from "#/endpoints/people";
 import {
@@ -64,6 +65,9 @@ function OverviewSection({
 		person.relationship_type,
 	);
 	const [dob, setDob] = useState(person.date_of_birth ?? "");
+	const [birthdayReminder, setBirthdayReminder] = useState(
+		person.has_birthday_reminder,
+	);
 	const [lastContactAt, setLastContactAt] = useState(
 		utcToDatetimeLocal(person.last_contact_at),
 	);
@@ -77,6 +81,7 @@ function OverviewSection({
 				gender,
 				relationship_type: relationshipType,
 				date_of_birth: dob,
+				create_birthday_reminder: birthdayReminder,
 				last_contact_at: lastContactAt
 					? datetimeLocalToUtc(lastContactAt)
 					: null,
@@ -170,6 +175,21 @@ function OverviewSection({
 							onChange={(e) => setDob(e.target.value)}
 						/>
 					</div>
+					{dob && (
+						<div className="flex items-center gap-2">
+							<Switch
+								id="birthday-reminder-toggle"
+								checked={birthdayReminder}
+								onCheckedChange={setBirthdayReminder}
+							/>
+							<Label
+								htmlFor="birthday-reminder-toggle"
+								className="font-normal cursor-pointer"
+							>
+								Annual birthday reminder
+							</Label>
+						</div>
+					)}
 					<div>
 						<div className="flex items-center justify-between mb-1.5">
 							<Label>Last contact</Label>
@@ -258,7 +278,12 @@ function OverviewSection({
 						{person.date_of_birth && (
 							<>
 								<dt className="font-medium text-zinc-500">Date of birth</dt>
-								<dd>{formatDate(person.date_of_birth)}</dd>
+								<dd className="flex items-center gap-2">
+									{formatDate(person.date_of_birth)}
+									{person.has_birthday_reminder && (
+										<Badge variant="neutral">🎂 reminder on</Badge>
+									)}
+								</dd>
 							</>
 						)}
 						{person.gender && (

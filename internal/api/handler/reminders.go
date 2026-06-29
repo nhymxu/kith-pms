@@ -38,6 +38,29 @@ func NewPeopleLastContacter(svc *people.Service) reminders.JournalLastContacter 
 	return &peopleLastContacter{people: svc}
 }
 
+// personDOBLookup adapts people.Service to reminders.PersonDOBLookup.
+type personDOBLookup struct {
+	people *people.Service
+}
+
+func (p *personDOBLookup) PersonDOB(ctx context.Context, personID int64) (*people.DateOnly, string, error) {
+	person, err := p.people.Get(ctx, personID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if person == nil {
+		return nil, "", reminders.ErrNoPerson
+	}
+
+	return person.DateOfBirth, person.Name, nil
+}
+
+// NewPersonDOBLookup creates a reminders.PersonDOBLookup backed by people.Service.
+func NewPersonDOBLookup(svc *people.Service) reminders.PersonDOBLookup {
+	return &personDOBLookup{people: svc}
+}
+
 type RemindersAPI struct {
 	Svc *reminders.Service
 }
@@ -149,6 +172,39 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 		return apiErr(c, http.StatusBadRequest, "invalid request body")
 	}
 
+	if strings.TrimSpace(req.Title) == "" &&
+		(req.RecurrenceRule == nil || req.RecurrenceRule.Type != reminders.RecurrenceBirthday) {
+		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+	}
+
+	// Birthday branch: due_date is computed server-side; skip parseDateOrDatetime.
+	if req.RecurrenceRule != nil && req.RecurrenceRule.Type == reminders.RecurrenceBirthday {
+		if req.PersonID == nil {
+			return apiErr(c, http.StatusUnprocessableEntity, "person_id is required for a birthday reminder")
+		}
+
+		daysBefore := 0
+		if req.RecurrenceRule.DaysBeforeDob != nil {
+			daysBefore = *req.RecurrenceRule.DaysBeforeDob
+		}
+
+		rem, err := h.Svc.BuildBirthdayReminder(c.Request().Context(), *req.PersonID, daysBefore, req.Title)
+		if errors.Is(err, reminders.ErrNoDOB) {
+			return apiErr(c, http.StatusUnprocessableEntity, "selected person has no date of birth")
+		}
+
+		if err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		id, err := h.Svc.Create(c.Request().Context(), rem)
+		if err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return created(c, map[string]any{"id": id})
+	}
+
 	if strings.TrimSpace(req.Title) == "" {
 		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
 	}
@@ -218,6 +274,34 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 	var req reminderRequest
 	if err := c.Bind(&req); err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid request body")
+	}
+
+	// Birthday branch: due_date computed server-side.
+	if req.RecurrenceRule != nil && req.RecurrenceRule.Type == reminders.RecurrenceBirthday {
+		if req.PersonID == nil {
+			return apiErr(c, http.StatusUnprocessableEntity, "person_id is required for a birthday reminder")
+		}
+
+		daysBefore := 0
+		if req.RecurrenceRule.DaysBeforeDob != nil {
+			daysBefore = *req.RecurrenceRule.DaysBeforeDob
+		}
+
+		rem, err := h.Svc.BuildBirthdayReminder(c.Request().Context(), *req.PersonID, daysBefore, req.Title)
+		if errors.Is(err, reminders.ErrNoDOB) {
+			return apiErr(c, http.StatusUnprocessableEntity, "selected person has no date of birth")
+		}
+
+		if err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		rem.ID = id
+		if err := h.Svc.Update(c.Request().Context(), rem); err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return ok(c, map[string]any{"id": id})
 	}
 
 	if strings.TrimSpace(req.Title) == "" {

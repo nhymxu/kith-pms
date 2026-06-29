@@ -9,6 +9,8 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	_ "github.com/uptrace/bun/driver/sqliteshim"
+
+	"github.com/nhymxu/kith-pms/internal/people"
 )
 
 func setupTestDB(t *testing.T) *bun.DB {
@@ -27,7 +29,8 @@ func setupTestDB(t *testing.T) *bun.DB {
 	_, err = sqldb.Exec(`
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
-			name TEXT NOT NULL
+			name TEXT NOT NULL,
+			date_of_birth TEXT
 		)
 	`)
 	if err != nil {
@@ -46,7 +49,8 @@ func setupTestDB(t *testing.T) *bun.DB {
 		t.Fatalf("create important_date table: %v", err)
 	}
 
-	_, err = sqldb.Exec(`
+	// Note: Reminder table creation combined into single statement to avoid issues
+	result, err := sqldb.Exec(`
 		CREATE TABLE reminder (
 			id INTEGER PRIMARY KEY,
 			title TEXT NOT NULL,
@@ -60,13 +64,27 @@ func setupTestDB(t *testing.T) *bun.DB {
 			recurrence_end_date TEXT,
 			created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
 			updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-		);
-		CREATE INDEX idx_reminder_due_date ON reminder(due_date);
-		CREATE INDEX idx_reminder_person ON reminder(person_id);
-		CREATE INDEX idx_reminder_completed ON reminder(completed);
+		)
 	`)
 	if err != nil {
 		t.Fatalf("create reminder table: %v", err)
+	}
+
+	_, _ = result.LastInsertId()
+
+	_, err = sqldb.Exec(`CREATE INDEX idx_reminder_due_date ON reminder(due_date)`)
+	if err != nil {
+		t.Fatalf("create index due_date: %v", err)
+	}
+
+	_, err = sqldb.Exec(`CREATE INDEX idx_reminder_person ON reminder(person_id)`)
+	if err != nil {
+		t.Fatalf("create index person: %v", err)
+	}
+
+	_, err = sqldb.Exec(`CREATE INDEX idx_reminder_completed ON reminder(completed)`)
+	if err != nil {
+		t.Fatalf("create index completed: %v", err)
 	}
 
 	return db
@@ -503,4 +521,374 @@ func TestMarkComplete_Recurring_EndDateReached_NoSpawn(t *testing.T) {
 	if len(all) != 1 {
 		t.Errorf("expected 1 row (end date reached, no spawn), got %d", len(all))
 	}
+}
+
+func TestMarkComplete_Birthday_Advance(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	// Insert person with DOB
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Alice", "1990-12-25")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	daysBeforeDob := 7
+	due := time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC)
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:    "Alice's birthday",
+		DueDate:  due,
+		PersonID: &personID,
+		RecurrenceRule: &RecurrenceRule{
+			Type:          RecurrenceBirthday,
+			DaysBeforeDob: &daysBeforeDob,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Mock PersonDOB lookup
+	svc.PersonDOB = &mockPersonDOBLookup{
+		personDOBs: map[int64]*people.DateOnly{
+			personID: parseDateOnlyPtr("1990-12-25"),
+		},
+	}
+
+	if err := svc.MarkComplete(ctx, id); err != nil {
+		t.Fatalf("MarkComplete: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 2 {
+		t.Fatalf("expected 2 rows (original + spawn), got %d", len(all))
+	}
+
+	var spawned *ReminderWithPerson
+
+	for i := range all {
+		if !all[i].Completed {
+			spawned = &all[i]
+		}
+	}
+
+	if spawned == nil {
+		t.Fatal("expected a non-completed spawned reminder")
+	}
+
+	wantDue := time.Date(2027, 12, 18, 0, 0, 0, 0, time.UTC)
+	if !spawned.DueDate.Equal(wantDue) {
+		t.Errorf("spawned DueDate = %v, want %v", spawned.DueDate, wantDue)
+	}
+
+	if spawned.RecurrenceRule == nil || spawned.RecurrenceRule.DaysBeforeDob == nil ||
+		*spawned.RecurrenceRule.DaysBeforeDob != daysBeforeDob {
+		t.Errorf("spawned DaysBeforeDob = %v, want %d", spawned.RecurrenceRule.DaysBeforeDob, daysBeforeDob)
+	}
+}
+
+func TestEnsureBirthdayReminder_Idempotent(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Bob", "1985-03-15")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	// Mock PersonDOB
+	svc.PersonDOB = &mockPersonDOBLookup{
+		personDOBs: map[int64]*people.DateOnly{
+			personID: parseDateOnlyPtr("1985-03-15"),
+		},
+		names: map[int64]string{personID: "Bob"},
+	}
+
+	if err := svc.EnsureBirthdayReminder(ctx, personID); err != nil {
+		t.Fatalf("first EnsureBirthdayReminder: %v", err)
+	}
+
+	if err := svc.EnsureBirthdayReminder(ctx, personID); err != nil {
+		t.Fatalf("second EnsureBirthdayReminder: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 1 {
+		t.Errorf("expected exactly 1 reminder after idempotent calls, got %d", len(all))
+	}
+}
+
+func TestSyncBirthdayRemindersForPerson_DOBChange(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Carol", "1988-05-10")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	daysBeforeDob := 5
+	oldDue := time.Date(2026, 5, 5, 0, 0, 0, 0, time.UTC)
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:    "Carol's birthday",
+		DueDate:  oldDue,
+		PersonID: &personID,
+		RecurrenceRule: &RecurrenceRule{
+			Type:          RecurrenceBirthday,
+			DaysBeforeDob: &daysBeforeDob,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Change DOB
+	newDOB := parseDateOnlyPtr("1988-07-20")
+	if err := svc.SyncBirthdayRemindersForPerson(ctx, personID, newDOB); err != nil {
+		t.Fatalf("SyncBirthdayRemindersForPerson: %v", err)
+	}
+
+	updated, err := svc.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID after sync: %v", err)
+	}
+
+	// Due should be recomputed based on new DOB (July 20 - 5 days = July 15, 2026, since that's in the future)
+	wantDue := time.Date(2026, 7, 15, 0, 0, 0, 0, time.UTC)
+	if !updated.DueDate.Equal(wantDue) {
+		t.Errorf("after sync, DueDate = %v, want %v", updated.DueDate, wantDue)
+	}
+}
+
+func TestSyncBirthdayRemindersForPerson_NilDOB_DeletesAll(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name, date_of_birth) VALUES (?, ?)",
+		"Diana", "1992-11-08")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	daysBeforeDob := 3
+
+	_, err = svc.Create(ctx, &Reminder{
+		Title:    "Diana's birthday",
+		DueDate:  time.Date(2026, 11, 5, 0, 0, 0, 0, time.UTC),
+		PersonID: &personID,
+		RecurrenceRule: &RecurrenceRule{
+			Type:          RecurrenceBirthday,
+			DaysBeforeDob: &daysBeforeDob,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Create birthday reminder: %v", err)
+	}
+
+	// Create a non-birthday reminder for same person
+	_, err = svc.Create(ctx, &Reminder{
+		Title:    "Call Diana",
+		DueDate:  time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC),
+		PersonID: &personID,
+	})
+	if err != nil {
+		t.Fatalf("Create non-birthday reminder: %v", err)
+	}
+
+	if err := svc.SyncBirthdayRemindersForPerson(ctx, personID, nil); err != nil {
+		t.Fatalf("SyncBirthdayRemindersForPerson with nil DOB: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PersonID: &personID, PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 1 {
+		t.Errorf("expected 1 reminder (non-birthday only), got %d", len(all))
+	}
+
+	if len(all) > 0 && all[0].Title != "Call Diana" {
+		t.Errorf("remaining reminder title = %q, want %q", all[0].Title, "Call Diana")
+	}
+}
+
+func TestMarkComplete_Birthday_NilDOB_NoSpawn(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name) VALUES (?)", "Eve")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	daysBeforeDob := 2
+
+	id, err := svc.Create(ctx, &Reminder{
+		Title:    "Eve's birthday",
+		DueDate:  time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC),
+		PersonID: &personID,
+		RecurrenceRule: &RecurrenceRule{
+			Type:          RecurrenceBirthday,
+			DaysBeforeDob: &daysBeforeDob,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// PersonDOB lookup returns nil (person has no DOB)
+	svc.PersonDOB = &mockPersonDOBLookup{
+		personDOBs: map[int64]*people.DateOnly{
+			personID: nil,
+		},
+	}
+
+	if err := svc.MarkComplete(ctx, id); err != nil {
+		t.Fatalf("MarkComplete: %v", err)
+	}
+
+	all, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(all) != 1 {
+		t.Errorf("expected 1 row (no spawn when DOB is nil), got %d", len(all))
+	}
+}
+
+func TestRecurrenceRuleJSONRoundTrip_Birthday(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	daysBefore := 7
+	rem := &Reminder{
+		Title:   "Birthday with lead",
+		DueDate: time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC),
+		RecurrenceRule: &RecurrenceRule{
+			Type:          RecurrenceBirthday,
+			DaysBeforeDob: &daysBefore,
+		},
+	}
+
+	id, err := svc.Create(ctx, rem)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	fetched, err := svc.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+
+	if fetched.RecurrenceRule == nil {
+		t.Fatal("expected RecurrenceRule to be populated")
+	}
+
+	if fetched.RecurrenceRule.Type != RecurrenceBirthday {
+		t.Errorf("Type = %v, want %v", fetched.RecurrenceRule.Type, RecurrenceBirthday)
+	}
+
+	if fetched.RecurrenceRule.DaysBeforeDob == nil || *fetched.RecurrenceRule.DaysBeforeDob != daysBefore {
+		t.Errorf("DaysBeforeDob = %v, want %d", fetched.RecurrenceRule.DaysBeforeDob, daysBefore)
+	}
+}
+
+func TestRecurrenceRuleJSONRoundTrip_OldStyleNoField(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	rem := &Reminder{
+		Title:   "Old birthday without days_before",
+		DueDate: time.Date(2026, 12, 25, 0, 0, 0, 0, time.UTC),
+		RecurrenceRule: &RecurrenceRule{
+			Type: RecurrenceBirthday,
+			// DaysBeforeDob is nil
+		},
+	}
+
+	id, err := svc.Create(ctx, rem)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	fetched, err := svc.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+
+	if fetched.RecurrenceRule == nil {
+		t.Fatal("expected RecurrenceRule to be populated")
+	}
+
+	if fetched.RecurrenceRule.DaysBeforeDob != nil {
+		t.Errorf("DaysBeforeDob = %v, want nil (backward compat)", fetched.RecurrenceRule.DaysBeforeDob)
+	}
+
+	if !fetched.IsBirthday() {
+		t.Error("expected IsBirthday() == true")
+	}
+}
+
+// Mock for PersonDOBLookup interface
+type mockPersonDOBLookup struct {
+	personDOBs map[int64]*people.DateOnly
+	names      map[int64]string
+}
+
+func (m *mockPersonDOBLookup) PersonDOB(
+	_ context.Context,
+	personID int64,
+) (dob *people.DateOnly, name string, err error) {
+	return m.personDOBs[personID], m.names[personID], nil
+}
+
+func parseDateOnlyPtr(s string) *people.DateOnly {
+	d, _ := people.ParseDateOnly(s)
+	return &d
 }

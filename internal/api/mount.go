@@ -158,7 +158,7 @@ func mountDates(g *echo.Group, deps Deps) {
 	h := &handler.DatesAPI{Svc: deps.DatesService}
 	g.GET("/people/:id/dates", h.ListByPerson)
 	g.PUT("/people/:id/dates", h.ReplaceForPerson)
-	g.GET("/dates/upcoming", h.Upcoming)
+	g.GET("/important-dates/upcoming", h.Upcoming)
 }
 
 func mountAudit(g *echo.Group, deps Deps) {

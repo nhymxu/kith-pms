@@ -17,8 +17,8 @@ import { Route as AuthedRemindersIndexRouteImport } from './routes/_authed/remin
 import { Route as AuthedPeopleIndexRouteImport } from './routes/_authed/people/index'
 import { Route as AuthedMeIndexRouteImport } from './routes/_authed/me/index'
 import { Route as AuthedJournalIndexRouteImport } from './routes/_authed/journal/index'
+import { Route as AuthedImportantDatesIndexRouteImport } from './routes/_authed/important-dates/index'
 import { Route as AuthedGiftsIndexRouteImport } from './routes/_authed/gifts/index'
-import { Route as AuthedDatesIndexRouteImport } from './routes/_authed/important-dates/index'
 import { Route as AuthedAuditIndexRouteImport } from './routes/_authed/audit/index'
 import { Route as AuthedSettingsLayoutRouteImport } from './routes/_authed/settings/_layout'
 import { Route as AuthedRemindersNewRouteImport } from './routes/_authed/reminders/new'
@@ -82,14 +82,15 @@ const AuthedJournalIndexRoute = AuthedJournalIndexRouteImport.update({
   path: '/journal/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedImportantDatesIndexRoute =
+  AuthedImportantDatesIndexRouteImport.update({
+    id: '/important-dates/',
+    path: '/important-dates/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedGiftsIndexRoute = AuthedGiftsIndexRouteImport.update({
   id: '/gifts/',
   path: '/gifts/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedDatesIndexRoute = AuthedDatesIndexRouteImport.update({
-  id: '/important-dates/',
-  path: '/important-dates/',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedAuditIndexRoute = AuthedAuditIndexRouteImport.update({
@@ -234,8 +235,8 @@ export interface FileRoutesByFullPath {
   '/reminders/new': typeof AuthedRemindersNewRoute
   '/settings': typeof AuthedSettingsLayoutRouteWithChildren
   '/audit/': typeof AuthedAuditIndexRoute
-  '/important-dates/': typeof AuthedDatesIndexRoute
   '/gifts/': typeof AuthedGiftsIndexRoute
+  '/important-dates/': typeof AuthedImportantDatesIndexRoute
   '/journal/': typeof AuthedJournalIndexRoute
   '/me/': typeof AuthedMeIndexRoute
   '/people/': typeof AuthedPeopleIndexRoute
@@ -266,8 +267,8 @@ export interface FileRoutesByTo {
   '/reminders/new': typeof AuthedRemindersNewRoute
   '/settings': typeof AuthedSettingsIndexRoute
   '/audit': typeof AuthedAuditIndexRoute
-  '/important-dates': typeof AuthedDatesIndexRoute
   '/gifts': typeof AuthedGiftsIndexRoute
+  '/important-dates': typeof AuthedImportantDatesIndexRoute
   '/journal': typeof AuthedJournalIndexRoute
   '/me': typeof AuthedMeIndexRoute
   '/people': typeof AuthedPeopleIndexRoute
@@ -301,8 +302,8 @@ export interface FileRoutesById {
   '/_authed/reminders/new': typeof AuthedRemindersNewRoute
   '/_authed/settings/_layout': typeof AuthedSettingsLayoutRouteWithChildren
   '/_authed/audit/': typeof AuthedAuditIndexRoute
-  '/_authed/important-dates/': typeof AuthedDatesIndexRoute
   '/_authed/gifts/': typeof AuthedGiftsIndexRoute
+  '/_authed/important-dates/': typeof AuthedImportantDatesIndexRoute
   '/_authed/journal/': typeof AuthedJournalIndexRoute
   '/_authed/me/': typeof AuthedMeIndexRoute
   '/_authed/people/': typeof AuthedPeopleIndexRoute
@@ -337,8 +338,8 @@ export interface FileRouteTypes {
     | '/reminders/new'
     | '/settings'
     | '/audit/'
-    | '/important-dates/'
     | '/gifts/'
+    | '/important-dates/'
     | '/journal/'
     | '/me/'
     | '/people/'
@@ -369,8 +370,8 @@ export interface FileRouteTypes {
     | '/reminders/new'
     | '/settings'
     | '/audit'
-    | '/important-dates'
     | '/gifts'
+    | '/important-dates'
     | '/journal'
     | '/me'
     | '/people'
@@ -403,8 +404,8 @@ export interface FileRouteTypes {
     | '/_authed/reminders/new'
     | '/_authed/settings/_layout'
     | '/_authed/audit/'
-    | '/_authed/important-dates/'
     | '/_authed/gifts/'
+    | '/_authed/important-dates/'
     | '/_authed/journal/'
     | '/_authed/me/'
     | '/_authed/people/'
@@ -487,18 +488,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJournalIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/important-dates/': {
+      id: '/_authed/important-dates/'
+      path: '/important-dates'
+      fullPath: '/important-dates/'
+      preLoaderRoute: typeof AuthedImportantDatesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/gifts/': {
       id: '/_authed/gifts/'
       path: '/gifts'
       fullPath: '/gifts/'
       preLoaderRoute: typeof AuthedGiftsIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/important-dates/': {
-      id: '/_authed/important-dates/'
-      path: '/important-dates'
-      fullPath: '/important-dates/'
-      preLoaderRoute: typeof AuthedDatesIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/audit/': {
@@ -758,8 +759,8 @@ interface AuthedRouteChildren {
   AuthedRemindersNewRoute: typeof AuthedRemindersNewRoute
   AuthedSettingsLayoutRoute: typeof AuthedSettingsLayoutRouteWithChildren
   AuthedAuditIndexRoute: typeof AuthedAuditIndexRoute
-  AuthedDatesIndexRoute: typeof AuthedDatesIndexRoute
   AuthedGiftsIndexRoute: typeof AuthedGiftsIndexRoute
+  AuthedImportantDatesIndexRoute: typeof AuthedImportantDatesIndexRoute
   AuthedJournalIndexRoute: typeof AuthedJournalIndexRoute
   AuthedMeIndexRoute: typeof AuthedMeIndexRoute
   AuthedPeopleIndexRoute: typeof AuthedPeopleIndexRoute
@@ -780,8 +781,8 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedRemindersNewRoute: AuthedRemindersNewRoute,
   AuthedSettingsLayoutRoute: AuthedSettingsLayoutRouteWithChildren,
   AuthedAuditIndexRoute: AuthedAuditIndexRoute,
-  AuthedDatesIndexRoute: AuthedDatesIndexRoute,
   AuthedGiftsIndexRoute: AuthedGiftsIndexRoute,
+  AuthedImportantDatesIndexRoute: AuthedImportantDatesIndexRoute,
   AuthedJournalIndexRoute: AuthedJournalIndexRoute,
   AuthedMeIndexRoute: AuthedMeIndexRoute,
   AuthedPeopleIndexRoute: AuthedPeopleIndexRoute,

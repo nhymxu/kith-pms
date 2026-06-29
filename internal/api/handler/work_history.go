@@ -84,9 +84,13 @@ func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 			return apiErr(c, http.StatusUnprocessableEntity, "company is required for each entry")
 		}
 
-		startDate, err := work_history.ParseWorkDate(e.StartDate)
-		if err != nil {
-			return apiErr(c, http.StatusUnprocessableEntity, "invalid start_date: "+err.Error())
+		// StartDate is optional (empty = unknown); validate only if non-empty.
+		startDate := ""
+		if e.StartDate != "" {
+			startDate, err = work_history.ParseWorkDate(e.StartDate)
+			if err != nil {
+				return apiErr(c, http.StatusUnprocessableEntity, "invalid start_date: "+err.Error())
+			}
 		}
 
 		// EndDate is optional (empty = Present); validate only if non-empty.

@@ -223,9 +223,13 @@ export function WorkHistorySection({ personId }: WorkHistorySectionProps) {
 									<Trash2 className="size-3" />
 								</button>
 							</div>
-							<p className="font-mono text-[12px] text-zinc-500">
-								{e.start_date} → {e.end_date || "Present"}
-							</p>
+							{(e.start_date || e.end_date) && (
+								<p className="font-mono text-[12px] text-zinc-500">
+									{e.start_date
+										? `${e.start_date} – ${e.end_date || "Present"}`
+										: `– ${e.end_date}`}
+								</p>
+							)}
 							{e.location && <p className="text-zinc-500">{e.location}</p>}
 							{e.description && (
 								<p className="text-zinc-600 whitespace-pre-wrap">

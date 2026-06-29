@@ -17,7 +17,7 @@ type WorkEntry struct {
 	PersonID    int64     `bun:"person_id"         json:"person_id"`
 	Company     string    `bun:"company"           json:"company"`
 	Title       string    `bun:"title"             json:"title"`
-	StartDate   string    `bun:"start_date"        json:"start_date"` // "YYYY", "YYYY-MM", or "YYYY-MM-DD" — required
+	StartDate   string    `bun:"start_date"        json:"start_date"` // "YYYY | YYYY-MM | YYYY-MM-DD / empty = unknown
 	EndDate     string    `bun:"end_date"          json:"end_date"`   // same formats OR "" (= Present)
 	Location    string    `bun:"location"          json:"location"`
 	Description string    `bun:"description"       json:"description"`

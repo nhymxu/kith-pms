@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -25,6 +25,27 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 const CONTACT_TYPES = ["phone", "email", "address", "social", "other"];
+
+const SOCIAL_BASE_URLS: Record<string, string> = {
+	twitter: "https://twitter.com/",
+	x: "https://x.com/",
+	github: "https://github.com/",
+	linkedin: "https://linkedin.com/in/",
+	instagram: "https://instagram.com/",
+	facebook: "https://facebook.com/",
+	youtube: "https://youtube.com/@",
+	tiktok: "https://tiktok.com/@",
+	telegram: "https://t.me/",
+	threads: "https://www.threads.com/@",
+};
+
+function resolveSocialUrl(value: string, label: string): string | null {
+	if (/^https?:\/\//i.test(value)) return value;
+	const base = SOCIAL_BASE_URLS[label.toLowerCase().trim()];
+	if (!base) return null;
+	const username = value.startsWith("@") ? value.slice(1) : value;
+	return base + username;
+}
 
 interface EditRowProps {
 	contact: Partial<ContactInfo>;
@@ -182,7 +203,26 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 							className="flex gap-3 text-sm border border-zinc-200 rounded-md p-2 items-center"
 						>
 							<Badge variant="neutral">{c.type}</Badge>
-							<span className="font-base flex-1">{c.value}</span>
+							{c.type === "social" ? (
+								(() => {
+									const url = resolveSocialUrl(c.value, c.label ?? "");
+									return url ? (
+										<a
+											href={url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="font-base flex-1 flex items-center gap-1 hover:underline text-inherit"
+										>
+											{c.value}
+											<ExternalLink className="size-3 text-zinc-400 shrink-0" />
+										</a>
+									) : (
+										<span className="font-base flex-1">{c.value}</span>
+									);
+								})()
+							) : (
+								<span className="font-base flex-1">{c.value}</span>
+							)}
 							{c.label && <span className="text-zinc-400">{c.label}</span>}
 							<button
 								type="button"

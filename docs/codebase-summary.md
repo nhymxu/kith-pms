@@ -190,7 +190,7 @@ kith-pms/
 - **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions; extracts underlying `*sql.DB` from `*bun.DB` for schema work
 
 ### `internal/testutil` — Test utilities
-- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, runs all 18 migrations, registers `t.Cleanup` for teardown
+- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, runs all 24 migrations, registers `t.Cleanup` for teardown
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
@@ -202,11 +202,11 @@ kith-pms/
 - **repo.go**: User & session queries using bun (no raw SQL, uses bun query builders for readability)
 
 ### `internal/audit` — Audit logging & change tracking
-- **domain.go**: Entry (id, entity_type, entity_id, entity_name, action, actor_id, created_at), EntityType enum, Action enum
+- **domain.go**: Entry (id, entity_type, entity_id, entity_name, action, actor_id, created_at, metadata), EntityType enum, Action enum; Metadata struct with Change[] array for field-level change tracking (field name, old value, new value)
 - **context.go**: Helper functions for actor context — `WithActor(ctx, userID)` and `ActorFromCtx(ctx)`
-- **service.go**: `Log(ctx, entityType, entityID, entityName, action)` — best-effort logging (never blocks, errors logged as warnings)
-- **repo.go**: Database queries for audit log insertion and list retrieval with filtering
-- **service_test.go**: Tests for logging behavior and list queries
+- **service.go**: `Log(ctx, entityType, entityID, entityName, action, metadata)` — best-effort logging (never blocks, errors logged as warnings); `Purge(ctx, days)` for retention cleanup
+- **repo.go**: Database queries for audit log insertion, list retrieval with filtering, and retention-based purge
+- **service_test.go**: Tests for logging behavior, list queries, and purge operations
 
 ### `internal/people` — Contacts management
 - **domain.go**: Person (name, DOB, type, is_self, last_contact_at), Contact (email, phone), Location (street, city, country)
@@ -234,11 +234,11 @@ kith-pms/
 - **service_test.go**: Integration tests for date parsing, recurring logic, and queries
 
 ### `internal/reminders` — Reminders & notifications
-- **domain.go**: Reminder (title, notes, due_date, person_id, important_date_id, completed, recurrence_rule, recurrence_end_date), ReminderWithPerson; RecurrenceType enum (7 types), RecurrenceRule struct
-- **recurrence.go**: Pure `computeNextDue` function computing next due date for all 7 recurrence types (daily, weekly, monthly, yearly, custom, day_of_week, relative_contact)
-- **service.go**: CRUD for reminders; completion tracking; auto-spawn next occurrence when RecurrenceRule != nil; JournalLastContacter interface for relative-contact lookups
-- **repo.go**: Queries for reminders with person joins; status filtering; read/write recurrence columns (JSON marshal/unmarshal)
-- **service_test.go**: Integration tests for reminder CRUD, completion, and auto-spawn with recurrence
+- **domain.go**: Reminder (title, notes, due_date, person_id, important_date_id, completed, recurrence_rule, recurrence_end_date, days_before_dob), ReminderWithPerson; RecurrenceType enum (8 types: daily, weekly, monthly, yearly, custom, day_of_week, relative_contact, **birthday**); RecurrenceRule struct with birthday-specific fields
+- **recurrence.go**: Pure `computeNextDue` function for 7 standard types; `ComputeBirthdayDueDate` and `NextBirthdayDueAfter` for birthday recurrence with Feb 29 handling
+- **service.go**: CRUD for reminders; completion tracking; auto-spawn next occurrence when RecurrenceRule != nil; JournalLastContacter interface for relative-contact lookups; `EnsureBirthdayReminder` for DOB sync
+- **repo.go**: Queries for reminders with person joins; status filtering; read/write recurrence columns (JSON marshal/unmarshal); birthday reminder lookup/delete methods
+- **service_test.go**: Integration tests for reminder CRUD, completion, auto-spawn with recurrence, and birthday reminder sync
 
 ### `internal/gifts` — Gift management & debt tracking
 - **domain.go**: Gift (title, description, direction, debt_type, person_id, image_path), GiftWithPerson; Direction and DebtType enums
@@ -258,7 +258,7 @@ kith-pms/
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
-- **service.go**: LocalFileService with methods for avatar uploads/imports and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 5MB); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic number, size limits, path traversal prevention, atomic writes)
+- **service.go**: LocalFileService for avatar uploads and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 5MB); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type to `documents/<personID>/` (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic numbers, size limits, path traversal prevention, atomic writes)
 - **service_test.go**: File service unit tests (avatar uploads, document storage, path traversal prevention)
 
 ### `internal/metrics` — Prometheus metrics & observability
@@ -266,9 +266,9 @@ kith-pms/
 - **metrics_test.go**: Unit tests for route-template label cardinality, unknown route handling, scrape format validation
 
 ### `internal/monica` — Monica PRM data import
-- **parser.go**: Unmarshals Monica JSON export format (array-of-groups wire format; contacts, activities, reminders, tags, photos, documents, etc.) into typed structs; parses `account.data.photos` into UUID→dataURL map; adds `AvatarDataURL` field to `Contact` struct resolved when `avatar_source == "photo"` (5MB limit); parses documents with embedded base64 dataURLs (50MB limit via `parseDataURLLimit`)
-- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream avatar processing; includes `MDocument` list for document storage
-- **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication, document import coverage)
+- **parser.go**: Unmarshals Monica v4 JSON export format (array-of-groups wire format: `data:[{type, count, values:[]}]`) into typed structs; parses `account.data[type="photo"]` into UUID→dataURL map; extracts nested `properties.avatar.avatar_photo` UUID for contact avatars; decodes documents with embedded base64 dataURLs (5MB limit for avatars, 50MB for documents via `parseDataURLLimit`); date normalization to `YYYY-MM-DD`; supports account-level documents (reports as skipped in dry-run)
+- **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream avatar processing; includes `MDocument` list for document storage with filename preservation
+- **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication, document import coverage, array-of-groups parsing)
 
 ### `internal/api` — HTTP API handlers & server
 - **handler/ package** — HTTP handler structs with injected services (struct-based pattern)
@@ -314,7 +314,7 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-**Stack**: React 19.2 CSR SPA with TanStack Router 1.168+, TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI 1.5, Tailwind CSS 4.3, Biome 2.4.16, Vite 8, pnpm (latest).
+**Stack**: React 19.2.7 CSR SPA with TanStack Router 1.168+, TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI 1.5, Tailwind CSS 4.3.1, Biome 2.5.1, Vite 8.1.0, pnpm 11.5.3.
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
@@ -389,6 +389,8 @@ styles.css               # Tailwind + design tokens (:root variables)
 | `uptrace/bun/extra/bundebug` | v1.2.18+ | Query debug logging hook |
 | `modernc.org/sqlite` | v1.50.1+ | Pure Go SQLite driver (no CGO) |
 | `golang.org/x/crypto` | latest | bcrypt password hashing |
+| `Prometheus` | v1.23.2 | Metrics exposition format |
+| `Sentry Go` | v0.47.0 | Error monitoring (optional, server-side only) |
 | `nhymxu/gommon/cfgloader` | v0.0.0-20260605025023 | Three-layer config merging (replaces koanf) |
 | `koanf` | (indirect) | Used transitively via dependencies (not direct) |
 | `getsentry/sentry-go` | v0.46.1+ | Error monitoring (optional) |
@@ -400,10 +402,11 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ## Module & Build
 
-- **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.4
+- **Module**: `github.com/nhymxu/kith-pms` — Go 1.26.4 with CGO_ENABLED=0
 - **Build**: `make web` (pnpm build → copy SPA) then `CGO_ENABLED=0 go build` for single static binary
 - **Binary name**: `kith-pms` (compiled to `bin/kith-pms`)
 - **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/api/spa/public/` for embedding
+- **Frontend Stack**: React 19.2.7, TypeScript 6.0.3, Vite 8.1.0, TailwindCSS 4.3.1, Biome 2.5.1, pnpm 11.5.3
 
 ## Test Coverage
 
@@ -424,6 +427,6 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 **Total**: 200+ Go tests passing with race detector. Run all: `make tests`
 
-**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 22 migrations applied, providing clean per-test isolation.
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 24 migrations applied, providing clean per-test isolation.
 
 **React Frontend Tests**: Vitest + @testing-library/react; run via `pnpm --dir web test`

@@ -156,7 +156,7 @@ export const PersonSchema = z.object({
 ```
 
 ### Styling
-- **Tailwind CSS 4.3** with Linear/Stripe minimal design tokens (Indigo-600 accent)
+- **Tailwind CSS 4.3.1** with Linear/Stripe minimal design tokens (Indigo-600 accent)
 - Local UI components use indigo-600 accent, zinc surfaces, hairline borders, no shadows
 - **Recharts 3.8+** for dashboard charts with custom Indigo/Zinc theme
 - Design tokens in `web/src/styles.css` (:root CSS variables)
@@ -182,7 +182,7 @@ export const PersonSchema = z.object({
 - Use discriminated unions for type safety
 
 ### Biome Configuration
-- Linter + formatter in `web/biome.json` (Biome 2.4.16+)
+- Linter + formatter in `web/biome.json` (Biome 2.5.1+)
 - Run `pnpm check` to verify lint/format
 - Run `pnpm format` to auto-fix formatting issues
 - Enforced on `make lint` via `pnpm --dir web check`
@@ -192,6 +192,14 @@ export const PersonSchema = z.object({
 - Use the module path `github.com/nhymxu/kith-pms/...` for internal Go imports
 - Standard Go imports: `"database/sql"`, `"time"`, `"fmt"`, `"log/slog"`
 - External: `"github.com/labstack/echo/v5"`, `"golang.org/x/crypto/..."`
+
+## File Storage Patterns
+
+- **Avatar Storage**: `data/avatars/` with filename pattern `<personID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit)
+- **Gift Image Storage**: `data/gifts/` with filename pattern `<giftID>.<ext>` (any type; 5MB limit)
+- **Document Storage**: `data/documents/<personID>/` with original filename preserved (any type; 50MB per file)
+- All storage paths are configurable via environment variables (`AVATAR_STORAGE_PATH`, `GIFT_STORAGE_PATH`)
+- MIME type detection at serve-time (no storage); path traversal prevention in all methods
 
 ## Testing
 

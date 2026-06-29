@@ -98,10 +98,10 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
 | UI Components    | Local shadcn-style primitives + Base UI 1.5 | Accessible local component APIs with Tailwind theming                    |
-| Styling          | Tailwind CSS 4.3                            | Utility-first CSS with Indigo-600 accent, Zinc surfaces                  |
-| Build            | Vite 8                                      | Fast bundler; code splitting, lazy loading, HMR                          |
-| Linter/Formatter | Biome 2.4.16+                               | Rust-based linter + formatter for JS/TS                                  |
-| Package Manager  | pnpm (latest)                               | Fast, disk-efficient workspaces                                          |
+| Styling          | Tailwind CSS 4.3.1                          | Utility-first CSS with Indigo-600 accent, Zinc surfaces                  |
+| Build            | Vite 8.1.0                                  | Fast bundler; code splitting, lazy loading, HMR                          |
+| Linter/Formatter | Biome 2.5.1                                 | Rust-based linter + formatter for JS/TS                                  |
+| Package Manager  | pnpm 11.5.3                                 | Fast, disk-efficient workspaces                                          |
 | CLI              | urfave/cli v3                               | Simple CLI scaffolding for subcommands                                   |
 | Config           | nhymxu/gommon/cfgloader                     | Three-layer config: defaults → .env file → env vars (replaces koanf)    |
 | Logging          | slog + tint                                 | Standard library structured logging with colored debug output             |
@@ -124,7 +124,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 - All assets (CSS, JS, images) bundled; no external file dependencies
 
 ### Docker Deployment
-- Multi-stage Dockerfile: Node.js 24-alpine (build SPA) → Go 1.26-alpine (compile) → distroless (runtime)
+- Multi-stage Dockerfile: Node.js 24 Alpine (build SPA) → Go 1.26.4 Alpine (compile) → distroless (runtime)
 - `docker-compose.dev.yml` for local development; production stack in `deploy/compose/docker-compose.yml` with Litestream sidecar
 - Multi-platform images pushed to GHCR (linux/amd64, linux/arm64) for both distroless and debian-slim variants
 - Automatic migrations on startup (configurable via `DB_AUTO_MIGRATE`)
@@ -139,6 +139,7 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 - SQLite database: `data/kith.db` (configurable via `DB_PATH`)
 - Avatar storage: `data/avatars/` (configurable via `AVATAR_STORAGE_PATH`)
 - Gift images: `data/gifts/` (configurable via `GIFT_STORAGE_PATH`)
+- Documents: `data/documents/<personID>/` (any file type, 50MB per file)
 - All paths support relative or absolute paths
 
 ### Backup & Restore

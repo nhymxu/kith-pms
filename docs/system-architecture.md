@@ -521,16 +521,31 @@ err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT row
 | `0016_user_setting.sql` | user_setting table (key, value) for storing user preferences (date_format, time_format, timezone, audit_log_retention_days) |
 | `0017_reminder_recurrence.sql` | recurrence_rule TEXT and recurrence_end_date TEXT columns on reminder table for storing recurrence configuration |
 | `0018_person_gender.sql` | gender TEXT column on person table |
+| `0019_rename_people_labels.sql` | rename label table to people_labels for clarity (distinct from journal_label) |
+| `0020_journal_label.sql` | journal-specific labels (separate from people labels) with color support |
+| `0021_person_nickname_lower.sql` | generated lowercase nickname column for case-insensitive search |
+| `0022_drop_mime_type_columns.sql` | remove avatar_mime_type and gift_image_mime_type; MIME now detected at serve-time |
+| `0023_work_history.sql` | work history table with employment dates and employment records |
+| `0024_audit_metadata.sql` | add metadata TEXT column to audit_log for structured field-level change tracking |
 
-**Total Migrations**: 22 migrations applied in order; tracked via schema_migrations table.
+**Total Migrations**: 24 migrations applied in order; tracked via schema_migrations table.
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 
-### Reminder Recurrence & Settings Notes
+### Reminder Recurrence, Birthday Reminders, & Settings Notes
 
-**Reminders**: Support 7 recurrence types (daily, weekly, monthly, yearly, custom interval, day-of-week, relative-to-last-contact) with optional end date cutoff. Auto-spawn next occurrence on completion via pure `computeNextDue()` function.
+**Reminders**: Support 8 recurrence types (daily, weekly, monthly, yearly, custom interval, day-of-week, relative-to-last-contact, **birthday**) with optional end date cutoff. Auto-spawn next occurrence on completion via pure `computeNextDue()` function.
 
-**Settings Persistence**: Key-value settings stored in `user_setting` table (server-side) with matching localStorage keys in frontend for date format, timezone, and other user preferences. Ensures settings persist across sessions and are loaded on app initialization.
+**Birthday Reminders** (new in Phase 4.5):
+- Triggered by `recurrence_type: "birthday"` in RecurrenceRule JSON
+- Anchored to `person.date_of_birth` field with annual recurrence
+- Configurable `days_before_dob` field (0–30 day advance warning presets)
+- DOB sync logic: on DOB update, re-computes pending birthday reminder due dates; on DOB clear, deletes all associated birthday reminders
+- No new DB columns required — stored entirely in existing `recurrence_rule` JSON
+- UI: person-form checkbox "Create annual birthday reminder" (DOB-conditional); reminder-form toggle with picker; mutual exclusion with recurring checkbox for simplicity
+- Handles edge cases: Feb 29 birthdays, yearless dates, leap year transitions
+
+**Settings Persistence**: Key-value settings stored in `user_setting` table (server-side) with matching localStorage keys in frontend for date format, timezone, audit log retention policy, and other user preferences. Ensures settings persist across sessions and are loaded on app initialization.
 
 ### FTS5 Full-Text Search
 
@@ -549,17 +564,26 @@ WHERE rowid IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH 'sea
 
 **Architecture**:
 - Service: `internal/audit/Service` — logs all entity mutations (CREATE, UPDATE, DELETE)
-- Integration: Injected into people, journal, labels, reminders, dates, work_history services
+- Integration: Injected into people, journal, labels, reminders, dates, work_history, gifts, relationships services
 - Best-effort: Logging failures never block primary operations; errors logged as warnings only
 - Actor attribution: `audit.WithActor(ctx, userID)` and `ActorFromCtx(ctx)` for context-based user tracking
-- Storage: `audit_log` table (entity_type, entity_id, entity_name, action, actor_id, created_at)
+- Storage: `audit_log` table (entity_type, entity_id, entity_name, action, actor_id, created_at, **metadata**)
+- **Field-Level Tracking** (new in Phase 4.5): `metadata` column stores structured JSON array of `Change` objects tracking field-level mutations:
+  ```
+  {
+    "changes": [
+      {"field": "name", "old_value": "Alice", "new_value": "Alice Smith"},
+      {"field": "date_of_birth", "old_value": null, "new_value": "1990-01-15"}
+    ]
+  }
+  ```
 - **Retention Policy**: Configurable TTL via `audit_log_retention_days` setting (0 = disabled/keep forever)
 - **Purge Method**: `Repo.Purge(ctx, db, days)` deletes entries older than N days using SQLite datetime arithmetic
 - **Manual Cleanup**: `POST /v1/audit/cleanup` endpoint triggers immediate purge, returns `{"deleted": N}`
 
 **Usage**:
 ```go
-s.auditSvc.Log(ctx, audit.EntityType("person"), id, "Alice Smith", audit.ActionCreated)
+s.auditSvc.Log(ctx, audit.EntityType("person"), id, "Alice Smith", audit.ActionCreated, metadata)
 s.auditSvc.Purge(ctx, retentionDays) // Auto-purge based on setting
 ```
 

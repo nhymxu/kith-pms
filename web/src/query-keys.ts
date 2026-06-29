@@ -86,6 +86,10 @@ export const keys = {
 		list: () => ["relationship-types", "list"] as const,
 		detail: (id: number) => ["relationship-types", "detail", id] as const,
 	},
+	relationships: {
+		graph: (personId?: number) =>
+			["relationships", "graph", personId ?? "all"] as const,
+	},
 	audit: {
 		all: ["audit"] as const,
 		list: (filters: AuditFilters = {}) => ["audit", "list", filters] as const,

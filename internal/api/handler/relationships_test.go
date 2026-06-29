@@ -138,5 +138,48 @@ func TestRelationshipsDetach_InvalidRelID_Returns400(t *testing.T) {
 	}
 }
 
+func TestRelationshipsGraph_Global_Returns200WithShape(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.RelationshipsAPI{Svc: newRelationshipsService(db)}
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/relationships/graph", nil)
+	rec := execHandler(newTestEcho(), req, nil, h.Graph)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	body := rec.Body.String()
+	if !strings.Contains(body, `"nodes"`) || !strings.Contains(body, `"links"`) {
+		t.Errorf("response missing nodes/links keys: %s", body)
+	}
+}
+
+func TestRelationshipsGraph_EgoMode_Returns200(t *testing.T) {
+	db := openTestDB(t)
+	svc := newRelationshipsService(db)
+	personID := insertTestPerson(t, db, "Alice")
+	h := &handler.RelationshipsAPI{Svc: svc}
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/relationships/graph?person_id=%d", personID), nil)
+	rec := execHandler(newTestEcho(), req, nil, h.Graph)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRelationshipsGraph_InvalidPersonID_Returns400(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.RelationshipsAPI{Svc: newRelationshipsService(db)}
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/relationships/graph?person_id=invalid", nil)
+	rec := execHandler(newTestEcho(), req, nil, h.Graph)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
 // ensure unused import doesn't break build
 var _ = strings.Contains

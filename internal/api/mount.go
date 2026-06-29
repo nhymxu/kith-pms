@@ -229,6 +229,7 @@ func mountRelationships(g *echo.Group, deps Deps) {
 	g.POST("/relationship-types", h.CreateType)
 	g.PUT("/relationship-types/:id", h.UpdateType)
 	g.DELETE("/relationship-types/:id", h.DeleteType)
+	g.GET("/relationships/graph", h.Graph)
 	g.GET("/people/:id/relationships", h.ListByPerson)
 	g.POST("/people/:id/relationships", h.AttachRelationship)
 	g.DELETE("/people/:id/relationships/:relID", h.DetachRelationship)

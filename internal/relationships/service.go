@@ -8,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/nhymxu/kith-pms/internal/audit"
+	"github.com/nhymxu/kith-pms/internal/people"
 )
 
 // Sentinel errors returned by service methods.
@@ -24,8 +25,10 @@ var (
 type Service struct {
 	Types         RelationshipTypeRepo
 	Relationships PersonRelationshipRepo
+	PeopleLabels  people.LabelRepo
 	Audit         *audit.Service
 	db            *bun.DB // needed for transactions
+	graphEdges    GraphEdgesRepo
 }
 
 // NewService constructs a Service wired to db.
@@ -33,7 +36,9 @@ func NewService(db *bun.DB) *Service {
 	return &Service{
 		Types:         NewSQLRelationshipTypeRepo(db),
 		Relationships: NewSQLPersonRelationshipRepo(db),
+		PeopleLabels:  people.NewLabelRepo(db),
 		db:            db,
+		graphEdges:    newSQLGraphEdgesRepo(db),
 	}
 }
 

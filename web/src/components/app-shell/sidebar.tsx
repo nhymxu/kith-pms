@@ -5,6 +5,7 @@ import {
 	Gift,
 	Heart,
 	LayoutDashboard,
+	Network,
 	Users,
 } from "lucide-react";
 import { NavLink } from "./nav-link";
@@ -12,6 +13,7 @@ import { NavLink } from "./nav-link";
 export const NAV_ITEMS = [
 	{ to: "/", icon: LayoutDashboard, label: "Dashboard" },
 	{ to: "/people", icon: Users, label: "People" },
+	{ to: "/network", icon: Network, label: "Network" },
 	{ to: "/journal", icon: BookOpen, label: "Journal" },
 	{ to: "/gifts", icon: Gift, label: "Gifts" },
 	{ to: "/important-dates", icon: Calendar, label: "Dates" },

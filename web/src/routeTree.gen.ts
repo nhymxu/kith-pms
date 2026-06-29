@@ -15,6 +15,7 @@ import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
 import { Route as AuthedRemindersIndexRouteImport } from './routes/_authed/reminders/index'
 import { Route as AuthedPeopleIndexRouteImport } from './routes/_authed/people/index'
+import { Route as AuthedNetworkIndexRouteImport } from './routes/_authed/network/index'
 import { Route as AuthedMeIndexRouteImport } from './routes/_authed/me/index'
 import { Route as AuthedJournalIndexRouteImport } from './routes/_authed/journal/index'
 import { Route as AuthedImportantDatesIndexRouteImport } from './routes/_authed/important-dates/index'
@@ -70,6 +71,11 @@ const AuthedRemindersIndexRoute = AuthedRemindersIndexRouteImport.update({
 const AuthedPeopleIndexRoute = AuthedPeopleIndexRouteImport.update({
   id: '/people/',
   path: '/people/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedNetworkIndexRoute = AuthedNetworkIndexRouteImport.update({
+  id: '/network/',
+  path: '/network/',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedMeIndexRoute = AuthedMeIndexRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/important-dates/': typeof AuthedImportantDatesIndexRoute
   '/journal/': typeof AuthedJournalIndexRoute
   '/me/': typeof AuthedMeIndexRoute
+  '/network/': typeof AuthedNetworkIndexRoute
   '/people/': typeof AuthedPeopleIndexRoute
   '/reminders/': typeof AuthedRemindersIndexRoute
   '/settings/': typeof AuthedSettingsIndexRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/important-dates': typeof AuthedImportantDatesIndexRoute
   '/journal': typeof AuthedJournalIndexRoute
   '/me': typeof AuthedMeIndexRoute
+  '/network': typeof AuthedNetworkIndexRoute
   '/people': typeof AuthedPeopleIndexRoute
   '/reminders': typeof AuthedRemindersIndexRoute
   '/gifts/$giftId/edit': typeof AuthedGiftsGiftIdEditRoute
@@ -306,6 +314,7 @@ export interface FileRoutesById {
   '/_authed/important-dates/': typeof AuthedImportantDatesIndexRoute
   '/_authed/journal/': typeof AuthedJournalIndexRoute
   '/_authed/me/': typeof AuthedMeIndexRoute
+  '/_authed/network/': typeof AuthedNetworkIndexRoute
   '/_authed/people/': typeof AuthedPeopleIndexRoute
   '/_authed/reminders/': typeof AuthedRemindersIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
@@ -342,6 +351,7 @@ export interface FileRouteTypes {
     | '/important-dates/'
     | '/journal/'
     | '/me/'
+    | '/network/'
     | '/people/'
     | '/reminders/'
     | '/settings/'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/important-dates'
     | '/journal'
     | '/me'
+    | '/network'
     | '/people'
     | '/reminders'
     | '/gifts/$giftId/edit'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authed/important-dates/'
     | '/_authed/journal/'
     | '/_authed/me/'
+    | '/_authed/network/'
     | '/_authed/people/'
     | '/_authed/reminders/'
     | '/_authed/settings/'
@@ -472,6 +484,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people/'
       preLoaderRoute: typeof AuthedPeopleIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/network/': {
+      id: '/_authed/network/'
+      path: '/network'
+      fullPath: '/network/'
+      preLoaderRoute: typeof AuthedNetworkIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/me/': {
@@ -763,6 +782,7 @@ interface AuthedRouteChildren {
   AuthedImportantDatesIndexRoute: typeof AuthedImportantDatesIndexRoute
   AuthedJournalIndexRoute: typeof AuthedJournalIndexRoute
   AuthedMeIndexRoute: typeof AuthedMeIndexRoute
+  AuthedNetworkIndexRoute: typeof AuthedNetworkIndexRoute
   AuthedPeopleIndexRoute: typeof AuthedPeopleIndexRoute
   AuthedRemindersIndexRoute: typeof AuthedRemindersIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
@@ -785,6 +805,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedImportantDatesIndexRoute: AuthedImportantDatesIndexRoute,
   AuthedJournalIndexRoute: AuthedJournalIndexRoute,
   AuthedMeIndexRoute: AuthedMeIndexRoute,
+  AuthedNetworkIndexRoute: AuthedNetworkIndexRoute,
   AuthedPeopleIndexRoute: AuthedPeopleIndexRoute,
   AuthedRemindersIndexRoute: AuthedRemindersIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,

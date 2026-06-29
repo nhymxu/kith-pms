@@ -69,6 +69,8 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 			}),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.people.relationships(personId) });
+			qc.invalidateQueries({ queryKey: keys.relationships.graph(personId) });
+			qc.invalidateQueries({ queryKey: keys.relationships.graph() });
 			setAddOpen(false);
 			setTypeId("");
 			setOtherPersonId(null);
@@ -83,6 +85,8 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		mutationFn: (relId: number) => detachRelationship(personId, relId),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: keys.people.relationships(personId) });
+			qc.invalidateQueries({ queryKey: keys.relationships.graph(personId) });
+			qc.invalidateQueries({ queryKey: keys.relationships.graph() });
 			setConfirmRelId(null);
 		},
 	});

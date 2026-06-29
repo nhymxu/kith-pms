@@ -239,6 +239,36 @@ func (h *RelationshipsAPI) DetachRelationship(c *echo.Context) error {
 	return noContent(c)
 }
 
+// Graph handles GET /v1/relationships/graph[?person_id=N].
+//
+// @Summary      Get relationship network graph
+// @Tags         relationships
+// @Produce      json
+// @Param        person_id  query     int  false  "Ego-network focal person ID"
+// @Success      200        {object}  envelope
+// @Failure      400        {object}  envelope
+// @Security     CookieAuth
+// @Router       /relationships/graph [get]
+func (h *RelationshipsAPI) Graph(c *echo.Context) error {
+	var personID int64
+
+	if raw := c.QueryParam("person_id"); raw != "" {
+		id, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || id <= 0 {
+			return apiErr(c, http.StatusBadRequest, "invalid person_id")
+		}
+
+		personID = id
+	}
+
+	graph, err := h.Svc.Graph(c.Request().Context(), personID)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, graph)
+}
+
 // ---- helpers ----------------------------------------------------------------
 
 func relTypeErrResponse(c *echo.Context, err error) error {

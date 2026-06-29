@@ -63,6 +63,7 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		EntityName string           `json:"entity_name"`
 		Action     audit.Action     `json:"action"`
 		ActorID    *int64           `json:"actor_id"`
+		Metadata   *audit.Metadata  `json:"metadata,omitempty"`
 		CreatedAt  string           `json:"created_at"`
 	}
 
@@ -75,6 +76,7 @@ func (h *AuditAPI) List(c *echo.Context) error {
 			EntityName: e.EntityName,
 			Action:     e.Action,
 			ActorID:    e.ActorID,
+			Metadata:   e.Metadata,
 			CreatedAt:  e.CreatedAt.Format("2006-01-02T15:04:05.000Z"),
 		})
 	}

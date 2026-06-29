@@ -88,6 +88,15 @@ func (s *Service) Create(ctx context.Context, p Person, contacts []ContactInfo, 
 }
 
 func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, locations []Location) error {
+	var meta *audit.Metadata
+
+	if s.Audit != nil {
+		if old, err := s.People.Get(ctx, p.ID); err == nil && old != nil {
+			changes := diffPersonFields(*old, p)
+			meta = &audit.Metadata{DetailAction: "profile_update", Changes: changes}
+		}
+	}
+
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("people: begin tx: %w", err)
@@ -111,7 +120,11 @@ func (s *Service) Update(ctx context.Context, p Person, contacts []ContactInfo, 
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, p.ID, p.Name, audit.ActionUpdate)
+		if meta != nil {
+			s.Audit.Log(ctx, audit.EntityPerson, p.ID, p.Name, audit.ActionUpdate, *meta)
+		} else {
+			s.Audit.Log(ctx, audit.EntityPerson, p.ID, p.Name, audit.ActionUpdate)
+		}
 	}
 
 	if s.BirthdaySync != nil {
@@ -279,7 +292,8 @@ func (s *Service) SetSelf(ctx context.Context, personID int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
+			audit.Metadata{DetailAction: "set_self"})
 	}
 
 	return nil
@@ -337,7 +351,8 @@ func (s *Service) UploadAvatar(
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
+			audit.Metadata{DetailAction: "avatar_upload"})
 	}
 
 	return nil
@@ -378,7 +393,8 @@ func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
+			audit.Metadata{DetailAction: "avatar_delete"})
 	}
 
 	return nil
@@ -409,7 +425,17 @@ func (s *Service) UpdateLastContact(ctx context.Context, personID int64, contact
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate)
+		var oldTS, newTS string
+		if person.LastContactAt != nil {
+			oldTS = person.LastContactAt.UTC().Format(time.RFC3339)
+		}
+
+		newTS = contactTime.UTC().Format(time.RFC3339)
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
+			audit.Metadata{
+				DetailAction: "last_contact_update",
+				Changes:      []audit.Change{{Field: "last_contact_at", Old: oldTS, New: newTS}},
+			})
 	}
 
 	return nil

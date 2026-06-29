@@ -293,6 +293,64 @@ func TestService_Purge_NothingToDelete(t *testing.T) {
 	}
 }
 
+func TestAuditLog_WithMetadata(t *testing.T) {
+	db := openTestDB(t)
+	svc := audit.NewService(db)
+	ctx := context.Background()
+
+	meta := audit.Metadata{
+		DetailAction: "profile_update",
+		Changes: []audit.Change{
+			{Field: "name", Old: "Alice", New: "Alice Smith"},
+			{Field: "nickname", Old: "", New: "Ali"},
+		},
+	}
+	svc.Log(ctx, audit.EntityPerson, 1, "Alice Smith", audit.ActionUpdate, meta)
+
+	entries, err := svc.List(ctx, audit.ListParams{Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(entries) != 1 {
+		t.Fatalf("want 1 entry, got %d", len(entries))
+	}
+
+	e := entries[0]
+	if e.Metadata == nil {
+		t.Fatal("metadata: want non-nil")
+	}
+
+	if e.Metadata.DetailAction != "profile_update" {
+		t.Errorf("detail_action: want %q, got %q", "profile_update", e.Metadata.DetailAction)
+	}
+
+	if len(e.Metadata.Changes) != 2 {
+		t.Fatalf("changes: want 2, got %d", len(e.Metadata.Changes))
+	}
+
+	if e.Metadata.Changes[0].Field != "name" {
+		t.Errorf("changes[0].field: want %q, got %q", "name", e.Metadata.Changes[0].Field)
+	}
+}
+
+func TestAuditLog_NilMetadata(t *testing.T) {
+	db := openTestDB(t)
+	svc := audit.NewService(db)
+	ctx := context.Background()
+
+	svc.Log(ctx, audit.EntityPerson, 1, "Jane", audit.ActionCreate)
+
+	entries, err := svc.List(ctx, audit.ListParams{Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if entries[0].Metadata != nil {
+		t.Errorf("metadata: want nil for entry with no metadata")
+	}
+}
+
 func TestActorContext_RoundTrip(t *testing.T) {
 	ctx := audit.WithActor(context.Background(), 42)
 

@@ -20,13 +20,27 @@ func NewService(db *bun.DB) *Service {
 
 // Log writes an audit entry best-effort: errors are logged as warnings but
 // never returned so a logging failure never breaks the primary operation.
-func (s *Service) Log(ctx context.Context, entityType EntityType, entityID int64, entityName string, action Action) {
+// An optional Metadata value may be passed as the last argument.
+func (s *Service) Log(
+	ctx context.Context,
+	entityType EntityType,
+	entityID int64,
+	entityName string,
+	action Action,
+	meta ...Metadata,
+) {
+	var m *Metadata
+	if len(meta) > 0 {
+		m = &meta[0]
+	}
+
 	e := Entry{
 		EntityType: entityType,
 		EntityID:   entityID,
 		EntityName: entityName,
 		Action:     action,
 		ActorID:    ActorFromCtx(ctx),
+		Metadata:   m,
 		CreatedAt:  time.Now().UTC(),
 	}
 	if err := s.repo.Insert(ctx, s.db, e); err != nil {

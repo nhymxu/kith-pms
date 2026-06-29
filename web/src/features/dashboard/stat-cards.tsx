@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Bell, BookOpen, Calendar, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { listUpcomingDates } from "#/endpoints/dates";
+import { listUpcomingDates } from "#/endpoints/important-dates";
 import { listJournal } from "#/endpoints/journal";
 import { listPeople } from "#/endpoints/people";
 import { listReminders } from "#/endpoints/reminders";

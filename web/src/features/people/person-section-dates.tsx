@@ -12,7 +12,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
-import { listDatesByPerson, replaceDatesForPerson } from "#/endpoints/dates";
+import { listDatesByPerson, replaceDatesForPerson } from "#/endpoints/important-dates";
 import { keys } from "#/query-keys";
 import type { ImportantDate } from "#/schemas/date";
 import type { Person } from "#/schemas/person";

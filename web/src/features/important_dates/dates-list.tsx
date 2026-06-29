@@ -1,7 +1,7 @@
 // Upcoming dates list: grouped by month, shows person name, date type, exact date + days-until badge
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { listUpcomingDates } from "#/endpoints/dates";
+import { listUpcomingDates } from "#/endpoints/important-dates";
 import { keys } from "#/query-keys";
 
 function daysUntil(dateStr: string): number {

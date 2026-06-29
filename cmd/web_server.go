@@ -15,7 +15,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/api"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
-	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/important_dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
@@ -123,7 +123,7 @@ Can scale later.`,
 			journalSvc.PeopleSvc = &api.JournalPeopleAdapter{Svc: peopleSvc}
 			journalLabelsSvc := journal.NewLabelService(db)
 
-			datesSvc := dates.NewService(db)
+			datesSvc := important_dates.NewService(db)
 
 			remindersSvc := reminders.NewService(db)
 

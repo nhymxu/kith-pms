@@ -1,4 +1,4 @@
-package dates
+package important_dates
 
 import (
 	"fmt"

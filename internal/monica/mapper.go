@@ -6,7 +6,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/important_dates"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/people"
@@ -45,7 +45,7 @@ type ImportRecord struct {
 	// LifeEventActivities are mapped from Monica life events; attach LIFE_EVENT label on create.
 	LifeEventActivities []journal.Activity
 	Reminders           []reminders.Reminder
-	Dates               []dates.ImportantDate
+	Dates               []important_dates.ImportantDate
 	WorkHistory         []work_history.WorkEntry
 	Gifts               []gifts.Gift
 	// Relationships are resolved after all persons are inserted (UUID→ID mapping needed).
@@ -366,12 +366,12 @@ func mapReminders(mrs []MReminder, tasks []MTask, options ImportOptions) []remin
 	return out
 }
 
-func mapDates(info Information) []dates.ImportantDate {
-	var out []dates.ImportantDate
+func mapDates(info Information) []important_dates.ImportantDate {
+	var out []important_dates.ImportantDate
 
 	if info.FirstMetDate != "" {
-		out = append(out, dates.ImportantDate{
-			Kind:      string(dates.KindMet),
+		out = append(out, important_dates.ImportantDate{
+			Kind:      string(important_dates.KindMet),
 			DateValue: info.FirstMetDate,
 			Recurring: false,
 		})
@@ -491,10 +491,10 @@ func mapConversations(c Contact) []journal.Activity {
 }
 
 // mapLifeEvents converts Monica life events to journal activities and ImportantDate records.
-func mapLifeEvents(c Contact) ([]journal.Activity, []dates.ImportantDate) {
+func mapLifeEvents(c Contact) ([]journal.Activity, []important_dates.ImportantDate) {
 	var (
 		activities     []journal.Activity
-		importantDates []dates.ImportantDate
+		importantDates []important_dates.ImportantDate
 	)
 
 	for _, le := range c.LifeEvents {
@@ -512,8 +512,8 @@ func mapLifeEvents(c Contact) ([]journal.Activity, []dates.ImportantDate) {
 			OccurredAtDate: happenedAt,
 		})
 
-		importantDates = append(importantDates, dates.ImportantDate{
-			Kind:      string(dates.KindOther),
+		importantDates = append(importantDates, important_dates.ImportantDate{
+			Kind:      string(important_dates.KindOther),
 			Label:     name,
 			DateValue: happenedAt,
 			Recurring: false,

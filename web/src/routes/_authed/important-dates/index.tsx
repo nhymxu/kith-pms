@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { DatesList } from "#/features/dates/dates-list";
+import { DatesList } from "#/features/important_dates/dates-list";
 
-export const Route = createFileRoute("/_authed/dates/")({
+export const Route = createFileRoute("/_authed/important-dates/")({
 	component: DatesPage,
 });
 

@@ -1,4 +1,4 @@
-// Dates endpoints: list by person, replace for person, upcoming
+// Important dates endpoints: list by person, replace for person, upcoming
 import { apiFetch } from "../lib/api-client";
 import {
 	type DatesReplaceRequest,
@@ -29,7 +29,7 @@ export async function replaceDatesForPerson(
 
 export async function listUpcomingDates(days = 30): Promise<UpcomingDatesList> {
 	const res = await apiFetch<Envelope<unknown>>(
-		`/v1/dates/upcoming?days=${days}`,
+		`/v1/important-dates/upcoming?days=${days}`,
 	);
 	return upcomingDatesListSchema.parse(res.data);
 }

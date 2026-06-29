@@ -12,7 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/urfave/cli/v3"
 
-	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/important_dates"
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
@@ -116,7 +116,7 @@ func monicaImportCommand() *cli.Command {
 			journalSvc := journal.NewService(database)
 			journalLabelSvc := journal.NewLabelService(database)
 			remindersSvc := reminders.NewService(database)
-			datesSvc := dates.NewService(database)
+			datesSvc := important_dates.NewService(database)
 			giftsSvc := gifts.NewService(database)
 			workSvc := work_history.NewService(database)
 			relSvc := relationships.NewService(database)
@@ -151,7 +151,7 @@ func runImport(
 	journalSvc *journal.Service,
 	journalLabelSvc *journal.LabelService,
 	remindersSvc *reminders.Service,
-	datesSvc *dates.Service,
+	datesSvc *important_dates.Service,
 	giftsSvc *gifts.Service,
 	workSvc *work_history.Service,
 	relSvc *relationships.Service,

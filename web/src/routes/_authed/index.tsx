@@ -6,7 +6,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { listAudit } from "#/endpoints/audit";
-import { listUpcomingDates } from "#/endpoints/dates";
+import { listUpcomingDates } from "#/endpoints/important-dates";
 import { listGifts } from "#/endpoints/gifts";
 import { listJournal } from "#/endpoints/journal";
 import { getMe } from "#/endpoints/me";

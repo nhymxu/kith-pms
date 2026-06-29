@@ -11,7 +11,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/api/spa"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
-	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/important_dates"
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
@@ -32,7 +32,7 @@ type Deps struct {
 	JournalLabelsService *journal.LabelService
 	RemindersService     *reminders.Service
 	WorkHistoryService   *work_history.Service
-	DatesService         *dates.Service
+	DatesService         *important_dates.Service
 	AuditService         *audit.Service
 	GiftsService         *gifts.Service
 	RelationshipsService *relationships.Service

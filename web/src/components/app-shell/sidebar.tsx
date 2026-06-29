@@ -14,7 +14,7 @@ export const NAV_ITEMS = [
 	{ to: "/people", icon: Users, label: "People" },
 	{ to: "/journal", icon: BookOpen, label: "Journal" },
 	{ to: "/gifts", icon: Gift, label: "Gifts" },
-	{ to: "/dates", icon: Calendar, label: "Dates" },
+	{ to: "/important-dates", icon: Calendar, label: "Dates" },
 	{ to: "/reminders", icon: Heart, label: "Reminders" },
 	{ to: "/audit", icon: BarChart3, label: "Audit" },
 ] as const;

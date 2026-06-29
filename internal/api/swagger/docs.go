@@ -433,7 +433,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/dates/upcoming": {
+        "/important-dates/upcoming": {
             "get": {
                 "security": [
                     {

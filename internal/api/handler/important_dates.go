@@ -7,12 +7,12 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/nhymxu/kith-pms/internal/dates"
+	"github.com/nhymxu/kith-pms/internal/important_dates"
 )
 
 // DatesAPI handles person-scoped important dates and global upcoming endpoints.
 type DatesAPI struct {
-	Svc *dates.Service
+	Svc *important_dates.Service
 }
 
 // datesReplaceRequest is the JSON body for full replace of a person's dates.
@@ -78,9 +78,9 @@ func (h *DatesAPI) ReplaceForPerson(c *echo.Context) error {
 		return apiErr(c, http.StatusBadRequest, "invalid request body")
 	}
 
-	domainDates := make([]dates.ImportantDate, 0, len(req.Dates))
+	domainDates := make([]important_dates.ImportantDate, 0, len(req.Dates))
 	for _, d := range req.Dates {
-		domainDates = append(domainDates, dates.ImportantDate{
+		domainDates = append(domainDates, important_dates.ImportantDate{
 			PersonID:  personID,
 			Kind:      d.Kind,
 			Label:     d.Label,
@@ -122,7 +122,7 @@ type personRef struct {
 // @Failure      500   {object}  envelope
 // @Security     CookieAuth
 // @Security     CSRFHeader
-// @Router       /dates/upcoming [get]
+// @Router       /important-dates/upcoming [get]
 func (h *DatesAPI) Upcoming(c *echo.Context) error {
 	days, _ := strconv.Atoi(c.QueryParam("days"))
 	if days < 1 {
@@ -157,8 +157,8 @@ func (h *DatesAPI) Upcoming(c *echo.Context) error {
 }
 
 // nextOccurrenceStr computes the next occurrence date as "YYYY-MM-DD".
-// Mirrors the logic in dates.nextOccurrence but returns a string instead of time.Time.
-func nextOccurrenceStr(d dates.ImportantDate, today time.Time) string {
+// Mirrors the logic in important_dates.nextOccurrence but returns a string instead of time.Time.
+func nextOccurrenceStr(d important_dates.ImportantDate, today time.Time) string {
 	monthDay := d.MonthDay()
 	if d.IsYearless() {
 		if len(monthDay) != 5 {

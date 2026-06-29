@@ -314,7 +314,7 @@ kith-pms/
 
 ## React SPA Frontend (`web/` directory)
 
-**Stack**: React 19.2.7 CSR SPA with TanStack Router 1.168+, TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI 1.5, Tailwind CSS 4.3.1, Biome 2.5.1, Vite 8.1.0, pnpm 11.5.3.
+**Stack**: React 19.2.7 CSR SPA with TanStack Router 1.168+, TanStack Query v5, TanStack Table v8, TanStack Form v0, local shadcn-style primitives with Base UI 1.6, react-force-graph-2d 1.29.1 (network visualization), Tailwind CSS 4.3.1, Biome 2.5.1, Vite 8.1.0, pnpm 11.5.3.
 
 **Path Alias**: `#/` (not `@/`) — mapped in `web/package.json` `imports`.
 
@@ -331,6 +331,7 @@ features/
   gifts/                 # Gift form, list, detail
   journal/               # Journal form, timeline, search
   me/                    # User profile section
+  network/               # Relationship network graph (force-directed, ego view, graph-data.ts utility)
   people/                # People table, detail sections, avatar uploader, quick actions
   reminders/             # Reminder form, table
   settings/              # Two-panel layout (sidebar nav + detail panel); General settings for date/time format + timezone
@@ -427,6 +428,6 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 **Total**: 200+ Go tests passing with race detector. Run all: `make tests`
 
-**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 24 migrations applied, providing clean per-test isolation.
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 24 confirmed migrations applied, providing clean per-test isolation.
 
 **React Frontend Tests**: Vitest + @testing-library/react; run via `pnpm --dir web test`

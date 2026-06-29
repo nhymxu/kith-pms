@@ -19,8 +19,9 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Tag relationships with color-coded labels
 - Upload profile avatars (JPEG, PNG, GIF, WebP; max 5MB)
 - Important dates tracking (birthdays, anniversaries, milestones with recurring support)
-- Reminders for follow-up with 7 recurrence types (daily, weekly, monthly, yearly, custom, day-of-week, relative-to-last-contact)
+- Reminders for follow-up with 7 recurrence types (daily, weekly, monthly, yearly, custom, day-of-week, relative-to-last-contact, birthday with Feb 29 handling)
 - Many-to-many person-to-person relationships with customizable, optionally-paired types
+- Relationship Network Visualization: force-directed graph of your entire contact network (global `/network` view, per-person ego view, color-by label/relationship type)
 - Last contact timestamp tracking (manual & auto-update from journal entries)
 - Employment history tracking per person (positions, dates, notes)
 
@@ -93,11 +94,12 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | HTTP             | Echo v5.2.1                                 | Lightweight HTTP framework, minimal magic                                |
 | Database         | SQLite (modernc.org/sqlite v1.50.1)         | Pure Go, no CGO, single-file database, WAL mode                          |
 | ORM              | uptrace/bun v1.2.18+                        | Lightweight query builder; raw SQL queries; no model layer               |
-| Frontend         | React 19.2, TanStack Router 1.168+          | CSR SPA with file-based routing; full client-side interactivity          |
+| Frontend         | React 19.2.7, TanStack Router 1.168+        | CSR SPA with file-based routing; full client-side interactivity          |
 | Data Fetching    | TanStack Query v5                           | Cache-first data fetching, stale-while-revalidate, per-component refresh |
 | Forms            | TanStack Form v0                            | Uncontrolled form state with Zod validation                              |
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
-| UI Components    | Local shadcn-style primitives + Base UI 1.5 | Accessible local component APIs with Tailwind theming                    |
+| Network Graph    | react-force-graph-2d 1.29.1                 | Force-directed graph visualization for relationship networks              |
+| UI Components    | Local shadcn-style primitives + Base UI 1.6 | Accessible local component APIs with Tailwind theming                    |
 | Styling          | Tailwind CSS 4.3.1                          | Utility-first CSS with Indigo-600 accent, Zinc surfaces                  |
 | Build            | Vite 8.1.0                                  | Fast bundler; code splitting, lazy loading, HMR                          |
 | Linter/Formatter | Biome 2.5.1                                 | Rust-based linter + formatter for JS/TS                                  |

@@ -171,6 +171,7 @@ routes/
 ├── login.tsx            # Public login page
 └── _authed.tsx          # Auth-guarded layout with topbar
     ├── index.tsx        # Dashboard (/)
+    ├── network/         # Relationship Network Graph (global view)
     ├── people/          # People CRUD (index, new, $personId, $personId.edit)
     ├── journal/         # Journal (index, new, $entryId, $entryId.edit)
     ├── gifts/           # Gifts (index, new, $giftId, $giftId.edit)
@@ -218,6 +219,13 @@ routes/
 8. **Important-dates-section.tsx** — DOB read-only with lock icon; custom dates add/edit/delete
 9. **Gifts-section.tsx** — "Quick gift" button in section header
 Each section uses `SectionCard` for consistent visual spacing and TanStack Query optimistic updates.
+
+**Relationship Network Visualization**: The network page (`web/src/routes/_authed/network.tsx`) displays a force-directed graph of your entire contact network using `react-force-graph-2d` v1.29.1. Features:
+- **Global View**: Full network showing all people (nodes) with relationships (edges); click any person to navigate to detail view
+- **Per-Person Ego View**: Accessible from people detail page; shows selected person + direct connections (1-hop); helps visualize local community
+- **Visual Encoding**: Nodes display person avatar (cached from API); edges colored by relationship type; optional group-by-label coloring (toggle in UI)
+- **Interaction**: Drag nodes to pin in position; zoom/pan; recenter button to reset view; canvas resized to container
+- **Graph Data**: `web/src/lib/graph-data.ts` utility processes people + relationships into force-graph node/link format with avatar URL caching; lazy-loaded on route entry (separate code chunk)
 
 ### Data Layer (TanStack Query v5)
 

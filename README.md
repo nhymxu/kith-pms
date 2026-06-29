@@ -11,7 +11,8 @@
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
 - **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
 - **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types (e.g. "Manager" / "Reports to")
-- **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking
+- **Relationship Network** — force-directed graph visualization of your entire contact network (global at `/network`; per-person ego view)
+- **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking; 7 recurrence types including birthday reminders
 - **Dashboard** — at-a-glance counts and recent activity on the homepage
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
@@ -23,7 +24,7 @@
 
 | Tool     | Version  | Purpose                      |
 |----------|----------|------------------------------|
-| Go       | 1.26.2+  | build                        |
+| Go       | 1.26.4+  | build                        |
 | Node.js  | 22 LTS   | React SPA build              |
 | pnpm     | 11+      | JS package manager           |
 | make     | any      | convenience targets          |

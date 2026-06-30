@@ -98,7 +98,7 @@ export function GraphControls({
 									: "text-zinc-600 hover:bg-zinc-100"
 							}`}
 						>
-							{v === "labels" ? "Group" : "Rel. type"}
+							{v === "labels" ? "Labels" : "Rel. type"}
 						</button>
 					))}
 				</div>

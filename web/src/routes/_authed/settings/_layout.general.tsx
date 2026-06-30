@@ -14,10 +14,13 @@ import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import {
 	type DateFormat,
+	getNetworkPrefs,
 	getUserPrefs,
+	type NetworkColorBy,
 	saveUserPrefs,
 	type TimeFormat,
 } from "#/lib/format-datetime";
+import type { UserSettings } from "#/schemas/settings";
 
 export const Route = createFileRoute("/_authed/settings/_layout/general")({
 	component: GeneralSettingsPage,
@@ -72,14 +75,18 @@ function GeneralSettingsPage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 		// Seed local state from localStorage while the query loads.
-		placeholderData: () => {
+		placeholderData: (): UserSettings => {
 			const p = getUserPrefs();
 			return {
 				date_format: p.dateFormat,
 				time_format: p.timeFormat,
 				timezone: p.timezone,
 				audit_log_retention_days: 0,
-			} as const;
+				network_color_by: p.networkColorBy,
+				network_show_avatar: p.networkShowAvatar,
+				network_show_only_mine: p.networkShowOnlyMine,
+				network_show_unconnected: p.networkShowUnconnected,
+			};
 		},
 	});
 
@@ -102,6 +109,21 @@ function GeneralSettingsPage() {
 		apiSettings?.audit_log_retention_days ?? 0,
 	);
 
+	const [networkDefaults, setNetworkDefaults] = useState<{
+		colorBy: NetworkColorBy;
+		showAvatar: boolean;
+		showOnlyMine: boolean;
+		showUnconnected: boolean;
+	}>(() => {
+		const n = getNetworkPrefs();
+		return {
+			colorBy: n.networkColorBy,
+			showAvatar: n.networkShowAvatar,
+			showOnlyMine: n.networkShowOnlyMine,
+			showUnconnected: n.networkShowUnconnected,
+		};
+	});
+
 	// Keep local form state in sync when the real query resolves (skip placeholder).
 	const [synced, setSynced] = useState(false);
 	if (apiSettings && !isPlaceholderData && !synced) {
@@ -111,18 +133,32 @@ function GeneralSettingsPage() {
 			timezone: apiSettings.timezone,
 		});
 		setRetentionDays(apiSettings.audit_log_retention_days ?? 0);
+		setNetworkDefaults({
+			colorBy: apiSettings.network_color_by,
+			showAvatar: apiSettings.network_show_avatar,
+			showOnlyMine: apiSettings.network_show_only_mine,
+			showUnconnected: apiSettings.network_show_unconnected,
+		});
 		setSynced(true);
 	}
 
+	const buildPayload = (
+		overrides?: Partial<Parameters<typeof updateSettings>[0]>,
+	) => ({
+		date_format: prefs.dateFormat,
+		time_format: prefs.timeFormat,
+		timezone: prefs.timezone,
+		audit_log_retention_days:
+			apiSettings?.audit_log_retention_days ?? retentionDays,
+		network_color_by: networkDefaults.colorBy,
+		network_show_avatar: networkDefaults.showAvatar,
+		network_show_only_mine: networkDefaults.showOnlyMine,
+		network_show_unconnected: networkDefaults.showUnconnected,
+		...overrides,
+	});
+
 	const prefsMutation = useMutation({
-		mutationFn: () =>
-			updateSettings({
-				date_format: prefs.dateFormat,
-				time_format: prefs.timeFormat,
-				timezone: prefs.timezone,
-				audit_log_retention_days:
-					apiSettings?.audit_log_retention_days ?? retentionDays,
-			}),
+		mutationFn: () => updateSettings(buildPayload()),
 		onSuccess: (updated) => {
 			saveUserPrefs({
 				dateFormat: updated.date_format as DateFormat,
@@ -136,14 +172,30 @@ function GeneralSettingsPage() {
 
 	const auditMutation = useMutation({
 		mutationFn: () =>
-			updateSettings({
-				date_format: prefs.dateFormat,
-				time_format: prefs.timeFormat,
-				timezone: prefs.timezone,
-				audit_log_retention_days: retentionDays,
-			}),
+			updateSettings(buildPayload({ audit_log_retention_days: retentionDays })),
 		onSuccess: (updated) => {
 			setRetentionDays(updated.audit_log_retention_days ?? 0);
+			queryClient.setQueryData(["settings"], updated);
+		},
+	});
+
+	const networkMutation = useMutation({
+		mutationFn: () =>
+			updateSettings(
+				buildPayload({
+					network_color_by: networkDefaults.colorBy,
+					network_show_avatar: networkDefaults.showAvatar,
+					network_show_only_mine: networkDefaults.showOnlyMine,
+					network_show_unconnected: networkDefaults.showUnconnected,
+				}),
+			),
+		onSuccess: (updated) => {
+			saveUserPrefs({
+				networkColorBy: updated.network_color_by,
+				networkShowAvatar: updated.network_show_avatar,
+				networkShowOnlyMine: updated.network_show_only_mine,
+				networkShowUnconnected: updated.network_show_unconnected,
+			});
 			queryClient.setQueryData(["settings"], updated);
 		},
 	});
@@ -324,6 +376,102 @@ function GeneralSettingsPage() {
 					{cleanupMutation.isError && (
 						<p className="text-[12px] text-red-500">
 							Cleanup failed. Please try again.
+						</p>
+					)}
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-[14px] font-medium text-zinc-900">
+						Network Defaults
+					</CardTitle>
+					<CardDescription className="text-[12px] text-zinc-500">
+						Default filter settings applied when you open the Network page. You
+						can still change them on the fly.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="space-y-2">
+						<Label className="text-[13px]">Color by</Label>
+						<div className="flex gap-4">
+							{(["labels", "type"] as const).map((val) => (
+								<label
+									key={val}
+									className="flex items-center gap-2 cursor-pointer"
+								>
+									<input
+										type="radio"
+										name="networkColorBy"
+										value={val}
+										checked={networkDefaults.colorBy === val}
+										onChange={() =>
+											setNetworkDefaults((n) => ({ ...n, colorBy: val }))
+										}
+										className="accent-indigo-600"
+									/>
+									<span className="text-[13px] text-zinc-700">
+										{val === "labels" ? "Labels" : "Rel. type"}
+									</span>
+								</label>
+							))}
+						</div>
+					</div>
+
+					<div className="space-y-2">
+						<Label className="text-[13px]">Visibility</Label>
+						<div className="space-y-1.5">
+							{(
+								[
+									{ key: "showAvatar" as const, label: "Show avatars" },
+									{
+										key: "showOnlyMine" as const,
+										label: "Show only my connections",
+									},
+									{
+										key: "showUnconnected" as const,
+										label: "Show unconnected people",
+									},
+								] satisfies {
+									key: keyof typeof networkDefaults;
+									label: string;
+								}[]
+							).map(({ key, label }) => (
+								<label
+									key={key}
+									className="flex items-center gap-3 cursor-pointer"
+								>
+									<input
+										type="checkbox"
+										checked={networkDefaults[key] as boolean}
+										onChange={(e) =>
+											setNetworkDefaults((n) => ({
+												...n,
+												[key]: e.target.checked,
+											}))
+										}
+										className="accent-indigo-600"
+									/>
+									<span className="text-[13px] text-zinc-700">{label}</span>
+								</label>
+							))}
+						</div>
+					</div>
+
+					<Button
+						onClick={() => networkMutation.mutate()}
+						size="sm"
+						disabled={networkMutation.isPending}
+					>
+						{networkMutation.isPending
+							? "Saving…"
+							: networkMutation.isSuccess
+								? "Saved!"
+								: "Save defaults"}
+					</Button>
+					{networkMutation.isError && (
+						<p className="text-[12px] text-red-500">
+							Failed to save. Please try again.
 						</p>
 					)}
 				</CardContent>

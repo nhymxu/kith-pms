@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrInvalidDateFormat    = errors.New("settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY")
-	ErrInvalidTimeFormat    = errors.New("settings: time_format must be one of 24h, 12h")
-	ErrInvalidTimezone      = errors.New("settings: timezone must not be empty")
-	ErrInvalidRetentionDays = errors.New("settings: audit_log_retention_days must be >= 0")
+	ErrInvalidDateFormat     = errors.New("settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY")
+	ErrInvalidTimeFormat     = errors.New("settings: time_format must be one of 24h, 12h")
+	ErrInvalidTimezone       = errors.New("settings: timezone must not be empty")
+	ErrInvalidRetentionDays  = errors.New("settings: audit_log_retention_days must be >= 0")
+	ErrInvalidNetworkColorBy = errors.New("settings: network_color_by must be one of labels, type")
 )
 
 var validDateFormats = map[string]bool{
@@ -25,6 +26,11 @@ var validDateFormats = map[string]bool{
 var validTimeFormats = map[string]bool{
 	"24h": true,
 	"12h": true,
+}
+
+var validNetworkColorBy = map[string]bool{
+	"labels": true,
+	"type":   true,
 }
 
 type Service struct {
@@ -60,6 +66,22 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		}
 	}
 
+	if v, ok := rows[KeyNetworkColorBy]; ok {
+		result.NetworkColorBy = v
+	}
+
+	if v, ok := rows[KeyNetworkShowAvatar]; ok {
+		result.NetworkShowAvatar = v == "true"
+	}
+
+	if v, ok := rows[KeyNetworkShowOnlyMine]; ok {
+		result.NetworkShowOnlyMine = v == "true"
+	}
+
+	if v, ok := rows[KeyNetworkShowUnconnected]; ok {
+		result.NetworkShowUnconnected = v == "true"
+	}
+
 	return result, nil
 }
 
@@ -80,12 +102,20 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidRetentionDays
 	}
 
+	if !validNetworkColorBy[in.NetworkColorBy] {
+		return UserSettings{}, ErrInvalidNetworkColorBy
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
-		KeyDateFormat:            in.DateFormat,
-		KeyTimeFormat:            in.TimeFormat,
-		KeyTimezone:              in.Timezone,
-		KeyAuditLogRetentionDays: strconv.Itoa(in.AuditLogRetentionDays),
+		KeyDateFormat:             in.DateFormat,
+		KeyTimeFormat:             in.TimeFormat,
+		KeyTimezone:               in.Timezone,
+		KeyAuditLogRetentionDays:  strconv.Itoa(in.AuditLogRetentionDays),
+		KeyNetworkColorBy:         in.NetworkColorBy,
+		KeyNetworkShowAvatar:      strconv.FormatBool(in.NetworkShowAvatar),
+		KeyNetworkShowOnlyMine:    strconv.FormatBool(in.NetworkShowOnlyMine),
+		KeyNetworkShowUnconnected: strconv.FormatBool(in.NetworkShowUnconnected),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

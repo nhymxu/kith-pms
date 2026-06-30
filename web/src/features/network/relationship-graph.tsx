@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
 import { listPeopleLabels } from "#/endpoints/people-labels";
+import { getNetworkPrefs } from "#/lib/format-datetime";
 import { formatPersonName } from "#/lib/format-person-name";
 import { cloneGraphData } from "#/lib/graph-data";
 import { keys } from "#/query-keys";
@@ -45,11 +46,17 @@ export default function RelationshipGraph({
 	const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState(600);
-	const [colorBy, setColorBy] = useState<ColorBy>("labels");
+	const [colorBy, setColorBy] = useState<ColorBy>(
+		() => getNetworkPrefs().networkColorBy,
+	);
 	const [activeGroup, setActiveGroup] = useState<string | null>(null);
 	const [activeRelType, setActiveRelType] = useState<string | null>(null);
-	const [showAvatar, setShowAvatar] = useState(false);
-	const [showUnconnected, setShowUnconnected] = useState(true);
+	const [showAvatar, setShowAvatar] = useState(
+		() => getNetworkPrefs().networkShowAvatar,
+	);
+	const [showUnconnected, setShowUnconnected] = useState(
+		() => getNetworkPrefs().networkShowUnconnected,
+	);
 	const [repaintKey, setRepaintKey] = useState(0);
 	const [profileCard, setProfileCard] = useState<{
 		node: GraphNode;

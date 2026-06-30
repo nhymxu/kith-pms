@@ -3,11 +3,16 @@
 
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type TimeFormat = "12h" | "24h";
+export type NetworkColorBy = "labels" | "type";
 
 export interface UserPrefs {
 	dateFormat: DateFormat;
 	timeFormat: TimeFormat;
 	timezone: string;
+	networkColorBy: NetworkColorBy;
+	networkShowAvatar: boolean;
+	networkShowOnlyMine: boolean;
+	networkShowUnconnected: boolean;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -16,6 +21,10 @@ const DEFAULTS: UserPrefs = {
 	dateFormat: "YYYY-MM-DD",
 	timeFormat: "24h",
 	timezone: "UTC",
+	networkColorBy: "labels",
+	networkShowAvatar: false,
+	networkShowOnlyMine: false,
+	networkShowUnconnected: true,
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -33,6 +42,22 @@ export function saveUserPrefs(prefs: Partial<UserPrefs>): void {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
 }
 
+export function getNetworkPrefs(): Pick<
+	UserPrefs,
+	| "networkColorBy"
+	| "networkShowAvatar"
+	| "networkShowOnlyMine"
+	| "networkShowUnconnected"
+> {
+	const p = getUserPrefs();
+	return {
+		networkColorBy: p.networkColorBy,
+		networkShowAvatar: p.networkShowAvatar,
+		networkShowOnlyMine: p.networkShowOnlyMine,
+		networkShowUnconnected: p.networkShowUnconnected,
+	};
+}
+
 // Fetch settings from the API and seed localStorage. Called once on authenticated app load.
 export async function syncSettingsFromApi(): Promise<void> {
 	try {
@@ -42,6 +67,10 @@ export async function syncSettingsFromApi(): Promise<void> {
 			dateFormat: s.date_format as DateFormat,
 			timeFormat: s.time_format as TimeFormat,
 			timezone: s.timezone,
+			networkColorBy: s.network_color_by,
+			networkShowAvatar: s.network_show_avatar,
+			networkShowOnlyMine: s.network_show_only_mine,
+			networkShowUnconnected: s.network_show_unconnected,
 		});
 	} catch {
 		// Non-fatal: fall back to whatever is already in localStorage / defaults.

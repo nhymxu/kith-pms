@@ -5,6 +5,7 @@ import type { RelationshipGraph } from "#/endpoints/relationships";
 import { getRelationshipGraph } from "#/endpoints/relationships";
 import type { SelectedNodeInfo } from "#/features/network/graph-selected-panel";
 import { GraphSelectedPanel } from "#/features/network/graph-selected-panel";
+import { getNetworkPrefs } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
 const LazyRelationshipGraph = lazy(
@@ -82,7 +83,9 @@ function NetworkGraph({
 }
 
 function NetworkPage() {
-	const [showOnlyMine, setShowOnlyMine] = useState(false);
+	const [showOnlyMine, setShowOnlyMine] = useState(
+		() => getNetworkPrefs().networkShowOnlyMine,
+	);
 	const [selectedInfo, setSelectedInfo] = useState<SelectedNodeInfo | null>(
 		null,
 	);

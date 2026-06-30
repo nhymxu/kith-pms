@@ -30,10 +30,14 @@ func openTestDB(t *testing.T) *bun.DB {
 
 func validBase() settings.UserSettings {
 	return settings.UserSettings{
-		DateFormat:            "YYYY-MM-DD",
-		TimeFormat:            "24h",
-		Timezone:              "UTC",
-		AuditLogRetentionDays: 0,
+		DateFormat:             "YYYY-MM-DD",
+		TimeFormat:             "24h",
+		Timezone:               "UTC",
+		AuditLogRetentionDays:  0,
+		NetworkColorBy:         "labels",
+		NetworkShowAvatar:      false,
+		NetworkShowOnlyMine:    false,
+		NetworkShowUnconnected: true,
 	}
 }
 

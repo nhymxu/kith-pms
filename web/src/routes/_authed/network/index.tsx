@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
 import type { RelationshipGraph } from "#/endpoints/relationships";
 import { getRelationshipGraph } from "#/endpoints/relationships";
@@ -33,7 +33,6 @@ function NetworkGraph({
 	onNodeSelect,
 	panelCollapsed,
 }: NetworkGraphProps) {
-	const navigate = useNavigate();
 	const { data } = useSuspenseQuery({
 		queryKey: keys.relationships.graph(),
 		queryFn: () => getRelationshipGraph(),
@@ -78,12 +77,6 @@ function NetworkGraph({
 			onShowOnlyMineChange={onShowOnlyMineChange}
 			onNodeSelect={onNodeSelect}
 			sidebarCollapsed={panelCollapsed}
-			onNodeClick={(id) =>
-				void navigate({
-					to: "/people/$personId",
-					params: { personId: String(id) },
-				})
-			}
 		/>
 	);
 }

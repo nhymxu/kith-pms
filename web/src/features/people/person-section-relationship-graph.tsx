@@ -1,5 +1,4 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { getRelationshipGraph } from "#/endpoints/relationships";
 import { keys } from "#/query-keys";
@@ -21,7 +20,6 @@ interface EgoGraphInnerProps {
 }
 
 function EgoGraphInner({ personId }: EgoGraphInnerProps) {
-	const navigate = useNavigate();
 	const { data } = useSuspenseQuery({
 		queryKey: keys.relationships.graph(personId),
 		queryFn: () => getRelationshipGraph(personId),
@@ -32,19 +30,7 @@ function EgoGraphInner({ personId }: EgoGraphInnerProps) {
 	}
 
 	return (
-		<LazyRelationshipGraph
-			data={data}
-			focusNodeId={personId}
-			height={360}
-			onNodeClick={(id) => {
-				if (id !== personId) {
-					void navigate({
-						to: "/people/$personId",
-						params: { personId: String(id) },
-					});
-				}
-			}}
-		/>
+		<LazyRelationshipGraph data={data} focusNodeId={personId} height={360} />
 	);
 }
 

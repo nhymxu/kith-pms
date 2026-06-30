@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
 
@@ -9,7 +10,6 @@ interface GraphNodeProfileCardProps {
 	showAvatar: boolean;
 	groupColorMap: Map<string, string>;
 	onClose: () => void;
-	onOpenProfile: (id: number) => void;
 }
 
 function NodeAvatarDisc({
@@ -66,7 +66,6 @@ export function GraphNodeProfileCard({
 	showAvatar,
 	groupColorMap,
 	onClose,
-	onOpenProfile,
 }: GraphNodeProfileCardProps) {
 	const birthday = node.date_of_birth
 		? formatBirthdayLabel(node.date_of_birth)
@@ -131,13 +130,15 @@ export function GraphNodeProfileCard({
 
 			{/* Action */}
 			<div className="border-t border-zinc-100 px-3 py-2.5">
-				<button
-					type="button"
-					onClick={() => onOpenProfile(node.id)}
+				<Link
+					to="/people/$personId"
+					params={{ personId: String(node.id) }}
+					target="_blank"
+					rel="noopener noreferrer"
 					className="text-[12px] font-medium text-indigo-600 hover:underline"
 				>
 					Open profile →
-				</button>
+				</Link>
 			</div>
 		</div>
 	);

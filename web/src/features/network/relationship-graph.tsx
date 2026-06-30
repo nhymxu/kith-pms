@@ -27,7 +27,6 @@ interface RelationshipGraphProps {
 	title?: string;
 	showOnlyMine?: boolean;
 	onShowOnlyMineChange?: (v: boolean) => void;
-	onNodeClick?: (id: number) => void;
 	onNodeSelect?: (info: SelectedNodeInfo | null) => void;
 	sidebarCollapsed?: boolean;
 }
@@ -39,7 +38,6 @@ export default function RelationshipGraph({
 	title,
 	showOnlyMine,
 	onShowOnlyMineChange,
-	onNodeClick,
 	onNodeSelect,
 	sidebarCollapsed,
 }: RelationshipGraphProps) {
@@ -383,10 +381,6 @@ export default function RelationshipGraph({
 					onClose={() => {
 						setProfileCard(null);
 						onNodeSelect?.(null);
-					}}
-					onOpenProfile={(id) => {
-						setProfileCard(null);
-						onNodeClick?.(id);
 					}}
 				/>
 			)}

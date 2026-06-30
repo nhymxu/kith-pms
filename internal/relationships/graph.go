@@ -14,6 +14,7 @@ import (
 type GraphNode struct {
 	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
+	Nickname    string  `json:"nickname"`
 	Avatar      string  `json:"avatar"`
 	Group       string  `json:"group"`
 	IsSelf      bool    `json:"is_self"`
@@ -41,11 +42,13 @@ type graphEdgeRow struct {
 	FromPersonID    int64      `bun:"from_person_id"`
 	ToPersonID      int64      `bun:"to_person_id"`
 	FromName        string     `bun:"from_name"`
+	FromNickname    string     `bun:"from_nickname"`
 	FromAvatar      string     `bun:"from_avatar"`
 	FromIsSelf      bool       `bun:"from_is_self"`
 	FromDateOfBirth *string    `bun:"from_date_of_birth"`
 	FromLastContact *time.Time `bun:"from_last_contact_at"`
 	ToName          string     `bun:"to_name"`
+	ToNickname      string     `bun:"to_nickname"`
 	ToAvatar        string     `bun:"to_avatar"`
 	ToIsSelf        bool       `bun:"to_is_self"`
 	ToDateOfBirth   *string    `bun:"to_date_of_birth"`
@@ -69,17 +72,19 @@ func newSQLGraphEdgesRepo(db *bun.DB) GraphEdgesRepo {
 // When personID > 0, restricts to the ego-network (focal person + all neighbors
 // + edges among neighbors). When personID == 0, returns the full global graph.
 func (r *sqlGraphEdgesRepo) GraphEdges(ctx context.Context, personID int64) ([]graphEdgeRow, error) {
-	const baseQuery = `
-		SELECT pr.from_person_id, pr.to_person_id,
-		       pf.name AS from_name, COALESCE(pf.avatar_path, '') AS from_avatar, pf.is_self AS from_is_self,
-		       pf.date_of_birth AS from_date_of_birth, pf.last_contact_at AS from_last_contact_at,
-		       pt.name AS to_name, COALESCE(pt.avatar_path, '') AS to_avatar, pt.is_self AS to_is_self,
-		       pt.date_of_birth AS to_date_of_birth, pt.last_contact_at AS to_last_contact_at,
-		       rt.name AS type_name, rt.reverse_name
-		FROM person_relationship pr
-		JOIN relationship_type rt ON rt.id = pr.relationship_type_id
-		JOIN person pf ON pf.id = pr.from_person_id
-		JOIN person pt ON pt.id = pr.to_person_id`
+	const baseQuery = `` + //nolint:lll
+		`SELECT pr.from_person_id, pr.to_person_id,` +
+		` pf.name AS from_name, COALESCE(pf.nickname,'') AS from_nickname,` +
+		` COALESCE(pf.avatar_path,'') AS from_avatar, pf.is_self AS from_is_self,` +
+		` pf.date_of_birth AS from_date_of_birth, pf.last_contact_at AS from_last_contact_at,` +
+		` pt.name AS to_name, COALESCE(pt.nickname,'') AS to_nickname,` +
+		` COALESCE(pt.avatar_path,'') AS to_avatar, pt.is_self AS to_is_self,` +
+		` pt.date_of_birth AS to_date_of_birth, pt.last_contact_at AS to_last_contact_at,` +
+		` rt.name AS type_name, rt.reverse_name` +
+		` FROM person_relationship pr` +
+		` JOIN relationship_type rt ON rt.id = pr.relationship_type_id` +
+		` JOIN person pf ON pf.id = pr.from_person_id` +
+		` JOIN person pt ON pt.id = pr.to_person_id`
 
 	if personID == 0 {
 		var rows []graphEdgeRow
@@ -163,6 +168,7 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 
 	type nodeData struct {
 		name        string
+		nickname    string
 		avatar      string
 		isSelf      bool
 		dateOfBirth *string
@@ -177,6 +183,7 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 		if _, ok := nodeMap[row.FromPersonID]; !ok {
 			nodeMap[row.FromPersonID] = nodeData{
 				name:        row.FromName,
+				nickname:    row.FromNickname,
 				avatar:      row.FromAvatar,
 				isSelf:      row.FromIsSelf,
 				dateOfBirth: row.FromDateOfBirth,
@@ -187,6 +194,7 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 		if _, ok := nodeMap[row.ToPersonID]; !ok {
 			nodeMap[row.ToPersonID] = nodeData{
 				name:        row.ToName,
+				nickname:    row.ToNickname,
 				avatar:      row.ToAvatar,
 				isSelf:      row.ToIsSelf,
 				dateOfBirth: row.ToDateOfBirth,
@@ -238,21 +246,23 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 		var selfRows []struct {
 			ID          int64      `bun:"id"`
 			Name        string     `bun:"name"`
+			Nickname    string     `bun:"nickname"`
 			AvatarPath  string     `bun:"avatar_path"`
 			DateOfBirth *string    `bun:"date_of_birth"`
 			LastContact *time.Time `bun:"last_contact_at"`
 		}
 
 		err := s.db.NewRaw(
-			`SELECT id, name, COALESCE(avatar_path, '') AS avatar_path, date_of_birth, last_contact_at
-			FROM person
-			WHERE is_self = 1 LIMIT 1`,
+			`SELECT id, name, COALESCE(nickname,'') AS nickname,`+
+				` COALESCE(avatar_path,'') AS avatar_path, date_of_birth, last_contact_at`+
+				` FROM person WHERE is_self = 1 LIMIT 1`,
 		).Scan(ctx, &selfRows)
 		if err == nil && len(selfRows) > 0 {
 			sp := selfRows[0]
 			if _, ok := nodeMap[sp.ID]; !ok {
 				nodeMap[sp.ID] = nodeData{
 					name:        sp.Name,
+					nickname:    sp.Nickname,
 					avatar:      sp.AvatarPath,
 					isSelf:      true,
 					dateOfBirth: sp.DateOfBirth,
@@ -290,6 +300,7 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 		nodes = append(nodes, GraphNode{
 			ID:          id,
 			Name:        nd.name,
+			Nickname:    nd.nickname,
 			Avatar:      avatarURL(id, nd.avatar),
 			Group:       group,
 			IsSelf:      nd.isSelf,

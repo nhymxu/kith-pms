@@ -31,10 +31,11 @@ type PersonRelationship struct {
 }
 
 type RelationshipView struct {
-	ID                int64  `json:"id"`
-	OtherPersonID     int64  `json:"other_person_id"`
-	OtherPersonName   string `json:"other_person_name"`
-	OtherPersonAvatar string `json:"other_person_avatar"`
-	TypeName          string `json:"type_name"`
-	Notes             string `json:"notes"`
+	ID                  int64  `json:"id"`
+	OtherPersonID       int64  `json:"other_person_id"`
+	OtherPersonName     string `json:"other_person_name"`
+	OtherPersonNickname string `json:"other_person_nickname"`
+	OtherPersonAvatar   string `json:"other_person_avatar"`
+	TypeName            string `json:"type_name"`
+	Notes               string `json:"notes"`
 }

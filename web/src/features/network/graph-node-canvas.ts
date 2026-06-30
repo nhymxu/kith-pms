@@ -1,3 +1,4 @@
+import { formatPersonName } from "#/lib/format-person-name";
 import { getOrLoadImage } from "./graph-image-cache";
 import type { ColorBy, GraphNode } from "./graph-types";
 
@@ -118,7 +119,11 @@ export function drawNode(
 	ctx.fillStyle = dimmed ? "#a1a1aa" : "#18181b";
 	ctx.textAlign = "center";
 	ctx.textBaseline = "top";
-	ctx.fillText(node.name, x, y + r + 2 / globalScale);
+	ctx.fillText(
+		formatPersonName(node.name, node.nickname),
+		x,
+		y + r + 2 / globalScale,
+	);
 
 	ctx.restore();
 }

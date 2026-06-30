@@ -21,6 +21,7 @@ import {
 	listRelationships,
 } from "#/endpoints/people";
 import { listRelationshipTypes } from "#/endpoints/relationship-types";
+import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -116,7 +117,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 								params={{ personId: String(r.other_person_id) }}
 								className="font-medium hover:underline flex-1"
 							>
-								{r.other_person_name}
+								{formatPersonName(r.other_person_name, r.other_person_nickname)}
 							</Link>
 							{r.notes && (
 								<span className="text-zinc-400 text-xs truncate max-w-[140px]">
@@ -200,12 +201,14 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 														type="button"
 														onClick={() => {
 															setOtherPersonId(p.id);
-															setOtherPersonName(p.name);
+															setOtherPersonName(
+																formatPersonName(p.name, p.nickname),
+															);
 															setPersonSearch("");
 														}}
 														className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
 													>
-														{p.name}
+														{formatPersonName(p.name, p.nickname)}
 													</button>
 												))}
 										</div>
@@ -250,7 +253,10 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 							<span className="font-medium">{confirmRel.type_name}</span>{" "}
 							relationship with{" "}
 							<span className="font-medium">
-								{confirmRel.other_person_name}
+								{formatPersonName(
+									confirmRel.other_person_name,
+									confirmRel.other_person_nickname,
+								)}
 							</span>
 							?
 						</p>

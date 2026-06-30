@@ -15,6 +15,7 @@ export const relationshipViewSchema = z.object({
 	id: z.number(),
 	other_person_id: z.number(),
 	other_person_name: z.string(),
+	other_person_nickname: z.string().optional().default(""),
 	other_person_avatar: z.string().optional().default(""),
 	type_name: z.string(),
 	notes: z.string().optional().default(""),

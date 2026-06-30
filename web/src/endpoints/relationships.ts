@@ -4,6 +4,7 @@ import { apiFetch } from "../lib/api-client";
 export interface GraphNode {
 	id: number;
 	name: string;
+	nickname: string;
 	avatar: string;
 	group: string;
 	is_self: boolean;

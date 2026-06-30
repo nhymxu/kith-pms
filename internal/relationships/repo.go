@@ -210,17 +210,22 @@ func (r *sqlPersonRelationshipRepo) FindPair(
 
 func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID int64) ([]RelationshipView, error) {
 	var rows []struct {
-		ID                int64  `bun:"id"`
-		OtherPersonID     int64  `bun:"other_person_id"`
-		OtherPersonName   string `bun:"other_person_name"`
-		OtherPersonAvatar string `bun:"other_person_avatar"`
-		TypeName          string `bun:"type_name"`
-		Notes             string `bun:"notes"`
+		ID                  int64  `bun:"id"`
+		OtherPersonID       int64  `bun:"other_person_id"`
+		OtherPersonName     string `bun:"other_person_name"`
+		OtherPersonNickname string `bun:"other_person_nickname"`
+		OtherPersonAvatar   string `bun:"other_person_avatar"`
+		TypeName            string `bun:"type_name"`
+		Notes               string `bun:"notes"`
 	}
+
+	const colExpr = "pr.id, pr.to_person_id AS other_person_id," +
+		" p.name AS other_person_name, COALESCE(p.nickname,'') AS other_person_nickname," +
+		" COALESCE(p.avatar_path,'') AS other_person_avatar, t.name AS type_name, pr.notes"
 
 	err := r.db.NewSelect().
 		TableExpr("person_relationship pr").
-		ColumnExpr("pr.id, pr.to_person_id AS other_person_id, p.name AS other_person_name, COALESCE(p.avatar_path, '') AS other_person_avatar, t.name AS type_name, pr.notes"). //nolint:golines,lll
+		ColumnExpr(colExpr).
 		Join("JOIN person p ON p.id = pr.to_person_id").
 		Join("JOIN relationship_type t ON t.id = pr.relationship_type_id").
 		Where("pr.from_person_id = ?", personID).
@@ -233,12 +238,13 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 	views := make([]RelationshipView, 0, len(rows))
 	for _, row := range rows {
 		views = append(views, RelationshipView{
-			ID:                row.ID,
-			OtherPersonID:     row.OtherPersonID,
-			OtherPersonName:   row.OtherPersonName,
-			OtherPersonAvatar: row.OtherPersonAvatar,
-			TypeName:          row.TypeName,
-			Notes:             row.Notes,
+			ID:                  row.ID,
+			OtherPersonID:       row.OtherPersonID,
+			OtherPersonName:     row.OtherPersonName,
+			OtherPersonNickname: row.OtherPersonNickname,
+			OtherPersonAvatar:   row.OtherPersonAvatar,
+			TypeName:            row.TypeName,
+			Notes:               row.Notes,
 		})
 	}
 

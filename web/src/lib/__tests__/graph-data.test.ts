@@ -4,8 +4,22 @@ import { cloneGraphData } from "../graph-data";
 
 const sample: RelationshipGraph = {
 	nodes: [
-		{ id: 1, name: "Alice", avatar: "", group: "Friend", is_self: false },
-		{ id: 2, name: "Bob", avatar: "", group: "", is_self: true },
+		{
+			id: 1,
+			name: "Alice",
+			nickname: "",
+			avatar: "",
+			group: "Friend",
+			is_self: false,
+		},
+		{
+			id: 2,
+			name: "Bob",
+			nickname: "bobby",
+			avatar: "",
+			group: "",
+			is_self: true,
+		},
 	],
 	links: [{ source: 1, target: 2, type: "Friend", reverse_type: "Friend" }],
 };

@@ -1,3 +1,4 @@
+import { formatPersonName } from "#/lib/format-person-name";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
 
@@ -75,16 +76,15 @@ export function GraphSelectedPanel({
 				</p>
 			) : (
 				<div className="space-y-3">
-					{/* Name + group */}
+					{/* Name + nickname + group */}
 					<div>
-						<span className="text-[14px] font-semibold text-zinc-900">
-							{selected.node.name}
-						</span>
+						<div className="text-[14px] font-semibold text-zinc-900">
+							{formatPersonName(selected.node.name, selected.node.nickname)}
+						</div>
 						{selected.node.group && (
-							<span className="text-[13px] text-zinc-500">
-								{" "}
-								· {selected.node.group}
-							</span>
+							<div className="text-[12px] text-zinc-500">
+								{selected.node.group}
+							</div>
 						)}
 					</div>
 

@@ -96,8 +96,15 @@ export function GraphNodeProfileCard({
 					<div className="truncate text-[13px] font-semibold text-zinc-900">
 						{node.name}
 					</div>
+					{node.nickname && (
+						<div className="truncate text-[11px] text-zinc-400 italic">
+							{node.nickname}
+						</div>
+					)}
 					{node.group && (
-						<div className="text-[11px] text-zinc-500">{node.group}</div>
+						<div className="truncate text-[11px] text-zinc-500">
+							{node.group}
+						</div>
 					)}
 				</div>
 				<button

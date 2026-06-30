@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
 import { listPeopleLabels } from "#/endpoints/people-labels";
+import { formatPersonName } from "#/lib/format-person-name";
 import { cloneGraphData } from "#/lib/graph-data";
 import { keys } from "#/query-keys";
 import { GraphControls } from "./graph-controls";
@@ -244,7 +245,9 @@ export default function RelationshipGraph({
 					const other = data.nodes.find((n) => n.id === otherId);
 					return {
 						type: isSource ? l.type : l.reverse_type || l.type,
-						otherName: other?.name ?? `#${otherId}`,
+						otherName: other
+							? formatPersonName(other.name, other.nickname)
+							: `#${otherId}`,
 					};
 				}),
 		[data.links, data.nodes],
@@ -290,7 +293,7 @@ export default function RelationshipGraph({
 					relTypes.add(l.reverse_type);
 			}
 			setTooltip({
-				name: n.name,
+				name: formatPersonName(n.name, n.nickname),
 				group: n.group,
 				isSelf: n.is_self,
 				relTypes: [...relTypes],

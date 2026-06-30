@@ -75,7 +75,7 @@ Subcommands after dependency init:
 |---------|---------|
 | `serve` | Start HTTP server on port from `HOST:PORT` (default :8000) |
 | `migrate` | Schema management: `migrate up` (apply pending), `migrate down` (rollback latest) |
-| `set-password` | Interactive password setup/change (stores bcrypt hash in users table) |
+| `set-password` | Interactive password setup/change (stores Argon2id hash in users table) |
 | `backup --to PATH` | SQLite VACUUM INTO PATH; safe to run while server is running |
 | `restore --from PATH` | Replace live database with backup; refuses if server modified DB in last 30s |
 

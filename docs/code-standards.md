@@ -384,7 +384,7 @@ No AI references in commit messages.
 - **FTS5**: Full-text search via virtual table with auto-update triggers
 
 ### Auth & Security
-- **Password hashing**: bcrypt (golang.org/x/crypto/bcrypt)
+- **Password hashing**: Argon2id (golang.org/x/crypto/argon2) — Medium parameters (3 iterations, 65MB memory)
 - **Session tokens**: HMAC-SHA256 signed; server-stored with expiry
 - **CSRF tokens**: Per-request tokens validated via middleware
 - **Cookies**: Secure, httpOnly, SameSite=Lax

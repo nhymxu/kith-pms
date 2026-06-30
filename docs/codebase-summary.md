@@ -17,12 +17,12 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (22 migrations)
+│   │   └── migrations/           # SQL schema files (24 migrations: 0001-0024)
 │   ├── testutil/                 # Test utilities
 │   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management
 │   │   ├── domain.go             # User, Session, CSRF token data structures
-│   │   ├── password.go           # bcrypt hashing & verification
+│   │   ├── password.go           # Argon2id hashing & verification
 │   │   ├── sessions.go           # HMAC token generation & validation
 │   │   ├── csrf.go               # CSRF token generation & validation
 │   │   ├── middleware.go         # Echo middleware for auth/session checks
@@ -144,7 +144,9 @@ kith-pms/
 │   ├── 0019_rename_people_labels.sql # renamed label table to people_labels
 │   ├── 0020_journal_label.sql    # journal-specific labels (separate from people labels)
 │   ├── 0021_person_nickname_lower.sql # generated lowercase column for search
-│   └── 0022_drop_mime_type_columns.sql # MIME type now detected from file extension
+│   ├── 0022_drop_mime_type_columns.sql # MIME type now detected from file extension
+│   ├── 0023_remove_birthday_important_date.sql # Remove birthday from important_dates (use reminders instead)
+│   └── 0024_audit_log_metadata.sql # metadata column for field-level change tracking in audit log
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -190,11 +192,11 @@ kith-pms/
 - **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions; extracts underlying `*sql.DB` from `*bun.DB` for schema work
 
 ### `internal/testutil` — Test utilities
-- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, runs all 24 migrations, registers `t.Cleanup` for teardown
+- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, applies all 24 migrations (0001-0024), registers `t.Cleanup` for teardown
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
-- **password.go**: bcrypt hashing (via golang.org/x/crypto) with verification
+- **password.go**: Argon2id hashing (via golang.org/x/crypto/argon2) with Medium parameters; verification against stored hash
 - **sessions.go**: HMAC-SHA256 token generation (server-signed); validates session ID from DB against signed token
 - **csrf.go**: Per-request CSRF token generation & validation
 - **middleware.go**: Echo middleware for session validation and CSRF checks

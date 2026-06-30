@@ -72,7 +72,7 @@ function NetworkGraph({
 	return (
 		<LazyRelationshipGraph
 			data={displayData}
-			title="Your Network"
+			// title="Your Network"
 			height={Math.max(500, window.innerHeight - 200)}
 			showOnlyMine={showOnlyMine}
 			onShowOnlyMineChange={onShowOnlyMineChange}

@@ -123,6 +123,7 @@ data/
 CLAUDE.local.md
 .agents/
 .playwright-mcp/
+repomix-output.xml
 
 # Air live-reload build cache
 tmp/

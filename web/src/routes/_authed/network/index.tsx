@@ -60,7 +60,7 @@ function NetworkGraph({
 		};
 	}, [data, showOnlyMine, selfNode]);
 
-	if (displayData.nodes.length <= 1) {
+	if (displayData.nodes.length === 0) {
 		return (
 			<div className="flex items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 py-16 text-[13px] text-zinc-400">
 				No connections yet. Add relationships to people to see your network.

@@ -49,6 +49,7 @@ export default function RelationshipGraph({
 	const [activeGroup, setActiveGroup] = useState<string | null>(null);
 	const [activeRelType, setActiveRelType] = useState<string | null>(null);
 	const [showAvatar, setShowAvatar] = useState(false);
+	const [showUnconnected, setShowUnconnected] = useState(true);
 	const [repaintKey, setRepaintKey] = useState(0);
 	const [profileCard, setProfileCard] = useState<{
 		node: GraphNode;
@@ -75,7 +76,22 @@ export default function RelationshipGraph({
 		return m;
 	}, [peopleLabels]);
 
-	const graphData = useMemo(() => cloneGraphData(data), [data]);
+	const connectedIds = useMemo(() => {
+		const s = new Set<number>();
+		for (const l of data.links) {
+			s.add(l.source as number);
+			s.add(l.target as number);
+		}
+		return s;
+	}, [data.links]);
+
+	const graphData = useMemo(() => {
+		const d = cloneGraphData(data);
+		if (!showUnconnected) {
+			d.nodes = d.nodes.filter((n) => connectedIds.has(n.id));
+		}
+		return d;
+	}, [data, showUnconnected, connectedIds]);
 
 	const groups = useMemo(
 		() => [...new Set(data.nodes.map((n) => n.group).filter(Boolean))].sort(),
@@ -334,6 +350,8 @@ export default function RelationshipGraph({
 				onShowAvatarChange={setShowAvatar}
 				showOnlyMine={showOnlyMine}
 				onShowOnlyMineChange={onShowOnlyMineChange}
+				showUnconnected={showUnconnected}
+				onShowUnconnectedChange={setShowUnconnected}
 				onRecenter={() => fgRef.current?.zoomToFit(400, 40)}
 			/>
 

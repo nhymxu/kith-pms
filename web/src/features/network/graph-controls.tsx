@@ -14,6 +14,8 @@ interface GraphControlsProps {
 	onShowAvatarChange: (v: boolean) => void;
 	showOnlyMine?: boolean;
 	onShowOnlyMineChange?: (v: boolean) => void;
+	showUnconnected?: boolean;
+	onShowUnconnectedChange?: (v: boolean) => void;
 	onRecenter: () => void;
 }
 
@@ -31,6 +33,8 @@ export function GraphControls({
 	onShowAvatarChange,
 	showOnlyMine,
 	onShowOnlyMineChange,
+	showUnconnected,
+	onShowUnconnectedChange,
 	onRecenter,
 }: GraphControlsProps) {
 	return (
@@ -121,6 +125,19 @@ export function GraphControls({
 						className="h-3.5 w-3.5 rounded border-zinc-300 accent-indigo-600"
 					/>
 					Only mine
+				</label>
+			)}
+
+			{/* Show unconnected people (optional — network page only) */}
+			{onShowUnconnectedChange && (
+				<label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-zinc-600 select-none">
+					<input
+						type="checkbox"
+						checked={showUnconnected ?? true}
+						onChange={(e) => onShowUnconnectedChange(e.target.checked)}
+						className="h-3.5 w-3.5 rounded border-zinc-300 accent-indigo-600"
+					/>
+					Unconnected
 				</label>
 			)}
 

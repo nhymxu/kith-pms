@@ -241,32 +241,33 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 		}
 	}
 
-	// For global graph, also include the self person even if no edges.
+	// For global graph, include all people — even those with no relationships yet.
 	if personID == 0 {
-		var selfRows []struct {
+		var allPersonRows []struct {
 			ID          int64      `bun:"id"`
 			Name        string     `bun:"name"`
 			Nickname    string     `bun:"nickname"`
 			AvatarPath  string     `bun:"avatar_path"`
+			IsSelf      bool       `bun:"is_self"`
 			DateOfBirth *string    `bun:"date_of_birth"`
 			LastContact *time.Time `bun:"last_contact_at"`
 		}
 
-		err := s.db.NewRaw(
+		if err := s.db.NewRaw(
 			`SELECT id, name, COALESCE(nickname,'') AS nickname,`+
-				` COALESCE(avatar_path,'') AS avatar_path, date_of_birth, last_contact_at`+
-				` FROM person WHERE is_self = 1 LIMIT 1`,
-		).Scan(ctx, &selfRows)
-		if err == nil && len(selfRows) > 0 {
-			sp := selfRows[0]
-			if _, ok := nodeMap[sp.ID]; !ok {
-				nodeMap[sp.ID] = nodeData{
-					name:        sp.Name,
-					nickname:    sp.Nickname,
-					avatar:      sp.AvatarPath,
-					isSelf:      true,
-					dateOfBirth: sp.DateOfBirth,
-					lastContact: timeToDateStr(sp.LastContact),
+				` COALESCE(avatar_path,'') AS avatar_path, is_self, date_of_birth, last_contact_at`+
+				` FROM person`,
+		).Scan(ctx, &allPersonRows); err == nil {
+			for _, p := range allPersonRows {
+				if _, ok := nodeMap[p.ID]; !ok {
+					nodeMap[p.ID] = nodeData{
+						name:        p.Name,
+						nickname:    p.Nickname,
+						avatar:      p.AvatarPath,
+						isSelf:      p.IsSelf,
+						dateOfBirth: p.DateOfBirth,
+						lastContact: timeToDateStr(p.LastContact),
+					}
 				}
 			}
 		}

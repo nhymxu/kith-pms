@@ -151,10 +151,11 @@ func (s *Service) UploadImage(
 		return fmt.Errorf("file service not configured")
 	}
 
-	// Capture old path before overwriting so we can delete the orphaned file.
-	var oldPath string
+	// Capture old path and title before overwriting.
+	var oldPath, giftTitle string
 	if existing, err := s.repo.GetByID(ctx, giftID); err == nil && existing != nil {
 		oldPath = existing.ImagePath
+		giftTitle = existing.Title
 	}
 
 	path, err := s.FileSvc.SaveGiftImage(giftID, file, header)
@@ -181,7 +182,8 @@ func (s *Service) UploadImage(
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, giftID, "", audit.ActionUpdate)
+		s.Audit.Log(ctx, audit.EntityGift, giftID, giftTitle, audit.ActionUpdate,
+			audit.Metadata{DetailAction: "image_upload"})
 	}
 
 	return nil

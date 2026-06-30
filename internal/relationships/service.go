@@ -212,7 +212,15 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPersonRelationship, fwdID, "", audit.ActionCreate)
+		s.Audit.Log(ctx, audit.EntityPersonRelationship, fwdID, rt.Name, audit.ActionCreate,
+			audit.Metadata{
+				DetailAction: "attach",
+				Changes: []audit.Change{
+					{Field: "from_person_id", Old: nil, New: fromID},
+					{Field: "to_person_id", Old: nil, New: toID},
+					{Field: "relationship_type", Old: nil, New: rt.Name},
+				},
+			})
 	}
 
 	return fwdID, nil
@@ -262,7 +270,20 @@ func (s *Service) DetachRelationship(ctx context.Context, id int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPersonRelationship, id, "", audit.ActionDelete)
+		var typeName string
+		if rt != nil {
+			typeName = rt.Name
+		}
+
+		s.Audit.Log(ctx, audit.EntityPersonRelationship, id, typeName, audit.ActionDelete,
+			audit.Metadata{
+				DetailAction: "detach",
+				Changes: []audit.Change{
+					{Field: "from_person_id", Old: row.FromPersonID, New: nil},
+					{Field: "to_person_id", Old: row.ToPersonID, New: nil},
+					{Field: "relationship_type", Old: typeName, New: nil},
+				},
+			})
 	}
 
 	return nil

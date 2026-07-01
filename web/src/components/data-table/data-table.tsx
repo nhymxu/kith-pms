@@ -141,7 +141,19 @@ export function DataTable<T>({
 				</div>
 			)}
 
-			<Table>
+			<Table className="table-fixed">
+				<colgroup>
+					{table.getHeaderGroups()[0]?.headers.map((header) => (
+						<col
+							key={header.id}
+							style={
+								header.column.columnDef.size
+									? { width: header.getSize() }
+									: undefined
+							}
+						/>
+					))}
+				</colgroup>
 				<TableHeader>
 					{table.getHeaderGroups().map((hg) => (
 						<TableRow key={hg.id}>
@@ -168,7 +180,14 @@ export function DataTable<T>({
 								className={rowClassName?.(row) ?? ""}
 							>
 								{row.getVisibleCells().map((cell) => (
-									<TableCell key={cell.id}>
+									<TableCell
+										key={cell.id}
+										style={
+											cell.column.columnDef.size
+												? { width: cell.column.getSize() }
+												: undefined
+										}
+									>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</TableCell>
 								))}

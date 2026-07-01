@@ -52,43 +52,35 @@ interface PeopleTableProps {
 
 const columns: ColumnDef<Person>[] = [
 	{
-		id: "avatar",
-		header: "",
-		size: 48,
-		cell: ({ row }) => {
-			const p = row.original;
-			const hasAvatar = Boolean(p.avatar_path);
-			return (
-				<div className="size-7 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[11px] font-medium text-zinc-700 font-mono">
-					{hasAvatar ? (
-						<img
-							src={getAvatarUrl(p.id)}
-							alt={p.name}
-							className="size-full object-cover"
-						/>
-					) : (
-						<span>{p.name.charAt(0).toUpperCase()}</span>
-					)}
-				</div>
-			);
-		},
-	},
-	{
 		id: "name",
 		header: "Name",
 		accessorKey: "name",
 		cell: ({ row }) => {
 			const p = row.original;
+			const hasAvatar = Boolean(p.avatar_path);
 			return (
 				<Link
 					to="/people/$personId"
 					params={{ personId: String(p.id) }}
-					className="block hover:underline"
+					className="flex items-center gap-2 hover:underline"
 				>
-					<p className="text-[13px] text-zinc-900">{p.name}</p>
-					{p.nickname && (
-						<p className="text-[11px] text-zinc-500">"{p.nickname}"</p>
-					)}
+					<div className="size-7 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[11px] font-medium text-zinc-700 font-mono">
+						{hasAvatar ? (
+							<img
+								src={getAvatarUrl(p.id)}
+								alt={p.name}
+								className="size-full object-cover"
+							/>
+						) : (
+							<span>{p.name.charAt(0).toUpperCase()}</span>
+						)}
+					</div>
+					<div>
+						<p className="text-[13px] text-zinc-900">{p.name}</p>
+						{p.nickname && (
+							<p className="text-[11px] text-zinc-500">"{p.nickname}"</p>
+						)}
+					</div>
 				</Link>
 			);
 		},

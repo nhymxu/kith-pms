@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
+import { getSettings } from "#/endpoints/settings";
 import { PeopleTable } from "#/features/people/people-table";
+import { initialSearch } from "#/lib/initial-search";
 
 const VALID_SORTS = [
 	"name",
@@ -20,6 +23,7 @@ const searchSchema = z.object({
 	labels: z.array(z.coerce.number()).optional(),
 	sort: z.enum(VALID_SORTS).optional().default("name"),
 	favorite_only: z.coerce.boolean().optional(),
+	favorite_first: z.coerce.boolean().optional(),
 });
 
 export const Route = createFileRoute("/_authed/people/")({
@@ -36,7 +40,41 @@ function PeoplePage() {
 		page_size: searchPageSize,
 		sort: searchSort,
 		favorite_only: searchFavoriteOnly,
+		favorite_first: searchFavoriteFirst,
 	} = search;
+
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const appliedDefaultRef = useRef(false);
+
+	// One-shot: apply settings-derived defaults only on a bare first visit (no
+	// explicit sort/favorite params in the raw URL). Checking the URL captured
+	// at app boot (not `window.location.search`, which the router normalizes
+	// with schema defaults before this effect ever runs, and not the
+	// zod-parsed `search`, which always looks "already set" because of
+	// `.default("name")`) is the only way to see the URL as the user actually
+	// navigated to it.
+	useEffect(() => {
+		if (appliedDefaultRef.current || !settingsData) return;
+		appliedDefaultRef.current = true;
+
+		const raw = new URLSearchParams(initialSearch);
+		const hasExplicitParams =
+			raw.has("sort") || raw.has("favorite_only") || raw.has("favorite_first");
+		if (hasExplicitParams) return;
+
+		void navigate({
+			to: "/people",
+			search: {
+				...search,
+				sort: settingsData.default_people_sort as SortValue,
+				favorite_first: settingsData.favorite_first_default || undefined,
+			},
+			replace: true,
+		});
+	}, [settingsData, navigate, search]);
 
 	// Each handler only captures the fields it reads — excludes `page` so identity
 	// stays stable when the page number changes and avoids triggering the debounced
@@ -52,10 +90,18 @@ function PeoplePage() {
 					labels: searchLabels,
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
 				},
 			});
 		},
-		[searchLabels, searchPageSize, searchSort, searchFavoriteOnly, navigate],
+		[
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			searchFavoriteFirst,
+			navigate,
+		],
 	);
 
 	const handleLabelsChange = useCallback(
@@ -69,10 +115,18 @@ function PeoplePage() {
 					labels: labels.length ? labels : undefined,
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
 				},
 			});
 		},
-		[searchQ, searchPageSize, searchSort, searchFavoriteOnly, navigate],
+		[
+			searchQ,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			searchFavoriteFirst,
+			navigate,
+		],
 	);
 
 	const handlePageChange = useCallback(
@@ -86,6 +140,7 @@ function PeoplePage() {
 					labels: searchLabels,
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
 				},
 			});
 		},
@@ -95,6 +150,7 @@ function PeoplePage() {
 			searchPageSize,
 			searchSort,
 			searchFavoriteOnly,
+			searchFavoriteFirst,
 			navigate,
 		],
 	);
@@ -110,10 +166,18 @@ function PeoplePage() {
 					labels: searchLabels,
 					sort,
 					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
 				},
 			});
 		},
-		[searchQ, searchLabels, searchPageSize, searchFavoriteOnly, navigate],
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchFavoriteOnly,
+			searchFavoriteFirst,
+			navigate,
+		],
 	);
 
 	const handleFavoriteOnlyChange = useCallback(
@@ -127,10 +191,43 @@ function PeoplePage() {
 					labels: searchLabels,
 					sort: searchSort,
 					favorite_only: favoriteOnly || undefined,
+					favorite_first: searchFavoriteFirst,
 				},
 			});
 		},
-		[searchQ, searchLabels, searchPageSize, searchSort, navigate],
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteFirst,
+			navigate,
+		],
+	);
+
+	const handleFavoriteFirstChange = useCallback(
+		(favoriteFirst: boolean) => {
+			void navigate({
+				to: "/people",
+				search: {
+					q: searchQ || undefined,
+					page: 1,
+					page_size: searchPageSize,
+					labels: searchLabels,
+					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
+					favorite_first: favoriteFirst || undefined,
+				},
+			});
+		},
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			navigate,
+		],
 	);
 
 	return (
@@ -150,11 +247,14 @@ function PeoplePage() {
 				page_size={search.page_size}
 				sort={search.sort}
 				favoriteOnly={search.favorite_only}
+				favoriteFirst={search.favorite_first}
+				allowToggle={settingsData?.allow_favorite_toggle_on_list ?? true}
 				onSearchChange={handleSearchChange}
 				onLabelsChange={handleLabelsChange}
 				onPageChange={handlePageChange}
 				onSortChange={handleSortChange}
 				onFavoriteOnlyChange={handleFavoriteOnlyChange}
+				onFavoriteFirstChange={handleFavoriteFirstChange}
 			/>
 		</div>
 	);

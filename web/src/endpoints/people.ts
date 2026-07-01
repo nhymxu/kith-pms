@@ -23,6 +23,7 @@ export interface PeopleListParams {
 	labels?: number[];
 	has_journal?: boolean;
 	favorite_only?: boolean;
+	favorite_first?: boolean;
 	sort?: string;
 }
 
@@ -36,6 +37,7 @@ export async function listPeople(
 	if (params.labels?.length) qs.set("labels", params.labels.join(","));
 	if (params.has_journal) qs.set("has_journal", "true");
 	if (params.favorite_only) qs.set("favorite_only", "true");
+	if (params.favorite_first) qs.set("favorite_first", "true");
 	if (params.sort) qs.set("sort", params.sort);
 
 	const query = qs.toString();

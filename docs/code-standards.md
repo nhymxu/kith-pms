@@ -178,6 +178,16 @@ export const PersonSchema = z.object({
 - `make web` copies dist to `internal/api/spa/public/`
 - Embedded into Go binary via `//go:embed all:public`
 
+### First-Visit URL State Capture (`initial-search.ts`)
+
+TanStack Router normalizes the URL bar with schema-defaulted search params before route components render, making it impossible to distinguish "user navigated to this URL with no params" from "params were filled in by validateSearch defaults" at route-level effects.
+
+**Pattern**: `web/src/lib/initial-search.ts` exports `initialSearch = window.location.search` captured at module evaluation time (app boot, before router mount). Routes that need to detect a truly bare first visit import this instead of reading `window.location.search` from effects/components.
+
+**Use case**: `/people` route applies settings-derived defaults (favorite-first, sort order, etc.) only on first visit, not on every re-render or back-navigation. It checks `new URLSearchParams(initialSearch).has("sort") || new URLSearchParams(initialSearch).has("favorite_only") || ...` to detect "user came with no explicit params" and fires a one-time redirect with merged defaults.
+
+**Reusable for**: Any feature that needs "apply backend defaults only truly-once on bare first visit, then respect explicit URL params from that point forward."
+
 ### TypeScript Strict Mode
 - Enable `strict: true` in `tsconfig.json`
 - No `any` types without explicit `// @ts-ignore` comment with justification

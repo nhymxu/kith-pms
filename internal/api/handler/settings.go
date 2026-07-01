@@ -56,7 +56,8 @@ func (h *SettingsAPI) Update(c *echo.Context) error {
 		switch {
 		case errors.Is(err, settings.ErrInvalidDateFormat),
 			errors.Is(err, settings.ErrInvalidTimeFormat),
-			errors.Is(err, settings.ErrInvalidTimezone):
+			errors.Is(err, settings.ErrInvalidTimezone),
+			errors.Is(err, settings.ErrInvalidDefaultPeopleSort):
 			return apiErr(c, http.StatusUnprocessableEntity, err.Error())
 		default:
 			return apiErr(c, http.StatusInternalServerError, "internal server error")

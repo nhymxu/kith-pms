@@ -18,6 +18,9 @@ var (
 	ErrInvalidRetentionDays        = errors.New("settings: audit_log_retention_days must be >= 0")
 	ErrInvalidNetworkColorBy       = errors.New("settings: network_color_by must be one of labels, type")
 	ErrInvalidNetworkOnlyMineDepth = errors.New("settings: network_only_mine_depth must be one of direct, alter")
+	ErrInvalidDefaultPeopleSort    = errors.New(
+		"settings: default_people_sort must be one of name, -name, last_contact, -last_contact",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -39,6 +42,13 @@ var validNetworkColorBy = map[string]bool{
 var validNetworkOnlyMineDepth = map[string]bool{
 	"direct": true,
 	"alter":  true,
+}
+
+var validDefaultPeopleSort = map[string]bool{
+	"name":          true,
+	"-name":         true,
+	"last_contact":  true,
+	"-last_contact": true,
 }
 
 type Service struct {
@@ -94,6 +104,18 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.NetworkOnlyMineDepth = v
 	}
 
+	if v, ok := rows[KeyAllowFavoriteToggleOnList]; ok {
+		result.AllowFavoriteToggleOnList = v == "true"
+	}
+
+	if v, ok := rows[KeyFavoriteFirstDefault]; ok {
+		result.FavoriteFirstDefault = v == "true"
+	}
+
+	if v, ok := rows[KeyDefaultPeopleSort]; ok {
+		result.DefaultPeopleSort = v
+	}
+
 	return result, nil
 }
 
@@ -122,17 +144,24 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidNetworkOnlyMineDepth
 	}
 
+	if !validDefaultPeopleSort[in.DefaultPeopleSort] {
+		return UserSettings{}, ErrInvalidDefaultPeopleSort
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
-		KeyDateFormat:             in.DateFormat,
-		KeyTimeFormat:             in.TimeFormat,
-		KeyTimezone:               in.Timezone,
-		KeyAuditLogRetentionDays:  strconv.Itoa(in.AuditLogRetentionDays),
-		KeyNetworkColorBy:         in.NetworkColorBy,
-		KeyNetworkShowAvatar:      strconv.FormatBool(in.NetworkShowAvatar),
-		KeyNetworkShowOnlyMine:    strconv.FormatBool(in.NetworkShowOnlyMine),
-		KeyNetworkShowUnconnected: strconv.FormatBool(in.NetworkShowUnconnected),
-		KeyNetworkOnlyMineDepth:   in.NetworkOnlyMineDepth,
+		KeyDateFormat:                in.DateFormat,
+		KeyTimeFormat:                in.TimeFormat,
+		KeyTimezone:                  in.Timezone,
+		KeyAuditLogRetentionDays:     strconv.Itoa(in.AuditLogRetentionDays),
+		KeyNetworkColorBy:            in.NetworkColorBy,
+		KeyNetworkShowAvatar:         strconv.FormatBool(in.NetworkShowAvatar),
+		KeyNetworkShowOnlyMine:       strconv.FormatBool(in.NetworkShowOnlyMine),
+		KeyNetworkShowUnconnected:    strconv.FormatBool(in.NetworkShowUnconnected),
+		KeyNetworkOnlyMineDepth:      in.NetworkOnlyMineDepth,
+		KeyAllowFavoriteToggleOnList: strconv.FormatBool(in.AllowFavoriteToggleOnList),
+		KeyFavoriteFirstDefault:      strconv.FormatBool(in.FavoriteFirstDefault),
+		KeyDefaultPeopleSort:         in.DefaultPeopleSort,
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

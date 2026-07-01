@@ -10,6 +10,11 @@ export const userSettingsSchema = z.object({
 	network_show_only_mine: z.boolean().default(false),
 	network_show_unconnected: z.boolean().default(true),
 	network_only_mine_depth: z.enum(["direct", "alter"]).default("direct"),
+	allow_favorite_toggle_on_list: z.boolean().default(true),
+	favorite_first_default: z.boolean().default(false),
+	default_people_sort: z
+		.enum(["name", "-name", "last_contact", "-last_contact"])
+		.default("name"),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

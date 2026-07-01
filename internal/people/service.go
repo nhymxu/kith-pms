@@ -14,13 +14,14 @@ import (
 const defaultPageSize = 50
 
 type ListParams struct {
-	Query        string
-	Page         int
-	PageSize     int
-	LabelIDs     []int64 // AND-semantics: person must have ALL listed labels
-	Sort         string  // sort parameter: name, -name, last_contact, -last_contact
-	HasJournal   bool    // when true, only return people linked to at least one journal entry
-	FavoriteOnly bool    // when true, only return favorited people
+	Query         string
+	Page          int
+	PageSize      int
+	LabelIDs      []int64 // AND-semantics: person must have ALL listed labels
+	Sort          string  // sort parameter: name, -name, last_contact, -last_contact
+	HasJournal    bool    // when true, only return people linked to at least one journal entry
+	FavoriteOnly  bool    // when true, only return favorited people
+	FavoriteFirst bool    // when true, favorites are moved to the top regardless of Sort
 }
 
 type Service struct {
@@ -205,7 +206,8 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 	}
 
 	items, err := s.People.List(
-		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly, pageSize, offset, params.Sort,
+		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly,
+		params.FavoriteFirst, pageSize, offset, params.Sort,
 	)
 	if err != nil {
 		return nil, err

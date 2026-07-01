@@ -36,7 +36,6 @@ const SORT_OPTIONS = [
 	{ value: "-name", label: "Name Z→A" },
 	{ value: "-last_contact", label: "Last contact: newest" },
 	{ value: "last_contact", label: "Last contact: oldest" },
-	{ value: "-favorite", label: "Favorites first" },
 ] as const;
 
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
@@ -57,17 +56,21 @@ interface PeopleTableProps {
 	page_size?: number;
 	sort?: string;
 	favoriteOnly?: boolean;
+	favoriteFirst?: boolean;
+	allowToggle?: boolean;
 	onSearchChange: (q: string) => void;
 	onLabelsChange: (labels: number[]) => void;
 	onPageChange: (page: number) => void;
 	onSortChange: (sort: SortValue) => void;
 	onFavoriteOnlyChange: (v: boolean) => void;
+	onFavoriteFirstChange: (v: boolean) => void;
 }
 
 function buildColumns(
 	favoriteMutation: ReturnType<
 		typeof useMutation<void, Error, { id: number; favorite: boolean }>
 	>,
+	allowToggle: boolean,
 ): ColumnDef<Person>[] {
 	return [
 		{
@@ -76,6 +79,14 @@ function buildColumns(
 			size: 36,
 			cell: ({ row }) => {
 				const p = row.original;
+				if (!allowToggle) {
+					return (
+						<Star
+							className={`size-4 ${p.is_favorite ? "fill-amber-400 text-amber-500" : "text-zinc-300"}`}
+							aria-label={p.is_favorite ? "Favorite" : undefined}
+						/>
+					);
+				}
 				return (
 					<button
 						type="button"
@@ -192,11 +203,14 @@ export function PeopleTable({
 	page_size = 20,
 	sort = "name",
 	favoriteOnly = false,
+	favoriteFirst = false,
+	allowToggle = true,
 	onSearchChange,
 	onLabelsChange,
 	onPageChange,
 	onSortChange,
 	onFavoriteOnlyChange,
+	onFavoriteFirstChange,
 }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
@@ -210,7 +224,7 @@ export function PeopleTable({
 			qc.invalidateQueries({ queryKey: keys.people.all });
 		},
 	});
-	const columns = buildColumns(favoriteMutation);
+	const columns = buildColumns(favoriteMutation, allowToggle);
 
 	useEffect(() => {
 		if (isFirst.current) {
@@ -232,6 +246,7 @@ export function PeopleTable({
 			page_size,
 			sort,
 			favorite_only: favoriteOnly || undefined,
+			favorite_first: favoriteFirst || undefined,
 		}),
 		queryFn: () =>
 			listPeople({
@@ -241,6 +256,7 @@ export function PeopleTable({
 				page_size,
 				sort,
 				favorite_only: favoriteOnly || undefined,
+				favorite_first: favoriteFirst || undefined,
 			}),
 		placeholderData: keepPreviousData,
 	});
@@ -287,6 +303,15 @@ export function PeopleTable({
 					/>
 					Favorites only
 				</button>
+				<label className="text-xs flex items-center gap-1.5 cursor-pointer text-zinc-600">
+					<input
+						type="checkbox"
+						checked={favoriteFirst}
+						onChange={(e) => onFavoriteFirstChange(e.target.checked)}
+						className="accent-indigo-600"
+					/>
+					Favorites first
+				</label>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
 				<div className="flex flex-wrap gap-2">

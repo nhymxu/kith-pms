@@ -1350,6 +1350,12 @@ const docTemplate = `{
                         "description": "Only return favorited people",
                         "name": "favorite_only",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Move favorites to the top regardless of primary sort",
+                        "name": "favorite_first",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3458,12 +3464,21 @@ const docTemplate = `{
         "github_com_nhymxu_kith-pms_internal_settings.UserSettings": {
             "type": "object",
             "properties": {
+                "allow_favorite_toggle_on_list": {
+                    "type": "boolean"
+                },
                 "audit_log_retention_days": {
                     "description": "0 = disabled",
                     "type": "integer"
                 },
                 "date_format": {
                     "type": "string"
+                },
+                "default_people_sort": {
+                    "type": "string"
+                },
+                "favorite_first_default": {
+                    "type": "boolean"
                 },
                 "network_color_by": {
                     "type": "string"

@@ -18,6 +18,7 @@ type PersonRepo interface {
 		labelIDs []int64,
 		hasJournal bool,
 		favoriteOnly bool,
+		favoriteFirst bool,
 		limit, offset int,
 		sort string,
 	) ([]Person, error)
@@ -59,6 +60,7 @@ func (r *sqlPersonRepo) List(
 	labelIDs []int64,
 	hasJournal bool,
 	favoriteOnly bool,
+	favoriteFirst bool,
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
@@ -92,7 +94,7 @@ func (r *sqlPersonRepo) List(
 		sq = sq.Where(`"p"."is_favorite" = ?`, true)
 	}
 
-	sq = sq.OrderExpr(buildOrderBy(sort)).Limit(limit).Offset(offset)
+	sq = sq.OrderExpr(buildOrderBy(sort, favoriteFirst)).Limit(limit).Offset(offset)
 
 	if err := sq.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("people: list query: %w", err)
@@ -143,21 +145,29 @@ func (r *sqlPersonRepo) Count(
 }
 
 // buildOrderBy returns the ORDER BY expression based on sort parameter.
-func buildOrderBy(sort string) string {
+// When favoriteFirst is true, "is_favorite DESC" is prefixed onto the
+// resolved primary sort expression.
+func buildOrderBy(sort string, favoriteFirst bool) string {
+	var primary string
+
 	switch sort {
 	case "name":
-		return "name_lower ASC"
+		primary = "name_lower ASC"
 	case "-name":
-		return "name_lower DESC"
+		primary = "name_lower DESC"
 	case "last_contact":
-		return "last_contact_at ASC NULLS LAST"
+		primary = "last_contact_at ASC NULLS LAST"
 	case "-last_contact":
-		return "last_contact_at DESC NULLS LAST"
-	case "-favorite":
-		return "is_favorite DESC, name_lower ASC"
+		primary = "last_contact_at DESC NULLS LAST"
 	default:
-		return "name_lower ASC"
+		primary = "name_lower ASC"
 	}
+
+	if favoriteFirst {
+		return "is_favorite DESC, " + primary
+	}
+
+	return primary
 }
 
 // buildLabelIntersect builds an INTERSECT subquery for AND-semantics label filtering.

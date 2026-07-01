@@ -35,11 +35,17 @@ definitions:
     - RecurrenceBirthday
   github_com_nhymxu_kith-pms_internal_settings.UserSettings:
     properties:
+      allow_favorite_toggle_on_list:
+        type: boolean
       audit_log_retention_days:
         description: 0 = disabled
         type: integer
       date_format:
         type: string
+      default_people_sort:
+        type: string
+      favorite_first_default:
+        type: boolean
       network_color_by:
         type: string
       network_only_mine_depth:
@@ -1018,6 +1024,10 @@ paths:
       - description: Only return favorited people
         in: query
         name: favorite_only
+        type: boolean
+      - description: Move favorites to the top regardless of primary sort
+        in: query
+        name: favorite_first
         type: boolean
       produces:
       - application/json

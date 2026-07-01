@@ -12,6 +12,7 @@ import {
 import { Label } from "#/components/ui/label";
 import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
+import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
 import {
 	type DateFormat,
 	getNetworkPrefs,
@@ -88,6 +89,9 @@ function GeneralSettingsPage() {
 				network_show_only_mine: p.networkShowOnlyMine,
 				network_show_unconnected: p.networkShowUnconnected,
 				network_only_mine_depth: p.networkOnlyMineDepth,
+				allow_favorite_toggle_on_list: true,
+				favorite_first_default: false,
+				default_people_sort: "name",
 			};
 		},
 	});
@@ -161,6 +165,10 @@ function GeneralSettingsPage() {
 		network_show_only_mine: networkDefaults.showOnlyMine,
 		network_show_unconnected: networkDefaults.showUnconnected,
 		network_only_mine_depth: networkDefaults.onlyMineDepth,
+		allow_favorite_toggle_on_list:
+			apiSettings?.allow_favorite_toggle_on_list ?? true,
+		favorite_first_default: apiSettings?.favorite_first_default ?? false,
+		default_people_sort: apiSettings?.default_people_sort ?? "name",
 		...overrides,
 	});
 
@@ -516,6 +524,13 @@ function GeneralSettingsPage() {
 					)}
 				</CardContent>
 			</Card>
+
+			<FavoritesSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
 		</div>
 	);
 }

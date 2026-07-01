@@ -431,27 +431,103 @@ func TestList_FavoriteOnly(t *testing.T) {
 	}
 }
 
-func TestList_SortFavoriteFirst(t *testing.T) {
+func TestList_FavoriteFirst_CombinesWithPrimarySort(t *testing.T) {
 	svc := newSvc(t)
 	ctx := context.Background()
 
-	mustCreate(t, svc, "Bob", nil, nil)
+	// Create two people: Bob (unfavorited), Zoe (favorited).
+	// Deliberately reverse-alphabetical to prove ordering isn't accidentally name-ascending.
+	bobID := mustCreate(t, svc, "Bob", nil, nil)
 	zoeID := mustCreate(t, svc, "Zoe", nil, nil)
 
 	if err := svc.SetFavorite(ctx, zoeID, true); err != nil {
-		t.Fatalf("SetFavorite: %v", err)
+		t.Fatalf("SetFavorite Zoe: %v", err)
 	}
 
+	// Test 1: FavoriteFirst with "name" sort.
+	// Zoe is favorite, Bob is not. Zoe should be first despite B < Z alphabetically.
+	results, err := svc.List(ctx, people.ListParams{FavoriteFirst: true, Sort: "name", PageSize: 50})
+	if err != nil {
+		t.Fatalf("List FavoriteFirst=true, Sort=name: %v", err)
+	}
+
+	if len(results.Items) != 2 {
+		t.Fatalf("List: got %d results, want 2", len(results.Items))
+	}
+
+	if results.Items[0].Name != "Zoe" {
+		t.Fatalf("List FavoriteFirst=true, Sort=name: items[0]=%q, want Zoe", results.Items[0].Name)
+	}
+
+	// Test 2: FavoriteFirst with "-last_contact" sort.
+	// Set distinct LastContactAt so Bob would sort first under plain -last_contact.
+	bobTime := time.Now().UTC()
+
+	zoeTime := bobTime.Add(-24 * time.Hour) // Zoe is 1 day older
+	if err := svc.People.UpdateLastContact(ctx, svc.DB, bobID, bobTime); err != nil {
+		t.Fatalf("UpdateLastContact Bob: %v", err)
+	}
+
+	if err := svc.People.UpdateLastContact(ctx, svc.DB, zoeID, zoeTime); err != nil {
+		t.Fatalf("UpdateLastContact Zoe: %v", err)
+	}
+
+	results, err = svc.List(ctx, people.ListParams{FavoriteFirst: true, Sort: "-last_contact", PageSize: 50})
+	if err != nil {
+		t.Fatalf("List FavoriteFirst=true, Sort=-last_contact: %v", err)
+	}
+
+	if len(results.Items) != 2 {
+		t.Fatalf("List: got %d results, want 2", len(results.Items))
+	}
+
+	// Zoe is still first because FavoriteFirst takes precedence.
+	if results.Items[0].Name != "Zoe" {
+		t.Fatalf("List FavoriteFirst=true, Sort=-last_contact: items[0]=%q, want Zoe", results.Items[0].Name)
+	}
+
+	// Test 3: FavoriteFirst=false with "name" sort.
+	// Bob should be first now (plain alphabetical).
+	results, err = svc.List(ctx, people.ListParams{FavoriteFirst: false, Sort: "name", PageSize: 50})
+	if err != nil {
+		t.Fatalf("List FavoriteFirst=false, Sort=name: %v", err)
+	}
+
+	if len(results.Items) != 2 {
+		t.Fatalf("List: got %d results, want 2", len(results.Items))
+	}
+
+	if results.Items[0].Name != "Bob" {
+		t.Fatalf("List FavoriteFirst=false, Sort=name: items[0]=%q, want Bob", results.Items[0].Name)
+	}
+}
+
+func TestList_LegacyFavoriteSortValue_FallsBackGracefully(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	// Create a few people.
+	mustCreate(t, svc, "Carol", nil, nil)
+	mustCreate(t, svc, "Alice", nil, nil)
+	mustCreate(t, svc, "Bob", nil, nil)
+
+	// Call List with the old "-favorite" sort value (now falls through to default case).
+	// Should not error and should return results ordered by name_lower ASC (the default).
 	results, err := svc.List(ctx, people.ListParams{Sort: "-favorite", PageSize: 50})
 	if err != nil {
 		t.Fatalf("List sort -favorite: %v", err)
 	}
 
-	if len(results.Items) != 2 {
-		t.Fatalf("List sort -favorite: got %d results, want 2", len(results.Items))
+	if len(results.Items) != 3 {
+		t.Fatalf("List: got %d results, want 3", len(results.Items))
 	}
 
-	if results.Items[0].Name != "Zoe" {
-		t.Fatalf("List sort -favorite: got items[0]=%q, want Zoe", results.Items[0].Name)
+	// Should be ordered by name_lower ASC (default), not by favorite status.
+	// Expected order: Alice, Bob, Carol
+	expectedOrder := []string{"Alice", "Bob", "Carol"}
+	for i, expected := range expectedOrder {
+		if results.Items[i].Name != expected {
+			t.Fatalf("List sort -favorite: items[%d]=%q, want %q", i, results.Items[i].Name, expected)
+		}
 	}
 }

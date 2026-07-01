@@ -8,6 +8,7 @@ export type PeopleFilters = {
 	labels?: number[];
 	has_journal?: boolean;
 	favorite_only?: boolean;
+	favorite_first?: boolean;
 	sort?: string;
 };
 

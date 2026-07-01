@@ -11,6 +11,10 @@ type UserSettings struct {
 	NetworkShowOnlyMine    bool   `json:"network_show_only_mine"`
 	NetworkShowUnconnected bool   `json:"network_show_unconnected"`
 	NetworkOnlyMineDepth   string `json:"network_only_mine_depth"` // "direct" or "alter"
+
+	AllowFavoriteToggleOnList bool   `json:"allow_favorite_toggle_on_list"`
+	FavoriteFirstDefault      bool   `json:"favorite_first_default"`
+	DefaultPeopleSort         string `json:"default_people_sort"`
 }
 
 var Defaults = UserSettings{
@@ -23,6 +27,10 @@ var Defaults = UserSettings{
 	NetworkShowOnlyMine:    false,
 	NetworkShowUnconnected: true,
 	NetworkOnlyMineDepth:   "direct",
+
+	AllowFavoriteToggleOnList: true,
+	FavoriteFirstDefault:      false,
+	DefaultPeopleSort:         "name",
 }
 
 const (
@@ -35,4 +43,8 @@ const (
 	KeyNetworkShowOnlyMine    = "network_show_only_mine"
 	KeyNetworkShowUnconnected = "network_show_unconnected"
 	KeyNetworkOnlyMineDepth   = "network_only_mine_depth"
+
+	KeyAllowFavoriteToggleOnList = "allow_favorite_toggle_on_list"
+	KeyFavoriteFirstDefault      = "favorite_first_default"
+	KeyDefaultPeopleSort         = "default_people_sort"
 )

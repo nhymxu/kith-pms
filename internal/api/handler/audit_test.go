@@ -57,12 +57,15 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 
 	// set retention to 30 days
 	if _, err := settingsSvc.Update(t.Context(), settings.UserSettings{
-		DateFormat:            "YYYY-MM-DD",
-		TimeFormat:            "24h",
-		Timezone:              "UTC",
-		AuditLogRetentionDays: 30,
-		NetworkColorBy:        "labels",
-		NetworkOnlyMineDepth:  "direct",
+		DateFormat:                "YYYY-MM-DD",
+		TimeFormat:                "24h",
+		Timezone:                  "UTC",
+		AuditLogRetentionDays:     30,
+		NetworkColorBy:            "labels",
+		NetworkOnlyMineDepth:      "direct",
+		AllowFavoriteToggleOnList: true,
+		FavoriteFirstDefault:      false,
+		DefaultPeopleSort:         "name",
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

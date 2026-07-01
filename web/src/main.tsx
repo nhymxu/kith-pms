@@ -4,6 +4,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { AuthProvider, useAuth } from "./lib/auth-context";
+// Imported first (before the router mounts) so its module-level capture of
+// window.location.search reflects the raw pre-navigation URL.
+import "./lib/initial-search";
 import { getRouter } from "./router";
 
 const { queryClient } = getContext();

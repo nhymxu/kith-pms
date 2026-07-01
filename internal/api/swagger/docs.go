@@ -3738,9 +3738,6 @@ const docTemplate = `{
                 },
                 "other_notes": {
                     "type": "string"
-                },
-                "relationship_type": {
-                    "type": "string"
                 }
             }
         },

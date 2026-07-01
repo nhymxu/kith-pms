@@ -162,8 +162,6 @@ definitions:
         type: string
       other_notes:
         type: string
-      relationship_type:
-        type: string
     type: object
   internal_api_handler.reminderRequest:
     properties:

@@ -18,7 +18,6 @@ func diffPersonFields(old, updated Person) []audit.Change {
 	track("nickname", old.Nickname, updated.Nickname)
 	track("prefix", old.Prefix, updated.Prefix)
 	track("gender", old.Gender, updated.Gender)
-	track("relationship_type", old.RelationshipType, updated.RelationshipType)
 	track("other_notes", old.OtherNotes, updated.OtherNotes)
 	track("date_of_birth", dobStr(old.DateOfBirth), dobStr(updated.DateOfBirth))
 

@@ -117,7 +117,6 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 				name: person.name,
 				nickname: person.nickname,
 				gender: person.gender ?? "",
-				relationship_type: person.relationship_type,
 				date_of_birth: person.date_of_birth ?? "",
 				create_birthday_reminder: person.has_birthday_reminder,
 				last_contact_at: person.last_contact_at ?? null,

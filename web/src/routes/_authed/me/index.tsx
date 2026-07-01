@@ -68,12 +68,6 @@ function MePage() {
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-3 text-[13px]">
-					{data.relationship_type && (
-						<div className="flex gap-2">
-							<span className="text-zinc-500 w-32 shrink-0">Relationship</span>
-							<span className="text-zinc-900">{data.relationship_type}</span>
-						</div>
-					)}
 					{data.date_of_birth && (
 						<div className="flex gap-2">
 							<span className="text-zinc-500 w-32 shrink-0">Date of birth</span>

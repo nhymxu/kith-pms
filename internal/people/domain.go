@@ -26,7 +26,6 @@ type Person struct {
 	Nickname         string     `bun:"nickname"             json:"nickname"`
 	Gender           string     `bun:"gender"               json:"gender"`
 	DateOfBirth      *DateOnly  `bun:"date_of_birth"        json:"date_of_birth"`
-	RelationshipType string     `bun:"relationship_type"    json:"relationship_type"`
 	OtherNotes       string     `bun:"other_notes"          json:"other_notes"`
 	AvatarPath       string     `bun:"avatar_path"          json:"avatar_path"`
 	AvatarSize       int64      `bun:"avatar_size"          json:"avatar_size"`

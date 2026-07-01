@@ -62,12 +62,11 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 	dobTime := time.Date(1990, 6, 15, 0, 0, 0, 0, time.UTC)
 	dob := people.NewDateOnly(dobTime)
 	p := people.Person{
-		Prefix:           "Dr",
-		Name:             "Alice Example",
-		Nickname:         "Ali",
-		DateOfBirth:      &dob,
-		RelationshipType: "friend",
-		OtherNotes:       "met at conference",
+		Prefix:      "Dr",
+		Name:        "Alice Example",
+		Nickname:    "Ali",
+		DateOfBirth: &dob,
+		OtherNotes:  "met at conference",
 	}
 	contacts := []people.ContactInfo{
 		{Type: "email", Value: "alice@example.com", Label: "work"},
@@ -108,10 +107,6 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 
 	if got.Nickname != p.Nickname {
 		t.Errorf("Nickname: got %q, want %q", got.Nickname, p.Nickname)
-	}
-
-	if got.RelationshipType != p.RelationshipType {
-		t.Errorf("RelationshipType: got %q, want %q", got.RelationshipType, p.RelationshipType)
 	}
 
 	if got.DateOfBirth == nil {

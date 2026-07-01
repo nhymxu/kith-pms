@@ -62,9 +62,6 @@ function OverviewSection({
 	const [name, setName] = useState(person.name);
 	const [nickname, setNickname] = useState(person.nickname);
 	const [gender, setGender] = useState(person.gender ?? "");
-	const [relationshipType, setRelationshipType] = useState(
-		person.relationship_type,
-	);
 	const [dob, setDob] = useState(person.date_of_birth ?? "");
 	const [birthdayReminder, setBirthdayReminder] = useState(
 		person.has_birthday_reminder,
@@ -80,7 +77,6 @@ function OverviewSection({
 				name,
 				nickname,
 				gender,
-				relationship_type: relationshipType,
 				date_of_birth: dob,
 				create_birthday_reminder: birthdayReminder,
 				last_contact_at: lastContactAt
@@ -158,16 +154,6 @@ function OverviewSection({
 							placeholder="Nickname"
 						/>
 					</div>
-					{!person.is_self && (
-						<div>
-							<Label>Relationship type</Label>
-							<Input
-								value={relationshipType}
-								onChange={(e) => setRelationshipType(e.target.value)}
-								placeholder="e.g. Friend, Colleague"
-							/>
-						</div>
-					)}
 					<div>
 						<Label>Date of birth</Label>
 						<Input
@@ -269,11 +255,6 @@ function OverviewSection({
 								<dd>
 									<Badge variant="neutral">Self profile</Badge>
 								</dd>
-							</>
-						) : person.relationship_type ? (
-							<>
-								<dt className="font-medium text-zinc-500">Relationship</dt>
-								<dd>{person.relationship_type}</dd>
 							</>
 						) : null}
 						{person.date_of_birth && (

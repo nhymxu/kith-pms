@@ -74,7 +74,6 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			name: initial?.name ?? "",
 			nickname: initial?.nickname ?? "",
 			gender: initial?.gender ?? "",
-			relationship_type: initial?.relationship_type ?? "",
 			date_of_birth: initial?.date_of_birth ?? "",
 			create_birthday_reminder: initial?.has_birthday_reminder ?? false,
 			last_contact_at: utcToDatetimeLocal(initial?.last_contact_at),
@@ -169,20 +168,9 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 						)}
 					</form.Field>
 				</div>
-				<div className="grid grid-cols-2 gap-4">
-					<form.Field name="relationship_type">
-						{(f) => (
-							<FormField
-								field={f}
-								label="Relationship type"
-								placeholder="e.g. Friend"
-							/>
-						)}
-					</form.Field>
-					<form.Field name="date_of_birth">
-						{(f) => <FormField field={f} label="Date of birth" type="date" />}
-					</form.Field>
-				</div>
+				<form.Field name="date_of_birth">
+					{(f) => <FormField field={f} label="Date of birth" type="date" />}
+				</form.Field>
 
 				{/* Birthday reminder checkbox — only shown when DOB is set */}
 				<form.Subscribe

@@ -32,7 +32,6 @@ describe("buildDashboardViewModel", () => {
 						name: "Alex Kim",
 						nickname: "",
 						gender: "",
-						relationship_type: "friend",
 						other_notes: "",
 						avatar_path: "",
 						avatar_size: 0,

@@ -45,8 +45,7 @@ type PersonDetail struct {
 type personRequest struct {
 	Name                   string            `json:"name"`
 	Nickname               string            `json:"nickname"`
-	Gender                 string            `json:"gender"` // "" | "male" | "female" | "rather_not_say"
-	RelationshipType       string            `json:"relationship_type"`
+	Gender                 string            `json:"gender"`          // "" | "male" | "female" | "rather_not_say"
 	DateOfBirth            string            `json:"date_of_birth"`   // "YYYY-MM-DD" or ""
 	LastContactAt          string            `json:"last_contact_at"` // RFC3339 UTC or ""
 	OtherNotes             string            `json:"other_notes"`
@@ -318,12 +317,11 @@ func parseID(c *echo.Context) (int64, error) {
 
 func mapPersonRequest(id int64, req personRequest) (people.Person, []people.ContactInfo, []people.Location) {
 	p := people.Person{
-		ID:               id,
-		Name:             req.Name,
-		Nickname:         req.Nickname,
-		Gender:           req.Gender,
-		RelationshipType: req.RelationshipType,
-		OtherNotes:       req.OtherNotes,
+		ID:         id,
+		Name:       req.Name,
+		Nickname:   req.Nickname,
+		Gender:     req.Gender,
+		OtherNotes: req.OtherNotes,
 	}
 
 	if req.DateOfBirth != "" {

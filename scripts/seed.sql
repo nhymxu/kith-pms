@@ -45,21 +45,21 @@ UPDATE relationship_type SET inverse_type_id = 8 WHERE id = 7;
 UPDATE relationship_type SET inverse_type_id = 7 WHERE id = 8;
 
 -- ─── People ──────────────────────────────────────────────────────────────────
-INSERT OR IGNORE INTO person (id, name, nickname, date_of_birth, gender, relationship_type, other_notes, last_contact_at, created_at, updated_at) VALUES
-  (2,  'James Carter',    'Jimmy',   '1988-03-14', 'male',   'friend',     'Met at university. Loves hiking.', '2026-05-20T08:30:00.000Z', '2023-06-01T10:00:00.000Z', '2026-05-20T08:30:00.000Z'),
-  (3,  'Sophia Nguyen',   'Sophie',  '1992-07-22', 'female', 'colleague',  'Works at DesignHub. Great at Figma.', '2026-06-01T14:00:00.000Z', '2023-09-15T09:00:00.000Z', '2026-06-01T14:00:00.000Z'),
-  (4,  'Michael Torres',  'Mike',    '1985-11-05', 'male',   'mentor',     'Senior engineer at BigTech. Gives great career advice.', '2026-04-10T11:00:00.000Z', '2022-03-20T08:00:00.000Z', '2026-04-10T11:00:00.000Z'),
-  (5,  'Emily Chen',      'Em',      '1995-02-28', 'female', 'friend',     'Childhood friend. Lives in Hanoi.', '2026-05-15T16:00:00.000Z', '2021-11-10T07:00:00.000Z', '2026-05-15T16:00:00.000Z'),
-  (6,  'David Kim',       'Dave',    '1990-09-17', 'male',   'colleague',  'Backend engineer on the same team.', '2026-06-10T09:00:00.000Z', '2024-01-05T08:00:00.000Z', '2026-06-10T09:00:00.000Z'),
-  (7,  'Olivia Smith',    'Liv',     '1993-12-03', 'female', 'friend',     'Yoga instructor. Very calming to be around.', '2026-03-28T18:00:00.000Z', '2022-08-01T10:00:00.000Z', '2026-03-28T18:00:00.000Z'),
-  (8,  'Lucas Martinez',  'Luca',    '1987-04-20', 'male',   'colleague',  'Product manager. Very detail-oriented.', '2026-06-05T10:30:00.000Z', '2023-02-14T09:00:00.000Z', '2026-06-05T10:30:00.000Z'),
-  (9,  'Ava Johnson',     'Ava',     '1998-06-08', 'female', 'friend',     'Photographer. Met at an art exhibition.', '2026-04-22T15:00:00.000Z', '2024-03-01T11:00:00.000Z', '2026-04-22T15:00:00.000Z'),
-  (10, 'Noah Williams',   'Noah',    '1991-01-30', 'male',   '',           'Coffee shop owner downtown.', '2026-02-14T10:00:00.000Z', '2023-07-20T08:00:00.000Z', '2026-02-14T10:00:00.000Z'),
-  (11, 'Isabella Brown',  'Bella',   '1996-08-14', 'female', 'friend',     'Moved to Singapore last year.', '2026-05-30T20:00:00.000Z', '2022-12-01T09:00:00.000Z', '2026-05-30T20:00:00.000Z'),
-  (12, 'Ethan Davis',     'Ethan',   '1983-10-25', 'male',   'mentor',     'Former boss at StartupX. Great networker.', '2026-01-15T11:00:00.000Z', '2021-05-05T08:00:00.000Z', '2026-01-15T11:00:00.000Z'),
-  (13, 'Mia Wilson',      'Mia',     '1994-05-11', 'female', 'colleague',  'Data analyst. Always has interesting insights.', '2026-06-08T14:00:00.000Z', '2023-11-01T09:00:00.000Z', '2026-06-08T14:00:00.000Z'),
-  (14, 'Liam Anderson',   'Liam',    '1989-03-07', 'male',   'friend',     'Musician. Plays guitar in a local band.', '2026-05-01T21:00:00.000Z', '2022-06-15T10:00:00.000Z', '2026-05-01T21:00:00.000Z'),
-  (15, 'Charlotte Lee',   'Charlie', '1997-09-19', 'female', 'colleague',  'Junior developer on the frontend team.', '2026-06-11T09:30:00.000Z', '2025-01-10T08:00:00.000Z', '2026-06-11T09:30:00.000Z');
+INSERT OR IGNORE INTO person (id, name, nickname, date_of_birth, gender, other_notes, last_contact_at, created_at, updated_at) VALUES
+  (2,  'James Carter',    'Jimmy',   '1988-03-14', 'male',   'Met at university. Loves hiking.', '2026-05-20T08:30:00.000Z', '2023-06-01T10:00:00.000Z', '2026-05-20T08:30:00.000Z'),
+  (3,  'Sophia Nguyen',   'Sophie',  '1992-07-22', 'female', 'Works at DesignHub. Great at Figma.', '2026-06-01T14:00:00.000Z', '2023-09-15T09:00:00.000Z', '2026-06-01T14:00:00.000Z'),
+  (4,  'Michael Torres',  'Mike',    '1985-11-05', 'male',   'Senior engineer at BigTech. Gives great career advice.', '2026-04-10T11:00:00.000Z', '2022-03-20T08:00:00.000Z', '2026-04-10T11:00:00.000Z'),
+  (5,  'Emily Chen',      'Em',      '1995-02-28', 'female', 'Childhood friend. Lives in Hanoi.', '2026-05-15T16:00:00.000Z', '2021-11-10T07:00:00.000Z', '2026-05-15T16:00:00.000Z'),
+  (6,  'David Kim',       'Dave',    '1990-09-17', 'male',   'Backend engineer on the same team.', '2026-06-10T09:00:00.000Z', '2024-01-05T08:00:00.000Z', '2026-06-10T09:00:00.000Z'),
+  (7,  'Olivia Smith',    'Liv',     '1993-12-03', 'female', 'Yoga instructor. Very calming to be around.', '2026-03-28T18:00:00.000Z', '2022-08-01T10:00:00.000Z', '2026-03-28T18:00:00.000Z'),
+  (8,  'Lucas Martinez',  'Luca',    '1987-04-20', 'male',   'Product manager. Very detail-oriented.', '2026-06-05T10:30:00.000Z', '2023-02-14T09:00:00.000Z', '2026-06-05T10:30:00.000Z'),
+  (9,  'Ava Johnson',     'Ava',     '1998-06-08', 'female', 'Photographer. Met at an art exhibition.', '2026-04-22T15:00:00.000Z', '2024-03-01T11:00:00.000Z', '2026-04-22T15:00:00.000Z'),
+  (10, 'Noah Williams',   'Noah',    '1991-01-30', 'male',   'Coffee shop owner downtown.', '2026-02-14T10:00:00.000Z', '2023-07-20T08:00:00.000Z', '2026-02-14T10:00:00.000Z'),
+  (11, 'Isabella Brown',  'Bella',   '1996-08-14', 'female', 'Moved to Singapore last year.', '2026-05-30T20:00:00.000Z', '2022-12-01T09:00:00.000Z', '2026-05-30T20:00:00.000Z'),
+  (12, 'Ethan Davis',     'Ethan',   '1983-10-25', 'male',   'Former boss at StartupX. Great networker.', '2026-01-15T11:00:00.000Z', '2021-05-05T08:00:00.000Z', '2026-01-15T11:00:00.000Z'),
+  (13, 'Mia Wilson',      'Mia',     '1994-05-11', 'female', 'Data analyst. Always has interesting insights.', '2026-06-08T14:00:00.000Z', '2023-11-01T09:00:00.000Z', '2026-06-08T14:00:00.000Z'),
+  (14, 'Liam Anderson',   'Liam',    '1989-03-07', 'male',   'Musician. Plays guitar in a local band.', '2026-05-01T21:00:00.000Z', '2022-06-15T10:00:00.000Z', '2026-05-01T21:00:00.000Z'),
+  (15, 'Charlotte Lee',   'Charlie', '1997-09-19', 'female', 'Junior developer on the frontend team.', '2026-06-11T09:30:00.000Z', '2025-01-10T08:00:00.000Z', '2026-06-11T09:30:00.000Z');
 
 -- ─── Contact info ─────────────────────────────────────────────────────────────
 INSERT OR IGNORE INTO contact_info (id, person_id, type, value, label, position) VALUES

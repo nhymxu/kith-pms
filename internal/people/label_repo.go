@@ -18,12 +18,14 @@ type LabelRepo interface {
 	List(ctx context.Context) ([]Label, error)
 	ListWithCounts(ctx context.Context) ([]Label, error)
 	ListByPersonIDs(ctx context.Context, personIDs []int64) (map[int64][]Label, error)
+	ListPersonIDsByLabelID(ctx context.Context, labelID int64) ([]int64, error)
 }
 
 type PersonLabelRepo interface {
 	Attach(ctx context.Context, personID, labelID int64) error
 	Detach(ctx context.Context, personID, labelID int64) error
 	ListByPersonID(ctx context.Context, personID int64) ([]Label, error)
+	BulkAttach(ctx context.Context, labelID int64, personIDs []int64) (int, error)
 }
 
 // LabelAssignment is the join table model for people_label_assignment.
@@ -183,6 +185,21 @@ func (r *sqlLabelRepo) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 	return result, nil
 }
 
+func (r *sqlLabelRepo) ListPersonIDsByLabelID(ctx context.Context, labelID int64) ([]int64, error) {
+	var ids []int64
+
+	err := r.db.NewSelect().
+		TableExpr("people_label_assignment").
+		ColumnExpr("person_id").
+		Where("label_id = ?", labelID).
+		Scan(ctx, &ids)
+	if err != nil {
+		return nil, fmt.Errorf("people labels: list person ids by label: %w", err)
+	}
+
+	return ids, nil
+}
+
 // ---- sqlPersonLabelRepo -----------------------------------------------------
 
 type sqlPersonLabelRepo struct{ db *bun.DB }
@@ -213,6 +230,29 @@ func (r *sqlPersonLabelRepo) Detach(ctx context.Context, personID, labelID int64
 	}
 
 	return nil
+}
+
+func (r *sqlPersonLabelRepo) BulkAttach(ctx context.Context, labelID int64, personIDs []int64) (int, error) {
+	if len(personIDs) == 0 {
+		return 0, nil
+	}
+
+	rows := make([]LabelAssignment, len(personIDs))
+	for i, pid := range personIDs {
+		rows[i] = LabelAssignment{PersonID: pid, LabelID: labelID}
+	}
+
+	res, err := r.db.NewInsert().
+		Model(&rows).
+		On("CONFLICT DO NOTHING").
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("people labels: bulk attach: %w", err)
+	}
+
+	n, _ := res.RowsAffected()
+
+	return int(n), nil
 }
 
 func (r *sqlPersonLabelRepo) ListByPersonID(ctx context.Context, personID int64) ([]Label, error) {

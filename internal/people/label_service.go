@@ -126,6 +126,16 @@ func (s *LabelService) ListByPersonIDs(ctx context.Context, personIDs []int64) (
 	return s.Labels.ListByPersonIDs(ctx, personIDs)
 }
 
+// BulkAttach attaches labelID to each personID. Idempotent — skips existing rows.
+// Returns count of net-new assignments.
+func (s *LabelService) BulkAttach(ctx context.Context, labelID int64, personIDs []int64) (int, error) {
+	return s.PersonLabels.BulkAttach(ctx, labelID, personIDs)
+}
+
+func (s *LabelService) ListPersonIDsByLabelID(ctx context.Context, labelID int64) ([]int64, error) {
+	return s.Labels.ListPersonIDsByLabelID(ctx, labelID)
+}
+
 // ---- validation -------------------------------------------------------------
 
 func validateLabel(name, color string) error {

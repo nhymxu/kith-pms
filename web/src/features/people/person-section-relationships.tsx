@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Link2, Search, Trash2, X } from "lucide-react";
+import { Link2, ListPlus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -23,6 +23,7 @@ import {
 import { listRelationshipTypes } from "#/endpoints/relationship-types";
 import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
+import { BulkRelationshipModal } from "./bulk-relationship-modal";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
@@ -39,6 +40,7 @@ interface RelationshipsSectionProps {
 export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 	const qc = useQueryClient();
 	const [addOpen, setAddOpen] = useState(false);
+	const [bulkOpen, setBulkOpen] = useState(false);
 	const [typeId, setTypeId] = useState<number | "">("");
 	const [otherPersonId, setOtherPersonId] = useState<number | null>(null);
 	const [otherPersonName, setOtherPersonName] = useState("");
@@ -98,9 +100,14 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		<div>
 			<div className="flex items-center justify-between mb-2">
 				<SectionHeading>Relationships</SectionHeading>
-				<Button variant="neutral" size="sm" onClick={() => setAddOpen(true)}>
-					<Link2 className="size-3" /> Add
-				</Button>
+				<div className="flex gap-1">
+					<Button variant="neutral" size="sm" onClick={() => setBulkOpen(true)}>
+						<ListPlus className="size-3" /> Add multiple
+					</Button>
+					<Button variant="neutral" size="sm" onClick={() => setAddOpen(true)}>
+						<Link2 className="size-3" /> Add
+					</Button>
+				</div>
 			</div>
 			{!rels?.length ? (
 				<p className="text-sm text-zinc-400">No relationships yet.</p>
@@ -238,6 +245,21 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+
+			<BulkRelationshipModal
+				fromPersonId={personId}
+				open={bulkOpen}
+				onClose={() => setBulkOpen(false)}
+				onSuccess={() => {
+					qc.invalidateQueries({
+						queryKey: keys.people.relationships(personId),
+					});
+					qc.invalidateQueries({
+						queryKey: keys.relationships.graph(personId),
+					});
+					qc.invalidateQueries({ queryKey: keys.relationships.graph() });
+				}}
+			/>
 
 			<Dialog
 				open={confirmRelId !== null}

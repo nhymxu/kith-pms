@@ -1,16 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { useEffect, useRef, useState } from "react";
 import { DataTable } from "#/components/data-table/data-table";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
 import { listPeopleLabels } from "#/endpoints/people-labels";
 import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
+import { BulkActionBar } from "./bulk-action-bar";
 
 const SORT_OPTIONS = [
 	{ value: "name", label: "Name A→Z" },
@@ -154,6 +162,7 @@ export function PeopleTable({
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
 	const isFirst = useRef(true);
+	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
 	useEffect(() => {
 		if (isFirst.current) {
@@ -191,6 +200,7 @@ export function PeopleTable({
 	});
 
 	const rows = data?.items ?? [];
+	const selectedIDs = Object.keys(rowSelection).map(Number);
 
 	return (
 		<div className="space-y-3">
@@ -201,17 +211,21 @@ export function PeopleTable({
 					onChange={(e) => setLocalQ(e.target.value)}
 					className="max-w-xs"
 				/>
-				<select
+				<Select
 					value={sort}
-					onChange={(e) => onSortChange(e.target.value as SortValue)}
-					className="text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground"
+					onValueChange={(v) => onSortChange(v as SortValue)}
 				>
-					{SORT_OPTIONS.map((opt) => (
-						<option key={opt.value} value={opt.value}>
-							{opt.label}
-						</option>
-					))}
-				</select>
+					<SelectTrigger className="w-48">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{SORT_OPTIONS.map((opt) => (
+							<SelectItem key={opt.value} value={opt.value}>
+								{opt.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
 				<div className="flex flex-wrap gap-2">
@@ -252,6 +266,11 @@ export function PeopleTable({
 				totalCount={data?.total}
 				pageIndex={page - 1}
 				onPageChange={(idx) => onPageChange(idx + 1)}
+				hideToolbar
+				enableRowSelection
+				rowSelection={rowSelection}
+				onRowSelectionChange={setRowSelection}
+				getRowId={(row) => String(row.id)}
 				emptyState={
 					isLoading ? (
 						<span className="text-sm font-base text-foreground/50">
@@ -264,6 +283,13 @@ export function PeopleTable({
 					)
 				}
 			/>
+			{selectedIDs.length > 0 && (
+				<BulkActionBar
+					selectedCount={selectedIDs.length}
+					personIds={selectedIDs}
+					onClear={() => setRowSelection({})}
+				/>
+			)}
 		</div>
 	);
 }

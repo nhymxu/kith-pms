@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Network, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
@@ -21,6 +21,7 @@ import {
 	listPeopleLabels,
 	updatePeopleLabel,
 } from "#/endpoints/people-labels";
+import { ConnectMembersDialog } from "#/features/people/connect-members-dialog";
 import { keys } from "#/query-keys";
 import {
 	type PeopleLabel,
@@ -164,6 +165,9 @@ type DialogMode =
 
 function PeopleLabelsPage() {
 	const [dialog, setDialog] = useState<DialogMode>(null);
+	const [connectingLabel, setConnectingLabel] = useState<PeopleLabel | null>(
+		null,
+	);
 	const { data, isPending } = useQuery({
 		queryKey: keys.peopleLabels.list(),
 		queryFn: listPeopleLabels,
@@ -202,6 +206,14 @@ function PeopleLabelsPage() {
 							</span>
 						)}
 						<div className="ml-auto flex gap-1">
+							<Button
+								variant="ghost"
+								size="icon"
+								title="Connect members"
+								onClick={() => setConnectingLabel(label)}
+							>
+								<Network className="size-3.5" />
+							</Button>
 							<Button
 								variant="ghost"
 								size="icon"
@@ -251,6 +263,14 @@ function PeopleLabelsPage() {
 					)}
 				</DialogContent>
 			</Dialog>
+
+			{connectingLabel && (
+				<ConnectMembersDialog
+					label={connectingLabel}
+					open={true}
+					onClose={() => setConnectingLabel(null)}
+				/>
+			)}
 		</div>
 	);
 }

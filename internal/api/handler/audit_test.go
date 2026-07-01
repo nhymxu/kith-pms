@@ -61,6 +61,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		TimeFormat:            "24h",
 		Timezone:              "UTC",
 		AuditLogRetentionDays: 30,
+		NetworkColorBy:        "labels",
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

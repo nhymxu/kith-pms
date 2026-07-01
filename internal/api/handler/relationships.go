@@ -269,6 +269,53 @@ func (h *RelationshipsAPI) Graph(c *echo.Context) error {
 	return ok(c, graph)
 }
 
+// BulkAttach handles POST /v1/people/:id/relationships/bulk.
+func (h *RelationshipsAPI) BulkAttach(c *echo.Context) error {
+	fromID, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid person id")
+	}
+
+	var req struct {
+		Relationships []struct {
+			ToPersonID int64  `json:"to_person_id"`
+			TypeID     int64  `json:"relationship_type_id"`
+			Notes      string `json:"notes"`
+		} `json:"relationships"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid request body")
+	}
+
+	if len(req.Relationships) == 0 {
+		return apiErr(c, http.StatusBadRequest, "relationships required")
+	}
+
+	if len(req.Relationships) > 50 {
+		return apiErr(c, http.StatusBadRequest, "max 50 relationships per request")
+	}
+
+	pairs := make([]relationships.BulkRelationshipPair, len(req.Relationships))
+	for i, r := range req.Relationships {
+		pairs[i] = relationships.BulkRelationshipPair{ToPersonID: r.ToPersonID, TypeID: r.TypeID, Notes: r.Notes}
+	}
+
+	created, skipped, err := h.Svc.BulkAttach(c.Request().Context(), fromID, pairs)
+	if errors.Is(err, relationships.ErrTypeNotFound) {
+		return apiErr(c, http.StatusUnprocessableEntity, "relationship type not found")
+	}
+
+	if errors.Is(err, relationships.ErrSelfRelationship) {
+		return apiErr(c, http.StatusUnprocessableEntity, "cannot relate a person to themselves")
+	}
+
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, map[string]int{"created": created, "skipped": skipped})
+}
+
 // ---- helpers ----------------------------------------------------------------
 
 func relTypeErrResponse(c *echo.Context, err error) error {

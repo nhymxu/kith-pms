@@ -75,6 +75,8 @@ export const keys = {
 		all: ["people-labels"] as const,
 		list: () => ["people-labels", "list"] as const,
 		detail: (id: number) => ["people-labels", "detail", id] as const,
+		connectPreview: (id: number) =>
+			["people-labels", id, "connect-preview"] as const,
 	},
 	journalLabels: {
 		all: ["journal-labels"] as const,
@@ -89,6 +91,8 @@ export const keys = {
 	relationships: {
 		graph: (personId?: number) =>
 			["relationships", "graph", personId ?? "all"] as const,
+		byPerson: (personId: number) =>
+			["people", "relationships", personId] as const,
 	},
 	audit: {
 		all: ["audit"] as const,

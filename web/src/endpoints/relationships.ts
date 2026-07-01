@@ -36,3 +36,21 @@ export async function getRelationshipGraph(
 	const res = await apiFetch<Envelope<RelationshipGraph>>(path);
 	return res.data;
 }
+
+export async function bulkCreateRelationships(
+	personId: number,
+	relationships: Array<{
+		to_person_id: number;
+		relationship_type_id: number;
+		notes?: string;
+	}>,
+): Promise<{ created: number; skipped: number }> {
+	const res = await apiFetch<Envelope<{ created: number; skipped: number }>>(
+		`/v1/people/${personId}/relationships/bulk`,
+		{
+			method: "POST",
+			body: JSON.stringify({ relationships }),
+		},
+	);
+	return res.data;
+}

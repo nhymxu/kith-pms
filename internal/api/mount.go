@@ -85,6 +85,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountAudit(v1, deps)
 	mountGifts(v1, deps)
 	mountRelationships(v1, deps)
+	mountPeopleLabelsBulk(v1, deps)
 	mountPeopleLabels(v1, deps)
 	mountPeopleAvatars(v1, deps)
 	mountPeopleQuick(v1, deps)
@@ -233,6 +234,18 @@ func mountRelationships(g *echo.Group, deps Deps) {
 	g.GET("/people/:id/relationships", h.ListByPerson)
 	g.POST("/people/:id/relationships", h.AttachRelationship)
 	g.DELETE("/people/:id/relationships/:relID", h.DetachRelationship)
+	g.POST("/people/:id/relationships/bulk", h.BulkAttach)
+}
+
+func mountPeopleLabelsBulk(g *echo.Group, deps Deps) {
+	h := &handler.PeopleLabelsBulkAPI{
+		Svc:       deps.LabelsService,
+		PeopleSvc: deps.PeopleService,
+		RelSvc:    deps.RelationshipsService,
+	}
+	g.POST("/people-labels/bulk-assign", h.BulkAssign)
+	g.GET("/people-labels/:id/connect-all/preview", h.ConnectAllPreview)
+	g.POST("/people-labels/:id/connect-all", h.ConnectAll)
 }
 
 func mountPeopleLabels(g *echo.Group, deps Deps) {

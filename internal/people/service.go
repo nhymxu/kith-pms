@@ -400,6 +400,39 @@ func (s *Service) DeleteAvatar(ctx context.Context, personID int64) error {
 	return nil
 }
 
+// ValidatePeopleExist returns the subset of ids that do NOT exist in the person table.
+func (s *Service) ValidatePeopleExist(ctx context.Context, ids []int64) ([]int64, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	var found []int64
+
+	err := s.DB.NewSelect().
+		TableExpr("person").
+		ColumnExpr("id").
+		Where("id IN (?)", bun.List(ids)).
+		Scan(ctx, &found)
+	if err != nil {
+		return nil, fmt.Errorf("people: validate exist: %w", err)
+	}
+
+	foundSet := make(map[int64]struct{}, len(found))
+	for _, id := range found {
+		foundSet[id] = struct{}{}
+	}
+
+	var missing []int64
+
+	for _, id := range ids {
+		if _, ok := foundSet[id]; !ok {
+			missing = append(missing, id)
+		}
+	}
+
+	return missing, nil
+}
+
 func (s *Service) UpdateLastContact(ctx context.Context, personID int64, contactTime time.Time) error {
 	person, err := s.People.Get(ctx, personID)
 	if err != nil {

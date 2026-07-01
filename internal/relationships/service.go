@@ -13,12 +13,14 @@ import (
 
 // Sentinel errors returned by service methods.
 var (
-	ErrTypeInUse             = errors.New("relationships: type is in use and cannot be deleted")
-	ErrDuplicateRelationship = errors.New("relationships: relationship already exists")
-	ErrSelfRelationship      = errors.New("relationships: cannot relate a person to themselves")
-	ErrTypeNotFound          = errors.New("relationships: relationship type not found")
-	ErrNameEmpty             = errors.New("relationships: name must not be empty")
-	ErrNameTooLong           = errors.New("relationships: name must be 80 characters or fewer")
+	ErrTypeInUse                = errors.New("relationships: type is in use and cannot be deleted")
+	ErrDuplicateRelationship    = errors.New("relationships: relationship already exists")
+	ErrSelfRelationship         = errors.New("relationships: cannot relate a person to themselves")
+	ErrTypeNotFound             = errors.New("relationships: relationship type not found")
+	ErrNameEmpty                = errors.New("relationships: name must not be empty")
+	ErrNameTooLong              = errors.New("relationships: name must be 80 characters or fewer")
+	ErrAsymmetricTypeNotAllowed = errors.New("relationships: asymmetric types cannot be used for mesh connect")
+	ErrMeshTooLarge             = errors.New("relationships: label has too many members for mesh connect (max 500)")
 )
 
 // Service provides business logic for relationship types and person-relationship junctions.
@@ -160,9 +162,7 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 		return 0, ErrSelfRelationship
 	}
 
-	if len(notes) > 1000 {
-		notes = notes[:1000]
-	}
+	notes = truncateNotes(notes)
 
 	rt, err := s.Types.Get(ctx, typeID)
 	if err != nil {
@@ -292,6 +292,187 @@ func (s *Service) DetachRelationship(ctx context.Context, id int64) error {
 // ListByPerson returns the outgoing relationship views for a given person.
 func (s *Service) ListByPerson(ctx context.Context, personID int64) ([]RelationshipView, error) {
 	return s.Relationships.ListByPersonID(ctx, personID)
+}
+
+// BulkRelationshipPair is a single from→to relationship to create in a bulk operation.
+type BulkRelationshipPair struct {
+	ToPersonID int64
+	TypeID     int64
+	Notes      string
+}
+
+// BulkAttach creates relationships from fromID to each pair in a single transaction.
+// Skips duplicates (ON CONFLICT DO NOTHING). Handles inverse rows per type config.
+func (s *Service) BulkAttach(
+	ctx context.Context,
+	fromID int64,
+	pairs []BulkRelationshipPair,
+) (created, skipped int, err error) {
+	if len(pairs) == 0 {
+		return 0, 0, nil
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	txRepo := &sqlPersonRelationshipRepo{db: tx}
+	typeCache := make(map[int64]*RelationshipType)
+
+	for _, p := range pairs {
+		if p.ToPersonID == fromID {
+			return 0, 0, ErrSelfRelationship
+		}
+
+		rt, ok := typeCache[p.TypeID]
+		if !ok {
+			rt, err = s.Types.Get(ctx, p.TypeID)
+			if err != nil {
+				return 0, 0, err
+			}
+
+			if rt == nil {
+				return 0, 0, ErrTypeNotFound
+			}
+
+			typeCache[p.TypeID] = rt
+		}
+
+		p.Notes = truncateNotes(p.Notes)
+
+		_, err = txRepo.Attach(ctx, fromID, p.ToPersonID, p.TypeID, p.Notes)
+		if err != nil {
+			if isUniqueErr(err) {
+				skipped++
+				continue
+			}
+
+			return 0, 0, err
+		}
+
+		created++
+
+		const insertRel = `INSERT OR IGNORE INTO person_relationship` +
+			` (from_person_id, to_person_id, relationship_type_id, notes) VALUES (?,?,?,?)`
+
+		if rt.InverseTypeID != nil {
+			_, _ = tx.ExecContext(ctx, insertRel, p.ToPersonID, fromID, *rt.InverseTypeID, p.Notes)
+		} else if rt.ReverseName != "" {
+			_, _ = tx.ExecContext(ctx, insertRel, p.ToPersonID, fromID, p.TypeID, p.Notes)
+		}
+	}
+
+	return created, skipped, tx.Commit()
+}
+
+// BulkAttachMesh creates symmetric relationships between all people sharing labelID.
+// Only symmetric types (InverseTypeID == nil) are allowed.
+// Inserts all directed pairs (A→B and B→A) with INSERT OR IGNORE.
+// Returns created (net-new rows), skipped, totalMembers.
+func (s *Service) BulkAttachMesh(
+	ctx context.Context,
+	labelID, typeID int64,
+) (created, skipped, totalMembers int, err error) {
+	rt, err := s.Types.Get(ctx, typeID)
+	if err != nil || rt == nil {
+		return 0, 0, 0, ErrTypeNotFound
+	}
+
+	if rt.InverseTypeID != nil {
+		return 0, 0, 0, ErrAsymmetricTypeNotAllowed
+	}
+
+	ids, err := s.PeopleLabels.ListPersonIDsByLabelID(ctx, labelID)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	totalMembers = len(ids)
+	if totalMembers < 2 {
+		return 0, 0, totalMembers, nil
+	}
+
+	if totalMembers > 500 {
+		return 0, 0, totalMembers, ErrMeshTooLarge
+	}
+
+	type pair struct{ from, to int64 }
+
+	pairs := make([]pair, 0, totalMembers*(totalMembers-1))
+
+	for i := range ids {
+		for j := range ids {
+			if i != j {
+				pairs = append(pairs, pair{ids[i], ids[j]})
+			}
+		}
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, totalMembers, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const chunkSize = 200
+
+	var totalAffected int64
+
+	for start := 0; start < len(pairs); start += chunkSize {
+		end := start + chunkSize
+		if end > len(pairs) {
+			end = len(pairs)
+		}
+
+		chunk := pairs[start:end]
+		args := make([]any, 0, len(chunk)*3)
+		placeholders := make([]string, len(chunk))
+
+		for k, p := range chunk {
+			placeholders[k] = "(?,?,?)"
+
+			args = append(args, p.from, p.to, typeID)
+		}
+
+		q := "INSERT OR IGNORE INTO person_relationship (from_person_id, to_person_id, relationship_type_id) VALUES " +
+			strings.Join(placeholders, ",")
+
+		res, err := tx.ExecContext(ctx, q, args...)
+		if err != nil {
+			return 0, 0, totalMembers, err
+		}
+
+		n, _ := res.RowsAffected()
+		totalAffected += n
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, 0, totalMembers, err
+	}
+
+	created = int(totalAffected)
+	skipped = len(pairs) - created
+
+	return created, skipped, totalMembers, nil
+}
+
+// ---- helpers ----------------------------------------------------------------
+
+// truncateNotes caps notes at 1 000 Unicode code points to avoid splitting multibyte runes.
+func truncateNotes(s string) string {
+	const maxCodepoints = 1000
+	if len(s) <= maxCodepoints {
+		return s
+	}
+
+	runes := []rune(s)
+	if len(runes) > maxCodepoints {
+		runes = runes[:maxCodepoints]
+	}
+
+	return string(runes)
 }
 
 // ---- validation -------------------------------------------------------------

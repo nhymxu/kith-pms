@@ -5,6 +5,8 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
+	type OnChangeFn,
+	type RowSelectionState,
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
@@ -31,6 +33,12 @@ interface DataTableProps<T> {
 	totalCount?: number;
 	pageIndex?: number;
 	onPageChange?: (pageIndex: number) => void;
+	// Row selection — provide all three to enable
+	enableRowSelection?: boolean;
+	rowSelection?: RowSelectionState;
+	onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+	getRowId?: (row: T) => string;
+	hideToolbar?: boolean;
 }
 
 export function DataTable<T>({
@@ -43,6 +51,11 @@ export function DataTable<T>({
 	totalCount,
 	pageIndex,
 	onPageChange,
+	enableRowSelection = false,
+	rowSelection,
+	onRowSelectionChange,
+	getRowId,
+	hideToolbar = false,
 }: DataTableProps<T>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
@@ -52,18 +65,47 @@ export function DataTable<T>({
 		pageIndex !== undefined &&
 		onPageChange !== undefined;
 
+	const checkboxCol: ColumnDef<T> = {
+		id: "select",
+		size: 40,
+		header: ({ table }) => (
+			<input
+				type="checkbox"
+				className="size-4 cursor-pointer accent-indigo-600"
+				checked={table.getIsAllPageRowsSelected()}
+				onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+				aria-label="Select all"
+			/>
+		),
+		cell: ({ row }) => (
+			<input
+				type="checkbox"
+				className="size-4 cursor-pointer accent-indigo-600"
+				checked={row.getIsSelected()}
+				onChange={(e) => row.toggleSelected(e.target.checked)}
+				onClick={(e) => e.stopPropagation()}
+				aria-label="Select row"
+			/>
+		),
+	};
+
+	const resolvedCols = enableRowSelection ? [checkboxCol, ...columns] : columns;
+
 	const table = useReactTable({
 		data,
-		columns,
+		columns: resolvedCols,
 		state: {
 			sorting,
 			globalFilter,
 			...(isServerPaginated && {
 				pagination: { pageIndex, pageSize },
 			}),
+			...(enableRowSelection && { rowSelection: rowSelection ?? {} }),
 		},
 		onSortingChange: setSorting,
 		onGlobalFilterChange: setGlobalFilter,
+		...(enableRowSelection && { onRowSelectionChange }),
+		...(getRowId && { getRowId }),
 		...(isServerPaginated && {
 			manualPagination: true,
 			rowCount: totalCount,
@@ -75,6 +117,7 @@ export function DataTable<T>({
 				onPageChange(next.pageIndex);
 			},
 		}),
+		enableRowSelection,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
@@ -86,15 +129,17 @@ export function DataTable<T>({
 
 	return (
 		<div className="border border-zinc-200 rounded-md bg-white">
-			<div className="px-4">
-				<DataTableToolbar
-					table={table}
-					globalFilter={globalFilter}
-					onGlobalFilterChange={setGlobalFilter}
-				>
-					{toolbarActions}
-				</DataTableToolbar>
-			</div>
+			{!hideToolbar && (
+				<div className="px-4">
+					<DataTableToolbar
+						table={table}
+						globalFilter={globalFilter}
+						onGlobalFilterChange={setGlobalFilter}
+					>
+						{toolbarActions}
+					</DataTableToolbar>
+				</div>
+			)}
 
 			<Table>
 				<TableHeader>
@@ -131,7 +176,10 @@ export function DataTable<T>({
 						))
 					) : (
 						<TableRow>
-							<TableCell colSpan={columns.length} className="h-32 text-center">
+							<TableCell
+								colSpan={resolvedCols.length}
+								className="h-32 text-center"
+							>
 								{emptyState ?? (
 									<span className="text-sm text-foreground/50">
 										No results found.

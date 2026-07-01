@@ -433,48 +433,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/important-dates/upcoming": {
-            "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "dates"
-                ],
-                "summary": "Get upcoming dates",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 30,
-                        "description": "Days ahead to look",
-                        "name": "days",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            }
-        },
         "/gifts": {
             "get": {
                 "security": [
@@ -884,6 +842,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/important-dates/upcoming": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "CSRFHeader": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dates"
+                ],
+                "summary": "Get upcoming dates",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Days ahead to look",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/journal": {
             "get": {
                 "security": [
@@ -1191,273 +1191,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/labels": {
-            "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "labels"
-                ],
-                "summary": "List labels",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "labels"
-                ],
-                "summary": "Create label",
-                "parameters": [
-                    {
-                        "description": "Label data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.labelRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_api_handler.envelope"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            }
-        },
-        "/labels/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "labels"
-                ],
-                "summary": "Get label",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Label ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "labels"
-                ],
-                "summary": "Update label",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Label ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Label data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.labelRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_api_handler.envelope"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "CookieAuth": []
-                    },
-                    {
-                        "CSRFHeader": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "labels"
-                ],
-                "summary": "Delete label",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Label ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/internal_api_handler.envelope"
-                        }
-                    }
-                }
-            }
-        },
         "/me": {
             "get": {
                 "security": [
@@ -1604,6 +1337,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Comma-separated label IDs",
                         "name": "labels",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only return people linked to at least one journal entry",
+                        "name": "has_journal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only return favorited people",
+                        "name": "favorite_only",
                         "in": "query"
                     }
                 ],
@@ -2117,6 +1862,134 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    }
+                }
+            }
+        },
+        "/people/{id}/favorite": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "CSRFHeader": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Mark person as favorite",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_api_handler.envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "favorite": {
+                                                    "type": "boolean"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "CSRFHeader": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "people"
+                ],
+                "summary": "Unmark person as favorite",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Person ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_api_handler.envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "favorite": {
+                                                    "type": "boolean"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/internal_api_handler.envelope"
                         }
@@ -3062,6 +2935,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/relationships/graph": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "relationships"
+                ],
+                "summary": "Get relationship network graph",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Ego-network focal person ID",
+                        "name": "person_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/reminders": {
             "get": {
                 "security": [
@@ -3507,6 +3418,9 @@ const docTemplate = `{
                 "day_of_week": {
                     "type": "integer"
                 },
+                "days_before_dob": {
+                    "type": "integer"
+                },
                 "interval": {
                     "type": "integer"
                 },
@@ -3527,7 +3441,8 @@ const docTemplate = `{
                 "yearly",
                 "custom",
                 "relative_contact",
-                "day_of_week"
+                "day_of_week",
+                "birthday"
             ],
             "x-enum-varnames": [
                 "RecurrenceDaily",
@@ -3536,7 +3451,8 @@ const docTemplate = `{
                 "RecurrenceYearly",
                 "RecurrenceCustom",
                 "RecurrenceRelativeContact",
-                "RecurrenceDayOfWeek"
+                "RecurrenceDayOfWeek",
+                "RecurrenceBirthday"
             ]
         },
         "github_com_nhymxu_kith-pms_internal_settings.UserSettings": {
@@ -3548,6 +3464,22 @@ const docTemplate = `{
                 },
                 "date_format": {
                     "type": "string"
+                },
+                "network_color_by": {
+                    "type": "string"
+                },
+                "network_only_mine_depth": {
+                    "description": "\"direct\" or \"alter\"",
+                    "type": "string"
+                },
+                "network_show_avatar": {
+                    "type": "boolean"
+                },
+                "network_show_only_mine": {
+                    "type": "boolean"
+                },
+                "network_show_unconnected": {
+                    "type": "boolean"
                 },
                 "time_format": {
                     "type": "string"
@@ -3653,6 +3585,12 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "label_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "occurred_at_date": {
                     "description": "\"YYYY-MM-DD\"",
                     "type": "string"
@@ -3668,18 +3606,6 @@ const docTemplate = `{
                     }
                 },
                 "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_api_handler.labelRequest": {
-            "type": "object",
-            "properties": {
-                "color": {
-                    "description": "\"#RRGGBB\"",
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 }
             }
@@ -3716,12 +3642,19 @@ const docTemplate = `{
                         "$ref": "#/definitions/internal_api_handler.contactRequest"
                     }
                 },
+                "create_birthday_reminder": {
+                    "type": "boolean"
+                },
                 "date_of_birth": {
                     "description": "\"YYYY-MM-DD\" or \"\"",
                     "type": "string"
                 },
                 "gender": {
                     "description": "\"\" | \"male\" | \"female\" | \"rather_not_say\"",
+                    "type": "string"
+                },
+                "last_contact_at": {
+                    "description": "RFC3339 UTC or \"\"",
                     "type": "string"
                 },
                 "locations": {

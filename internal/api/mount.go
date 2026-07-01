@@ -284,4 +284,6 @@ func mountPeopleQuick(g *echo.Group, deps Deps) {
 	g.POST("/people/:id/journal/quick", h.QuickJournal)
 	g.POST("/people/:id/gifts/quick", h.QuickGift)
 	g.POST("/people/:id/last-contact", h.UpdateLastContact)
+	g.POST("/people/:id/favorite", h.SetFavorite)
+	g.DELETE("/people/:id/favorite", h.UnsetFavorite)
 }

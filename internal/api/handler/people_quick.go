@@ -233,3 +233,61 @@ func (h *PeopleQuickAPI) UpdateLastContact(c *echo.Context) error {
 
 	return ok(c, map[string]any{"updated": true})
 }
+
+// SetFavorite handles POST /v1/people/:id/favorite.
+//
+// @Summary      Mark person as favorite
+// @Tags         people
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope{data=object{favorite=bool}}
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/favorite [post]
+func (h *PeopleQuickAPI) SetFavorite(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	if err := h.PeopleSvc.SetFavorite(c.Request().Context(), personID, true); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return apiErr(c, http.StatusNotFound, "person not found")
+		}
+
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, map[string]any{"favorite": true})
+}
+
+// UnsetFavorite handles DELETE /v1/people/:id/favorite.
+//
+// @Summary      Unmark person as favorite
+// @Tags         people
+// @Produce      json
+// @Param        id   path      int  true  "Person ID"
+// @Success      200  {object}  envelope{data=object{favorite=bool}}
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/favorite [delete]
+func (h *PeopleQuickAPI) UnsetFavorite(c *echo.Context) error {
+	personID, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	if err := h.PeopleSvc.SetFavorite(c.Request().Context(), personID, false); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return apiErr(c, http.StatusNotFound, "person not found")
+		}
+
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, map[string]any{"favorite": false})
+}

@@ -62,11 +62,13 @@ export type DashboardViewModel = {
 	actions: DashboardAction[];
 	activities: DashboardActivity[];
 	moments: DashboardMoment[];
+	favorites: Person[];
 	empty: {
 		people: boolean;
 		activity: boolean;
 		actions: boolean;
 		moments: boolean;
+		favorites: boolean;
 	};
 };
 
@@ -90,6 +92,7 @@ export function buildDashboardViewModel(
 	const todayActions = openReminders.filter(
 		(reminder) => compareDateOnly(reminder.due_date, now) === 0,
 	);
+	const favoritePeople = people.filter((p) => p.is_favorite).slice(0, 5);
 
 	return {
 		meName: source.me?.name ?? "Your network",
@@ -152,11 +155,13 @@ export function buildDashboardViewModel(
 			date: date.next_occurrence,
 			personName: date.person.name,
 		})),
+		favorites: favoritePeople,
 		empty: {
 			people: (source.people?.total ?? people.length) === 0,
 			activity: journalItems.length === 0,
 			actions: openReminders.length === 0 && plannedGifts.length === 0,
 			moments: dates.length === 0,
+			favorites: favoritePeople.length === 0,
 		},
 	};
 }

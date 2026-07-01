@@ -7,6 +7,7 @@ export type PeopleFilters = {
 	page_size?: number;
 	labels?: number[];
 	has_journal?: boolean;
+	favorite_only?: boolean;
 	sort?: string;
 };
 

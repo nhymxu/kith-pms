@@ -2,6 +2,7 @@ package people_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -354,5 +355,103 @@ func TestSetSelf_UnknownID(t *testing.T) {
 
 	if err := svc.SetSelf(ctx, 9999); err == nil {
 		t.Fatal("SetSelf unknown ID: got nil error, want error")
+	}
+}
+
+func TestSetFavorite_Toggle(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Favorite Target", nil, nil)
+
+	if err := svc.SetFavorite(ctx, id, true); err != nil {
+		t.Fatalf("SetFavorite true: %v", err)
+	}
+
+	got, err := svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if !got.IsFavorite {
+		t.Fatalf("IsFavorite: got false, want true")
+	}
+
+	if err := svc.SetFavorite(ctx, id, false); err != nil {
+		t.Fatalf("SetFavorite false: %v", err)
+	}
+
+	got, err = svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if got.IsFavorite {
+		t.Fatalf("IsFavorite: got true, want false")
+	}
+}
+
+func TestSetFavorite_NotFound(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	err := svc.SetFavorite(ctx, 9999, true)
+	if err == nil {
+		t.Fatal("SetFavorite unknown ID: got nil error, want error")
+	}
+
+	if !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("SetFavorite unknown ID: got %q, want error containing 'not found'", err)
+	}
+}
+
+func TestList_FavoriteOnly(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+	mustCreate(t, svc, "Bob", nil, nil)
+	mustCreate(t, svc, "Carol", nil, nil)
+
+	if err := svc.SetFavorite(ctx, aliceID, true); err != nil {
+		t.Fatalf("SetFavorite: %v", err)
+	}
+
+	results, err := svc.List(ctx, people.ListParams{FavoriteOnly: true, PageSize: 50})
+	if err != nil {
+		t.Fatalf("List favorite_only: %v", err)
+	}
+
+	if len(results.Items) != 1 {
+		t.Fatalf("List favorite_only: got %d results, want 1", len(results.Items))
+	}
+
+	if results.Items[0].ID != aliceID {
+		t.Fatalf("List favorite_only: got id %d, want %d", results.Items[0].ID, aliceID)
+	}
+}
+
+func TestList_SortFavoriteFirst(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	mustCreate(t, svc, "Bob", nil, nil)
+	zoeID := mustCreate(t, svc, "Zoe", nil, nil)
+
+	if err := svc.SetFavorite(ctx, zoeID, true); err != nil {
+		t.Fatalf("SetFavorite: %v", err)
+	}
+
+	results, err := svc.List(ctx, people.ListParams{Sort: "-favorite", PageSize: 50})
+	if err != nil {
+		t.Fatalf("List sort -favorite: %v", err)
+	}
+
+	if len(results.Items) != 2 {
+		t.Fatalf("List sort -favorite: got %d results, want 2", len(results.Items))
+	}
+
+	if results.Items[0].Name != "Zoe" {
+		t.Fatalf("List sort -favorite: got items[0]=%q, want Zoe", results.Items[0].Name)
 	}
 }

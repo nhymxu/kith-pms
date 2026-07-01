@@ -22,6 +22,7 @@ export interface PeopleListParams {
 	page_size?: number;
 	labels?: number[];
 	has_journal?: boolean;
+	favorite_only?: boolean;
 	sort?: string;
 }
 
@@ -34,6 +35,7 @@ export async function listPeople(
 	if (params.page_size) qs.set("page_size", String(params.page_size));
 	if (params.labels?.length) qs.set("labels", params.labels.join(","));
 	if (params.has_journal) qs.set("has_journal", "true");
+	if (params.favorite_only) qs.set("favorite_only", "true");
 	if (params.sort) qs.set("sort", params.sort);
 
 	const query = qs.toString();
@@ -156,6 +158,16 @@ export async function replaceWorkHistory(
 		method: "PUT",
 		body: JSON.stringify(body),
 	});
+}
+
+// Favorite toggle
+
+export async function setFavorite(personId: number): Promise<void> {
+	await apiFetch(`/v1/people/${personId}/favorite`, { method: "POST" });
+}
+
+export async function unsetFavorite(personId: number): Promise<void> {
+	await apiFetch(`/v1/people/${personId}/favorite`, { method: "DELETE" });
 }
 
 // Label attach/detach

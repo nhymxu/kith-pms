@@ -176,3 +176,74 @@ func TestPeopleUpdateLastContact_InvalidID_Returns400(t *testing.T) {
 		t.Fatalf("expected 400, got %d", rec.Code)
 	}
 }
+
+// ---- SetFavorite / UnsetFavorite --------------------------------------------
+
+func TestPeopleSetFavorite_HappyPath(t *testing.T) {
+	db := openTestDB(t)
+	personID := insertTestPerson(t, db, "Grace")
+	h := &handler.PeopleQuickAPI{
+		PeopleSvc: newPeopleService(db),
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/people/1/favorite", nil)
+	rec := execHandler(newTestEcho(), req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.SetFavorite)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	if !strings.Contains(rec.Body.String(), `"favorite":true`) {
+		t.Fatalf("expected favorite:true in response, got: %s", rec.Body.String())
+	}
+}
+
+func TestPeopleSetFavorite_PersonNotFound_Returns404(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.PeopleQuickAPI{
+		PeopleSvc: newPeopleService(db),
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/people/999/favorite", nil)
+	rec := execHandler(newTestEcho(), req, map[string]string{"id": "999"}, h.SetFavorite)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestPeopleUnsetFavorite_HappyPath(t *testing.T) {
+	db := openTestDB(t)
+	personID := insertTestPerson(t, db, "Heidi")
+	h := &handler.PeopleQuickAPI{
+		PeopleSvc: newPeopleService(db),
+	}
+
+	setReq := httptest.NewRequest(http.MethodPost, "/v1/people/1/favorite", nil)
+	execHandler(newTestEcho(), setReq, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.SetFavorite)
+
+	req := httptest.NewRequest(http.MethodDelete, "/v1/people/1/favorite", nil)
+	rec := execHandler(newTestEcho(), req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.UnsetFavorite)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	if !strings.Contains(rec.Body.String(), `"favorite":false`) {
+		t.Fatalf("expected favorite:false in response, got: %s", rec.Body.String())
+	}
+}
+
+func TestPeopleUnsetFavorite_PersonNotFound_Returns404(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.PeopleQuickAPI{
+		PeopleSvc: newPeopleService(db),
+	}
+
+	req := httptest.NewRequest(http.MethodDelete, "/v1/people/999/favorite", nil)
+	rec := execHandler(newTestEcho(), req, map[string]string{"id": "999"}, h.UnsetFavorite)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}

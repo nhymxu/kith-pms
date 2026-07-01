@@ -17,6 +17,7 @@ import {
 	buildDashboardViewModel,
 	type DashboardSummaryCard,
 } from "#/features/dashboard/dashboard-data";
+import { FavoritePeople } from "#/features/dashboard/favorite-people";
 import { RecentRelationshipActivity } from "#/features/dashboard/recent-relationship-activity";
 import { RelationshipPulseChart } from "#/features/dashboard/relationship-pulse-chart";
 import { SummaryCards } from "#/features/dashboard/summary-cards";
@@ -93,7 +94,8 @@ function DashboardPage() {
 			| "pulse"
 			| "actions"
 			| "activity"
-			| "moments",
+			| "moments"
+			| "favorites",
 	) {
 		setRefreshingId(id);
 		try {
@@ -154,6 +156,12 @@ function DashboardPage() {
 						onRefresh={() => refresh("moments")}
 						isRefreshing={refreshingId === "moments"}
 					/>
+					<FavoritePeople
+						people={viewModel.favorites}
+						isLoading={people.isLoading}
+						onRefresh={() => refresh("favorites")}
+						isRefreshing={refreshingId === "favorites"}
+					/>
 				</div>
 			</div>
 		</div>
@@ -162,7 +170,13 @@ function DashboardPage() {
 
 async function invalidateDashboardQueries(
 	queryClient: QueryClient,
-	id: DashboardSummaryCard["id"] | "pulse" | "actions" | "activity" | "moments",
+	id:
+		| DashboardSummaryCard["id"]
+		| "pulse"
+		| "actions"
+		| "activity"
+		| "moments"
+		| "favorites",
 ) {
 	const map = {
 		people: [keys.people.all],
@@ -174,6 +188,7 @@ async function invalidateDashboardQueries(
 		actions: [keys.reminders.all, keys.gifts.all],
 		activity: [keys.journal.all],
 		moments: [keys.dates.all],
+		favorites: [keys.people.all],
 	} as const;
 
 	await Promise.all(

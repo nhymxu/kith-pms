@@ -17,10 +17,11 @@ type PersonRepo interface {
 		q string,
 		labelIDs []int64,
 		hasJournal bool,
+		favoriteOnly bool,
 		limit, offset int,
 		sort string,
 	) ([]Person, error)
-	Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool) (int, error)
+	Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool, favoriteOnly bool) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, db bun.IDB, p Person) (int64, error)
@@ -31,6 +32,7 @@ type PersonRepo interface {
 	UpdateAvatar(ctx context.Context, db bun.IDB, personID int64, path string, size int64) error
 	ClearAvatar(ctx context.Context, db bun.IDB, personID int64) error
 	UpdateLastContact(ctx context.Context, db bun.IDB, personID int64, contactTime time.Time) error
+	SetFavorite(ctx context.Context, db bun.IDB, personID int64, favorite bool) error
 }
 
 type ContactRepo interface {
@@ -56,6 +58,7 @@ func (r *sqlPersonRepo) List(
 	q string,
 	labelIDs []int64,
 	hasJournal bool,
+	favoriteOnly bool,
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
@@ -85,6 +88,10 @@ func (r *sqlPersonRepo) List(
 		sq = sq.Where(`EXISTS (SELECT 1 FROM activity_person WHERE person_id = "p"."id")`)
 	}
 
+	if favoriteOnly {
+		sq = sq.Where(`"p"."is_favorite" = ?`, true)
+	}
+
 	sq = sq.OrderExpr(buildOrderBy(sort)).Limit(limit).Offset(offset)
 
 	if err := sq.Scan(ctx); err != nil {
@@ -94,7 +101,13 @@ func (r *sqlPersonRepo) List(
 	return people, nil
 }
 
-func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool) (int, error) {
+func (r *sqlPersonRepo) Count(
+	ctx context.Context,
+	q string,
+	labelIDs []int64,
+	hasJournal bool,
+	favoriteOnly bool,
+) (int, error) {
 	sq := r.db.NewSelect().Model((*Person)(nil))
 
 	if q != "" {
@@ -117,6 +130,10 @@ func (r *sqlPersonRepo) Count(ctx context.Context, q string, labelIDs []int64, h
 		sq = sq.Where(`EXISTS (SELECT 1 FROM activity_person WHERE person_id = "p"."id")`)
 	}
 
+	if favoriteOnly {
+		sq = sq.Where(`"p"."is_favorite" = ?`, true)
+	}
+
 	total, err := sq.Count(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("people: count query: %w", err)
@@ -136,6 +153,8 @@ func buildOrderBy(sort string) string {
 		return "last_contact_at ASC NULLS LAST"
 	case "-last_contact":
 		return "last_contact_at DESC NULLS LAST"
+	case "-favorite":
+		return "is_favorite DESC, name_lower ASC"
 	default:
 		return "name_lower ASC"
 	}
@@ -242,6 +261,23 @@ func (r *sqlPersonRepo) ClearSelf(ctx context.Context, db bun.IDB) error {
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: clear self: %w", err)
+	}
+
+	return nil
+}
+
+func (r *sqlPersonRepo) SetFavorite(ctx context.Context, db bun.IDB, personID int64, favorite bool) error {
+	res, err := db.NewUpdate().Model((*Person)(nil)).
+		Set("is_favorite = ?, updated_at = ?", favorite, time.Now().UTC()).
+		Where("id = ?", personID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: set favorite: %w", err)
+	}
+
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return fmt.Errorf("person not found: %d", personID)
 	}
 
 	return nil

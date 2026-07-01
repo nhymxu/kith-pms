@@ -4,6 +4,8 @@ definitions:
     properties:
       day_of_week:
         type: integer
+      days_before_dob:
+        type: integer
       interval:
         type: integer
       type:
@@ -20,6 +22,7 @@ definitions:
     - custom
     - relative_contact
     - day_of_week
+    - birthday
     type: string
     x-enum-varnames:
     - RecurrenceDaily
@@ -29,6 +32,7 @@ definitions:
     - RecurrenceCustom
     - RecurrenceRelativeContact
     - RecurrenceDayOfWeek
+    - RecurrenceBirthday
   github_com_nhymxu_kith-pms_internal_settings.UserSettings:
     properties:
       audit_log_retention_days:
@@ -36,6 +40,17 @@ definitions:
         type: integer
       date_format:
         type: string
+      network_color_by:
+        type: string
+      network_only_mine_depth:
+        description: '"direct" or "alter"'
+        type: string
+      network_show_avatar:
+        type: boolean
+      network_show_only_mine:
+        type: boolean
+      network_show_unconnected:
+        type: boolean
       time_format:
         type: string
       timezone:
@@ -104,6 +119,10 @@ definitions:
     properties:
       content:
         type: string
+      label_ids:
+        items:
+          type: integer
+        type: array
       occurred_at_date:
         description: '"YYYY-MM-DD"'
         type: string
@@ -115,14 +134,6 @@ definitions:
           type: integer
         type: array
       title:
-        type: string
-    type: object
-  internal_api_handler.labelRequest:
-    properties:
-      color:
-        description: '"#RRGGBB"'
-        type: string
-      name:
         type: string
     type: object
   internal_api_handler.locationRequest:
@@ -146,11 +157,16 @@ definitions:
         items:
           $ref: '#/definitions/internal_api_handler.contactRequest'
         type: array
+      create_birthday_reminder:
+        type: boolean
       date_of_birth:
         description: '"YYYY-MM-DD" or ""'
         type: string
       gender:
         description: '"" | "male" | "female" | "rather_not_say"'
+        type: string
+      last_contact_at:
+        description: RFC3339 UTC or ""
         type: string
       locations:
         items:
@@ -458,31 +474,6 @@ paths:
       summary: Change password
       tags:
       - auth
-  /dates/upcoming:
-    get:
-      parameters:
-      - default: 30
-        description: Days ahead to look
-        in: query
-        name: days
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: Get upcoming dates
-      tags:
-      - dates
   /gifts:
     get:
       parameters:
@@ -730,6 +721,31 @@ paths:
       summary: Upload gift image
       tags:
       - gifts
+  /important-dates/upcoming:
+    get:
+      parameters:
+      - default: 30
+        description: Days ahead to look
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get upcoming dates
+      tags:
+      - dates
   /journal:
     get:
       parameters:
@@ -914,163 +930,6 @@ paths:
       summary: Update journal entry
       tags:
       - journal
-  /labels:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: List labels
-      tags:
-      - labels
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Label data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/internal_api_handler.labelRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_api_handler.envelope'
-            - properties:
-                data:
-                  properties:
-                    id:
-                      type: integer
-                  type: object
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: Create label
-      tags:
-      - labels
-  /labels/{id}:
-    delete:
-      parameters:
-      - description: Label ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: Delete label
-      tags:
-      - labels
-    get:
-      parameters:
-      - description: Label ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: Get label
-      tags:
-      - labels
-    put:
-      consumes:
-      - application/json
-      parameters:
-      - description: Label ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Label data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/internal_api_handler.labelRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_api_handler.envelope'
-            - properties:
-                data:
-                  properties:
-                    id:
-                      type: integer
-                  type: object
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/internal_api_handler.envelope'
-      security:
-      - CookieAuth: []
-      - CSRFHeader: []
-      summary: Update label
-      tags:
-      - labels
   /me:
     get:
       description: Returns the person designated as "Me", or 404 if not configured.
@@ -1152,6 +1011,14 @@ paths:
         in: query
         name: labels
         type: string
+      - description: Only return people linked to at least one journal entry
+        in: query
+        name: has_journal
+        type: boolean
+      - description: Only return favorited people
+        in: query
+        name: favorite_only
+        type: boolean
       produces:
       - application/json
       responses:
@@ -1468,6 +1335,79 @@ paths:
       summary: Replace dates for person
       tags:
       - dates
+  /people/{id}/favorite:
+    delete:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    favorite:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Unmark person as favorite
+      tags:
+      - people
+    post:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_api_handler.envelope'
+            - properties:
+                data:
+                  properties:
+                    favorite:
+                      type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Mark person as favorite
+      tags:
+      - people
   /people/{id}/gifts:
     get:
       parameters:
@@ -2026,6 +1966,29 @@ paths:
       - CookieAuth: []
       - CSRFHeader: []
       summary: Update relationship type
+      tags:
+      - relationships
+  /relationships/graph:
+    get:
+      parameters:
+      - description: Ego-network focal person ID
+        in: query
+        name: person_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      summary: Get relationship network graph
       tags:
       - relationships
   /reminders:

@@ -14,12 +14,13 @@ import (
 const defaultPageSize = 50
 
 type ListParams struct {
-	Query      string
-	Page       int
-	PageSize   int
-	LabelIDs   []int64 // AND-semantics: person must have ALL listed labels
-	Sort       string  // sort parameter: name, -name, last_contact, -last_contact
-	HasJournal bool    // when true, only return people linked to at least one journal entry
+	Query        string
+	Page         int
+	PageSize     int
+	LabelIDs     []int64 // AND-semantics: person must have ALL listed labels
+	Sort         string  // sort parameter: name, -name, last_contact, -last_contact
+	HasJournal   bool    // when true, only return people linked to at least one journal entry
+	FavoriteOnly bool    // when true, only return favorited people
 }
 
 type Service struct {
@@ -198,12 +199,14 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 
 	offset := (page - 1) * pageSize
 
-	total, err := s.People.Count(ctx, params.Query, params.LabelIDs, params.HasJournal)
+	total, err := s.People.Count(ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := s.People.List(ctx, params.Query, params.LabelIDs, params.HasJournal, pageSize, offset, params.Sort)
+	items, err := s.People.List(
+		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly, pageSize, offset, params.Sort,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -294,6 +297,43 @@ func (s *Service) SetSelf(ctx context.Context, personID int64) error {
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
 			audit.Metadata{DetailAction: "set_self"})
+	}
+
+	return nil
+}
+
+func (s *Service) SetFavorite(ctx context.Context, personID int64, favorite bool) error {
+	person, err := s.People.Get(ctx, personID)
+	if err != nil {
+		return err
+	}
+
+	if person == nil {
+		return fmt.Errorf("person not found")
+	}
+
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("people: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := s.People.SetFavorite(ctx, tx, personID, favorite); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("people: commit set favorite: %w", err)
+	}
+
+	if s.Audit != nil {
+		action := "favorite_unset"
+		if favorite {
+			action = "favorite_set"
+		}
+
+		s.Audit.Log(ctx, audit.EntityPerson, personID, person.Name, audit.ActionUpdate,
+			audit.Metadata{DetailAction: action})
 	}
 
 	return nil

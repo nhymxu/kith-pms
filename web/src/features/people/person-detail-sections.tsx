@@ -3,7 +3,7 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Star, X } from "lucide-react";
 import { useState } from "react";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Badge } from "#/components/ui/badge";
@@ -13,7 +13,12 @@ import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
-import { getPerson, updatePerson } from "#/endpoints/people";
+import {
+	getPerson,
+	setFavorite,
+	unsetFavorite,
+	updatePerson,
+} from "#/endpoints/people";
 import {
 	datetimeLocalToUtc,
 	formatDate,
@@ -310,18 +315,41 @@ function PersonDetailSectionsInner({
 	onClose,
 }: PersonDetailSectionsInnerProps) {
 	const [editing, setEditing] = useState(false);
+	const qc = useQueryClient();
 
 	const { data: person } = useSuspenseQuery({
 		queryKey: keys.people.detail(personId),
 		queryFn: () => getPerson(personId),
 	});
 
+	const favoriteMutation = useMutation({
+		mutationFn: () =>
+			person.is_favorite ? unsetFavorite(personId) : setFavorite(personId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			qc.invalidateQueries({ queryKey: keys.people.all });
+		},
+	});
+
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
-					{person.name}
-				</h1>
+				<div className="flex items-center gap-2">
+					<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+						{person.name}
+					</h1>
+					<button
+						type="button"
+						onClick={() => favoriteMutation.mutate()}
+						disabled={favoriteMutation.isPending}
+						aria-label={person.is_favorite ? "Unfavorite" : "Favorite"}
+						className="text-zinc-300 hover:text-amber-500 disabled:opacity-50"
+					>
+						<Star
+							className={`size-4 ${person.is_favorite ? "fill-amber-400 text-amber-500" : ""}`}
+						/>
+					</button>
+				</div>
 				{onClose && (
 					<Button variant="neutral" size="sm" onClick={onClose}>
 						<X className="size-4" />

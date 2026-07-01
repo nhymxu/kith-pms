@@ -80,6 +80,7 @@ type locationRequest struct {
 // @Param        page_size  query     int     false  "Page size"     default(50)
 // @Param        labels      query     string  false  "Comma-separated label IDs"
 // @Param        has_journal query     bool    false  "Only return people linked to at least one journal entry"
+// @Param        favorite_only query  bool    false  "Only return favorited people"
 // @Success      200  {object}  envelope
 // @Failure      500  {object}  envelope
 // @Security     CookieAuth
@@ -119,16 +120,18 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	}
 
 	hasJournal := c.QueryParam("has_journal") == "true"
+	favoriteOnly := c.QueryParam("favorite_only") == "true"
 
 	sort := c.QueryParam("sort")
 
 	list, err := h.Svc.List(c.Request().Context(), people.ListParams{
-		Query:      q,
-		Page:       page,
-		PageSize:   pageSize,
-		LabelIDs:   labelIDs,
-		HasJournal: hasJournal,
-		Sort:       sort,
+		Query:        q,
+		Page:         page,
+		PageSize:     pageSize,
+		LabelIDs:     labelIDs,
+		HasJournal:   hasJournal,
+		FavoriteOnly: favoriteOnly,
+		Sort:         sort,
 	})
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")

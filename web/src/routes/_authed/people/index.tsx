@@ -4,7 +4,13 @@ import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { PeopleTable } from "#/features/people/people-table";
 
-const VALID_SORTS = ["name", "-name", "last_contact", "-last_contact"] as const;
+const VALID_SORTS = [
+	"name",
+	"-name",
+	"last_contact",
+	"-last_contact",
+	"-favorite",
+] as const;
 type SortValue = (typeof VALID_SORTS)[number];
 
 const searchSchema = z.object({
@@ -13,6 +19,7 @@ const searchSchema = z.object({
 	page_size: z.coerce.number().min(1).max(100).optional().default(20),
 	labels: z.array(z.coerce.number()).optional(),
 	sort: z.enum(VALID_SORTS).optional().default("name"),
+	favorite_only: z.coerce.boolean().optional(),
 });
 
 export const Route = createFileRoute("/_authed/people/")({
@@ -28,6 +35,7 @@ function PeoplePage() {
 		labels: searchLabels,
 		page_size: searchPageSize,
 		sort: searchSort,
+		favorite_only: searchFavoriteOnly,
 	} = search;
 
 	// Each handler only captures the fields it reads — excludes `page` so identity
@@ -43,10 +51,11 @@ function PeoplePage() {
 					page_size: searchPageSize,
 					labels: searchLabels,
 					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
 				},
 			});
 		},
-		[searchLabels, searchPageSize, searchSort, navigate],
+		[searchLabels, searchPageSize, searchSort, searchFavoriteOnly, navigate],
 	);
 
 	const handleLabelsChange = useCallback(
@@ -59,10 +68,11 @@ function PeoplePage() {
 					page_size: searchPageSize,
 					labels: labels.length ? labels : undefined,
 					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
 				},
 			});
 		},
-		[searchQ, searchPageSize, searchSort, navigate],
+		[searchQ, searchPageSize, searchSort, searchFavoriteOnly, navigate],
 	);
 
 	const handlePageChange = useCallback(
@@ -75,10 +85,18 @@ function PeoplePage() {
 					page_size: searchPageSize,
 					labels: searchLabels,
 					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
 				},
 			});
 		},
-		[searchQ, searchLabels, searchPageSize, searchSort, navigate],
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			navigate,
+		],
 	);
 
 	const handleSortChange = useCallback(
@@ -91,10 +109,28 @@ function PeoplePage() {
 					page_size: searchPageSize,
 					labels: searchLabels,
 					sort,
+					favorite_only: searchFavoriteOnly,
 				},
 			});
 		},
-		[searchQ, searchLabels, searchPageSize, navigate],
+		[searchQ, searchLabels, searchPageSize, searchFavoriteOnly, navigate],
+	);
+
+	const handleFavoriteOnlyChange = useCallback(
+		(favoriteOnly: boolean) => {
+			void navigate({
+				to: "/people",
+				search: {
+					q: searchQ || undefined,
+					page: 1,
+					page_size: searchPageSize,
+					labels: searchLabels,
+					sort: searchSort,
+					favorite_only: favoriteOnly || undefined,
+				},
+			});
+		},
+		[searchQ, searchLabels, searchPageSize, searchSort, navigate],
 	);
 
 	return (
@@ -113,10 +149,12 @@ function PeoplePage() {
 				page={search.page}
 				page_size={search.page_size}
 				sort={search.sort}
+				favoriteOnly={search.favorite_only}
 				onSearchChange={handleSearchChange}
 				onLabelsChange={handleLabelsChange}
 				onPageChange={handlePageChange}
 				onSortChange={handleSortChange}
+				onFavoriteOnlyChange={handleFavoriteOnlyChange}
 			/>
 		</div>
 	);

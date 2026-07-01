@@ -16,6 +16,7 @@ describe("buildDashboardViewModel", () => {
 			activity: true,
 			actions: true,
 			moments: true,
+			favorites: true,
 		});
 		expect(viewModel.pulse).toHaveLength(14);
 	});
@@ -27,6 +28,7 @@ describe("buildDashboardViewModel", () => {
 					{
 						id: 1,
 						is_self: false,
+						is_favorite: false,
 						has_birthday_reminder: false,
 						prefix: "",
 						name: "Alex Kim",
@@ -140,5 +142,58 @@ describe("buildDashboardViewModel", () => {
 			entries: 1,
 			touches: 1,
 		});
+	});
+
+	it("filters favorites from the people list, capped at 5", () => {
+		const person = (id: number, name: string, isFavorite: boolean) => ({
+			id,
+			is_self: false,
+			is_favorite: isFavorite,
+			has_birthday_reminder: false,
+			prefix: "",
+			name,
+			nickname: "",
+			gender: "",
+			other_notes: "",
+			avatar_path: "",
+			avatar_size: 0,
+			created_at: "2026-01-01T00:00:00Z",
+			updated_at: "2026-05-01T00:00:00Z",
+			contacts: [],
+			locations: [],
+			labels: [],
+		});
+
+		const source: DashboardSource = {
+			people: {
+				items: [
+					person(1, "Alex Kim", true),
+					person(2, "Bob Lee", false),
+					person(3, "Carol Diaz", true),
+				],
+				total: 3,
+				page: 1,
+				page_size: 25,
+			},
+		};
+
+		const viewModel = buildDashboardViewModel(source, now);
+
+		expect(viewModel.favorites.map((p) => p.name)).toEqual([
+			"Alex Kim",
+			"Carol Diaz",
+		]);
+		expect(viewModel.empty.favorites).toBe(false);
+	});
+
+	it("marks favorites empty when no one is favorited", () => {
+		const source: DashboardSource = {
+			people: { items: [], total: 0, page: 1, page_size: 25 },
+		};
+
+		const viewModel = buildDashboardViewModel(source, now);
+
+		expect(viewModel.favorites).toEqual([]);
+		expect(viewModel.empty.favorites).toBe(true);
 	});
 });

@@ -32,6 +32,7 @@ type Person struct {
 	AvatarUploadedAt *time.Time `bun:"avatar_uploaded_at"   json:"avatar_uploaded_at"`
 	LastContactAt    *time.Time `bun:"last_contact_at"      json:"last_contact_at"`
 	IsSelf           bool       `bun:"is_self"              json:"is_self"`
+	IsFavorite       bool       `bun:"is_favorite"          json:"is_favorite"`
 	CreatedAt        time.Time  `bun:"created_at"           json:"created_at"`
 	UpdatedAt        time.Time  `bun:"updated_at"           json:"updated_at"`
 

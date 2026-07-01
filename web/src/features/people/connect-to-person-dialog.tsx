@@ -46,14 +46,16 @@ export function ConnectToPersonDialog({
 	const selectedType = types?.find((t) => t.id === Number(typeId));
 
 	const mutation = useMutation({
-		mutationFn: () =>
-			bulkCreateRelationships(
-				target?.id,
+		mutationFn: () => {
+			if (!target) throw new Error("No target person selected");
+			return bulkCreateRelationships(
+				target.id,
 				toIds.map((id) => ({
 					to_person_id: id,
 					relationship_type_id: Number(typeId),
 				})),
-			),
+			);
+		},
 		onSuccess: (data) => {
 			setResultMsg(`Connected ${data.created} (${data.skipped} skipped)`);
 			qc.invalidateQueries({ queryKey: keys.relationships.graph() });

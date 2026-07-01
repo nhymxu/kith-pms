@@ -11,6 +11,7 @@ import { Badge } from "#/components/ui/badge";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listJournalLabels } from "#/endpoints/journal-labels";
+import { getMe } from "#/endpoints/me";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 import {
@@ -43,6 +44,10 @@ export function JournalForm({
 	const { data: allLabels } = useQuery({
 		queryKey: keys.journalLabels.list(),
 		queryFn: listJournalLabels,
+	});
+	const { data: myProfile } = useQuery({
+		queryKey: keys.me.profile(),
+		queryFn: getMe,
 	});
 
 	const form = useForm({
@@ -119,7 +124,20 @@ export function JournalForm({
 
 					return (
 						<div className="space-y-2">
-							<Label>People</Label>
+							<div className="flex items-center gap-2">
+								<Label>People</Label>
+								{myProfile && !selectedIds.includes(myProfile.id) && (
+									<button
+										type="button"
+										onClick={() =>
+											f.handleChange([...selectedIds, myProfile.id])
+										}
+										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+									>
+										+ Me
+									</button>
+								)}
+							</div>
 							{selectedPeople.length > 0 && (
 								<div className="flex flex-wrap gap-1">
 									{selectedPeople.map((p) => (

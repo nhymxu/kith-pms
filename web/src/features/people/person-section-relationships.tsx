@@ -14,6 +14,7 @@ import {
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import { getMe } from "#/endpoints/me";
 import {
 	attachRelationship,
 	detachRelationship,
@@ -61,6 +62,10 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		queryKey: keys.people.list({ q: personSearch || undefined }),
 		queryFn: () => listPeople({ q: personSearch || undefined, page_size: 10 }),
 		enabled: personSearch.length > 0,
+	});
+	const { data: myProfile } = useQuery({
+		queryKey: keys.me.profile(),
+		queryFn: getMe,
 	});
 
 	const attach = useMutation({
@@ -170,7 +175,24 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 							</select>
 						</div>
 						<div className="space-y-1">
-							<Label>Person</Label>
+							<div className="flex items-center gap-2">
+								<Label>Person</Label>
+								{myProfile && myProfile.id !== personId && !otherPersonId && (
+									<button
+										type="button"
+										onClick={() => {
+											setOtherPersonId(myProfile.id);
+											setOtherPersonName(
+												formatPersonName(myProfile.name, myProfile.nickname),
+											);
+											setPersonSearch("");
+										}}
+										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+									>
+										+ Me
+									</button>
+								)}
+							</div>
 							{otherPersonId ? (
 								<div className="flex items-center gap-2 border border-zinc-200 rounded-md px-3 py-2 text-sm">
 									<span className="flex-1 font-medium">{otherPersonName}</span>

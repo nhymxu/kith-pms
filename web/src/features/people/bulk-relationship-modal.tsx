@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
+import { getMe } from "#/endpoints/me";
 import { listPeople } from "#/endpoints/people";
 import { listRelationshipTypes } from "#/endpoints/relationship-types";
 import { bulkCreateRelationships } from "#/endpoints/relationships";
@@ -55,6 +56,11 @@ export function BulkRelationshipModal({
 		queryKey: keys.people.list({ q: personSearch || undefined }),
 		queryFn: () => listPeople({ q: personSearch || undefined, page_size: 10 }),
 		enabled: personSearch.length > 0,
+	});
+	const { data: myProfile } = useQuery({
+		queryKey: keys.me.profile(),
+		queryFn: getMe,
+		enabled: open,
 	});
 
 	const mutation = useMutation({
@@ -164,9 +170,30 @@ export function BulkRelationshipModal({
 					</div>
 
 					<div className="space-y-1.5">
-						<p className="text-xs font-medium text-zinc-600">
-							People (select multiple)
-						</p>
+						<div className="flex items-center gap-2">
+							<p className="text-xs font-medium text-zinc-600">
+								People (select multiple)
+							</p>
+							{myProfile &&
+								myProfile.id !== fromPersonId &&
+								!selectedPeople.some((p) => p.id === myProfile.id) && (
+									<button
+										type="button"
+										onClick={() =>
+											togglePerson({
+												id: myProfile.id,
+												name: formatPersonName(
+													myProfile.name,
+													myProfile.nickname,
+												),
+											})
+										}
+										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+									>
+										+ Me
+									</button>
+								)}
+						</div>
 						<Input
 							placeholder="Search by name…"
 							value={personSearch}

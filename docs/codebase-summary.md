@@ -17,7 +17,7 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (24 migrations: 0001-0024)
+│   │   └── migrations/           # SQL schema files (25 migrations: 0001-0025)
 │   ├── testutil/                 # Test utilities
 │   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management

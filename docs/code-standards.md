@@ -29,13 +29,12 @@
 ```go
 // domain.go — data structures
 type Person struct {
-    ID              int64
-    CreatedBy       int64
-    Name            string
-    DateOfBirth     *time.Time
-    RelationshipType string
-    CreatedAt       time.Time
-    UpdatedAt       time.Time
+    ID          int64
+    CreatedBy   int64
+    Name        string
+    DateOfBirth *time.Time
+    CreatedAt   time.Time
+    UpdatedAt   time.Time
 }
 
 // service.go — business logic

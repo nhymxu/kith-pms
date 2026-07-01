@@ -10,7 +10,7 @@
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
 - **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
-- **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types (e.g. "Manager" / "Reports to")
+- **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types; bulk connect-to-person action; network depth filter (direct/indirect contacts)
 - **Relationship Network** — force-directed graph visualization of your entire contact network (global at `/network`; per-person ego view)
 - **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking; 7 recurrence types including birthday reminders
 - **Dashboard** — at-a-glance counts and recent activity on the homepage
@@ -66,6 +66,7 @@ All configuration is via environment variables or a `.env` file in the working d
 | `SENTRY.DSN`          | —                | No       | Sentry DSN; omit to disable error reporting               |
 | `DB_PATH`             | `data/kith.db`   | No       | Path to the SQLite database file                          |
 | `DB_AUTO_MIGRATE`     | `true`           | No       | Run migrations automatically on startup                   |
+| `DB_MAX_OPEN_CONNS`   | `1`              | No       | SQLite connection pool size; default serializes writes    |
 | `TOKEN_AUTH`          | —                | No       | Bearer token for any future JSON API endpoints            |
 | `APP_PASSWORD_HASH`   | —                | No       | Pre-hashed Argon2id password for Docker/headless setup    |
 | `AVATAR_STORAGE_PATH` | `data/avatars`   | No       | Directory for storing avatar files                        |
@@ -171,7 +172,7 @@ cd web && pnpm dev
 ### Project layout
 
 ```
-cmd/                CLI entrypoints (api, migrate, set-password, backup, restore)
+cmd/                CLI entrypoints (serve, migrate, set-password, backup, restore)
 internal/
   auth/             Session auth: users, sessions, middleware
   db/               SQLite open helper + embed migrations
@@ -180,14 +181,16 @@ internal/
   people/           People domain, repo, service
   dates/            Important dates & milestones
   reminders/        Reminders & notifications
-  files/            File storage service (avatar uploads)
-  web/              Echo HTTP server
+  files/            File storage service (avatar/document uploads)
+  api/              Echo HTTP server with route mounting
+    handler/        HTTP handlers organized by domain
     spa/            Embedded React SPA (//go:embed public)
-    route.go        Route mounting: /health, /v1/*, SPA catch-all
+  relationships/    Relationship graph, queries, service
+  settings/         User preferences & configuration
 pkg/
-  config/           Config loading via koanf
+  config/           Config loading via nhymxu/gommon/cfgloader
 web/                React SPA source (pnpm workspace)
-  src/              TanStack Router + Query + Form + shadcn/neobrutalism
+  src/              TanStack Router + Query + Form + shadcn/ui
   public/           Static assets (favicon, manifest)
 docs/               Project documentation
 ```

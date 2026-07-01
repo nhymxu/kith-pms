@@ -113,6 +113,8 @@ SQLite's single-writer model means at most one goroutine can hold a write transa
 
 **Default (`DB_MAX_OPEN_CONNS=1`):** the Go pool serialises everything at the driver level — no `SQLITE_BUSY` errors, but no concurrent reads either. Code must never hold a transaction open and then make a second query on the same pool (causes a pool deadlock). All service methods that use transactions must prefetch any read dependencies before calling `BeginTx`.
 
+**Example**: `BulkAttach` in `internal/relationships/service.go` pre-fetches all relationship types before opening the transaction to avoid needing a second connection inside the loop.
+
 **Raising the limit:** safe to do in WAL mode (already active), which allows concurrent readers alongside one writer. When `DB_MAX_OPEN_CONNS > 1`, `sqlite.go` automatically applies `PRAGMA busy_timeout=5000` so SQLite retries for up to 5 s on write contention instead of returning `SQLITE_BUSY` immediately — no extra configuration needed.
 
 ## Logging
@@ -232,7 +234,9 @@ Each section uses `SectionCard` for consistent visual spacing and TanStack Query
 **Relationship Network Visualization**: The network page (`web/src/routes/_authed/network.tsx`) displays a force-directed graph of your entire contact network using `react-force-graph-2d` v1.29.1. Features:
 - **Global View**: Full network showing all people (nodes) with relationships (edges); click any person to navigate to detail view
 - **Per-Person Ego View**: Accessible from people detail page; shows selected person + direct connections (1-hop); helps visualize local community
-- **Visual Encoding**: Nodes display person avatar (cached from API); edges colored by relationship type; optional group-by-label coloring (toggle in UI)
+- **Depth Filtering**: "Only mine" filter supports Direct (1-hop neighbors) vs. Alters (2+ hop indirect contacts); default depth configurable in Settings → Network Defaults
+- **Visual Encoding**: Nodes display person avatar (cached from API); edges colored by relationship type; renders all labels per person as pills (not just first); group-by-label coloring via toggle
+- **Multiple Relationship Types**: Graph links correctly render distinct edges for multiple relationship types between same person pair (dedup key includes relationship type)
 - **Interaction**: Drag nodes to pin in position; zoom/pan; recenter button to reset view; canvas resized to container
 - **Graph Data**: `web/src/lib/graph-data.ts` utility processes people + relationships into force-graph node/link format with avatar URL caching; lazy-loaded on route entry (separate code chunk)
 
@@ -344,6 +348,7 @@ export function PersonForm() {
 - `GET /people/:id/labels` — person's labels
 - `GET /people/:id/relationships` — person's relationships
 - `POST/DELETE /people/:id/relationships` — attach/detach relationships
+- `POST /people/:id/relationships/bulk` — connect multiple people to target person (star topology); chunked at 50 pairs/request
 
 **Journal**, **Reminders**, **Dates** — similar CRUD patterns
 
@@ -555,10 +560,11 @@ err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT row
 | `0020_journal_label.sql` | journal-specific labels (separate from people labels) with color support |
 | `0021_person_nickname_lower.sql` | generated lowercase nickname column for case-insensitive search |
 | `0022_drop_mime_type_columns.sql` | remove avatar_mime_type and gift_image_mime_type; MIME now detected at serve-time |
-| `0023_work_history.sql` | work history table with employment dates and employment records |
+| `0023_remove_birthday_important_date.sql` | remove legacy important_date.is_birthday column (birthday tracking via reminders instead) |
 | `0024_audit_metadata.sql` | add metadata TEXT column to audit_log for structured field-level change tracking |
+| `0025_drop_person_relationship_type.sql` | drop legacy person.relationship_type column (replaced by structured person_relationship table from migration 0015) |
 
-**Total Migrations**: 24 migrations applied in order; tracked via schema_migrations table.
+**Total Migrations**: 25 migrations applied in order; tracked via schema_migrations table.
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

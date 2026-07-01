@@ -13,7 +13,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 ## Core Feature Areas (Implemented)
 
 ### Contacts & Relationships
-- Store people: name, date of birth, gender (male/female/other), relationship type, contact methods, addresses
+- Store people: name, date of birth, gender (male/female/other), contact methods, addresses
 - Self-profile designation: mark one person as "Me" for personal journal filtering
 - Track interaction history via journal entries linked to people
 - Tag relationships with color-coded labels
@@ -21,7 +21,8 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Important dates tracking (birthdays, anniversaries, milestones with recurring support)
 - Reminders for follow-up with 7 recurrence types (daily, weekly, monthly, yearly, custom, day-of-week, relative-to-last-contact, birthday with Feb 29 handling)
 - Many-to-many person-to-person relationships with customizable, optionally-paired types
-- Relationship Network Visualization: force-directed graph of your entire contact network (global `/network` view, per-person ego view, color-by label/relationship type)
+- Bulk connect-to-person: connect multiple people to a target in star topology via single action
+- Relationship Network Visualization: force-directed graph of your entire contact network (global `/network` view, per-person ego view, color-by label/relationship type, configurable depth filter for direct vs. indirect contacts)
 - Last contact timestamp tracking (manual & auto-update from journal entries)
 - Employment history tracking per person (positions, dates, notes)
 

@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { useState } from "react";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
@@ -49,6 +49,13 @@ function JournalListInner({ personId }: JournalListInnerProps) {
 						<span className="font-medium flex-1">{e.title}</span>
 						<span className="text-zinc-400 text-xs">{e.occurred_at_date}</span>
 					</div>
+					{e.content && (
+						<p className="text-zinc-500 text-xs mt-1 line-clamp-2">
+							{e.content.length > 100
+								? `${e.content.slice(0, 100)}…`
+								: e.content}
+						</p>
+					)}
 					{e.people.length > 1 && (
 						<div className="flex gap-1 mt-1 flex-wrap">
 							{e.people
@@ -75,13 +82,22 @@ export function JournalSection({ personId }: JournalSectionProps) {
 		<div>
 			<div className="flex items-center justify-between mb-2">
 				<SectionHeading>Journal</SectionHeading>
-				<Button
-					variant="neutral"
-					size="sm"
-					onClick={() => setJournalOpen(true)}
-				>
-					<Plus className="size-3" /> Quick journal
-				</Button>
+				<div className="flex items-center gap-5">
+					<Link
+						to="/journal"
+						search={{ people: [personId] }}
+						className="flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-800"
+					>
+						View all <ExternalLink className="size-3" />
+					</Link>
+					<Button
+						variant="neutral"
+						size="sm"
+						onClick={() => setJournalOpen(true)}
+					>
+						<Plus className="size-3" /> Quick journal
+					</Button>
+				</div>
 			</div>
 			<QueryBoundary>
 				<JournalListInner personId={personId} />

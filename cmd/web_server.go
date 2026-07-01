@@ -69,7 +69,7 @@ Can scale later.`,
 				return fmt.Errorf("api: create db dir: %w", err)
 			}
 
-			db, err := internaldb.Open(dbPath)
+			db, err := internaldb.Open(dbPath, config.C.DBMaxOpenConns)
 			if err != nil {
 				return fmt.Errorf("api: open db: %w", err)
 			}

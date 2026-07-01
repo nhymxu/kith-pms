@@ -13,26 +13,32 @@ import (
 // Open opens (or creates) the SQLite database at path, applies recommended
 // PRAGMAs, and returns a *bun.DB wrapping the underlying connection.
 //
-// PRAGMAs applied:
+// PRAGMAs always applied:
 //   - journal_mode=WAL   — concurrent readers without blocking the writer
 //   - foreign_keys=ON    — enforce referential integrity
 //   - synchronous=NORMAL — safe with WAL; good balance of durability vs speed
 //
-// MaxOpenConns is set to 1 to serialise all writes (SQLite single-writer model).
-func Open(path string) (*bun.DB, error) {
+// When maxOpenConns > 1, busy_timeout=5000 is also applied so SQLite retries
+// for up to 5 s on write contention instead of returning SQLITE_BUSY immediately.
+// At maxOpenConns=1 (default) the Go pool serialises everything, so busy_timeout
+// is unnecessary. See docs/system-architecture.md for the full tradeoff.
+func Open(path string, maxOpenConns int) (*bun.DB, error) {
 	sqldb, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, fmt.Errorf("db: open %q: %w", path, err)
 	}
 
-	// Single writer — avoid SQLITE_BUSY on concurrent writes.
-	sqldb.SetMaxOpenConns(1)
+	sqldb.SetMaxOpenConns(maxOpenConns)
 
 	pragmas := []string{
 		"PRAGMA journal_mode=WAL;",
 		"PRAGMA foreign_keys=ON;",
 		"PRAGMA synchronous=NORMAL;",
 	}
+	if maxOpenConns > 1 {
+		pragmas = append(pragmas, "PRAGMA busy_timeout=5000;")
+	}
+
 	for _, p := range pragmas {
 		if _, err := sqldb.Exec(p); err != nil {
 			_ = sqldb.Close()

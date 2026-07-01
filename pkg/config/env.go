@@ -17,8 +17,9 @@ type Config struct {
 	TokenAuth string `koanf:"TOKEN_AUTH" copier:"-"`
 
 	// Database
-	DBPath        string `koanf:"DB_PATH"`
-	DBAutoMigrate bool   `koanf:"DB_AUTO_MIGRATE"`
+	DBPath         string `koanf:"DB_PATH"`
+	DBAutoMigrate  bool   `koanf:"DB_AUTO_MIGRATE"`
+	DBMaxOpenConns int    `koanf:"DB_MAX_OPEN_CONNS"`
 
 	// File Storage
 	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
@@ -51,8 +52,9 @@ var configDefaults = map[string]any{
 	"TOKEN_AUTH": "",
 
 	// Database
-	"DB_PATH":         "data/kith.db",
-	"DB_AUTO_MIGRATE": true,
+	"DB_PATH":           "data/kith.db",
+	"DB_AUTO_MIGRATE":   true,
+	"DB_MAX_OPEN_CONNS": 1,
 
 	// File Storage
 	"AVATAR_STORAGE_PATH": "data/avatars",

@@ -27,7 +27,7 @@ const testSecret = "test-secret-key-32-bytes-long!00"
 func openTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	db, err := internaldb.Open(":memory:")
+	db, err := internaldb.Open(":memory:", 1)
 	if err != nil {
 		t.Fatalf("open test db: %v", err)
 	}

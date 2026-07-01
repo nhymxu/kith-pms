@@ -19,7 +19,7 @@ func migrateCommand() *cli.Command {
 				Name:  "up",
 				Usage: "Apply all unapplied migrations",
 				Action: func(_ context.Context, _ *cli.Command) error {
-					db, err := internaldb.Open(config.C.DBPath)
+					db, err := internaldb.Open(config.C.DBPath, 1)
 					if err != nil {
 						return fmt.Errorf("migrate up: open db: %w", err)
 					}
@@ -51,7 +51,7 @@ func migrateCommand() *cli.Command {
 				Name:  "status",
 				Usage: "List applied and pending migrations",
 				Action: func(_ context.Context, _ *cli.Command) error {
-					db, err := internaldb.Open(config.C.DBPath)
+					db, err := internaldb.Open(config.C.DBPath, 1)
 					if err != nil {
 						return fmt.Errorf("migrate status: open db: %w", err)
 					}

@@ -97,6 +97,7 @@ Result unmarshals to global `config.C` (Config struct). Load via `config.Load()`
 |-----------------------|----------|------------------|---------------------------------------------------------|
 | `DB_PATH`             | string   | `data/kith.db`   | SQLite database file path                               |
 | `DB_AUTO_MIGRATE`     | bool     | `true`           | Apply pending migrations on server startup              |
+| `DB_MAX_OPEN_CONNS`   | int      | `1`              | Go connection pool size. Default serialises all writes (prevents `SQLITE_BUSY`). Raise to 5–10 in WAL mode if you also add `PRAGMA busy_timeout`. See *SQLite concurrency* note below. |
 | `SESSION_SECRET`      | string   | *(required)*     | Cookie signing secret (min 32 bytes)                    |
 | `SESSION_LIFETIME`    | duration | `720h` (30 days) | Session cookie expiry duration                          |
 | `BEHIND_TLS`          | bool     | `false`          | Set `true` when behind TLS proxy (marks cookies Secure) |
@@ -105,6 +106,14 @@ Result unmarshals to global `config.C` (Config struct). Load via `config.Load()`
 | `AVATAR_STORAGE_PATH` | string   | `data/avatars`   | Directory for storing avatar files                      |
 | `GIFT_STORAGE_PATH`   | string   | `data/gifts`     | Directory for storing gift images                       |
 | `TOKEN_AUTH`          | string   | *(empty)*        | Static bearer token for API clients (optional)          |
+
+### SQLite concurrency note
+
+SQLite's single-writer model means at most one goroutine can hold a write transaction at a time.
+
+**Default (`DB_MAX_OPEN_CONNS=1`):** the Go pool serialises everything at the driver level — no `SQLITE_BUSY` errors, but no concurrent reads either. Code must never hold a transaction open and then make a second query on the same pool (causes a pool deadlock). All service methods that use transactions must prefetch any read dependencies before calling `BeginTx`.
+
+**Raising the limit:** safe to do in WAL mode (already active), which allows concurrent readers alongside one writer. When `DB_MAX_OPEN_CONNS > 1`, `sqlite.go` automatically applies `PRAGMA busy_timeout=5000` so SQLite retries for up to 5 s on write contention instead of returning `SQLITE_BUSY` immediately — no extra configuration needed.
 
 ## Logging
 

@@ -51,7 +51,7 @@ it does not exist yet.`,
 				return fmt.Errorf("set-password: create db dir: %w", err)
 			}
 
-			db, err := internaldb.Open(dbPath)
+			db, err := internaldb.Open(dbPath, 1)
 			if err != nil {
 				return fmt.Errorf("set-password: open db: %w", err)
 			}

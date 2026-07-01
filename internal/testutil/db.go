@@ -13,7 +13,7 @@ import (
 func NewDB(t *testing.T) *bun.DB {
 	t.Helper()
 
-	bunDB, err := db.Open(":memory:")
+	bunDB, err := db.Open(":memory:", 1)
 	if err != nil {
 		t.Fatalf("testutil.NewDB: %v", err)
 	}

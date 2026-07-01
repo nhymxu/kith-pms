@@ -48,7 +48,7 @@ export function ConnectToPersonDialog({
 	const mutation = useMutation({
 		mutationFn: () =>
 			bulkCreateRelationships(
-				target!.id,
+				target?.id,
 				toIds.map((id) => ({
 					to_person_id: id,
 					relationship_type_id: Number(typeId),

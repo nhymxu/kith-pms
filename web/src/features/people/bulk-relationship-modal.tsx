@@ -12,10 +12,13 @@ import {
 import { Input } from "#/components/ui/input";
 import { getMe } from "#/endpoints/me";
 import { listPeople } from "#/endpoints/people";
+import { listPeopleLabels } from "#/endpoints/people-labels";
 import { listRelationshipTypes } from "#/endpoints/relationship-types";
 import { bulkCreateRelationships } from "#/endpoints/relationships";
 import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
+
+const LABEL_ADD_ALL_PAGE_SIZE = 500;
 
 interface PendingPair {
 	toPersonId: number;
@@ -45,10 +48,18 @@ export function BulkRelationshipModal({
 		Array<{ id: number; name: string }>
 	>([]);
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
+	const [labelAddAllId, setLabelAddAllId] = useState<string>("");
+	const [labelAddAllMsg, setLabelAddAllMsg] = useState<string | null>(null);
 
 	const { data: types } = useQuery({
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
+		enabled: open,
+	});
+
+	const { data: labels } = useQuery({
+		queryKey: keys.peopleLabels.list(),
+		queryFn: listPeopleLabels,
 		enabled: open,
 	});
 
@@ -110,6 +121,35 @@ export function BulkRelationshipModal({
 		setPersonSearch("");
 	}
 
+	const addAllWithLabelMutation = useMutation({
+		mutationFn: (labelId: number) =>
+			listPeople({ labels: [labelId], page_size: LABEL_ADD_ALL_PAGE_SIZE }),
+		onSuccess: (result) => {
+			setSelectedPeople((prev) => {
+				const existingIds = new Set(prev.map((p) => p.id));
+				const additions = result.items
+					.filter((p) => p.id !== fromPersonId && !existingIds.has(p.id))
+					.map((p) => ({
+						id: p.id,
+						name: formatPersonName(p.name, p.nickname),
+					}));
+				return [...prev, ...additions];
+			});
+			setLabelAddAllMsg(
+				result.total > LABEL_ADD_ALL_PAGE_SIZE
+					? `Added first ${LABEL_ADD_ALL_PAGE_SIZE} of ${result.total} people with this label`
+					: `Added ${result.items.length} people with this label`,
+			);
+		},
+		onError: () => setLabelAddAllMsg("Failed to load people with this label"),
+	});
+
+	function handleAddAllWithLabel() {
+		if (!labelAddAllId) return;
+		setLabelAddAllMsg(null);
+		addAllWithLabelMutation.mutate(Number(labelAddAllId));
+	}
+
 	function togglePerson(person: { id: number; name: string }) {
 		setSelectedPeople((prev) =>
 			prev.some((p) => p.id === person.id)
@@ -128,12 +168,19 @@ export function BulkRelationshipModal({
 		setPersonSearch("");
 		setSelectedPeople([]);
 		setResultMsg(null);
+		setLabelAddAllId("");
+		setLabelAddAllMsg(null);
 		onClose();
 	}
 
 	const filteredResults = searchResults?.items.filter(
 		(p) => p.id !== fromPersonId,
 	);
+
+	const isMultiCanHave =
+		selectedTypeId !== "" &&
+		types?.find((t) => t.id === Number(selectedTypeId))?.inverse_type_id ==
+			null;
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
@@ -154,6 +201,7 @@ export function BulkRelationshipModal({
 								<option value="">Select type…</option>
 								{types?.map((t) => (
 									<option key={t.id} value={t.id}>
+										{t.inverse_type_id == null ? "⇄ " : ""}
 										{t.name}
 									</option>
 								))}
@@ -168,6 +216,9 @@ export function BulkRelationshipModal({
 							Add to list
 						</Button>
 					</div>
+					<p className="text-xs text-zinc-400 -mt-2">
+						⇄ marks symmetric types — these support label quick-select below
+					</p>
 
 					<div className="space-y-1.5">
 						<div className="flex items-center gap-2">
@@ -199,6 +250,34 @@ export function BulkRelationshipModal({
 							value={personSearch}
 							onChange={(e) => setPersonSearch(e.target.value)}
 						/>
+						{isMultiCanHave && labels && labels.length > 0 && (
+							<div className="flex gap-2 items-end">
+								<select
+									value={labelAddAllId}
+									onChange={(e) => setLabelAddAllId(e.target.value)}
+									disabled={addAllWithLabelMutation.isPending}
+									className="flex-1 h-8 border border-zinc-200 rounded-md bg-white px-2 text-xs"
+								>
+									<option value="">Add all with label…</option>
+									{labels.map((l) => (
+										<option key={l.id} value={l.id}>
+											{l.name}
+										</option>
+									))}
+								</select>
+								<Button
+									size="sm"
+									variant="neutral"
+									disabled={!labelAddAllId || addAllWithLabelMutation.isPending}
+									onClick={handleAddAllWithLabel}
+								>
+									{addAllWithLabelMutation.isPending ? "Adding…" : "Add all"}
+								</Button>
+							</div>
+						)}
+						{labelAddAllMsg && (
+							<p className="text-xs text-zinc-500">{labelAddAllMsg}</p>
+						)}
 						{selectedPeople.length > 0 && (
 							<div className="flex flex-wrap gap-1">
 								{selectedPeople.map((p) => (

@@ -114,9 +114,9 @@ The import is safe to re-run on a fresh database. Running it twice on the same d
 
 After import, avatars and documents are handled as follows:
 
-**Avatars**: Contacts whose avatars were stored as photos in Monica (`avatar_source: photo`) have their photos automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`). The dry-run summary includes an `Avatars:` count. Contact avatars using gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page.
+**Avatars**: Contacts whose avatars were stored as photos in Monica (`avatar_source: photo`) have their photos automatically saved to the `AVATAR_STORAGE_PATH` directory (default: `data/avatars`) with the filename pattern `{personID}.{ext}` (flat single-file scheme; each person has exactly one avatar). The dry-run summary includes an `Avatars:` count. Contact avatars using gravatar, adorable, or external URLs will have no avatar in kith — upload one manually from their profile page. If a person already has an avatar in kith, the imported photo will replace it.
 
-**Documents**: Each imported document is decoded from the export and stored under the `AVATAR_STORAGE_PATH` base directory in a `documents/<personID>/` subfolder. A `DOCUMENT`-labelled journal entry is created for each document, containing the filename and metadata. This makes imported documents discoverable via journal search and filters.
+**Documents**: Each imported document is decoded from the export and stored under the `AVATAR_STORAGE_PATH` base directory in a `documents/{personID}/` subfolder with a randomized prefix to ensure uniqueness. A `DOCUMENT`-labelled journal entry is created for each document, containing the filename and metadata. This makes imported documents discoverable via journal search and filters.
 
 ## Step 6 — Verify all data
 
@@ -163,7 +163,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | tasks (incomplete only) | Reminders | Due date set to import day; completed tasks are skipped |
 | gifts | Gifts | status mapped to given/received/planned; amount converted to cents |
 | relationships | Person relationships | Relationship type names are created automatically |
-| avatar (photo source) | Person avatar | Automatically imported when Monica `avatar_source` is `"photo"` and the photo data exists in the export. Photos are decoded from dataURL and saved to `AVATAR_STORAGE_PATH` (default: `data/avatars`). Gravatar, adorable, and external avatars are skipped. |
+| avatar (photo source) | Person avatar | Automatically imported when Monica `avatar_source` is `"photo"` and the photo data exists in the export. Photos are decoded from dataURL and saved to `AVATAR_STORAGE_PATH` with filename `{personID}.{ext}` (default: `data/avatars/{personID}.{ext}`). Each person has exactly one avatar; re-importing replaces the previous one. Gravatar, adorable, and external avatars are skipped. |
 | documents (per-contact) | Journal entries + files | Documents are decoded from base64 dataURL, saved under `AVATAR_STORAGE_PATH/documents/<personID>/`, and linked via DOCUMENT-labelled journal entries. Dry-run reports document count. |
 
 ### What does NOT migrate

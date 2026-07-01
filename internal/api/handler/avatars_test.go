@@ -33,7 +33,6 @@ func (s *stubFileService) SaveAvatarBytes(_ int64, _ []byte, _ string) (string, 
 	return "", nil
 }
 func (s *stubFileService) DeleteAvatar(_ int64, _ string) error { return nil }
-func (s *stubFileService) GetAvatarPath(_ int64) string         { return "" }
 func (s *stubFileService) SaveGiftImage(_ int64, _ multipart.File, _ *multipart.FileHeader) (string, error) {
 	return "", nil
 }

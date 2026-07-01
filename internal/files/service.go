@@ -28,7 +28,6 @@ type FileService interface {
 	SaveAvatar(personID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
 	SaveAvatarBytes(personID int64, data []byte, mimeType string) (path string, err error)
 	DeleteAvatar(personID int64, path string) error
-	GetAvatarPath(personID int64) string
 	SaveGiftImage(giftID int64, file multipart.File, header *multipart.FileHeader) (path string, err error)
 	DeleteGiftImage(giftID int64, path string) error
 	// SaveDocument stores any file type (no mime allowlist) under documents/<personID>/.
@@ -78,28 +77,19 @@ func (s *LocalFileService) SaveAvatar(
 		return "", fmt.Errorf("unsupported MIME type: %s", mimeType)
 	}
 
-	ext := filepath.Ext(header.Filename)
-	if ext == "" {
-		ext = mimeTypeToExt(mimeType)
-	}
+	ext := mimeTypeToExt(mimeType)
+	filename := fmt.Sprintf("%d%s", personID, ext)
 
-	randomBytes := make([]byte, 8)
-	if _, err := rand.Read(randomBytes); err != nil {
-		return "", fmt.Errorf("generate random filename: %w", err)
-	}
-
-	randomStr := hex.EncodeToString(randomBytes)
-
-	sanitizedName := sanitizeFilename(strings.TrimSuffix(header.Filename, ext))
-	filename := fmt.Sprintf("%s-%s%s", randomStr, sanitizedName, ext)
-
-	personDir := filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
-	if err := os.MkdirAll(personDir, 0755); err != nil {
+	if err := os.MkdirAll(s.BaseDir, 0755); err != nil {
 		return "", fmt.Errorf("create directory: %w", err)
 	}
 
-	destPath := filepath.Join(personDir, filename)
-	tempPath := destPath + ".tmp"
+	destPath := filepath.Join(s.BaseDir, filename)
+
+	tempPath, err := tempFilePath(destPath)
+	if err != nil {
+		return "", err
+	}
 
 	dest, err := os.Create(tempPath)
 	if err != nil {
@@ -122,9 +112,7 @@ func (s *LocalFileService) SaveAvatar(
 		return "", fmt.Errorf("rename file: %w", err)
 	}
 
-	relativePath := filepath.Join(fmt.Sprintf("%d", personID), filename)
-
-	return relativePath, nil
+	return filename, nil
 }
 
 // SaveAvatarBytes writes raw image bytes to disk without requiring multipart headers.
@@ -145,21 +133,18 @@ func (s *LocalFileService) SaveAvatarBytes(personID int64, data []byte, mimeType
 	}
 
 	ext := mimeTypeToExt(mimeType)
+	filename := fmt.Sprintf("%d%s", personID, ext)
 
-	randomBytes := make([]byte, 8)
-	if _, err := rand.Read(randomBytes); err != nil {
-		return "", fmt.Errorf("generate random filename: %w", err)
-	}
-
-	filename := fmt.Sprintf("%s-imported%s", hex.EncodeToString(randomBytes), ext)
-
-	personDir := filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
-	if err := os.MkdirAll(personDir, 0755); err != nil {
+	if err := os.MkdirAll(s.BaseDir, 0755); err != nil {
 		return "", fmt.Errorf("create directory: %w", err)
 	}
 
-	destPath := filepath.Join(personDir, filename)
-	tempPath := destPath + ".tmp"
+	destPath := filepath.Join(s.BaseDir, filename)
+
+	tempPath, err := tempFilePath(destPath)
+	if err != nil {
+		return "", err
+	}
 
 	dest, err := os.Create(tempPath)
 	if err != nil {
@@ -182,7 +167,7 @@ func (s *LocalFileService) SaveAvatarBytes(personID int64, data []byte, mimeType
 		return "", fmt.Errorf("rename file: %w", err)
 	}
 
-	return filepath.Join(fmt.Sprintf("%d", personID), filename), nil
+	return filename, nil
 }
 
 // SaveDocument stores raw document bytes under documents/<personID>/ with a random filename.
@@ -248,7 +233,7 @@ func (s *LocalFileService) SaveDocument(personID int64, data []byte, originalNam
 	return filepath.Join("documents", fmt.Sprintf("%d", personID), filename), nil
 }
 
-func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {
+func (s *LocalFileService) DeleteAvatar(_ int64, path string) error {
 	if path == "" {
 		return nil
 	}
@@ -264,18 +249,7 @@ func (s *LocalFileService) DeleteAvatar(personID int64, path string) error {
 		return fmt.Errorf("remove file: %w", err)
 	}
 
-	personDir := filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
-
-	entries, err := os.ReadDir(personDir)
-	if err == nil && len(entries) == 0 {
-		_ = os.Remove(personDir)
-	}
-
 	return nil
-}
-
-func (s *LocalFileService) GetAvatarPath(personID int64) string {
-	return filepath.Join(s.BaseDir, fmt.Sprintf("%d", personID))
 }
 
 func (s *LocalFileService) SaveGiftImage(
@@ -394,6 +368,18 @@ func sanitizeFilename(name string) string {
 	}
 
 	return strings.Trim(name, "-_")
+}
+
+// tempFilePath returns a temp path derived from destPath with a random suffix,
+// so concurrent writes to the same destPath (e.g. same-person avatar re-uploads)
+// never share a temp file.
+func tempFilePath(destPath string) (string, error) {
+	suffix := make([]byte, 8)
+	if _, err := rand.Read(suffix); err != nil {
+		return "", fmt.Errorf("generate temp filename: %w", err)
+	}
+
+	return fmt.Sprintf("%s.%s.tmp", destPath, hex.EncodeToString(suffix)), nil
 }
 
 func mimeTypeToExt(mimeType string) string {

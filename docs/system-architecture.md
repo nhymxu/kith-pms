@@ -438,9 +438,9 @@ The file storage layer handles avatar uploads with security and durability guara
 
 **LocalFileService Implementation**:
 - **Avatar base directory**: Configured via `AVATAR_STORAGE_PATH` (default: `data/avatars`)
-- **Avatar structure**: `data/avatars/{personID}/{randomStr}-{sanitized-name}.{ext}`
+- **Avatar structure**: `data/avatars/{personID}.{ext}` (flat single-file scheme; each person has exactly one avatar)
 - **Document base directory**: Uses same base `data/` with `documents/` subdirectory
-- **Document structure**: `data/avatars/documents/{personID}/{randomStr}-{sanitized-name}.{ext}` (stored under avatars base for simplicity)
+- **Document structure**: `data/avatars/documents/{personID}/{randomStr}-{sanitized-name}.{ext}` (stored under avatars base for simplicity; preserves per-document uniqueness)
 - **Atomic writes**: Temp file → sync → rename (prevents partial uploads)
 - **Path traversal prevention**: Validates clean path stays within base directory
 

@@ -197,11 +197,11 @@ export const PersonSchema = z.object({
 
 ## File Storage Patterns
 
-- **Avatar Storage**: `data/avatars/` with filename pattern `<personID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit)
-- **Gift Image Storage**: `data/gifts/` with filename pattern `<giftID>.<ext>` (any type; 5MB limit)
-- **Document Storage**: `data/documents/<personID>/` with original filename preserved (any type; 50MB per file)
+- **Avatar Storage**: `data/avatars/` with flat single-file scheme per person: `<personID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit; each person has exactly one avatar, new uploads replace old)
+- **Gift Image Storage**: `data/gifts/` with filename pattern `<giftID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit)
+- **Document Storage**: `data/documents/<personID>/` with original filename preserved (any file type; 50MB per file)
 - All storage paths are configurable via environment variables (`AVATAR_STORAGE_PATH`, `GIFT_STORAGE_PATH`)
-- MIME type detection at serve-time (no storage); path traversal prevention in all methods
+- MIME type detection at serve-time (no storage in DB); path traversal prevention in all methods
 
 ## Testing
 
@@ -335,11 +335,11 @@ No AI references in commit messages.
 3. **FileService** (`internal/files/service.go`):
    - Validate file size against limit (5MB)
    - Read file header (512 bytes) for magic number check via `http.DetectContentType`
-   - Validate MIME type (header + detected) against allowlist
-   - Sanitize filename: alphanumeric + dash/underscore; max 50 chars
-   - Generate random 8-byte hex prefix to prevent collisions
-   - Write to temp file, sync, rename (atomic write)
-   - Return relative path: `{personID}/{randomStr}-{sanitized-name}.{ext}`
+   - Validate MIME type (header + detected) against allowlist (JPEG, PNG, GIF, WebP only)
+   - Determine file extension from MIME type
+   - Write to temp file, sync, rename to final location (atomic write; prevents partial uploads)
+   - Return relative path: `{personID}.{ext}`
+   - Note: Flat scheme with no subdirectory, no random prefix, or filename sanitization — each person has exactly one avatar (new uploads replace old)
 
 ### Gift Image Upload Flow
 - Similar to avatar flow but stored in `GIFT_STORAGE_PATH` (default: `data/gifts`)

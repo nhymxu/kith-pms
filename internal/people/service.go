@@ -346,7 +346,7 @@ func (s *Service) UploadAvatar(
 		return fmt.Errorf("commit: %w", err)
 	}
 
-	if oldAvatarPath != "" {
+	if oldAvatarPath != "" && oldAvatarPath != path {
 		_ = s.FileService.DeleteAvatar(personID, oldAvatarPath)
 	}
 

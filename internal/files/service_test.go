@@ -59,8 +59,8 @@ func TestLocalFileService_SaveAvatar(t *testing.T) {
 		t.Fatal("expected non-empty path")
 	}
 
-	if !strings.HasPrefix(path, "123/") {
-		t.Errorf("path = %q, want prefix '123/'", path)
+	if path != "123.jpg" {
+		t.Errorf("path = %q, want %q", path, "123.jpg")
 	}
 
 	fullPath := filepath.Join(tempDir, path)
@@ -171,17 +171,12 @@ func TestLocalFileService_DeleteAvatar(t *testing.T) {
 	tempDir := t.TempDir()
 	svc := NewLocalFileService(tempDir)
 
-	personDir := filepath.Join(tempDir, "123")
-	if err := os.MkdirAll(personDir, 0755); err != nil {
-		t.Fatalf("create person dir: %v", err)
-	}
-
-	testFile := filepath.Join(personDir, "test-avatar.jpg")
+	testFile := filepath.Join(tempDir, "123.jpg")
 	if err := os.WriteFile(testFile, []byte("content"), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
 
-	err := svc.DeleteAvatar(123, "123/test-avatar.jpg")
+	err := svc.DeleteAvatar(123, "123.jpg")
 	if err != nil {
 		t.Fatalf("DeleteAvatar: %v", err)
 	}
@@ -189,10 +184,77 @@ func TestLocalFileService_DeleteAvatar(t *testing.T) {
 	if _, err := os.Stat(testFile); !os.IsNotExist(err) {
 		t.Error("file should be deleted")
 	}
+}
 
-	if _, err := os.Stat(personDir); !os.IsNotExist(err) {
-		t.Error("empty person directory should be removed")
+func TestLocalFileService_SaveAvatar_SameExtOverwrite(t *testing.T) {
+	tempDir := t.TempDir()
+	svc := NewLocalFileService(tempDir)
+
+	firstContent := []byte{
+		0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01,
+		0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xd9,
 	}
+	secondContent := append([]byte{}, firstContent...)
+	secondContent = append(secondContent, 0x00)
+
+	firstPath := saveJPEG(t, svc, 5, firstContent)
+	secondPath := saveJPEG(t, svc, 5, secondContent)
+
+	if firstPath != secondPath {
+		t.Errorf("expected same path across re-uploads, got %q then %q", firstPath, secondPath)
+	}
+
+	if firstPath != "5.jpg" {
+		t.Errorf("path = %q, want %q", firstPath, "5.jpg")
+	}
+
+	saved, err := os.ReadFile(filepath.Join(tempDir, secondPath))
+	if err != nil {
+		t.Fatalf("read saved file: %v", err)
+	}
+
+	if !bytes.Equal(saved, secondContent) {
+		t.Error("expected second upload's content to overwrite the first")
+	}
+}
+
+func saveJPEG(t *testing.T, svc *LocalFileService, personID int64, content []byte) string {
+	t.Helper()
+
+	buf := new(bytes.Buffer)
+	writer := multipart.NewWriter(buf)
+
+	part, err := writer.CreateFormFile("avatar", "photo.jpg")
+	if err != nil {
+		t.Fatalf("create form file: %v", err)
+	}
+
+	part.Write(content)
+	writer.Close()
+
+	reader := multipart.NewReader(buf, writer.Boundary())
+
+	form, err := reader.ReadForm(maxAvatarSize)
+	if err != nil {
+		t.Fatalf("read form: %v", err)
+	}
+	defer form.RemoveAll()
+
+	fileHeader := form.File["avatar"][0]
+	fileHeader.Header.Set("Content-Type", "image/jpeg")
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		t.Fatalf("open file: %v", err)
+	}
+	defer file.Close()
+
+	path, err := svc.SaveAvatar(personID, file, fileHeader)
+	if err != nil {
+		t.Fatalf("SaveAvatar: %v", err)
+	}
+
+	return path
 }
 
 func TestLocalFileService_DeleteAvatar_PathTraversal(t *testing.T) {

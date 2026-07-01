@@ -38,6 +38,7 @@ func validBase() settings.UserSettings {
 		NetworkShowAvatar:      false,
 		NetworkShowOnlyMine:    false,
 		NetworkShowUnconnected: true,
+		NetworkOnlyMineDepth:   "direct",
 	}
 }
 

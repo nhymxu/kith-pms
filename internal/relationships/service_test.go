@@ -209,13 +209,15 @@ func TestDetachRelationship_SymmetricRemovesBoth(t *testing.T) {
 	}
 }
 
-func TestAttachRelationship_Unpaired(t *testing.T) {
+func TestAttachRelationship_SymmetricWithBlankReverseName(t *testing.T) {
 	svc, db := newSvc(t)
 	ctx := context.Background()
 
 	alice := insertPerson(t, db, "Alice")
 	bob := insertPerson(t, db, "Bob")
 
+	// reverse_name is a display label only; leaving it blank must not prevent
+	// the reciprocal row from being created for a symmetric type (e.g. "Friend").
 	rt, _ := svc.CreateType(ctx, "Friend", "")
 
 	_, err := svc.AttachRelationship(ctx, alice, bob, rt.ID, "")
@@ -226,8 +228,17 @@ func TestAttachRelationship_Unpaired(t *testing.T) {
 	var count int
 	db.QueryRowContext(ctx, `SELECT COUNT(*) FROM person_relationship`).Scan(&count)
 
-	if count != 1 {
-		t.Errorf("expected 1 junction row (unpaired), got %d", count)
+	if count != 2 {
+		t.Errorf("expected 2 junction rows (forward + reciprocal), got %d", count)
+	}
+
+	bobViews, err := svc.ListByPerson(ctx, bob)
+	if err != nil {
+		t.Fatalf("ListByPerson(bob): %v", err)
+	}
+
+	if len(bobViews) != 1 {
+		t.Errorf("bob: expected 1 view, got %d", len(bobViews))
 	}
 }
 

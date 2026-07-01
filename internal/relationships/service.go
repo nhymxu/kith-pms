@@ -197,9 +197,11 @@ func (s *Service) AttachRelationship(ctx context.Context, fromID, toID, typeID i
 			 VALUES (?, ?, ?, ?)`,
 			toID, fromID, *rt.InverseTypeID, notes,
 		)
-	} else if rt.ReverseName != "" {
-		// Symmetric type (e.g. Friend/Friend): reverse name equals forward name so no separate
-		// inverse type is created, but we still need the reciprocal row so both people see it.
+	} else {
+		// Symmetric type (e.g. Friend/Friend, or any type with no distinct inverse):
+		// no separate inverse type exists, but we still need the reciprocal row so
+		// both people see it. reverse_name is a display label only — it must not
+		// gate whether the reciprocal row is created.
 		_, _ = tx.ExecContext(ctx,
 			`INSERT OR IGNORE INTO person_relationship (from_person_id, to_person_id, relationship_type_id, notes)
 			 VALUES (?, ?, ?, ?)`,
@@ -257,7 +259,7 @@ func (s *Service) DetachRelationship(ctx context.Context, id int64) error {
 		if inv != nil {
 			_ = txRepo.Detach(ctx, inv.ID)
 		}
-	} else if rt != nil && rt.ReverseName != "" {
+	} else if rt != nil {
 		// Symmetric type: inverse row uses the same type ID.
 		inv, _ := txRepo.FindPair(ctx, row.ToPersonID, row.FromPersonID, row.RelationshipTypeID)
 		if inv != nil {
@@ -367,7 +369,7 @@ func (s *Service) BulkAttach(
 
 		if rt.InverseTypeID != nil {
 			_, _ = tx.ExecContext(ctx, insertRel, p.ToPersonID, fromID, *rt.InverseTypeID, p.Notes)
-		} else if rt.ReverseName != "" {
+		} else {
 			_, _ = tx.ExecContext(ctx, insertRel, p.ToPersonID, fromID, p.TypeID, p.Notes)
 		}
 	}

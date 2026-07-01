@@ -312,6 +312,27 @@ func (s *Service) BulkAttach(
 		return 0, 0, nil
 	}
 
+	// Prefetch all unique type IDs before opening the transaction.
+	// With MaxOpenConns=1, fetching inside a transaction would deadlock because
+	// the transaction holds the only connection.
+	typeCache := make(map[int64]*RelationshipType)
+	for _, p := range pairs {
+		if _, ok := typeCache[p.TypeID]; ok {
+			continue
+		}
+
+		rt, err := s.Types.Get(ctx, p.TypeID)
+		if err != nil {
+			return 0, 0, err
+		}
+
+		if rt == nil {
+			return 0, 0, ErrTypeNotFound
+		}
+
+		typeCache[p.TypeID] = rt
+	}
+
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, 0, err
@@ -319,26 +340,13 @@ func (s *Service) BulkAttach(
 	defer func() { _ = tx.Rollback() }()
 
 	txRepo := &sqlPersonRelationshipRepo{db: tx}
-	typeCache := make(map[int64]*RelationshipType)
 
 	for _, p := range pairs {
 		if p.ToPersonID == fromID {
 			return 0, 0, ErrSelfRelationship
 		}
 
-		rt, ok := typeCache[p.TypeID]
-		if !ok {
-			rt, err = s.Types.Get(ctx, p.TypeID)
-			if err != nil {
-				return 0, 0, err
-			}
-
-			if rt == nil {
-				return 0, 0, ErrTypeNotFound
-			}
-
-			typeCache[p.TypeID] = rt
-		}
+		rt := typeCache[p.TypeID]
 
 		p.Notes = truncateNotes(p.Notes)
 
@@ -421,10 +429,7 @@ func (s *Service) BulkAttachMesh(
 	var totalAffected int64
 
 	for start := 0; start < len(pairs); start += chunkSize {
-		end := start + chunkSize
-		if end > len(pairs) {
-			end = len(pairs)
-		}
+		end := min(start+chunkSize, len(pairs))
 
 		chunk := pairs[start:end]
 		args := make([]any, 0, len(chunk)*3)

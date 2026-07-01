@@ -9,6 +9,7 @@ export const userSettingsSchema = z.object({
 	network_show_avatar: z.boolean().default(false),
 	network_show_only_mine: z.boolean().default(false),
 	network_show_unconnected: z.boolean().default(true),
+	network_only_mine_depth: z.enum(["direct", "alter"]).default("direct"),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

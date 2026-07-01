@@ -4,6 +4,7 @@
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type TimeFormat = "12h" | "24h";
 export type NetworkColorBy = "labels" | "type";
+export type NetworkOnlyMineDepth = "direct" | "alter";
 
 export interface UserPrefs {
 	dateFormat: DateFormat;
@@ -13,6 +14,7 @@ export interface UserPrefs {
 	networkShowAvatar: boolean;
 	networkShowOnlyMine: boolean;
 	networkShowUnconnected: boolean;
+	networkOnlyMineDepth: NetworkOnlyMineDepth;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -25,6 +27,7 @@ const DEFAULTS: UserPrefs = {
 	networkShowAvatar: false,
 	networkShowOnlyMine: false,
 	networkShowUnconnected: true,
+	networkOnlyMineDepth: "direct",
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -48,6 +51,7 @@ export function getNetworkPrefs(): Pick<
 	| "networkShowAvatar"
 	| "networkShowOnlyMine"
 	| "networkShowUnconnected"
+	| "networkOnlyMineDepth"
 > {
 	const p = getUserPrefs();
 	return {
@@ -55,6 +59,7 @@ export function getNetworkPrefs(): Pick<
 		networkShowAvatar: p.networkShowAvatar,
 		networkShowOnlyMine: p.networkShowOnlyMine,
 		networkShowUnconnected: p.networkShowUnconnected,
+		networkOnlyMineDepth: p.networkOnlyMineDepth,
 	};
 }
 
@@ -71,6 +76,7 @@ export async function syncSettingsFromApi(): Promise<void> {
 			networkShowAvatar: s.network_show_avatar,
 			networkShowOnlyMine: s.network_show_only_mine,
 			networkShowUnconnected: s.network_show_unconnected,
+			networkOnlyMineDepth: s.network_only_mine_depth as NetworkOnlyMineDepth,
 		});
 	} catch {
 		// Non-fatal: fall back to whatever is already in localStorage / defaults.

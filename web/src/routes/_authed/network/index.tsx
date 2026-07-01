@@ -5,6 +5,7 @@ import type { RelationshipGraph } from "#/endpoints/relationships";
 import { getRelationshipGraph } from "#/endpoints/relationships";
 import type { SelectedNodeInfo } from "#/features/network/graph-selected-panel";
 import { GraphSelectedPanel } from "#/features/network/graph-selected-panel";
+import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import { getNetworkPrefs } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/_authed/network/")({
 interface NetworkGraphProps {
 	showOnlyMine: boolean;
 	onShowOnlyMineChange: (v: boolean) => void;
+	onlyMineDepth: NetworkOnlyMineDepth;
+	onOnlyMineDepthChange: (v: NetworkOnlyMineDepth) => void;
 	onNodeSelect: (info: SelectedNodeInfo | null) => void;
 	panelCollapsed: boolean;
 }
@@ -31,6 +34,8 @@ interface NetworkGraphProps {
 function NetworkGraph({
 	showOnlyMine,
 	onShowOnlyMineChange,
+	onlyMineDepth,
+	onOnlyMineDepthChange,
 	onNodeSelect,
 	panelCollapsed,
 }: NetworkGraphProps) {
@@ -43,6 +48,8 @@ function NetworkGraph({
 
 	const displayData = useMemo((): RelationshipGraph => {
 		if (!showOnlyMine || !selfNode) return data;
+
+		// First level: self + direct connections
 		const included = new Set<number>([selfNode.id]);
 		for (const link of data.links) {
 			const src = link.source as number;
@@ -52,6 +59,21 @@ function NetworkGraph({
 				included.add(tgt);
 			}
 		}
+
+		if (onlyMineDepth === "alter") {
+			// Second level: connections of direct connections
+			const alters = new Set(included);
+			alters.delete(selfNode.id);
+			for (const link of data.links) {
+				const src = link.source as number;
+				const tgt = link.target as number;
+				if (alters.has(src) || alters.has(tgt)) {
+					included.add(src);
+					included.add(tgt);
+				}
+			}
+		}
+
 		return {
 			nodes: data.nodes.filter((n) => included.has(n.id)),
 			links: data.links.filter(
@@ -59,7 +81,7 @@ function NetworkGraph({
 					included.has(l.source as number) && included.has(l.target as number),
 			),
 		};
-	}, [data, showOnlyMine, selfNode]);
+	}, [data, showOnlyMine, onlyMineDepth, selfNode]);
 
 	if (displayData.nodes.length === 0) {
 		return (
@@ -76,6 +98,8 @@ function NetworkGraph({
 			height={Math.max(500, window.innerHeight - 200)}
 			showOnlyMine={showOnlyMine}
 			onShowOnlyMineChange={onShowOnlyMineChange}
+			onlyMineDepth={onlyMineDepth}
+			onOnlyMineDepthChange={onOnlyMineDepthChange}
 			onNodeSelect={onNodeSelect}
 			sidebarCollapsed={panelCollapsed}
 		/>
@@ -85,6 +109,9 @@ function NetworkGraph({
 function NetworkPage() {
 	const [showOnlyMine, setShowOnlyMine] = useState(
 		() => getNetworkPrefs().networkShowOnlyMine,
+	);
+	const [onlyMineDepth, setOnlyMineDepth] = useState<NetworkOnlyMineDepth>(
+		() => getNetworkPrefs().networkOnlyMineDepth,
 	);
 	const [selectedInfo, setSelectedInfo] = useState<SelectedNodeInfo | null>(
 		null,
@@ -114,6 +141,8 @@ function NetworkPage() {
 					<NetworkGraph
 						showOnlyMine={showOnlyMine}
 						onShowOnlyMineChange={setShowOnlyMine}
+						onlyMineDepth={onlyMineDepth}
+						onOnlyMineDepthChange={setOnlyMineDepth}
 						onNodeSelect={setSelectedInfo}
 						panelCollapsed={panelCollapsed}
 					/>

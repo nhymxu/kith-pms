@@ -17,6 +17,7 @@ import {
 	getNetworkPrefs,
 	getUserPrefs,
 	type NetworkColorBy,
+	type NetworkOnlyMineDepth,
 	saveUserPrefs,
 	type TimeFormat,
 } from "#/lib/format-datetime";
@@ -86,6 +87,7 @@ function GeneralSettingsPage() {
 				network_show_avatar: p.networkShowAvatar,
 				network_show_only_mine: p.networkShowOnlyMine,
 				network_show_unconnected: p.networkShowUnconnected,
+				network_only_mine_depth: p.networkOnlyMineDepth,
 			};
 		},
 	});
@@ -114,6 +116,7 @@ function GeneralSettingsPage() {
 		showAvatar: boolean;
 		showOnlyMine: boolean;
 		showUnconnected: boolean;
+		onlyMineDepth: NetworkOnlyMineDepth;
 	}>(() => {
 		const n = getNetworkPrefs();
 		return {
@@ -121,6 +124,7 @@ function GeneralSettingsPage() {
 			showAvatar: n.networkShowAvatar,
 			showOnlyMine: n.networkShowOnlyMine,
 			showUnconnected: n.networkShowUnconnected,
+			onlyMineDepth: n.networkOnlyMineDepth,
 		};
 	});
 
@@ -138,6 +142,8 @@ function GeneralSettingsPage() {
 			showAvatar: apiSettings.network_show_avatar,
 			showOnlyMine: apiSettings.network_show_only_mine,
 			showUnconnected: apiSettings.network_show_unconnected,
+			onlyMineDepth: (apiSettings.network_only_mine_depth ??
+				"direct") as NetworkOnlyMineDepth,
 		});
 		setSynced(true);
 	}
@@ -154,6 +160,7 @@ function GeneralSettingsPage() {
 		network_show_avatar: networkDefaults.showAvatar,
 		network_show_only_mine: networkDefaults.showOnlyMine,
 		network_show_unconnected: networkDefaults.showUnconnected,
+		network_only_mine_depth: networkDefaults.onlyMineDepth,
 		...overrides,
 	});
 
@@ -187,6 +194,7 @@ function GeneralSettingsPage() {
 					network_show_avatar: networkDefaults.showAvatar,
 					network_show_only_mine: networkDefaults.showOnlyMine,
 					network_show_unconnected: networkDefaults.showUnconnected,
+					network_only_mine_depth: networkDefaults.onlyMineDepth,
 				}),
 			),
 		onSuccess: (updated) => {
@@ -195,6 +203,8 @@ function GeneralSettingsPage() {
 				networkShowAvatar: updated.network_show_avatar,
 				networkShowOnlyMine: updated.network_show_only_mine,
 				networkShowUnconnected: updated.network_show_unconnected,
+				networkOnlyMineDepth: (updated.network_only_mine_depth ??
+					"direct") as NetworkOnlyMineDepth,
 			});
 			queryClient.setQueryData(["settings"], updated);
 		},
@@ -437,23 +447,53 @@ function GeneralSettingsPage() {
 									label: string;
 								}[]
 							).map(({ key, label }) => (
-								<label
-									key={key}
-									className="flex items-center gap-3 cursor-pointer"
-								>
-									<input
-										type="checkbox"
-										checked={networkDefaults[key] as boolean}
-										onChange={(e) =>
-											setNetworkDefaults((n) => ({
-												...n,
-												[key]: e.target.checked,
-											}))
-										}
-										className="accent-indigo-600"
-									/>
-									<span className="text-[13px] text-zinc-700">{label}</span>
-								</label>
+								<div key={key}>
+									<label className="flex items-center gap-3 cursor-pointer">
+										<input
+											type="checkbox"
+											checked={networkDefaults[key] as boolean}
+											onChange={(e) =>
+												setNetworkDefaults((n) => ({
+													...n,
+													[key]: e.target.checked,
+												}))
+											}
+											className="accent-indigo-600"
+										/>
+										<span className="text-[13px] text-zinc-700">{label}</span>
+									</label>
+									{key === "showOnlyMine" && networkDefaults.showOnlyMine && (
+										<div className="ml-6 mt-1.5 flex gap-4">
+											{(["direct", "alter"] as NetworkOnlyMineDepth[]).map(
+												(v) => (
+													<label
+														key={v}
+														className="flex items-center gap-2 cursor-pointer"
+													>
+														<input
+															type="radio"
+															name="onlyMineDepth"
+															value={v}
+															checked={networkDefaults.onlyMineDepth === v}
+															onChange={() =>
+																setNetworkDefaults((n) => ({
+																	...n,
+																	onlyMineDepth: v,
+																}))
+															}
+															className="accent-indigo-600"
+														/>
+														<span className="text-[12px] text-zinc-600">
+															{v === "direct"
+																? "Direct only"
+																: "Include alters (2nd level)"}
+														</span>
+													</label>
+												),
+											)}
+										</div>
+									)}
+								</div>
 							))}
 						</div>
 					</div>

@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
 import { listPeopleLabels } from "#/endpoints/people-labels";
+import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import { getNetworkPrefs } from "#/lib/format-datetime";
 import { formatPersonName } from "#/lib/format-person-name";
 import { cloneGraphData } from "#/lib/graph-data";
@@ -29,6 +30,8 @@ interface RelationshipGraphProps {
 	title?: string;
 	showOnlyMine?: boolean;
 	onShowOnlyMineChange?: (v: boolean) => void;
+	onlyMineDepth?: NetworkOnlyMineDepth;
+	onOnlyMineDepthChange?: (v: NetworkOnlyMineDepth) => void;
 	onNodeSelect?: (info: SelectedNodeInfo | null) => void;
 	sidebarCollapsed?: boolean;
 }
@@ -40,6 +43,8 @@ export default function RelationshipGraph({
 	title,
 	showOnlyMine,
 	onShowOnlyMineChange,
+	onlyMineDepth,
+	onOnlyMineDepthChange,
 	onNodeSelect,
 	sidebarCollapsed,
 }: RelationshipGraphProps) {
@@ -357,6 +362,8 @@ export default function RelationshipGraph({
 				onShowAvatarChange={setShowAvatar}
 				showOnlyMine={showOnlyMine}
 				onShowOnlyMineChange={onShowOnlyMineChange}
+				onlyMineDepth={onlyMineDepth}
+				onOnlyMineDepthChange={onOnlyMineDepthChange}
 				showUnconnected={showUnconnected}
 				onShowUnconnectedChange={setShowUnconnected}
 				onRecenter={() => fgRef.current?.zoomToFit(400, 40)}

@@ -10,11 +10,14 @@ import (
 )
 
 var (
-	ErrInvalidDateFormat     = errors.New("settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY")
-	ErrInvalidTimeFormat     = errors.New("settings: time_format must be one of 24h, 12h")
-	ErrInvalidTimezone       = errors.New("settings: timezone must not be empty")
-	ErrInvalidRetentionDays  = errors.New("settings: audit_log_retention_days must be >= 0")
-	ErrInvalidNetworkColorBy = errors.New("settings: network_color_by must be one of labels, type")
+	ErrInvalidDateFormat = errors.New(
+		"settings: date_format must be one of YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY",
+	)
+	ErrInvalidTimeFormat           = errors.New("settings: time_format must be one of 24h, 12h")
+	ErrInvalidTimezone             = errors.New("settings: timezone must not be empty")
+	ErrInvalidRetentionDays        = errors.New("settings: audit_log_retention_days must be >= 0")
+	ErrInvalidNetworkColorBy       = errors.New("settings: network_color_by must be one of labels, type")
+	ErrInvalidNetworkOnlyMineDepth = errors.New("settings: network_only_mine_depth must be one of direct, alter")
 )
 
 var validDateFormats = map[string]bool{
@@ -31,6 +34,11 @@ var validTimeFormats = map[string]bool{
 var validNetworkColorBy = map[string]bool{
 	"labels": true,
 	"type":   true,
+}
+
+var validNetworkOnlyMineDepth = map[string]bool{
+	"direct": true,
+	"alter":  true,
 }
 
 type Service struct {
@@ -82,6 +90,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.NetworkShowUnconnected = v == "true"
 	}
 
+	if v, ok := rows[KeyNetworkOnlyMineDepth]; ok {
+		result.NetworkOnlyMineDepth = v
+	}
+
 	return result, nil
 }
 
@@ -106,6 +118,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidNetworkColorBy
 	}
 
+	if !validNetworkOnlyMineDepth[in.NetworkOnlyMineDepth] {
+		return UserSettings{}, ErrInvalidNetworkOnlyMineDepth
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:             in.DateFormat,
@@ -116,6 +132,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyNetworkShowAvatar:      strconv.FormatBool(in.NetworkShowAvatar),
 		KeyNetworkShowOnlyMine:    strconv.FormatBool(in.NetworkShowOnlyMine),
 		KeyNetworkShowUnconnected: strconv.FormatBool(in.NetworkShowUnconnected),
+		KeyNetworkOnlyMineDepth:   in.NetworkOnlyMineDepth,
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

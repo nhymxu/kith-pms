@@ -10,6 +10,7 @@ type UserSettings struct {
 	NetworkShowAvatar      bool   `json:"network_show_avatar"`
 	NetworkShowOnlyMine    bool   `json:"network_show_only_mine"`
 	NetworkShowUnconnected bool   `json:"network_show_unconnected"`
+	NetworkOnlyMineDepth   string `json:"network_only_mine_depth"` // "direct" or "alter"
 }
 
 var Defaults = UserSettings{
@@ -21,6 +22,7 @@ var Defaults = UserSettings{
 	NetworkShowAvatar:      false,
 	NetworkShowOnlyMine:    false,
 	NetworkShowUnconnected: true,
+	NetworkOnlyMineDepth:   "direct",
 }
 
 const (
@@ -32,4 +34,5 @@ const (
 	KeyNetworkShowAvatar      = "network_show_avatar"
 	KeyNetworkShowOnlyMine    = "network_show_only_mine"
 	KeyNetworkShowUnconnected = "network_show_unconnected"
+	KeyNetworkOnlyMineDepth   = "network_only_mine_depth"
 )

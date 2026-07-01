@@ -1,3 +1,4 @@
+import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import type { ColorBy } from "./graph-types";
 
 interface GraphControlsProps {
@@ -14,6 +15,8 @@ interface GraphControlsProps {
 	onShowAvatarChange: (v: boolean) => void;
 	showOnlyMine?: boolean;
 	onShowOnlyMineChange?: (v: boolean) => void;
+	onlyMineDepth?: NetworkOnlyMineDepth;
+	onOnlyMineDepthChange?: (v: NetworkOnlyMineDepth) => void;
 	showUnconnected?: boolean;
 	onShowUnconnectedChange?: (v: boolean) => void;
 	onRecenter: () => void;
@@ -33,6 +36,8 @@ export function GraphControls({
 	onShowAvatarChange,
 	showOnlyMine,
 	onShowOnlyMineChange,
+	onlyMineDepth,
+	onOnlyMineDepthChange,
 	showUnconnected,
 	onShowUnconnectedChange,
 	onRecenter,
@@ -117,15 +122,42 @@ export function GraphControls({
 
 			{/* Only my connections (optional — network page only) */}
 			{onShowOnlyMineChange && (
-				<label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-zinc-600 select-none">
-					<input
-						type="checkbox"
-						checked={showOnlyMine ?? false}
-						onChange={(e) => onShowOnlyMineChange(e.target.checked)}
-						className="h-3.5 w-3.5 rounded border-zinc-300 accent-indigo-600"
-					/>
-					Only mine
-				</label>
+				<div className="flex items-center gap-1.5">
+					<label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-zinc-600 select-none">
+						<input
+							type="checkbox"
+							checked={showOnlyMine ?? false}
+							onChange={(e) => onShowOnlyMineChange(e.target.checked)}
+							className="h-3.5 w-3.5 rounded border-zinc-300 accent-indigo-600"
+						/>
+						Only mine
+					</label>
+					{showOnlyMine && onOnlyMineDepthChange && (
+						<div className="flex items-center gap-1.5">
+							<div className="flex items-center gap-0.5 rounded border border-zinc-200 bg-white p-0.5">
+								{(["direct", "alter"] as NetworkOnlyMineDepth[]).map((v) => (
+									<button
+										key={v}
+										type="button"
+										onClick={() => onOnlyMineDepthChange(v)}
+										className={`min-h-0 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+											(onlyMineDepth ?? "direct") === v
+												? "bg-indigo-600 text-white"
+												: "text-zinc-600 hover:bg-zinc-100"
+										}`}
+									>
+										{v === "direct" ? "Direct" : "Alters"}
+									</button>
+								))}
+							</div>
+							{(onlyMineDepth ?? "direct") === "alter" && (
+								<span className="text-[10px] text-zinc-400 italic">
+									indirect connections
+								</span>
+							)}
+						</div>
+					)}
+				</div>
 			)}
 
 			{/* Show unconnected people (optional — network page only) */}

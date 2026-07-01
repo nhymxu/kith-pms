@@ -10,6 +10,7 @@ import {
 } from "#/components/ui/select";
 import { bulkAssignLabel, listPeopleLabels } from "#/endpoints/people-labels";
 import { keys } from "#/query-keys";
+import { ConnectToPersonDialog } from "./connect-to-person-dialog";
 
 interface BulkActionBarProps {
 	selectedCount: number;
@@ -24,6 +25,7 @@ export function BulkActionBar({
 }: BulkActionBarProps) {
 	const [labelId, setLabelId] = useState<string>("");
 	const [lastResult, setLastResult] = useState<string | null>(null);
+	const [connectOpen, setConnectOpen] = useState(false);
 	const qc = useQueryClient();
 
 	const { data: labels } = useQuery({
@@ -76,9 +78,21 @@ export function BulkActionBar({
 			>
 				{mutation.isPending ? "Assigning…" : "Assign"}
 			</Button>
+			<Button size="sm" variant="neutral" onClick={() => setConnectOpen(true)}>
+				Connect to person…
+			</Button>
 			<Button size="sm" variant="neutral" onClick={onClear}>
 				Clear
 			</Button>
+			<ConnectToPersonDialog
+				selectedIds={personIds}
+				open={connectOpen}
+				onClose={() => setConnectOpen(false)}
+				onSuccess={() => {
+					setConnectOpen(false);
+					onClear();
+				}}
+			/>
 		</div>
 	);
 }

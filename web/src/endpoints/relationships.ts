@@ -37,20 +37,43 @@ export async function getRelationshipGraph(
 	return res.data;
 }
 
-export async function bulkCreateRelationships(
+const BULK_RELATIONSHIP_CHUNK = 50;
+
+type BulkRelationship = {
+	to_person_id: number;
+	relationship_type_id: number;
+	notes?: string;
+};
+
+async function postBulkBatch(
 	personId: number,
-	relationships: Array<{
-		to_person_id: number;
-		relationship_type_id: number;
-		notes?: string;
-	}>,
+	batch: BulkRelationship[],
 ): Promise<{ created: number; skipped: number }> {
 	const res = await apiFetch<Envelope<{ created: number; skipped: number }>>(
 		`/v1/people/${personId}/relationships/bulk`,
 		{
 			method: "POST",
-			body: JSON.stringify({ relationships }),
+			body: JSON.stringify({ relationships: batch }),
 		},
 	);
 	return res.data;
+}
+
+export async function bulkCreateRelationships(
+	personId: number,
+	relationships: BulkRelationship[],
+): Promise<{ created: number; skipped: number }> {
+	const acc = { created: 0, skipped: 0 };
+	for (let i = 0; i < relationships.length; i += BULK_RELATIONSHIP_CHUNK) {
+		const batch = relationships.slice(i, i + BULK_RELATIONSHIP_CHUNK);
+		try {
+			const r = await postBulkBatch(personId, batch);
+			acc.created += r.created;
+			acc.skipped += r.skipped;
+		} catch (err) {
+			(err as Error & { partial?: typeof acc }).partial = { ...acc };
+			throw err;
+		}
+	}
+	return acc;
 }

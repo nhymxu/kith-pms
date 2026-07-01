@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from "#/endpoints/people";
@@ -23,6 +24,8 @@ export function AvatarUploader({
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [preview, setPreview] = useState<string | null>(null);
 	const [clientError, setClientError] = useState<string | null>(null);
+	const [cropSrc, setCropSrc] = useState<string | null>(null);
+	const [cropFileName, setCropFileName] = useState("avatar");
 	const qc = useQueryClient();
 
 	const invalidate = () => {
@@ -38,12 +41,24 @@ export function AvatarUploader({
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteAvatar(personId),
 		onSuccess: () => {
-			setPreview(null);
+			setPreview((prev) => {
+				if (prev) URL.revokeObjectURL(prev);
+				return null;
+			});
 			invalidate();
 		},
 	});
 
+	const previewRef = useRef<string | null>(null);
+	previewRef.current = preview;
+	useEffect(() => {
+		return () => {
+			if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+		};
+	}, []);
+
 	function handleFile(file: File) {
+		if (cropSrc) return; // crop dialog already open for a previous pick
 		setClientError(null);
 		if (!ALLOWED_MIME.includes(file.type)) {
 			setClientError("Only JPEG, PNG, GIF, or WebP images are allowed.");
@@ -53,8 +68,26 @@ export function AvatarUploader({
 			setClientError("File must be under 5 MB.");
 			return;
 		}
-		const url = URL.createObjectURL(file);
-		setPreview(url);
+		setCropFileName(file.name);
+		setCropSrc(URL.createObjectURL(file));
+	}
+
+	function handleCropCancel() {
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
+	}
+
+	function handleCropped(file: File) {
+		if (cropSrc) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
+		if (file.size > MAX_BYTES) {
+			setClientError("Cropped image is too large — try a smaller zoom area.");
+			return;
+		}
+		setPreview((prev) => {
+			if (prev) URL.revokeObjectURL(prev);
+			return URL.createObjectURL(file);
+		});
 		uploadMutation.mutate(file);
 	}
 
@@ -142,6 +175,17 @@ export function AvatarUploader({
 								: "Upload failed")}
 					</AlertDescription>
 				</Alert>
+			)}
+
+			{cropSrc && (
+				<ImageCropDialog
+					open
+					imageSrc={cropSrc}
+					fileName={cropFileName}
+					aspect={1}
+					onCancel={handleCropCancel}
+					onCropped={handleCropped}
+				/>
 			)}
 		</div>
 	);

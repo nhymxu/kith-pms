@@ -1,9 +1,10 @@
 // Gift create/edit form — TanStack Form + Zod validation
 import { useForm } from "@tanstack/react-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
+import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -11,6 +12,11 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
+import {
+	GIFT_IMAGE_ALLOWED_MIME,
+	GIFT_IMAGE_ASPECT,
+	GIFT_IMAGE_MAX_BYTES,
+} from "#/features/gifts/gift-image-constraints";
 import { keys } from "#/query-keys";
 import {
 	type GiftRequest,
@@ -48,7 +54,20 @@ function GiftFormInner({
 	onImageChange,
 }: GiftFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null);
+	const [imageError, setImageError] = useState<string | null>(null);
 	const [personSearch, setPersonSearch] = useState("");
+	const [cropSrc, setCropSrc] = useState<string | null>(null);
+	const [cropFileName, setCropFileName] = useState("gift-image");
+	const [croppedPreview, setCroppedPreview] = useState<string | null>(null);
+	const croppedPreviewRef = useRef<string | null>(null);
+	croppedPreviewRef.current = croppedPreview;
+	useEffect(() => {
+		return () => {
+			if (croppedPreviewRef.current) {
+				URL.revokeObjectURL(croppedPreviewRef.current);
+			}
+		};
+	}, []);
 	const [amountDisplay, setAmountDisplay] = useState(
 		initial?.amount_cents != null
 			? (initial.amount_cents / 100).toString()
@@ -289,12 +308,62 @@ function GiftFormInner({
 			{onImageChange && (
 				<div className="space-y-1.5">
 					<Label>Image</Label>
+					{croppedPreview && (
+						<img
+							src={croppedPreview}
+							alt="Selected gift"
+							className="max-h-32 rounded border border-zinc-200 object-contain"
+						/>
+					)}
 					<input
 						type="file"
-						accept="image/jpeg,image/png,image/gif,image/webp"
-						onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
+						accept={GIFT_IMAGE_ALLOWED_MIME.join(",")}
+						onChange={(e) => {
+							const file = e.target.files?.[0];
+							e.target.value = "";
+							if (!file || cropSrc) return;
+							setImageError(null);
+							if (!GIFT_IMAGE_ALLOWED_MIME.includes(file.type)) {
+								setImageError(
+									"Only JPEG, PNG, GIF, or WebP images are allowed.",
+								);
+								return;
+							}
+							setCropFileName(file.name);
+							setCropSrc(URL.createObjectURL(file));
+						}}
 						className="text-sm"
 					/>
+					{imageError && (
+						<p className="text-xs text-destructive">{imageError}</p>
+					)}
+					{cropSrc && (
+						<ImageCropDialog
+							open
+							imageSrc={cropSrc}
+							fileName={cropFileName}
+							aspect={GIFT_IMAGE_ASPECT}
+							onCancel={() => {
+								URL.revokeObjectURL(cropSrc);
+								setCropSrc(null);
+							}}
+							onCropped={(file) => {
+								URL.revokeObjectURL(cropSrc);
+								setCropSrc(null);
+								if (file.size > GIFT_IMAGE_MAX_BYTES) {
+									setImageError(
+										"Cropped image is too large — try a smaller zoom area.",
+									);
+									return;
+								}
+								setCroppedPreview((prev) => {
+									if (prev) URL.revokeObjectURL(prev);
+									return URL.createObjectURL(file);
+								});
+								onImageChange(file);
+							}}
+						/>
+					)}
 				</div>
 			)}
 

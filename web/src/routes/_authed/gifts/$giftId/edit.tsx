@@ -4,6 +4,8 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Label } from "#/components/ui/label";
@@ -14,6 +16,11 @@ import {
 	uploadGiftImage,
 } from "#/endpoints/gifts";
 import { GiftForm } from "#/features/gifts/gift-form";
+import {
+	GIFT_IMAGE_ALLOWED_MIME,
+	GIFT_IMAGE_ASPECT,
+	GIFT_IMAGE_MAX_BYTES,
+} from "#/features/gifts/gift-image-constraints";
 import { keys } from "#/query-keys";
 import type { GiftRequest } from "#/schemas/gift";
 
@@ -32,6 +39,9 @@ function EditGiftPage() {
 	const id = Number(giftId);
 	const navigate = useNavigate();
 	const qc = useQueryClient();
+	const [cropSrc, setCropSrc] = useState<string | null>(null);
+	const [cropFileName, setCropFileName] = useState("gift-image");
+	const [imageError, setImageError] = useState<string | null>(null);
 
 	const { data } = useSuspenseQuery({
 		queryKey: keys.gifts.detail(id),
@@ -110,13 +120,24 @@ function EditGiftPage() {
 						<Label>Upload new image</Label>
 						<input
 							type="file"
-							accept="image/jpeg,image/png,image/gif,image/webp"
+							accept={GIFT_IMAGE_ALLOWED_MIME.join(",")}
 							onChange={(e) => {
-								const f = e.target.files?.[0];
-								if (f) uploadImageMutation.mutate(f);
+								const file = e.target.files?.[0];
+								e.target.value = "";
+								if (!file || cropSrc) return;
+								setImageError(null);
+								if (!GIFT_IMAGE_ALLOWED_MIME.includes(file.type)) {
+									setImageError(
+										"Only JPEG, PNG, GIF, or WebP images are allowed.",
+									);
+									return;
+								}
+								setCropFileName(file.name);
+								setCropSrc(URL.createObjectURL(file));
 							}}
 							className="text-sm"
 						/>
+						{imageError && <p className="text-xs text-red-600">{imageError}</p>}
 						{uploadImageMutation.isPending && (
 							<p className="text-xs text-zinc-500">Uploading…</p>
 						)}
@@ -126,6 +147,30 @@ function EditGiftPage() {
 					</div>
 				</CardContent>
 			</Card>
+
+			{cropSrc && (
+				<ImageCropDialog
+					open
+					imageSrc={cropSrc}
+					fileName={cropFileName}
+					aspect={GIFT_IMAGE_ASPECT}
+					onCancel={() => {
+						URL.revokeObjectURL(cropSrc);
+						setCropSrc(null);
+					}}
+					onCropped={(file) => {
+						URL.revokeObjectURL(cropSrc);
+						setCropSrc(null);
+						if (file.size > GIFT_IMAGE_MAX_BYTES) {
+							setImageError(
+								"Cropped image is too large — try a smaller zoom area.",
+							);
+							return;
+						}
+						uploadImageMutation.mutate(file);
+					}}
+				/>
+			)}
 		</div>
 	);
 }

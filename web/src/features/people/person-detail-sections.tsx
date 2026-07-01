@@ -1,6 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Pencil, X } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -295,36 +300,21 @@ function OverviewSection({
 	);
 }
 
-interface PersonDetailSectionsProps {
+interface PersonDetailSectionsInnerProps {
 	personId: number;
 	onClose?: () => void;
 }
 
-export function PersonDetailSections({
+function PersonDetailSectionsInner({
 	personId,
 	onClose,
-}: PersonDetailSectionsProps) {
+}: PersonDetailSectionsInnerProps) {
 	const [editing, setEditing] = useState(false);
 
-	const {
-		data: person,
-		isLoading,
-		error,
-	} = useQuery({
+	const { data: person } = useSuspenseQuery({
 		queryKey: keys.people.detail(personId),
 		queryFn: () => getPerson(personId),
 	});
-
-	if (isLoading)
-		return (
-			<div className="py-12 text-center text-zinc-400 font-base">Loading…</div>
-		);
-	if (error || !person)
-		return (
-			<div className="py-12 text-center text-zinc-400 font-base">
-				Person not found.
-			</div>
-		);
 
 	return (
 		<div className="space-y-3">
@@ -376,5 +366,25 @@ export function PersonDetailSections({
 				<GiftsSection personId={personId} />
 			</SectionCard>
 		</div>
+	);
+}
+
+const personDetailFallback = (
+	<div className="py-12 text-center text-zinc-400 font-base">Loading…</div>
+);
+
+interface PersonDetailSectionsProps {
+	personId: number;
+	onClose?: () => void;
+}
+
+export function PersonDetailSections({
+	personId,
+	onClose,
+}: PersonDetailSectionsProps) {
+	return (
+		<QueryBoundary fallback={personDetailFallback}>
+			<PersonDetailSectionsInner personId={personId} onClose={onClose} />
+		</QueryBoundary>
 	);
 }

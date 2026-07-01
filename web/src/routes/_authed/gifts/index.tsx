@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
 import { listGifts } from "#/endpoints/gifts";
@@ -7,18 +7,19 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/gifts/")({
 	component: GiftsPage,
+	pendingComponent: () => (
+		<p className="text-[13px] text-zinc-500">Loading gifts…</p>
+	),
+	errorComponent: () => (
+		<p className="text-[13px] text-red-600">Failed to load gifts.</p>
+	),
 });
 
 function GiftsPage() {
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.gifts.list({}),
 		queryFn: () => listGifts({}),
 	});
-
-	if (isPending)
-		return <p className="text-[13px] text-zinc-500">Loading gifts…</p>;
-	if (isError)
-		return <p className="text-[13px] text-red-600">Failed to load gifts.</p>;
 
 	return (
 		<div className="space-y-4">
@@ -30,7 +31,7 @@ function GiftsPage() {
 					<Link to="/gifts/new">New Gift</Link>
 				</Button>
 			</div>
-			<GiftsTable data={data?.items ?? []} />
+			<GiftsTable data={data.items} />
 		</div>
 	);
 }

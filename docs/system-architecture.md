@@ -236,16 +236,29 @@ Each section uses `SectionCard` for consistent visual spacing and TanStack Query
 - **Interaction**: Drag nodes to pin in position; zoom/pan; recenter button to reset view; canvas resized to container
 - **Graph Data**: `web/src/lib/graph-data.ts` utility processes people + relationships into force-graph node/link format with avatar URL caching; lazy-loaded on route entry (separate code chunk)
 
-### Data Layer (TanStack Query v5)
+### Data Layer (TanStack Query v5 + Suspense)
 
 **Configuration**: 5-minute stale time, 10-minute cache duration
+
 **Endpoints**: API functions in `web/src/endpoints/*.ts` per resource:
 - `audit.ts`, `auth.ts`, `dates.ts`, `gifts.ts`, `journal.ts`, `labels.ts`, `me.ts`, `people.ts`, `relationship-types.ts`, `reminders.ts`
+
+**Querying Strategy** (Phase 5 update):
+- **useSuspenseQuery pattern**: Route pages and inner components wrap queries in `<QueryBoundary>` (or `<Suspense>`), throw on error → route-level `errorComponent` catches
+  - Example: Gift detail page uses `useSuspenseQuery` → scoped `errorComponent` shows "Gift not found."
+  - Reduces manual `isPending`/`isError` branching; suspends component tree until data loads
+  - Inner components split from parent; each query wrapped independently for granular loading states
+- **useQuery pattern** (limited use): Dashboard intentionally uses `useQuery` to preserve composite KPI state across 7 parallel queries; shows custom loading/error UI per card
+- **Error Boundaries**: 
+  - Global: `/_authed.tsx` layout has auth-scoped `errorComponent` 
+  - Route-level: Detail routes (e.g., `gifts/$giftId`, `people/$personId`) have scoped error messages
+  - Component-level: `<QueryBoundary>` fallback prop customizes per-section loading UI
 
 **API Client**: `lib/api-client.ts` shared fetch wrapper:
 - Attaches `X-Requested-With: kith-spa` CSRF header for POST/PUT/PATCH/DELETE
 - Handles cookie-based auth automatically
 - Supports Bearer token auth (for future programmatic access)
+- Null response handling: Endpoint files guard `res.data ?? []` before zod parsing to prevent crashes on unexpected null APIs
 
 **Auth Context**: `lib/auth-context.tsx` manages session state:
 - Stores user info in React context

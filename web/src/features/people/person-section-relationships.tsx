@@ -1,7 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQuery,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Link2, ListPlus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -39,6 +45,14 @@ interface RelationshipsSectionProps {
 }
 
 export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
+	return (
+		<QueryBoundary>
+			<RelationshipsSectionInner personId={personId} />
+		</QueryBoundary>
+	);
+}
+
+function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 	const qc = useQueryClient();
 	const [addOpen, setAddOpen] = useState(false);
 	const [bulkOpen, setBulkOpen] = useState(false);
@@ -50,11 +64,11 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 	const [err, setErr] = useState<string | null>(null);
 	const [confirmRelId, setConfirmRelId] = useState<number | null>(null);
 
-	const { data: rels } = useQuery({
+	const { data: rels } = useSuspenseQuery({
 		queryKey: keys.people.relationships(personId),
 		queryFn: () => listRelationships(personId),
 	});
-	const { data: types } = useQuery({
+	const { data: types } = useSuspenseQuery({
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
 	});
@@ -63,7 +77,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		queryFn: () => listPeople({ q: personSearch || undefined, page_size: 10 }),
 		enabled: personSearch.length > 0,
 	});
-	const { data: myProfile } = useQuery({
+	const { data: myProfile } = useSuspenseQuery({
 		queryKey: keys.me.profile(),
 		queryFn: getMe,
 	});
@@ -99,7 +113,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 		},
 	});
 
-	const confirmRel = rels?.find((r) => r.id === confirmRelId);
+	const confirmRel = rels.find((r) => r.id === confirmRelId);
 
 	return (
 		<div>
@@ -114,7 +128,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 					</Button>
 				</div>
 			</div>
-			{!rels?.length ? (
+			{!rels.length ? (
 				<p className="text-sm text-zinc-400">No relationships yet.</p>
 			) : (
 				<div className="space-y-2">
@@ -167,7 +181,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 								onChange={(e) => setTypeId(Number(e.target.value))}
 							>
 								<option value="">Select…</option>
-								{types?.map((t) => (
+								{types.map((t) => (
 									<option key={t.id} value={t.id}>
 										{t.name}
 									</option>
@@ -177,7 +191,7 @@ export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
 						<div className="space-y-1">
 							<div className="flex items-center gap-2">
 								<Label>Person</Label>
-								{myProfile && myProfile.id !== personId && !otherPersonId && (
+								{myProfile.id !== personId && !otherPersonId && (
 									<button
 										type="button"
 										onClick={() => {

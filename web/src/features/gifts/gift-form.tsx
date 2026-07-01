@@ -1,9 +1,10 @@
 // Gift create/edit form — TanStack Form + Zod validation
 import { useForm } from "@tanstack/react-form";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -25,7 +26,21 @@ interface GiftFormProps {
 	onImageChange?: (file: File | null) => void;
 }
 
-export function GiftForm({
+const formFallback = (
+	<div className="py-8 text-center text-[13px] text-zinc-400">
+		Loading form…
+	</div>
+);
+
+export function GiftForm(props: GiftFormProps) {
+	return (
+		<QueryBoundary fallback={formFallback}>
+			<GiftFormInner {...props} />
+		</QueryBoundary>
+	);
+}
+
+function GiftFormInner({
 	initial,
 	onSubmit,
 	submitLabel = "Save Gift",
@@ -40,7 +55,7 @@ export function GiftForm({
 			: "",
 	);
 
-	const { data: peopleList } = useQuery({
+	const { data: peopleList } = useSuspenseQuery({
 		queryKey: keys.people.list({}),
 		queryFn: () => listPeople({ page_size: 200 }),
 	});
@@ -75,10 +90,9 @@ export function GiftForm({
 		},
 	});
 
-	const filteredPeople =
-		peopleList?.items.filter((p) =>
-			p.name.toLowerCase().includes(personSearch.toLowerCase()),
-		) ?? [];
+	const filteredPeople = peopleList.items.filter((p) =>
+		p.name.toLowerCase().includes(personSearch.toLowerCase()),
+	);
 
 	return (
 		<form
@@ -99,7 +113,7 @@ export function GiftForm({
 				<Label>Person</Label>
 				<form.Field name="person_id">
 					{(field) => {
-						const selected = peopleList?.items.find(
+						const selected = peopleList.items.find(
 							(p) => p.id === field.state.value,
 						);
 						return (

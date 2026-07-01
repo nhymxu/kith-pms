@@ -14,7 +14,7 @@ export async function listDatesByPerson(
 	personId: number,
 ): Promise<ImportantDateList> {
 	const res = await apiFetch<Envelope<unknown>>(`/v1/people/${personId}/dates`);
-	return importantDateListSchema.parse(res.data);
+	return importantDateListSchema.parse(res.data ?? []);
 }
 
 export async function replaceDatesForPerson(
@@ -31,5 +31,5 @@ export async function listUpcomingDates(days = 30): Promise<UpcomingDatesList> {
 	const res = await apiFetch<Envelope<unknown>>(
 		`/v1/important-dates/upcoming?days=${days}`,
 	);
-	return upcomingDatesListSchema.parse(res.data);
+	return upcomingDatesListSchema.parse(res.data ?? []);
 }

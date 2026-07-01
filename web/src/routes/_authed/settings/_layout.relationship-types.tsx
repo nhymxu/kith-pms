@@ -1,10 +1,15 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
@@ -161,32 +166,24 @@ type DialogMode =
 	| { kind: "delete"; relType: RelationshipType }
 	| null;
 
-function RelationshipTypesPage() {
-	const [dialog, setDialog] = useState<DialogMode>(null);
-	const { data, isPending } = useQuery({
+interface RelationshipTypesListProps {
+	onDialogChange: (dialog: DialogMode) => void;
+}
+
+function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
+	const { data } = useSuspenseQuery({
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
 	});
 
 	return (
-		<div className="space-y-4 max-w-xl">
-			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
-					Relationship Types
-				</h1>
-				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Type
-				</Button>
-			</div>
-
-			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
-
-			{data && data.length === 0 && (
+		<>
+			{data.length === 0 && (
 				<p className="text-[13px] text-zinc-500">No relationship types yet.</p>
 			)}
 
 			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
-				{data?.map((rt) => (
+				{data.map((rt) => (
 					<li
 						key={rt.id}
 						className="flex items-center gap-3 px-4 py-3 text-[13px]"
@@ -206,14 +203,14 @@ function RelationshipTypesPage() {
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={() => setDialog({ kind: "edit", relType: rt })}
+								onClick={() => onDialogChange({ kind: "edit", relType: rt })}
 							>
 								<Pencil className="size-3.5" />
 							</Button>
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={() => setDialog({ kind: "delete", relType: rt })}
+								onClick={() => onDialogChange({ kind: "delete", relType: rt })}
 							>
 								<Trash2 className="size-3.5" />
 							</Button>
@@ -221,6 +218,27 @@ function RelationshipTypesPage() {
 					</li>
 				))}
 			</ul>
+		</>
+	);
+}
+
+function RelationshipTypesPage() {
+	const [dialog, setDialog] = useState<DialogMode>(null);
+
+	return (
+		<div className="space-y-4 max-w-xl">
+			<div className="flex items-center justify-between">
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					Relationship Types
+				</h1>
+				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
+					<Plus className="size-3 mr-1" /> New Type
+				</Button>
+			</div>
+
+			<QueryBoundary>
+				<RelationshipTypesList onDialogChange={setDialog} />
+			</QueryBoundary>
 
 			<Dialog
 				open={dialog?.kind === "create" || dialog?.kind === "edit"}

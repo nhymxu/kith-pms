@@ -31,15 +31,22 @@ const HasResolvedContext = createContext<boolean>(false);
 interface AuthProviderProps {
 	children: ReactNode;
 	onClearCache?: () => void;
+	// AuthProvider mounts above RouterProvider (router context needs live auth
+	// state), so useNavigate() isn't available here — the redirect is injected
+	// from main.tsx via router.navigate instead.
+	onSessionCleared?: () => void;
 }
 
-export function AuthProvider({ children, onClearCache }: AuthProviderProps) {
+export function AuthProvider({
+	children,
+	onClearCache,
+	onSessionCleared,
+}: AuthProviderProps) {
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	// hasResolved flips true after the first /v1/auth/me settles (success or 401).
 	// RequireAuth gates navigation on this — never redirects before the fetch completes.
 	const [hasResolved, setHasResolved] = useState(false);
-	const navigate = useNavigate();
 
 	// Stable reference so the session-lost subscription doesn't re-subscribe on every render.
 	const stableOnClearCache = useCallback(() => {
@@ -49,8 +56,8 @@ export function AuthProvider({ children, onClearCache }: AuthProviderProps) {
 	const clearSession = useCallback(() => {
 		setUser(null);
 		stableOnClearCache();
-		navigate({ to: "/login" });
-	}, [navigate, stableOnClearCache]);
+		onSessionCleared?.();
+	}, [stableOnClearCache, onSessionCleared]);
 
 	// Fetch current user on mount
 	const fetchMe = useCallback(async () => {

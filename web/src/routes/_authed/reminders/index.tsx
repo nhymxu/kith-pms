@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -10,13 +10,19 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/reminders/")({
 	component: RemindersPage,
+	pendingComponent: () => (
+		<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-[13px] text-red-600">Failed to load reminders.</p>
+	),
 });
 
 function RemindersPage() {
 	const [tab, setTab] = useState<ReminderStatus>("upcoming");
 	const qc = useQueryClient();
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: [
 			...keys.reminders.list({
 				completed:
@@ -26,11 +32,6 @@ function RemindersPage() {
 		],
 		queryFn: () => listReminders({ status: tab }),
 	});
-
-	if (isError)
-		return (
-			<p className="text-[13px] text-red-600">Failed to load reminders.</p>
-		);
 
 	return (
 		<div className="space-y-4">
@@ -51,16 +52,12 @@ function RemindersPage() {
 				</TabsList>
 
 				<TabsContent value={tab}>
-					{isPending ? (
-						<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
-					) : (
-						<RemindersTable
-							data={data ?? []}
-							onCompleted={() =>
-								qc.invalidateQueries({ queryKey: keys.reminders.all })
-							}
-						/>
-					)}
+					<RemindersTable
+						data={data}
+						onCompleted={() =>
+							qc.invalidateQueries({ queryKey: keys.reminders.all })
+						}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

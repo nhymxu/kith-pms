@@ -103,7 +103,7 @@ export async function listRelationships(
 	const res = await apiFetch<Envelope<unknown>>(
 		`/v1/people/${personId}/relationships`,
 	);
-	return relationshipViewListSchema.parse(res.data);
+	return relationshipViewListSchema.parse(res.data ?? []);
 }
 
 export async function attachRelationship(
@@ -135,7 +135,7 @@ export async function listWorkHistory(personId: number): Promise<WorkEntry[]> {
 	const res = await apiFetch<{ data: unknown }>(
 		`/v1/people/${personId}/work-history`,
 	);
-	return workEntryListSchema.parse(res.data);
+	return workEntryListSchema.parse(res.data ?? []);
 }
 
 export interface WorkEntryRequest {

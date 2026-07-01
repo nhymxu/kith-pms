@@ -1,11 +1,12 @@
 // Journal create/edit form — TanStack Form + Zod, people + label multi-select
 import { useForm } from "@tanstack/react-form";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Label } from "#/components/ui/label";
@@ -27,7 +28,21 @@ interface JournalFormProps {
 	defaultPersonId?: number;
 }
 
-export function JournalForm({
+const formFallback = (
+	<div className="py-8 text-center text-[13px] text-zinc-400">
+		Loading form…
+	</div>
+);
+
+export function JournalForm(props: JournalFormProps) {
+	return (
+		<QueryBoundary fallback={formFallback}>
+			<JournalFormInner {...props} />
+		</QueryBoundary>
+	);
+}
+
+function JournalFormInner({
 	initial,
 	onSubmit,
 	submitLabel = "Save Entry",
@@ -36,16 +51,16 @@ export function JournalForm({
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [searchQ, setSearchQ] = useState("");
 
-	const { data: peopleList } = useQuery({
+	const { data: peopleList } = useSuspenseQuery({
 		queryKey: keys.people.list({ q: searchQ || undefined }),
 		queryFn: () => listPeople({ q: searchQ || undefined, page_size: 50 }),
 	});
 
-	const { data: allLabels } = useQuery({
+	const { data: allLabels } = useSuspenseQuery({
 		queryKey: keys.journalLabels.list(),
 		queryFn: listJournalLabels,
 	});
-	const { data: myProfile } = useQuery({
+	const { data: myProfile } = useSuspenseQuery({
 		queryKey: keys.me.profile(),
 		queryFn: getMe,
 	});
@@ -117,16 +132,18 @@ export function JournalForm({
 					const selectedIds: number[] = Array.isArray(f.state.value)
 						? f.state.value
 						: [];
-					const selectedPeople =
-						peopleList?.items.filter((p) => selectedIds.includes(p.id)) ?? [];
-					const unselected =
-						peopleList?.items.filter((p) => !selectedIds.includes(p.id)) ?? [];
+					const selectedPeople = peopleList.items.filter((p) =>
+						selectedIds.includes(p.id),
+					);
+					const unselected = peopleList.items.filter(
+						(p) => !selectedIds.includes(p.id),
+					);
 
 					return (
 						<div className="space-y-2">
 							<div className="flex items-center gap-2">
 								<Label>People</Label>
-								{myProfile && !selectedIds.includes(myProfile.id) && (
+								{!selectedIds.includes(myProfile.id) && (
 									<button
 										type="button"
 										onClick={() =>
@@ -222,10 +239,10 @@ export function JournalForm({
 					const selectedIds: number[] = Array.isArray(f.state.value)
 						? f.state.value
 						: [];
-					const selected =
-						allLabels?.filter((l) => selectedIds.includes(l.id)) ?? [];
-					const unselected =
-						allLabels?.filter((l) => !selectedIds.includes(l.id)) ?? [];
+					const selected = allLabels.filter((l) => selectedIds.includes(l.id));
+					const unselected = allLabels.filter(
+						(l) => !selectedIds.includes(l.id),
+					);
 
 					return (
 						<div className="space-y-2">
@@ -255,7 +272,7 @@ export function JournalForm({
 									))}
 								</div>
 							)}
-							{allLabels && allLabels.length > 0 ? (
+							{allLabels.length > 0 ? (
 								unselected.length > 0 && (
 									<div className="flex flex-wrap gap-1">
 										{unselected.map((l) => (

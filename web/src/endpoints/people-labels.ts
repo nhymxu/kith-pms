@@ -11,7 +11,7 @@ type Envelope<T> = { data: T };
 
 export async function listPeopleLabels(): Promise<PeopleLabelList> {
 	const res = await apiFetch<Envelope<unknown>>("/v1/people-labels");
-	return peopleLabelListSchema.parse(res.data);
+	return peopleLabelListSchema.parse(res.data ?? []);
 }
 
 export async function getPeopleLabel(id: number): Promise<PeopleLabel> {

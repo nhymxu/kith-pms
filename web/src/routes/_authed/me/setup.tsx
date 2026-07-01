@@ -1,6 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
@@ -20,11 +25,6 @@ function MeSetupPage() {
 	const [selected, setSelected] = useState<number | null>(null);
 	const [apiError, setApiError] = useState<string | null>(null);
 
-	const { data: peopleList } = useQuery({
-		queryKey: keys.people.list({ q: q || undefined }),
-		queryFn: () => listPeople({ q: q || undefined, page_size: 30 }),
-	});
-
 	const mutation = useMutation({
 		mutationFn: (personId: number) => setupMe(personId),
 		onSuccess: () => {
@@ -34,9 +34,6 @@ function MeSetupPage() {
 		onError: (e) =>
 			setApiError(e instanceof Error ? e.message : "Setup failed"),
 	});
-
-	const people = peopleList?.items ?? [];
-	const selectedPerson = people.find((p) => p.id === selected);
 
 	return (
 		<div className="space-y-4 max-w-[480px]">
@@ -59,12 +56,47 @@ function MeSetupPage() {
 				onChange={(e) => setQ(e.target.value)}
 			/>
 
+			<QueryBoundary>
+				<PeopleSelectionList
+					q={q}
+					selected={selected}
+					onSelect={setSelected}
+					mutation={mutation}
+				/>
+			</QueryBoundary>
+		</div>
+	);
+}
+
+interface PeopleSelectionListProps {
+	q: string;
+	selected: number | null;
+	onSelect: (id: number) => void;
+	mutation: ReturnType<typeof useMutation<number, Error, number>>;
+}
+
+function PeopleSelectionList({
+	q,
+	selected,
+	onSelect,
+	mutation,
+}: PeopleSelectionListProps) {
+	const { data: peopleList } = useSuspenseQuery({
+		queryKey: keys.people.list({ q: q || undefined }),
+		queryFn: () => listPeople({ q: q || undefined, page_size: 30 }),
+	});
+
+	const people = peopleList.items;
+	const selectedPerson = people.find((p) => p.id === selected);
+
+	return (
+		<>
 			<div className="space-y-2 max-h-80 overflow-y-auto">
 				{people.map((p) => (
 					<button
 						key={p.id}
 						type="button"
-						onClick={() => setSelected(p.id)}
+						onClick={() => onSelect(p.id)}
 						className={[
 							"w-full text-left border rounded-md px-3 py-2.5 transition-colors text-[13px]",
 							selected === p.id
@@ -100,6 +132,6 @@ function MeSetupPage() {
 					</CardContent>
 				</Card>
 			)}
-		</div>
+		</>
 	);
 }

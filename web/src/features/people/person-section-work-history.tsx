@@ -1,6 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
@@ -108,17 +113,17 @@ function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
 	);
 }
 
-interface WorkHistorySectionProps {
+interface WorkHistorySectionInnerProps {
 	personId: number;
 }
 
-export function WorkHistorySection({ personId }: WorkHistorySectionProps) {
+function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-	const { data = [] } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.people.workHistory(personId),
 		queryFn: () => listWorkHistory(personId),
 	});
@@ -287,5 +292,17 @@ export function WorkHistorySection({ personId }: WorkHistorySectionProps) {
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+interface WorkHistorySectionProps {
+	personId: number;
+}
+
+export function WorkHistorySection({ personId }: WorkHistorySectionProps) {
+	return (
+		<QueryBoundary>
+			<WorkHistorySectionInner personId={personId} />
+		</QueryBoundary>
 	);
 }

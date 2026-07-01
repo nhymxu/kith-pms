@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
@@ -22,6 +22,14 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_authed/journal/")({
 	validateSearch: searchSchema,
 	component: JournalPage,
+	pendingComponent: () => (
+		<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-sm font-base text-destructive">
+			Failed to load journal.
+		</p>
+	),
 });
 
 const PEOPLE_FILTER_KEY = "journal.filter.people_with_journal";
@@ -34,7 +42,7 @@ function JournalPage() {
 		() => localStorage.getItem(PEOPLE_FILTER_KEY) !== "false",
 	);
 
-	const { data, isPending, isError, error } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.journal.list({
 			page: search.page,
 			page_size: search.page_size,
@@ -54,7 +62,7 @@ function JournalPage() {
 			}),
 	});
 
-	const { data: allPeople } = useQuery({
+	const { data: allPeople } = useSuspenseQuery({
 		queryKey: keys.people.list({
 			page_size: 500,
 			has_journal: onlyWithJournal || undefined,
@@ -63,19 +71,10 @@ function JournalPage() {
 			listPeople({ page_size: 500, has_journal: onlyWithJournal || undefined }),
 	});
 
-	const { data: allJournalLabels } = useQuery({
+	const { data: allJournalLabels } = useSuspenseQuery({
 		queryKey: keys.journalLabels.list(),
 		queryFn: listJournalLabels,
 	});
-
-	if (isError) {
-		console.error("[journal] load error:", error);
-		return (
-			<p className="text-sm font-base text-destructive">
-				Failed to load journal.
-			</p>
-		);
-	}
 
 	return (
 		<div className="space-y-4">
@@ -179,7 +178,7 @@ function JournalPage() {
 						<span className="text-[11px] text-zinc-500">With journal only</span>
 					</label>
 				</div>
-				{allPeople?.items && allPeople.items.length > 0 && (
+				{allPeople.items.length > 0 && (
 					<div className="flex flex-wrap gap-2">
 						{allPeople.items.map((p) => {
 							const active = (search.people ?? []).includes(p.id);
@@ -238,7 +237,7 @@ function JournalPage() {
 			</div>
 
 			{/* Journal label filter */}
-			{allJournalLabels && allJournalLabels.length > 0 && (
+			{allJournalLabels.length > 0 && (
 				<div className="space-y-1">
 					<p className="text-[11px] font-medium text-zinc-500">
 						Filter by label
@@ -288,11 +287,7 @@ function JournalPage() {
 				</div>
 			)}
 
-			{isPending ? (
-				<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
-			) : (
-				<JournalTimeline data={data?.items ?? []} />
-			)}
+			<JournalTimeline data={data.items} />
 		</div>
 	);
 }

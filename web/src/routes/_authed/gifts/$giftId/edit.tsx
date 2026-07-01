@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
@@ -15,6 +19,12 @@ import type { GiftRequest } from "#/schemas/gift";
 
 export const Route = createFileRoute("/_authed/gifts/$giftId/edit")({
 	component: EditGiftPage,
+	pendingComponent: () => (
+		<p className="text-sm font-base text-foreground/60">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-sm font-base text-destructive">Gift not found.</p>
+	),
 });
 
 function EditGiftPage() {
@@ -23,7 +33,7 @@ function EditGiftPage() {
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.gifts.detail(id),
 		queryFn: () => getGift(id),
 	});
@@ -46,13 +56,6 @@ function EditGiftPage() {
 		mutationFn: () => deleteGiftImage(id),
 		onSuccess: () => qc.invalidateQueries({ queryKey: keys.gifts.detail(id) }),
 	});
-
-	if (isPending)
-		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
-	if (isError || !data)
-		return (
-			<p className="text-sm font-base text-destructive">Gift not found.</p>
-		);
 
 	const handleCancel = () =>
 		navigate({ to: "/gifts/$giftId", params: { giftId } });

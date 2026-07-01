@@ -1,10 +1,15 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Network, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
@@ -163,37 +168,30 @@ type DialogMode =
 	| { kind: "delete"; label: PeopleLabel }
 	| null;
 
-function PeopleLabelsPage() {
-	const [dialog, setDialog] = useState<DialogMode>(null);
-	const [connectingLabel, setConnectingLabel] = useState<PeopleLabel | null>(
-		null,
-	);
-	const { data, isPending } = useQuery({
+interface PeopleLabelsListProps {
+	onDialogChange: (dialog: DialogMode) => void;
+	onConnectingLabelChange: (label: PeopleLabel) => void;
+}
+
+function PeopleLabelsList({
+	onDialogChange,
+	onConnectingLabelChange,
+}: PeopleLabelsListProps) {
+	const { data } = useSuspenseQuery({
 		queryKey: keys.peopleLabels.list(),
 		queryFn: listPeopleLabels,
 	});
 
 	return (
-		<div className="space-y-4 max-w-xl">
-			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
-					People Labels
-				</h1>
-				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Label
-				</Button>
-			</div>
-
-			{isPending && <p className="text-[13px] text-zinc-500">Loading…</p>}
-
-			{data && data.length === 0 && (
+		<>
+			{data.length === 0 && (
 				<p className="text-[13px] text-zinc-500">
 					No labels yet. Create one to start categorising people.
 				</p>
 			)}
 
 			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
-				{data?.map((label) => (
+				{data.map((label) => (
 					<li key={label.id} className="flex items-center gap-3 px-4 py-3">
 						<span
 							className="size-3 rounded-full shrink-0"
@@ -210,21 +208,21 @@ function PeopleLabelsPage() {
 								variant="ghost"
 								size="icon"
 								title="Connect members"
-								onClick={() => setConnectingLabel(label)}
+								onClick={() => onConnectingLabelChange(label)}
 							>
 								<Network className="size-3.5" />
 							</Button>
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={() => setDialog({ kind: "edit", label })}
+								onClick={() => onDialogChange({ kind: "edit", label })}
 							>
 								<Pencil className="size-3.5" />
 							</Button>
 							<Button
 								variant="ghost"
 								size="icon"
-								onClick={() => setDialog({ kind: "delete", label })}
+								onClick={() => onDialogChange({ kind: "delete", label })}
 							>
 								<Trash2 className="size-3.5" />
 							</Button>
@@ -232,6 +230,33 @@ function PeopleLabelsPage() {
 					</li>
 				))}
 			</ul>
+		</>
+	);
+}
+
+function PeopleLabelsPage() {
+	const [dialog, setDialog] = useState<DialogMode>(null);
+	const [connectingLabel, setConnectingLabel] = useState<PeopleLabel | null>(
+		null,
+	);
+
+	return (
+		<div className="space-y-4 max-w-xl">
+			<div className="flex items-center justify-between">
+				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					People Labels
+				</h1>
+				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
+					<Plus className="size-3 mr-1" /> New Label
+				</Button>
+			</div>
+
+			<QueryBoundary>
+				<PeopleLabelsList
+					onDialogChange={setDialog}
+					onConnectingLabelChange={setConnectingLabel}
+				/>
+			</QueryBoundary>
 
 			<Dialog
 				open={dialog?.kind === "create" || dialog?.kind === "edit"}

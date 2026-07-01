@@ -1,6 +1,7 @@
 // Upcoming dates list: grouped by month, shows person name, date type, exact date + days-until badge
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { QueryBoundary } from "#/components/query-boundary";
 import { listUpcomingDates } from "#/endpoints/important-dates";
 import { keys } from "#/query-keys";
 
@@ -65,17 +66,13 @@ function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
 	);
 }
 
-export function DatesList() {
-	const { data, isPending, isError } = useQuery({
+function DatesListInner() {
+	const { data } = useSuspenseQuery({
 		queryKey: keys.dates.upcoming(),
 		queryFn: () => listUpcomingDates(90),
 	});
 
-	if (isPending)
-		return <p className="text-[13px] text-zinc-500">Loading upcoming dates…</p>;
-	if (isError)
-		return <p className="text-[13px] text-red-600">Failed to load dates.</p>;
-	if (!data?.length)
+	if (!data.length)
 		return (
 			<p className="text-[13px] text-zinc-500">
 				No upcoming dates in the next 90 days.
@@ -128,5 +125,17 @@ export function DatesList() {
 				</div>
 			))}
 		</div>
+	);
+}
+
+const datesListFallback = (
+	<p className="text-[13px] text-zinc-500">Loading upcoming dates…</p>
+);
+
+export function DatesList() {
+	return (
+		<QueryBoundary fallback={datesListFallback}>
+			<DatesListInner />
+		</QueryBoundary>
 	);
 }

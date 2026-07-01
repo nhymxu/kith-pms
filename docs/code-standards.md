@@ -138,7 +138,10 @@ if err := tx.Commit(); err != nil {
 ### Data Fetching
 - **TanStack Query v5** with 5-minute stale time, 10-minute cache duration
 - Define endpoints in `web/src/endpoints/*.ts` (e.g. `people.ts`, `journal.ts`, `gifts.ts`, `reminders.ts`)
-- Use `useQuery` / `useMutation` hooks
+- **Query hooks**: Use `useSuspenseQuery` (for routes/inner components within Suspense boundaries) or `useQuery` (for composite UI requiring `isLoading`/`isError` state like dashboard). Never mix patterns in the same component.
+- **Suspense boundaries**: Wrap components using `useSuspenseQuery` with `<QueryBoundary>` (shared component in `web/src/components/query-boundary.tsx`) or `<Suspense>`. Shows fallback UI while queries load.
+- **Error handling**: Route-level `errorComponent` (defined on `createFileRoute()`) catches suspended errors. Scoped `errorComponent` on detail routes shows domain-specific messages (e.g., "Gift not found."). Global `errorComponent` on `/_authed` layout handles auth-related errors.
+- **Exception**: Dashboard intentionally uses `useQuery` to preserve composite KPI/chart state across queries; does not use Suspense.
 - Query keys centralized in `web/src/query-keys.ts`
 
 ### Forms

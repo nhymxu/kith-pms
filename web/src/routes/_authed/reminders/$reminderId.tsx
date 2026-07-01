@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
@@ -19,6 +23,12 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/reminders/$reminderId")({
 	component: ReminderDetailPage,
+	pendingComponent: () => (
+		<p className="text-sm font-base text-foreground/60">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-sm font-base text-destructive">Reminder not found.</p>
+	),
 });
 
 function ReminderDetailPage() {
@@ -28,7 +38,7 @@ function ReminderDetailPage() {
 	const qc = useQueryClient();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.reminders.detail(id),
 		queryFn: () => getReminder(id),
 	});
@@ -40,13 +50,6 @@ function ReminderDetailPage() {
 			navigate({ to: "/reminders" });
 		},
 	});
-
-	if (isPending)
-		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
-	if (isError || !data)
-		return (
-			<p className="text-sm font-base text-destructive">Reminder not found.</p>
-		);
 
 	const isOverdue = !data.completed && new Date(data.due_date) < new Date();
 

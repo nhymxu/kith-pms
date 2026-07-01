@@ -12,7 +12,7 @@ type Envelope<T> = { data: T };
 
 export async function listLabels(): Promise<LabelList> {
 	const res = await apiFetch<Envelope<unknown>>("/v1/labels");
-	return labelListSchema.parse(res.data);
+	return labelListSchema.parse(res.data ?? []);
 }
 
 export async function getLabel(id: number): Promise<Label> {

@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -18,6 +22,12 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/journal/$entryId/")({
 	component: JournalEntryPage,
+	pendingComponent: () => (
+		<p className="text-sm font-base text-foreground/60">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-sm font-base text-destructive">Entry not found.</p>
+	),
 });
 
 function JournalEntryPage() {
@@ -27,7 +37,7 @@ function JournalEntryPage() {
 	const qc = useQueryClient();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.journal.detail(id),
 		queryFn: () => getJournalEntry(id),
 	});
@@ -39,13 +49,6 @@ function JournalEntryPage() {
 			navigate({ to: "/journal" });
 		},
 	});
-
-	if (isPending)
-		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
-	if (isError || !data)
-		return (
-			<p className="text-sm font-base text-destructive">Entry not found.</p>
-		);
 
 	return (
 		<div className="max-w-[760px] space-y-4">

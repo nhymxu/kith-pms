@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -7,40 +7,41 @@ import { getMe } from "#/endpoints/me";
 import { getAvatarUrl } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 
+// 404 from getMe means Me is not set up yet — a valid state, not a load failure,
+// so the scoped errorComponent reproduces the "set up" CTA rather than a generic error.
+function MeNotSetUp() {
+	return (
+		<div className="space-y-4 max-w-md">
+			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				My Profile
+			</h1>
+			<Card>
+				<CardContent className="pt-6 space-y-3">
+					<p className="text-sm font-base">
+						You haven't set up your self-profile yet. Pick an existing person to
+						represent yourself.
+					</p>
+					<Button asChild>
+						<Link to="/me/setup">Set up my profile</Link>
+					</Button>
+				</CardContent>
+			</Card>
+		</div>
+	);
+}
+
 export const Route = createFileRoute("/_authed/me/")({
 	component: MePage,
+	pendingComponent: () => <p className="text-[13px] text-zinc-500">Loading…</p>,
+	errorComponent: MeNotSetUp,
 });
 
 function MePage() {
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.me.profile(),
 		queryFn: getMe,
 		retry: false,
 	});
-
-	if (isPending) return <p className="text-[13px] text-zinc-500">Loading…</p>;
-
-	// 404 from getMe means Me is not set up yet
-	if (isError || !data) {
-		return (
-			<div className="space-y-4 max-w-md">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
-					My Profile
-				</h1>
-				<Card>
-					<CardContent className="pt-6 space-y-3">
-						<p className="text-sm font-base">
-							You haven't set up your self-profile yet. Pick an existing person
-							to represent yourself.
-						</p>
-						<Button asChild>
-							<Link to="/me/setup">Set up my profile</Link>
-						</Button>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
 
 	return (
 		<div className="space-y-4 max-w-md">

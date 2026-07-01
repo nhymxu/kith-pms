@@ -1,5 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
 import {
 	Select,
@@ -18,7 +23,15 @@ interface BulkActionBarProps {
 	onClear: () => void;
 }
 
-export function BulkActionBar({
+export function BulkActionBar(props: BulkActionBarProps) {
+	return (
+		<QueryBoundary>
+			<BulkActionBarInner {...props} />
+		</QueryBoundary>
+	);
+}
+
+function BulkActionBarInner({
 	selectedCount,
 	personIds,
 	onClear,
@@ -28,7 +41,7 @@ export function BulkActionBar({
 	const [connectOpen, setConnectOpen] = useState(false);
 	const qc = useQueryClient();
 
-	const { data: labels } = useQuery({
+	const { data: labels } = useSuspenseQuery({
 		queryKey: keys.peopleLabels.list(),
 		queryFn: listPeopleLabels,
 	});
@@ -64,7 +77,7 @@ export function BulkActionBar({
 					<SelectValue placeholder="Assign label…" />
 				</SelectTrigger>
 				<SelectContent>
-					{labels?.map((l) => (
+					{labels.map((l) => (
 						<SelectItem key={l.id} value={String(l.id)}>
 							{l.name}
 						</SelectItem>

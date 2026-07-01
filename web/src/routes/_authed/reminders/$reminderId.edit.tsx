@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { getReminder, updateReminder } from "#/endpoints/reminders";
 import { ReminderForm } from "#/features/reminders/reminder-form";
@@ -7,6 +11,12 @@ import type { ReminderRequest } from "#/schemas/reminder";
 
 export const Route = createFileRoute("/_authed/reminders/$reminderId/edit")({
 	component: EditReminderPage,
+	pendingComponent: () => (
+		<p className="text-sm font-base text-foreground/60">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-sm font-base text-destructive">Reminder not found.</p>
+	),
 });
 
 function EditReminderPage() {
@@ -15,7 +25,7 @@ function EditReminderPage() {
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.reminders.detail(id),
 		queryFn: () => getReminder(id),
 	});
@@ -28,13 +38,6 @@ function EditReminderPage() {
 			navigate({ to: "/reminders/$reminderId", params: { reminderId } });
 		},
 	});
-
-	if (isPending)
-		return <p className="text-sm font-base text-foreground/60">Loading…</p>;
-	if (isError || !data)
-		return (
-			<p className="text-sm font-base text-destructive">Reminder not found.</p>
-		);
 
 	return (
 		<div className="max-w-lg space-y-4">

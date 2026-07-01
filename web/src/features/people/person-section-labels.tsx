@@ -1,6 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
@@ -23,14 +28,14 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 	);
 }
 
-interface LabelsSectionProps {
+interface LabelsSectionInnerProps {
 	person: Person;
 }
 
-export function LabelsSection({ person }: LabelsSectionProps) {
+function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 	const qc = useQueryClient();
 	const [confirmDetachId, setConfirmDetachId] = useState<number | null>(null);
-	const { data: allLabels } = useQuery({
+	const { data: allLabels } = useSuspenseQuery({
 		queryKey: keys.peopleLabels.list(),
 		queryFn: listPeopleLabels,
 	});
@@ -52,11 +57,10 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 		},
 	});
 
-	const available = allLabels?.filter((l) => !attachedIds.has(l.id)) ?? [];
+	const available = allLabels.filter((l) => !attachedIds.has(l.id));
 
 	return (
-		<div>
-			<SectionHeading>Labels</SectionHeading>
+		<>
 			<div className="space-y-3">
 				<div>
 					<p className="text-[11px] text-zinc-400 mb-1">Attached</p>
@@ -132,6 +136,21 @@ export function LabelsSection({ person }: LabelsSectionProps) {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+		</>
+	);
+}
+
+interface LabelsSectionProps {
+	person: Person;
+}
+
+export function LabelsSection({ person }: LabelsSectionProps) {
+	return (
+		<div>
+			<SectionHeading>Labels</SectionHeading>
+			<QueryBoundary>
+				<LabelsSectionInner person={person} />
+			</QueryBoundary>
 		</div>
 	);
 }

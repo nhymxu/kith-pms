@@ -28,7 +28,7 @@ export async function listReminders(
 	const res = await apiFetch<Envelope<unknown>>(
 		`/v1/reminders${query ? `?${query}` : ""}`,
 	);
-	return reminderListSchema.parse(res.data);
+	return reminderListSchema.parse(res.data ?? []);
 }
 
 export async function getReminder(id: number): Promise<ReminderWithPerson> {

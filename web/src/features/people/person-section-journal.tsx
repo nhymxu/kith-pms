@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
 import { PersonChip } from "#/features/journal/person-label-chip";
@@ -16,17 +17,59 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 	);
 }
 
+interface JournalListInnerProps {
+	personId: number;
+}
+
+function JournalListInner({ personId }: JournalListInnerProps) {
+	const { data } = useSuspenseQuery({
+		queryKey: keys.journal.list({ person_ids: [personId] }),
+		queryFn: () => listJournal({ person_ids: [personId], page_size: 20 }),
+	});
+	const entries = data.items;
+
+	if (entries.length === 0) {
+		return (
+			<p className="text-sm text-zinc-400">
+				No journal entries for this person.
+			</p>
+		);
+	}
+
+	return (
+		<div className="space-y-2">
+			{entries.map((e) => (
+				<Link
+					key={e.id}
+					to="/journal/$entryId"
+					params={{ entryId: String(e.id) }}
+					className="block p-2 border border-zinc-200 rounded-md hover:bg-zinc-50 text-sm"
+				>
+					<div className="flex items-center gap-2">
+						<span className="font-medium flex-1">{e.title}</span>
+						<span className="text-zinc-400 text-xs">{e.occurred_at_date}</span>
+					</div>
+					{e.people.length > 1 && (
+						<div className="flex gap-1 mt-1 flex-wrap">
+							{e.people
+								.filter((p) => p.person_id !== personId)
+								.map((p) => (
+									<PersonChip key={p.person_id} p={p} />
+								))}
+						</div>
+					)}
+				</Link>
+			))}
+		</div>
+	);
+}
+
 interface JournalSectionProps {
 	personId: number;
 }
 
 export function JournalSection({ personId }: JournalSectionProps) {
 	const [journalOpen, setJournalOpen] = useState(false);
-	const { data } = useQuery({
-		queryKey: keys.journal.list({ person_ids: [personId] }),
-		queryFn: () => listJournal({ person_ids: [personId], page_size: 20 }),
-	});
-	const entries = data?.items ?? [];
 
 	return (
 		<div>
@@ -40,38 +83,9 @@ export function JournalSection({ personId }: JournalSectionProps) {
 					<Plus className="size-3" /> Quick journal
 				</Button>
 			</div>
-			{entries.length === 0 ? (
-				<p className="text-sm text-zinc-400">
-					No journal entries for this person.
-				</p>
-			) : (
-				<div className="space-y-2">
-					{entries.map((e) => (
-						<Link
-							key={e.id}
-							to="/journal/$entryId"
-							params={{ entryId: String(e.id) }}
-							className="block p-2 border border-zinc-200 rounded-md hover:bg-zinc-50 text-sm"
-						>
-							<div className="flex items-center gap-2">
-								<span className="font-medium flex-1">{e.title}</span>
-								<span className="text-zinc-400 text-xs">
-									{e.occurred_at_date}
-								</span>
-							</div>
-							{e.people.length > 1 && (
-								<div className="flex gap-1 mt-1 flex-wrap">
-									{e.people
-										.filter((p) => p.person_id !== personId)
-										.map((p) => (
-											<PersonChip key={p.person_id} p={p} />
-										))}
-								</div>
-							)}
-						</Link>
-					))}
-				</div>
-			)}
+			<QueryBoundary>
+				<JournalListInner personId={personId} />
+			</QueryBoundary>
 			<QuickJournalDialog
 				personId={personId}
 				open={journalOpen}

@@ -22,7 +22,10 @@ if (!rootEl) throw new Error("Root element not found");
 createRoot(rootEl).render(
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>
-			<AuthProvider onClearCache={() => queryClient.clear()}>
+			<AuthProvider
+				onClearCache={() => queryClient.clear()}
+				onSessionCleared={() => router.navigate({ to: "/login" })}
+			>
 				<InnerApp />
 			</AuthProvider>
 		</QueryClientProvider>

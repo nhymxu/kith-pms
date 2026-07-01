@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { useEffect, useRef, useState } from "react";
@@ -192,6 +192,7 @@ export function PeopleTable({
 				page_size,
 				sort,
 			}),
+		placeholderData: keepPreviousData,
 	});
 
 	const { data: allLabelsData } = useQuery({

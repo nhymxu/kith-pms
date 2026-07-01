@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
@@ -14,13 +14,19 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_authed/audit/")({
 	validateSearch: searchSchema,
 	component: AuditPage,
+	pendingComponent: () => (
+		<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
+	),
+	errorComponent: () => (
+		<p className="text-[13px] text-red-600">Failed to load audit log.</p>
+	),
 });
 
 function AuditPage() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
-	const { data, isPending, isError } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.audit.list({
 			from_date: search.from_date,
 			to_date: search.to_date,
@@ -28,11 +34,6 @@ function AuditPage() {
 		queryFn: () =>
 			listAudit({ from_date: search.from_date, to_date: search.to_date }),
 	});
-
-	if (isError)
-		return (
-			<p className="text-[13px] text-red-600">Failed to load audit log.</p>
-		);
 
 	return (
 		<div className="space-y-4">
@@ -106,11 +107,7 @@ function AuditPage() {
 				)}
 			</div>
 
-			{isPending ? (
-				<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
-			) : (
-				<AuditTable data={data?.data ?? []} />
-			)}
+			<AuditTable data={data.data} />
 		</div>
 	);
 }

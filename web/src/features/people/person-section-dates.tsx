@@ -1,6 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Check, Lock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -97,21 +102,21 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 	);
 }
 
-interface ImportantDatesSectionProps {
+interface ImportantDatesSectionInnerProps {
 	personId: number;
 	person: Person;
 }
 
-export function ImportantDatesSection({
+function ImportantDatesSectionInner({
 	personId,
 	person,
-}: ImportantDatesSectionProps) {
+}: ImportantDatesSectionInnerProps) {
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-	const { data = [] } = useQuery({
+	const { data } = useSuspenseQuery({
 		queryKey: keys.dates.list(personId),
 		queryFn: () => listDatesByPerson(personId),
 	});
@@ -273,5 +278,21 @@ export function ImportantDatesSection({
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+interface ImportantDatesSectionProps {
+	personId: number;
+	person: Person;
+}
+
+export function ImportantDatesSection({
+	personId,
+	person,
+}: ImportantDatesSectionProps) {
+	return (
+		<QueryBoundary>
+			<ImportantDatesSectionInner personId={personId} person={person} />
+		</QueryBoundary>
 	);
 }

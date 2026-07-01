@@ -10,7 +10,7 @@ type Envelope<T> = { data: T };
 
 export async function listJournalLabels(): Promise<JournalLabel[]> {
 	const res = await apiFetch<Envelope<unknown>>("/v1/journal-labels");
-	return journalLabelListSchema.parse(res.data);
+	return journalLabelListSchema.parse(res.data ?? []);
 }
 
 export async function getJournalLabel(id: number): Promise<JournalLabel> {

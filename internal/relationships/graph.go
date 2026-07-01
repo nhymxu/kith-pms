@@ -202,35 +202,38 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 			}
 		}
 
-		// Deduplicate edges: canonical key is min-max pair.
+		// Canonical direction: source = lower ID, target = higher ID.
 		src, tgt := row.FromPersonID, row.ToPersonID
 		if src > tgt {
 			src, tgt = tgt, src
 		}
 
-		key := fmt.Sprintf("%d-%d", src, tgt)
-		if _, exists := linkMap[key]; exists {
-			continue
-		}
-
-		// Determine type/reverse_type based on canonical direction (source=from, target=to).
+		// Determine type/reverse_type based on canonical direction.
 		var typeName, reverseTypeName string
 		if row.FromPersonID == src {
 			// This row's direction matches canonical (from < to).
 			typeName = row.TypeName
-
 			reverseTypeName = row.ReverseName
+
 			if reverseTypeName == "" {
 				reverseTypeName = typeName
 			}
 		} else {
 			// This row is the inverse direction; swap type names.
 			typeName = row.ReverseName
-
 			reverseTypeName = row.TypeName
+
 			if typeName == "" {
 				typeName = reverseTypeName
 			}
+		}
+
+		// Key includes type name so reciprocal rows for the same relationship
+		// dedup (A→B and B→A produce the same canonical typeName), but two
+		// distinct relationship types between the same pair produce separate links.
+		key := fmt.Sprintf("%d-%d-%s", src, tgt, typeName)
+		if _, exists := linkMap[key]; exists {
+			continue
 		}
 
 		linkMap[key] = GraphLink{

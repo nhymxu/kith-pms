@@ -317,7 +317,7 @@ export default function RelationshipGraph({
 			}
 			setTooltip({
 				name: formatPersonName(n.name, n.nickname),
-				group: n.group,
+				group: (n.groups ?? []).join(", ") || n.group,
 				isSelf: n.is_self,
 				relTypes: [...relTypes],
 				x: event.clientX - rect.left,

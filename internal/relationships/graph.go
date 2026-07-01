@@ -12,14 +12,15 @@ import (
 
 // GraphNode is a person vertex in the relationship network.
 type GraphNode struct {
-	ID          int64   `json:"id"`
-	Name        string  `json:"name"`
-	Nickname    string  `json:"nickname"`
-	Avatar      string  `json:"avatar"`
-	Group       string  `json:"group"`
-	IsSelf      bool    `json:"is_self"`
-	DateOfBirth *string `json:"date_of_birth,omitempty"`
-	LastContact *string `json:"last_contact_at,omitempty"`
+	ID          int64    `json:"id"`
+	Name        string   `json:"name"`
+	Nickname    string   `json:"nickname"`
+	Avatar      string   `json:"avatar"`
+	Group       string   `json:"group"`  // first label — used for canvas colour
+	Groups      []string `json:"groups"` // all labels — used for display
+	IsSelf      bool     `json:"is_self"`
+	DateOfBirth *string  `json:"date_of_birth,omitempty"`
+	LastContact *string  `json:"last_contact_at,omitempty"`
 }
 
 // GraphLink is a deduplicated edge between two people.
@@ -296,9 +297,18 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 	nodes := make([]GraphNode, 0, len(nodeMap))
 
 	for id, nd := range nodeMap {
-		group := ""
-		if labels, ok := labelsByPerson[id]; len(labels) > 0 && ok {
+		var (
+			group  string
+			groups []string
+		)
+
+		if labels, ok := labelsByPerson[id]; ok && len(labels) > 0 {
 			group = labels[0].Name
+			groups = make([]string, len(labels))
+
+			for i, l := range labels {
+				groups[i] = l.Name
+			}
 		}
 
 		nodes = append(nodes, GraphNode{
@@ -307,6 +317,7 @@ func (s *Service) Graph(ctx context.Context, personID int64) (Graph, error) {
 			Nickname:    nd.nickname,
 			Avatar:      avatarURL(id, nd.avatar),
 			Group:       group,
+			Groups:      groups,
 			IsSelf:      nd.isSelf,
 			DateOfBirth: nd.dateOfBirth,
 			LastContact: nd.lastContact,

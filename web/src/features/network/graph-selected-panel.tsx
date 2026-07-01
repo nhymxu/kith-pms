@@ -81,9 +81,16 @@ export function GraphSelectedPanel({
 						<div className="text-[14px] font-semibold text-zinc-900">
 							{formatPersonName(selected.node.name, selected.node.nickname)}
 						</div>
-						{selected.node.group && (
-							<div className="text-[12px] text-zinc-500">
-								{selected.node.group}
+						{selected.node.groups && selected.node.groups.length > 0 && (
+							<div className="flex flex-wrap gap-1">
+								{selected.node.groups.map((g) => (
+									<span
+										key={g}
+										className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-500"
+									>
+										{g}
+									</span>
+								))}
 							</div>
 						)}
 					</div>

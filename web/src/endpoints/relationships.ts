@@ -6,7 +6,8 @@ export interface GraphNode {
 	name: string;
 	nickname: string;
 	avatar: string;
-	group: string;
+	group: string; // first label — used for canvas colour
+	groups: string[]; // all labels — used for display
 	is_self: boolean;
 	date_of_birth?: string | null;
 	last_contact_at?: string | null;

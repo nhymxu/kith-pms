@@ -101,9 +101,16 @@ export function GraphNodeProfileCard({
 							{node.nickname}
 						</div>
 					)}
-					{node.group && (
-						<div className="truncate text-[11px] text-zinc-500">
-							{node.group}
+					{node.groups && node.groups.length > 0 && (
+						<div className="flex flex-wrap gap-1 mt-0.5">
+							{node.groups.map((g) => (
+								<span
+									key={g}
+									className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-500"
+								>
+									{g}
+								</span>
+							))}
 						</div>
 					)}
 				</div>

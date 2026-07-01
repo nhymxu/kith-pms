@@ -10,6 +10,7 @@ const sample: RelationshipGraph = {
 			nickname: "",
 			avatar: "",
 			group: "Friend",
+			groups: ["Friend"],
 			is_self: false,
 		},
 		{
@@ -18,6 +19,7 @@ const sample: RelationshipGraph = {
 			nickname: "bobby",
 			avatar: "",
 			group: "",
+			groups: [],
 			is_self: true,
 		},
 	],

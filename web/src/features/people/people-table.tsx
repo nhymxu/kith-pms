@@ -296,22 +296,23 @@ export function PeopleTable({
 				<button
 					type="button"
 					onClick={() => onFavoriteOnlyChange(!favoriteOnly)}
-					className={`text-xs border rounded-md px-2 py-1 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
 				>
 					<Star
 						className={`size-3 ${favoriteOnly ? "fill-amber-400 text-amber-500" : ""}`}
 					/>
 					Favorites only
 				</button>
-				<label className="text-xs flex items-center gap-1.5 cursor-pointer text-zinc-600">
-					<input
-						type="checkbox"
-						checked={favoriteFirst}
-						onChange={(e) => onFavoriteFirstChange(e.target.checked)}
-						className="accent-indigo-600"
+				<button
+					type="button"
+					onClick={() => onFavoriteFirstChange(!favoriteFirst)}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteFirst ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+				>
+					<Star
+						className={`size-3 ${favoriteFirst ? "fill-amber-400 text-amber-500" : ""}`}
 					/>
 					Favorites first
-				</label>
+				</button>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
 				<div className="flex flex-wrap gap-2">

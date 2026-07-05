@@ -1,6 +1,10 @@
 // Journal create/edit form — TanStack Form + Zod, people + label multi-select
 import { useForm } from "@tanstack/react-form";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useQuery,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +18,7 @@ import { Textarea } from "#/components/ui/textarea";
 import { listJournalLabels } from "#/endpoints/journal-labels";
 import { getMe } from "#/endpoints/me";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
+import { useDebounce } from "#/hooks/use-debounce";
 import { keys } from "#/query-keys";
 import {
 	type JournalActivity,
@@ -50,11 +55,15 @@ function JournalFormInner({
 }: JournalFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [searchQ, setSearchQ] = useState("");
+	const debouncedSearchQ = useDebounce(searchQ, 300);
 
-	const { data: peopleList } = useSuspenseQuery({
-		queryKey: keys.people.list({ q: searchQ || undefined }),
-		queryFn: () => listPeople({ q: searchQ || undefined, page_size: 50 }),
+	const { data: peopleList } = useQuery({
+		queryKey: keys.people.list({ q: debouncedSearchQ || undefined }),
+		queryFn: () =>
+			listPeople({ q: debouncedSearchQ || undefined, page_size: 50 }),
+		placeholderData: keepPreviousData,
 	});
+	const peopleItems = peopleList?.items ?? [];
 
 	const { data: allLabels } = useSuspenseQuery({
 		queryKey: keys.journalLabels.list(),
@@ -132,10 +141,10 @@ function JournalFormInner({
 					const selectedIds: number[] = Array.isArray(f.state.value)
 						? f.state.value
 						: [];
-					const selectedPeople = peopleList.items.filter((p) =>
+					const selectedPeople = peopleItems.filter((p) =>
 						selectedIds.includes(p.id),
 					);
-					const unselected = peopleList.items.filter(
+					const unselected = peopleItems.filter(
 						(p) => !selectedIds.includes(p.id),
 					);
 

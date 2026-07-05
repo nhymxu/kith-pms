@@ -26,6 +26,7 @@ import {
 	unsetFavorite,
 } from "#/endpoints/people";
 import { listPeopleLabels } from "#/endpoints/people-labels";
+import { useDebounce } from "#/hooks/use-debounce";
 import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
@@ -39,15 +40,6 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
-
-function useDebounce<T>(value: T, ms = 300): T {
-	const [debounced, setDebounced] = useState(value);
-	useEffect(() => {
-		const t = setTimeout(() => setDebounced(value), ms);
-		return () => clearTimeout(t);
-	}, [value, ms]);
-	return debounced;
-}
 
 interface PeopleTableProps {
 	q?: string;

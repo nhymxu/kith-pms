@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
 import { listJournalLabels } from "#/endpoints/journal-labels";
 import { listPeople } from "#/endpoints/people";
+import { JournalPagination } from "#/features/journal/journal-pagination";
 import { JournalTimeline } from "#/features/journal/journal-timeline";
 import { keys } from "#/query-keys";
 
@@ -288,6 +289,17 @@ function JournalPage() {
 			)}
 
 			<JournalTimeline data={data.items} />
+
+			{data.total > data.page_size && (
+				<JournalPagination
+					page={data.page}
+					pageSize={data.page_size}
+					total={data.total}
+					onPageChange={(page) =>
+						void navigate({ to: "/journal", search: { ...search, page } })
+					}
+				/>
+			)}
 		</div>
 	);
 }

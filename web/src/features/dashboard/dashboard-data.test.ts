@@ -17,6 +17,7 @@ describe("buildDashboardViewModel", () => {
 			actions: true,
 			moments: true,
 			favorites: true,
+			lastContacted: true,
 		});
 		expect(viewModel.pulse).toHaveLength(14);
 	});
@@ -195,5 +196,52 @@ describe("buildDashboardViewModel", () => {
 
 		expect(viewModel.favorites).toEqual([]);
 		expect(viewModel.empty.favorites).toBe(true);
+	});
+
+	it("uses the dedicated last-contacted query, excluding people without contact history", () => {
+		const person = (
+			id: number,
+			name: string,
+			lastContactAt: string | null,
+		) => ({
+			id,
+			is_self: false,
+			is_favorite: false,
+			has_birthday_reminder: false,
+			prefix: "",
+			name,
+			nickname: "",
+			gender: "",
+			other_notes: "",
+			avatar_path: "",
+			avatar_size: 0,
+			created_at: "2026-01-01T00:00:00Z",
+			updated_at: "2026-05-01T00:00:00Z",
+			last_contact_at: lastContactAt,
+			contacts: [],
+			locations: [],
+			labels: [],
+		});
+
+		const source: DashboardSource = {
+			lastContactedPeople: {
+				items: [
+					person(3, "Carol Diaz", "2026-05-15T00:00:00Z"),
+					person(1, "Alex Kim", "2026-05-10T00:00:00Z"),
+					person(2, "Bob Lee", null),
+				],
+				total: 3,
+				page: 1,
+				page_size: 5,
+			},
+		};
+
+		const viewModel = buildDashboardViewModel(source, now);
+
+		expect(viewModel.lastContacted.map((p) => p.name)).toEqual([
+			"Carol Diaz",
+			"Alex Kim",
+		]);
+		expect(viewModel.empty.lastContacted).toBe(false);
 	});
 });

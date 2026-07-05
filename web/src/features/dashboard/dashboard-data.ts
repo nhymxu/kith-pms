@@ -7,6 +7,7 @@ import type { ReminderWithPerson } from "#/schemas/reminder";
 
 export type DashboardSource = {
 	people?: PersonList;
+	lastContactedPeople?: PersonList;
 	journal?: { items: JournalActivity[]; total: number };
 	reminders?: ReminderWithPerson[];
 	dates?: UpcomingDateItem[];
@@ -63,12 +64,14 @@ export type DashboardViewModel = {
 	activities: DashboardActivity[];
 	moments: DashboardMoment[];
 	favorites: Person[];
+	lastContacted: Person[];
 	empty: {
 		people: boolean;
 		activity: boolean;
 		actions: boolean;
 		moments: boolean;
 		favorites: boolean;
+		lastContacted: boolean;
 	};
 };
 
@@ -93,6 +96,12 @@ export function buildDashboardViewModel(
 		(reminder) => compareDateOnly(reminder.due_date, now) === 0,
 	);
 	const favoritePeople = people.filter((p) => p.is_favorite).slice(0, 5);
+	// Sourced from a dedicated `sort=-last_contact` query (backend ORDER BY
+	// last_contact_at DESC NULLS LAST) so it reflects the whole network, not
+	// just the page of people already loaded for other dashboard widgets.
+	const lastContactedPeople = (source.lastContactedPeople?.items ?? []).filter(
+		(p) => p.last_contact_at,
+	);
 
 	return {
 		meName: source.me?.name ?? "Your network",
@@ -156,12 +165,14 @@ export function buildDashboardViewModel(
 			personName: date.person.name,
 		})),
 		favorites: favoritePeople,
+		lastContacted: lastContactedPeople,
 		empty: {
 			people: (source.people?.total ?? people.length) === 0,
 			activity: journalItems.length === 0,
 			actions: openReminders.length === 0 && plannedGifts.length === 0,
 			moments: dates.length === 0,
 			favorites: favoritePeople.length === 0,
+			lastContacted: lastContactedPeople.length === 0,
 		},
 	};
 }

@@ -18,6 +18,7 @@ import {
 	type DashboardSummaryCard,
 } from "#/features/dashboard/dashboard-data";
 import { FavoritePeople } from "#/features/dashboard/favorite-people";
+import { LastContactedPeople } from "#/features/dashboard/last-contacted-people";
 import { RecentRelationshipActivity } from "#/features/dashboard/recent-relationship-activity";
 import { RelationshipPulseChart } from "#/features/dashboard/relationship-pulse-chart";
 import { SummaryCards } from "#/features/dashboard/summary-cards";
@@ -34,6 +35,10 @@ function DashboardPage() {
 	const people = useQuery({
 		queryKey: keys.people.list({ page_size: 25 }),
 		queryFn: () => listPeople({ page_size: 25 }),
+	});
+	const lastContactedPeople = useQuery({
+		queryKey: keys.people.list({ page_size: 5, sort: "-last_contact" }),
+		queryFn: () => listPeople({ page_size: 5, sort: "-last_contact" }),
 	});
 	const journal = useQuery({
 		queryKey: keys.journal.list({ page_size: 25 }),
@@ -64,6 +69,7 @@ function DashboardPage() {
 		() =>
 			buildDashboardViewModel({
 				people: people.data,
+				lastContactedPeople: lastContactedPeople.data,
 				journal: journal.data,
 				reminders: reminders.data,
 				dates: dates.data,
@@ -73,6 +79,7 @@ function DashboardPage() {
 			}),
 		[
 			people.data,
+			lastContactedPeople.data,
 			journal.data,
 			reminders.data,
 			dates.data,
@@ -95,7 +102,8 @@ function DashboardPage() {
 			| "actions"
 			| "activity"
 			| "moments"
-			| "favorites",
+			| "favorites"
+			| "lastContacted",
 	) {
 		setRefreshingId(id);
 		try {
@@ -137,6 +145,21 @@ function DashboardPage() {
 			/>
 
 			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+				<LastContactedPeople
+					people={viewModel.lastContacted}
+					isLoading={lastContactedPeople.isLoading}
+					onRefresh={() => refresh("lastContacted")}
+					isRefreshing={refreshingId === "lastContacted"}
+				/>
+				<FavoritePeople
+					people={viewModel.favorites}
+					isLoading={people.isLoading}
+					onRefresh={() => refresh("favorites")}
+					isRefreshing={refreshingId === "favorites"}
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 				<ActionQueue
 					actions={viewModel.actions}
 					isLoading={reminders.isLoading || gifts.isLoading}
@@ -156,12 +179,6 @@ function DashboardPage() {
 						onRefresh={() => refresh("moments")}
 						isRefreshing={refreshingId === "moments"}
 					/>
-					<FavoritePeople
-						people={viewModel.favorites}
-						isLoading={people.isLoading}
-						onRefresh={() => refresh("favorites")}
-						isRefreshing={refreshingId === "favorites"}
-					/>
 				</div>
 			</div>
 		</div>
@@ -176,7 +193,8 @@ async function invalidateDashboardQueries(
 		| "actions"
 		| "activity"
 		| "moments"
-		| "favorites",
+		| "favorites"
+		| "lastContacted",
 ) {
 	const map = {
 		people: [keys.people.all],
@@ -189,6 +207,7 @@ async function invalidateDashboardQueries(
 		activity: [keys.journal.all],
 		moments: [keys.dates.all],
 		favorites: [keys.people.all],
+		lastContacted: [keys.people.all],
 	} as const;
 
 	await Promise.all(

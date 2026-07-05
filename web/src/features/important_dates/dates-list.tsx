@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { QueryBoundary } from "#/components/query-boundary";
 import { listUpcomingDates } from "#/endpoints/important-dates";
+import { getAvatarUrl } from "#/endpoints/people";
 import { keys } from "#/query-keys";
 
 function daysUntil(dateStr: string): number {
@@ -102,6 +103,17 @@ function DatesListInner() {
 									key={`${item.person.id}-${item.kind}`}
 									className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors"
 								>
+									<div className="size-10 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-sm font-medium text-zinc-700 font-mono">
+										{item.person.avatar_path ? (
+											<img
+												src={getAvatarUrl(item.person.id)}
+												alt={item.person.name}
+												className="size-full object-cover"
+											/>
+										) : (
+											<span>{item.person.name.charAt(0).toUpperCase()}</span>
+										)}
+									</div>
 									<div className="flex-1 min-w-0">
 										<Link
 											to="/people/$personId"

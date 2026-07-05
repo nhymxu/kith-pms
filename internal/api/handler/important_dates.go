@@ -108,8 +108,9 @@ type upcomingItem struct {
 }
 
 type personRef struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	AvatarPath string `json:"avatar_path"`
 }
 
 // Upcoming godoc
@@ -145,7 +146,11 @@ func (h *DatesAPI) Upcoming(c *echo.Context) error {
 		// Compute next occurrence date string for display.
 		nextOcc := nextOccurrenceStr(item.Date, today)
 		result = append(result, upcomingItem{
-			Person:         personRef{ID: item.Person.ID, Name: item.Person.Name},
+			Person: personRef{
+				ID:         item.Person.ID,
+				Name:       item.Person.Name,
+				AvatarPath: item.Person.AvatarPath,
+			},
 			Kind:           item.Date.Kind,
 			DateValue:      item.Date.DateValue,
 			YearsSince:     item.YearsSince,

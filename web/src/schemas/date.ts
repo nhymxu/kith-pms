@@ -17,6 +17,7 @@ export const importantDateListSchema = z.array(importantDateSchema);
 export const personRefSchema = z.object({
 	id: z.number(),
 	name: z.string(),
+	avatar_path: z.string().optional().default(""),
 });
 
 export const upcomingDateItemSchema = z.object({

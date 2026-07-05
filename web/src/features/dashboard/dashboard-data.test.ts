@@ -91,7 +91,7 @@ describe("buildDashboardViewModel", () => {
 			],
 			dates: [
 				{
-					person: { id: 1, name: "Alex Kim" },
+					person: { id: 1, name: "Alex Kim", avatar_path: "" },
 					kind: "birthday",
 					date_value: "1990-05-20",
 					years_since: 36,

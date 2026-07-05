@@ -157,13 +157,13 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 	query := `
 		SELECT d.id, d.person_id, d.kind, d.label, d.date_value, d.recurring,
 		       d.notes, d.position, d.created_at,
-		       p.id, p.name, p.nickname
+		       p.id, p.name, p.nickname, COALESCE(p.avatar_path, '')
 		  FROM important_date d
 		  JOIN person p ON p.id = d.person_id
 		UNION ALL
 		SELECT 0, p.id, 'birthday', 'Birthday', p.date_of_birth, 1,
 		       '', 0, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-		       p.id, p.name, p.nickname
+		       p.id, p.name, p.nickname, COALESCE(p.avatar_path, '')
 		  FROM person p
 		 WHERE p.date_of_birth IS NOT NULL AND p.date_of_birth != ''
 		 ORDER BY name COLLATE NOCASE
@@ -198,6 +198,7 @@ func (r *sqlRepo) ListAll(ctx context.Context) ([]OnThisDayItem, error) {
 			&item.Person.ID,
 			&item.Person.Name,
 			&nickname,
+			&item.Person.AvatarPath,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan list all: %w", err)

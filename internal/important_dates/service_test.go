@@ -104,7 +104,8 @@ func setupTestDB(t *testing.T) *bun.DB {
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL,
 			nickname TEXT NOT NULL DEFAULT '',
-			date_of_birth TEXT
+			date_of_birth TEXT,
+			avatar_path TEXT NOT NULL DEFAULT ''
 		)
 	`)
 	if err != nil {

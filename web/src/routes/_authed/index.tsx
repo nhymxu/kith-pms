@@ -40,6 +40,10 @@ function DashboardPage() {
 		queryKey: keys.people.list({ page_size: 5, sort: "-last_contact" }),
 		queryFn: () => listPeople({ page_size: 5, sort: "-last_contact" }),
 	});
+	const favoritePeople = useQuery({
+		queryKey: keys.people.list({ page_size: 5, favorite_only: true }),
+		queryFn: () => listPeople({ page_size: 5, favorite_only: true }),
+	});
 	const journal = useQuery({
 		queryKey: keys.journal.list({ page_size: 25 }),
 		queryFn: () => listJournal({ page_size: 25 }),
@@ -69,6 +73,7 @@ function DashboardPage() {
 		() =>
 			buildDashboardViewModel({
 				people: people.data,
+				favoritePeople: favoritePeople.data,
 				lastContactedPeople: lastContactedPeople.data,
 				journal: journal.data,
 				reminders: reminders.data,
@@ -79,6 +84,7 @@ function DashboardPage() {
 			}),
 		[
 			people.data,
+			favoritePeople.data,
 			lastContactedPeople.data,
 			journal.data,
 			reminders.data,
@@ -91,7 +97,16 @@ function DashboardPage() {
 	const isLoading = [people, journal, reminders, dates, gifts].some(
 		(query) => query.isLoading,
 	);
-	const dashboardQueries = [people, journal, reminders, dates, gifts, audit];
+	const dashboardQueries = [
+		people,
+		favoritePeople,
+		lastContactedPeople,
+		journal,
+		reminders,
+		dates,
+		gifts,
+		audit,
+	];
 	const hasError = dashboardQueries.some((query) => query.isError);
 	const isStale = dashboardQueries.some((query) => query.isError && query.data);
 
@@ -153,7 +168,7 @@ function DashboardPage() {
 				/>
 				<FavoritePeople
 					people={viewModel.favorites}
-					isLoading={people.isLoading}
+					isLoading={favoritePeople.isLoading}
 					onRefresh={() => refresh("favorites")}
 					isRefreshing={refreshingId === "favorites"}
 				/>

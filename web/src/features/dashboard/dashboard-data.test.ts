@@ -145,11 +145,11 @@ describe("buildDashboardViewModel", () => {
 		});
 	});
 
-	it("filters favorites from the people list, capped at 5", () => {
-		const person = (id: number, name: string, isFavorite: boolean) => ({
+	it("uses the dedicated favorite_only query, independent of the general people page", () => {
+		const person = (id: number, name: string) => ({
 			id,
 			is_self: false,
-			is_favorite: isFavorite,
+			is_favorite: true,
 			has_birthday_reminder: false,
 			prefix: "",
 			name,
@@ -166,15 +166,11 @@ describe("buildDashboardViewModel", () => {
 		});
 
 		const source: DashboardSource = {
-			people: {
-				items: [
-					person(1, "Alex Kim", true),
-					person(2, "Bob Lee", false),
-					person(3, "Carol Diaz", true),
-				],
-				total: 3,
+			favoritePeople: {
+				items: [person(1, "Alex Kim"), person(3, "Carol Diaz")],
+				total: 2,
 				page: 1,
-				page_size: 25,
+				page_size: 5,
 			},
 		};
 
@@ -189,7 +185,7 @@ describe("buildDashboardViewModel", () => {
 
 	it("marks favorites empty when no one is favorited", () => {
 		const source: DashboardSource = {
-			people: { items: [], total: 0, page: 1, page_size: 25 },
+			favoritePeople: { items: [], total: 0, page: 1, page_size: 5 },
 		};
 
 		const viewModel = buildDashboardViewModel(source, now);

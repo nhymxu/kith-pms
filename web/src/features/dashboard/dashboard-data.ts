@@ -7,6 +7,7 @@ import type { ReminderWithPerson } from "#/schemas/reminder";
 
 export type DashboardSource = {
 	people?: PersonList;
+	favoritePeople?: PersonList;
 	lastContactedPeople?: PersonList;
 	journal?: { items: JournalActivity[]; total: number };
 	reminders?: ReminderWithPerson[];
@@ -95,7 +96,10 @@ export function buildDashboardViewModel(
 	const todayActions = openReminders.filter(
 		(reminder) => compareDateOnly(reminder.due_date, now) === 0,
 	);
-	const favoritePeople = people.filter((p) => p.is_favorite).slice(0, 5);
+	// Sourced from a dedicated `favorite_only=true` query so it reflects the
+	// whole network's favorites, not just whichever favorites happen to land
+	// on the first page of the general people list.
+	const favoritePeople = source.favoritePeople?.items ?? [];
 	// Sourced from a dedicated `sort=-last_contact` query (backend ORDER BY
 	// last_contact_at DESC NULLS LAST) so it reflects the whole network, not
 	// just the page of people already loaded for other dashboard widgets.

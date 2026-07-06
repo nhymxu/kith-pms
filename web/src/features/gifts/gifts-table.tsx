@@ -14,6 +14,11 @@ import type { GiftWithPerson } from "#/schemas/gift";
 interface GiftsTableProps {
 	data: GiftWithPerson[];
 	toolbarActions?: React.ReactNode;
+	pageSizeSelector?: React.ReactNode;
+	pageSize?: number;
+	totalCount?: number;
+	pageIndex?: number;
+	onPageChange?: (pageIndex: number) => void;
 }
 
 function DebtBadge({
@@ -54,7 +59,15 @@ function DebtBadge({
 	);
 }
 
-export function GiftsTable({ data, toolbarActions }: GiftsTableProps) {
+export function GiftsTable({
+	data,
+	toolbarActions,
+	pageSizeSelector,
+	pageSize,
+	totalCount,
+	pageIndex,
+	onPageChange,
+}: GiftsTableProps) {
 	const columns = useMemo<ColumnDef<GiftWithPerson>[]>(
 		() => [
 			{
@@ -159,6 +172,11 @@ export function GiftsTable({ data, toolbarActions }: GiftsTableProps) {
 			columns={columns}
 			data={data}
 			toolbarActions={toolbarActions}
+			pageSizeSelector={pageSizeSelector}
+			pageSize={pageSize}
+			totalCount={totalCount}
+			pageIndex={pageIndex}
+			onPageChange={onPageChange}
 			emptyState={
 				<span className="text-sm text-foreground/50">No gifts yet.</span>
 			}

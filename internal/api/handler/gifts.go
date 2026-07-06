@@ -38,6 +38,7 @@ type giftRequest struct {
 // @Tags         gifts
 // @Produce      json
 // @Param        page       query  int     false  "Page number"  default(1)
+// @Param        page_size  query  int     false  "Page size"  default(50)
 // @Param        person_id  query  int     false  "Filter by person ID"
 // @Param        direction  query  string  false  "Filter: planned, given, received"
 // @Param        debt_type  query  string  false  "Filter: i_owe, they_owe"
@@ -52,6 +53,15 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 		page = 1
 	}
 
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+	if pageSize < 1 {
+		pageSize = 50
+	}
+
+	if pageSize > 200 {
+		pageSize = 200
+	}
+
 	var personID *int64
 
 	if pidStr := c.QueryParam("person_id"); pidStr != "" {
@@ -64,7 +74,7 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 		Direction: gifts.Direction(c.QueryParam("direction")),
 		DebtType:  gifts.DebtType(c.QueryParam("debt_type")),
 		PersonID:  personID,
-		PageSize:  50,
+		PageSize:  pageSize,
 		Page:      page,
 	})
 	if err != nil {

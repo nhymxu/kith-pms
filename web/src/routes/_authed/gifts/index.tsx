@@ -1,24 +1,44 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
 import { listGifts } from "#/endpoints/gifts";
+import { getSettings } from "#/endpoints/settings";
 import { GiftsTable } from "#/features/gifts/gifts-table";
+import { usePageSizeOverride } from "#/lib/use-page-size-override";
 import { keys } from "#/query-keys";
 
+const searchSchema = z.object({
+	page: z.coerce.number().min(1).optional().default(1),
+	page_size: z.coerce.number().min(1).max(200).optional(),
+});
+
 export const Route = createFileRoute("/_authed/gifts/")({
+	validateSearch: searchSchema,
 	component: GiftsPage,
-	pendingComponent: () => (
-		<p className="text-[13px] text-zinc-500">Loading gifts…</p>
-	),
-	errorComponent: () => (
-		<p className="text-[13px] text-red-600">Failed to load gifts.</p>
-	),
 });
 
 function GiftsPage() {
-	const { data } = useSuspenseQuery({
-		queryKey: keys.gifts.list({}),
-		queryFn: () => listGifts({}),
+	const navigate = useNavigate();
+	const search = Route.useSearch();
+
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const { override, setPageSize, clear } = usePageSizeOverride("gifts");
+	const effectivePageSize =
+		search.page_size ?? override ?? settingsData?.default_page_size ?? 20;
+
+	const { data } = useQuery({
+		queryKey: keys.gifts.list({
+			page: search.page,
+			page_size: effectivePageSize,
+		}),
+		queryFn: () =>
+			listGifts({ page: search.page, page_size: effectivePageSize }),
+		placeholderData: keepPreviousData,
 	});
 
 	return (
@@ -31,7 +51,35 @@ function GiftsPage() {
 					<Link to="/gifts/new">New Gift</Link>
 				</Button>
 			</div>
-			<GiftsTable data={data.items} />
+			<GiftsTable
+				data={data?.items ?? []}
+				pageSize={effectivePageSize}
+				totalCount={data?.total ?? 0}
+				pageIndex={search.page - 1}
+				onPageChange={(idx) =>
+					void navigate({ to: "/gifts", search: { ...search, page: idx + 1 } })
+				}
+				pageSizeSelector={
+					<PageSizeSelector
+						value={effectivePageSize}
+						hasOverride={override !== null}
+						onChange={(n) => {
+							setPageSize(n);
+							void navigate({
+								to: "/gifts",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+						onReset={() => {
+							clear();
+							void navigate({
+								to: "/gifts",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+					/>
+				}
+			/>
 		</div>
 	);
 }

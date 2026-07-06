@@ -19,7 +19,7 @@ type SortValue = (typeof VALID_SORTS)[number];
 const searchSchema = z.object({
 	q: z.string().optional(),
 	page: z.coerce.number().min(1).optional().default(1),
-	page_size: z.coerce.number().min(1).max(100).optional().default(20),
+	page_size: z.coerce.number().min(1).max(200).optional(),
 	labels: z.array(z.coerce.number()).optional(),
 	sort: z.enum(VALID_SORTS).optional().default("name"),
 	favorite_only: z.coerce.boolean().optional(),
@@ -47,6 +47,8 @@ function PeoplePage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 	});
+	const effectivePageSize =
+		searchPageSize ?? settingsData?.default_page_size ?? 20;
 	const appliedDefaultRef = useRef(false);
 
 	// One-shot: apply settings-derived defaults only on a bare first visit (no
@@ -244,7 +246,7 @@ function PeoplePage() {
 				q={search.q}
 				labels={search.labels}
 				page={search.page}
-				page_size={search.page_size}
+				page_size={effectivePageSize}
 				sort={search.sort}
 				favoriteOnly={search.favorite_only}
 				favoriteFirst={search.favorite_first}

@@ -21,6 +21,7 @@ var (
 	ErrInvalidDefaultPeopleSort    = errors.New(
 		"settings: default_people_sort must be one of name, -name, last_contact, -last_contact",
 	)
+	ErrInvalidDefaultPageSize = errors.New("settings: default_page_size must be between 10 and 200")
 )
 
 var validDateFormats = map[string]bool{
@@ -116,6 +117,12 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.DefaultPeopleSort = v
 	}
 
+	if v, ok := rows[KeyDefaultPageSize]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n >= 10 && n <= 200 {
+			result.DefaultPageSize = n
+		}
+	}
+
 	return result, nil
 }
 
@@ -148,6 +155,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidDefaultPeopleSort
 	}
 
+	if in.DefaultPageSize < 10 || in.DefaultPageSize > 200 {
+		return UserSettings{}, ErrInvalidDefaultPageSize
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:                in.DateFormat,
@@ -162,6 +173,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyAllowFavoriteToggleOnList: strconv.FormatBool(in.AllowFavoriteToggleOnList),
 		KeyFavoriteFirstDefault:      strconv.FormatBool(in.FavoriteFirstDefault),
 		KeyDefaultPeopleSort:         in.DefaultPeopleSort,
+		KeyDefaultPageSize:           strconv.Itoa(in.DefaultPageSize),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

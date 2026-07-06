@@ -66,6 +66,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		AllowFavoriteToggleOnList: true,
 		FavoriteFirstDefault:      false,
 		DefaultPeopleSort:         "name",
+		DefaultPageSize:           25,
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

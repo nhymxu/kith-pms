@@ -24,6 +24,7 @@ type AuditAPI struct {
 // @Param        entity_type  query  string  false  "Filter by entity type"
 // @Param        entity_id    query  int     false  "Filter by entity ID"
 // @Param        page         query  int     false  "Page number"  default(1)
+// @Param        page_size    query  int     false  "Page size"  default(50)
 // @Param        from_date    query  string  false  "From date YYYY-MM-DD"
 // @Param        to_date      query  string  false  "To date YYYY-MM-DD"
 // @Success      200  {object}  object{data=[]object,page=int,page_size=int,has_more=bool}
@@ -44,11 +45,20 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		page = 1
 	}
 
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+	if pageSize < 1 {
+		pageSize = 50
+	}
+
+	if pageSize > 500 {
+		pageSize = 500
+	}
+
 	entries, err := h.Svc.List(c.Request().Context(), audit.ListParams{
 		EntityType: entityType,
 		EntityID:   entityID,
 		Page:       page,
-		PageSize:   50,
+		PageSize:   pageSize,
 		FromDate:   c.QueryParam("from_date"),
 		ToDate:     c.QueryParam("to_date"),
 	})
@@ -84,8 +94,8 @@ func (h *AuditAPI) List(c *echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]any{
 		"data":      out,
 		"page":      page,
-		"page_size": 50,
-		"has_more":  len(entries) == 50,
+		"page_size": pageSize,
+		"has_more":  len(entries) == pageSize,
 	})
 }
 

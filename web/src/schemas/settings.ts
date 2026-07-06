@@ -15,6 +15,7 @@ export const userSettingsSchema = z.object({
 	default_people_sort: z
 		.enum(["name", "-name", "last_contact", "-last_contact"])
 		.default("name"),
+	default_page_size: z.number().int().min(10).max(200).default(25),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

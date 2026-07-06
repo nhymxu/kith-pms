@@ -42,6 +42,7 @@ func validBase() settings.UserSettings {
 		AllowFavoriteToggleOnList: true,
 		FavoriteFirstDefault:      false,
 		DefaultPeopleSort:         "name",
+		DefaultPageSize:           25,
 	}
 }
 

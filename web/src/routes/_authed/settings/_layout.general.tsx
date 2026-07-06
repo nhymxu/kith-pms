@@ -13,6 +13,7 @@ import { Label } from "#/components/ui/label";
 import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
+import { PageSizeSettingsCard } from "#/features/settings/page-size-settings-card";
 import {
 	type DateFormat,
 	getNetworkPrefs,
@@ -92,6 +93,7 @@ function GeneralSettingsPage() {
 				allow_favorite_toggle_on_list: true,
 				favorite_first_default: false,
 				default_people_sort: "name",
+				default_page_size: 25,
 			};
 		},
 	});
@@ -169,6 +171,7 @@ function GeneralSettingsPage() {
 			apiSettings?.allow_favorite_toggle_on_list ?? true,
 		favorite_first_default: apiSettings?.favorite_first_default ?? false,
 		default_people_sort: apiSettings?.default_people_sort ?? "name",
+		default_page_size: apiSettings?.default_page_size ?? 25,
 		...overrides,
 	});
 
@@ -526,6 +529,13 @@ function GeneralSettingsPage() {
 			</Card>
 
 			<FavoritesSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
+
+			<PageSizeSettingsCard
 				apiSettings={apiSettings}
 				isPlaceholderData={isPlaceholderData}
 				buildPayload={buildPayload}

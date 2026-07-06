@@ -15,6 +15,7 @@ type UserSettings struct {
 	AllowFavoriteToggleOnList bool   `json:"allow_favorite_toggle_on_list"`
 	FavoriteFirstDefault      bool   `json:"favorite_first_default"`
 	DefaultPeopleSort         string `json:"default_people_sort"`
+	DefaultPageSize           int    `json:"default_page_size"`
 }
 
 var Defaults = UserSettings{
@@ -31,6 +32,7 @@ var Defaults = UserSettings{
 	AllowFavoriteToggleOnList: true,
 	FavoriteFirstDefault:      false,
 	DefaultPeopleSort:         "name",
+	DefaultPageSize:           25,
 }
 
 const (
@@ -47,4 +49,5 @@ const (
 	KeyAllowFavoriteToggleOnList = "allow_favorite_toggle_on_list"
 	KeyFavoriteFirstDefault      = "favorite_first_default"
 	KeyDefaultPeopleSort         = "default_people_sort"
+	KeyDefaultPageSize           = "default_page_size"
 )

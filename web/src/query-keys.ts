@@ -37,6 +37,7 @@ export type AuditFilters = {
 	entity_type?: string;
 	entity_id?: number;
 	page?: number;
+	page_size?: number;
 	from_date?: string;
 	to_date?: string;
 };

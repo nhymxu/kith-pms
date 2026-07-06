@@ -1,14 +1,16 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import { listAudit } from "#/endpoints/audit";
+import { getSettings } from "#/endpoints/settings";
 import { AuditTable } from "#/features/audit/audit-table";
 import { keys } from "#/query-keys";
 
 const searchSchema = z.object({
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
+	page_size: z.coerce.number().min(1).max(200).optional(),
 });
 
 export const Route = createFileRoute("/_authed/audit/")({
@@ -26,13 +28,25 @@ function AuditPage() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const effectivePageSize =
+		search.page_size ?? settingsData?.default_page_size ?? 20;
+
 	const { data } = useSuspenseQuery({
 		queryKey: keys.audit.list({
 			from_date: search.from_date,
 			to_date: search.to_date,
+			page_size: effectivePageSize,
 		}),
 		queryFn: () =>
-			listAudit({ from_date: search.from_date, to_date: search.to_date }),
+			listAudit({
+				from_date: search.from_date,
+				to_date: search.to_date,
+				page_size: effectivePageSize,
+			}),
 	});
 
 	return (

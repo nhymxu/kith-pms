@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
 import { listJournalLabels } from "#/endpoints/journal-labels";
 import { listPeople } from "#/endpoints/people";
+import { getSettings } from "#/endpoints/settings";
 import { JournalPagination } from "#/features/journal/journal-pagination";
 import { JournalTimeline } from "#/features/journal/journal-timeline";
 import { keys } from "#/query-keys";
@@ -13,7 +14,7 @@ import { keys } from "#/query-keys";
 const searchSchema = z.object({
 	q: z.string().optional(),
 	page: z.coerce.number().min(1).optional().default(1),
-	page_size: z.coerce.number().min(1).max(100).optional().default(20),
+	page_size: z.coerce.number().min(1).max(200).optional(),
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
 	people: z.array(z.coerce.number()).optional(),
@@ -43,10 +44,17 @@ function JournalPage() {
 		() => localStorage.getItem(PEOPLE_FILTER_KEY) !== "false",
 	);
 
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const effectivePageSize =
+		search.page_size ?? settingsData?.default_page_size ?? 20;
+
 	const { data } = useSuspenseQuery({
 		queryKey: keys.journal.list({
 			page: search.page,
-			page_size: search.page_size,
+			page_size: effectivePageSize,
 			person_ids: search.people,
 			from_date: search.from_date,
 			to_date: search.to_date,
@@ -55,7 +63,7 @@ function JournalPage() {
 			listJournal({
 				q: search.q,
 				page: search.page,
-				page_size: search.page_size,
+				page_size: effectivePageSize,
 				from_date: search.from_date,
 				to_date: search.to_date,
 				person_ids: search.people,

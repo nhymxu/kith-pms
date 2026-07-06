@@ -43,6 +43,8 @@ func validBase() settings.UserSettings {
 		FavoriteFirstDefault:      false,
 		DefaultPeopleSort:         "name",
 		DefaultPageSize:           25,
+		DashboardFavoritesCount:   5,
+		DashboardLastContactCount: 5,
 	}
 }
 
@@ -197,5 +199,64 @@ func TestSettings_Update_InvalidDefaultPeopleSort_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidDefaultPeopleSort) {
 		t.Errorf("want ErrInvalidDefaultPeopleSort, got %v", err)
+	}
+}
+
+func TestSettings_Update_DashboardWidgetCounts_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	in := validBase()
+	in.DashboardFavoritesCount = 3
+	in.DashboardLastContactCount = 10
+
+	out, err := svc.Update(ctx, in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if out.DashboardFavoritesCount != 3 {
+		t.Errorf("out.DashboardFavoritesCount: want 3, got %d", out.DashboardFavoritesCount)
+	}
+
+	if out.DashboardLastContactCount != 10 {
+		t.Errorf("out.DashboardLastContactCount: want 10, got %d", out.DashboardLastContactCount)
+	}
+
+	got, err := svc.Get(ctx)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.DashboardFavoritesCount != 3 {
+		t.Errorf("persisted DashboardFavoritesCount: want 3, got %d", got.DashboardFavoritesCount)
+	}
+
+	if got.DashboardLastContactCount != 10 {
+		t.Errorf("persisted DashboardLastContactCount: want 10, got %d", got.DashboardLastContactCount)
+	}
+}
+
+func TestSettings_Update_InvalidDashboardFavoritesCount_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.DashboardFavoritesCount = 21
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidDashboardFavoritesCount) {
+		t.Errorf("want ErrInvalidDashboardFavoritesCount, got %v", err)
+	}
+}
+
+func TestSettings_Update_InvalidDashboardLastContactCount_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.DashboardLastContactCount = 0
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidDashboardLastContactCount) {
+		t.Errorf("want ErrInvalidDashboardLastContactCount, got %v", err)
 	}
 }

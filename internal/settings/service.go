@@ -21,7 +21,13 @@ var (
 	ErrInvalidDefaultPeopleSort    = errors.New(
 		"settings: default_people_sort must be one of name, -name, last_contact, -last_contact",
 	)
-	ErrInvalidDefaultPageSize = errors.New("settings: default_page_size must be between 10 and 200")
+	ErrInvalidDefaultPageSize         = errors.New("settings: default_page_size must be between 10 and 200")
+	ErrInvalidDashboardFavoritesCount = errors.New(
+		"settings: dashboard_favorites_count must be between 1 and 20",
+	)
+	ErrInvalidDashboardLastContactCount = errors.New(
+		"settings: dashboard_last_contact_count must be between 1 and 20",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -123,6 +129,18 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		}
 	}
 
+	if v, ok := rows[KeyDashboardFavoritesCount]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n >= 1 && n <= 20 {
+			result.DashboardFavoritesCount = n
+		}
+	}
+
+	if v, ok := rows[KeyDashboardLastContactCount]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n >= 1 && n <= 20 {
+			result.DashboardLastContactCount = n
+		}
+	}
+
 	return result, nil
 }
 
@@ -159,6 +177,14 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidDefaultPageSize
 	}
 
+	if in.DashboardFavoritesCount < 1 || in.DashboardFavoritesCount > 20 {
+		return UserSettings{}, ErrInvalidDashboardFavoritesCount
+	}
+
+	if in.DashboardLastContactCount < 1 || in.DashboardLastContactCount > 20 {
+		return UserSettings{}, ErrInvalidDashboardLastContactCount
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:                in.DateFormat,
@@ -174,6 +200,8 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyFavoriteFirstDefault:      strconv.FormatBool(in.FavoriteFirstDefault),
 		KeyDefaultPeopleSort:         in.DefaultPeopleSort,
 		KeyDefaultPageSize:           strconv.Itoa(in.DefaultPageSize),
+		KeyDashboardFavoritesCount:   strconv.Itoa(in.DashboardFavoritesCount),
+		KeyDashboardLastContactCount: strconv.Itoa(in.DashboardLastContactCount),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

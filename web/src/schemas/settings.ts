@@ -16,6 +16,8 @@ export const userSettingsSchema = z.object({
 		.enum(["name", "-name", "last_contact", "-last_contact"])
 		.default("name"),
 	default_page_size: z.number().int().min(10).max(200).default(25),
+	dashboard_favorites_count: z.number().int().min(1).max(20).default(5),
+	dashboard_last_contact_count: z.number().int().min(1).max(20).default(5),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

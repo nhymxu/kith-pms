@@ -16,6 +16,9 @@ type UserSettings struct {
 	FavoriteFirstDefault      bool   `json:"favorite_first_default"`
 	DefaultPeopleSort         string `json:"default_people_sort"`
 	DefaultPageSize           int    `json:"default_page_size"`
+
+	DashboardFavoritesCount   int `json:"dashboard_favorites_count"`
+	DashboardLastContactCount int `json:"dashboard_last_contact_count"`
 }
 
 var Defaults = UserSettings{
@@ -33,6 +36,9 @@ var Defaults = UserSettings{
 	FavoriteFirstDefault:      false,
 	DefaultPeopleSort:         "name",
 	DefaultPageSize:           25,
+
+	DashboardFavoritesCount:   5,
+	DashboardLastContactCount: 5,
 }
 
 const (
@@ -50,4 +56,7 @@ const (
 	KeyFavoriteFirstDefault      = "favorite_first_default"
 	KeyDefaultPeopleSort         = "default_people_sort"
 	KeyDefaultPageSize           = "default_page_size"
+
+	KeyDashboardFavoritesCount   = "dashboard_favorites_count"
+	KeyDashboardLastContactCount = "dashboard_last_contact_count"
 )

@@ -12,6 +12,7 @@ import { listJournal } from "#/endpoints/journal";
 import { getMe } from "#/endpoints/me";
 import { listPeople } from "#/endpoints/people";
 import { listReminders } from "#/endpoints/reminders";
+import { getSettings } from "#/endpoints/settings";
 import { ActionQueue } from "#/features/dashboard/action-queue";
 import {
 	buildDashboardViewModel,
@@ -32,17 +33,31 @@ export const Route = createFileRoute("/_authed/")({
 function DashboardPage() {
 	const queryClient = useQueryClient();
 	const [refreshingId, setRefreshingId] = useState<string>();
+	const settings = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const favoritesCount = settings.data?.dashboard_favorites_count ?? 5;
+	const lastContactCount = settings.data?.dashboard_last_contact_count ?? 5;
 	const people = useQuery({
 		queryKey: keys.people.list({ page_size: 25 }),
 		queryFn: () => listPeople({ page_size: 25 }),
 	});
 	const lastContactedPeople = useQuery({
-		queryKey: keys.people.list({ page_size: 5, sort: "-last_contact" }),
-		queryFn: () => listPeople({ page_size: 5, sort: "-last_contact" }),
+		queryKey: keys.people.list({
+			page_size: lastContactCount,
+			sort: "-last_contact",
+		}),
+		queryFn: () =>
+			listPeople({ page_size: lastContactCount, sort: "-last_contact" }),
 	});
 	const favoritePeople = useQuery({
-		queryKey: keys.people.list({ page_size: 5, favorite_only: true }),
-		queryFn: () => listPeople({ page_size: 5, favorite_only: true }),
+		queryKey: keys.people.list({
+			page_size: favoritesCount,
+			favorite_only: true,
+		}),
+		queryFn: () =>
+			listPeople({ page_size: favoritesCount, favorite_only: true }),
 	});
 	const journal = useQuery({
 		queryKey: keys.journal.list({ page_size: 25 }),

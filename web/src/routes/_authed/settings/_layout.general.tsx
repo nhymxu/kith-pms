@@ -12,6 +12,7 @@ import {
 import { Label } from "#/components/ui/label";
 import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
+import { DashboardWidgetsSettingsCard } from "#/features/settings/dashboard-widgets-settings-card";
 import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
 import { PageSizeSettingsCard } from "#/features/settings/page-size-settings-card";
 import {
@@ -94,6 +95,8 @@ function GeneralSettingsPage() {
 				favorite_first_default: false,
 				default_people_sort: "name",
 				default_page_size: 25,
+				dashboard_favorites_count: 5,
+				dashboard_last_contact_count: 5,
 			};
 		},
 	});
@@ -172,6 +175,9 @@ function GeneralSettingsPage() {
 		favorite_first_default: apiSettings?.favorite_first_default ?? false,
 		default_people_sort: apiSettings?.default_people_sort ?? "name",
 		default_page_size: apiSettings?.default_page_size ?? 25,
+		dashboard_favorites_count: apiSettings?.dashboard_favorites_count ?? 5,
+		dashboard_last_contact_count:
+			apiSettings?.dashboard_last_contact_count ?? 5,
 		...overrides,
 	});
 
@@ -536,6 +542,13 @@ function GeneralSettingsPage() {
 			/>
 
 			<PageSizeSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
+
+			<DashboardWidgetsSettingsCard
 				apiSettings={apiSettings}
 				isPlaceholderData={isPlaceholderData}
 				buildPayload={buildPayload}

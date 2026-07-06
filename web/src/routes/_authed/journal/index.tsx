@@ -1,7 +1,12 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useQuery,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
+import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
 import { listJournalLabels } from "#/endpoints/journal-labels";
@@ -9,6 +14,7 @@ import { listPeople } from "#/endpoints/people";
 import { getSettings } from "#/endpoints/settings";
 import { JournalPagination } from "#/features/journal/journal-pagination";
 import { JournalTimeline } from "#/features/journal/journal-timeline";
+import { usePageSizeOverride } from "#/lib/use-page-size-override";
 import { keys } from "#/query-keys";
 
 const searchSchema = z.object({
@@ -48,10 +54,11 @@ function JournalPage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 	});
+	const { override, setPageSize, clear } = usePageSizeOverride("journal");
 	const effectivePageSize =
-		search.page_size ?? settingsData?.default_page_size ?? 20;
+		search.page_size ?? override ?? settingsData?.default_page_size ?? 20;
 
-	const { data } = useSuspenseQuery({
+	const { data } = useQuery({
 		queryKey: keys.journal.list({
 			page: search.page,
 			page_size: effectivePageSize,
@@ -69,6 +76,7 @@ function JournalPage() {
 				person_ids: search.people,
 				labels: search.labels,
 			}),
+		placeholderData: keepPreviousData,
 	});
 
 	const { data: allPeople } = useSuspenseQuery({
@@ -296,18 +304,38 @@ function JournalPage() {
 				</div>
 			)}
 
-			<JournalTimeline data={data.items} />
+			<JournalTimeline data={data?.items ?? []} />
 
-			{data.total > data.page_size && (
-				<JournalPagination
-					page={data.page}
-					pageSize={data.page_size}
-					total={data.total}
-					onPageChange={(page) =>
-						void navigate({ to: "/journal", search: { ...search, page } })
-					}
+			<div className="flex items-center justify-center gap-4 pt-2">
+				{data && data.total > data.page_size && (
+					<JournalPagination
+						page={data.page}
+						pageSize={data.page_size}
+						total={data.total}
+						onPageChange={(page) =>
+							void navigate({ to: "/journal", search: { ...search, page } })
+						}
+					/>
+				)}
+				<PageSizeSelector
+					value={effectivePageSize}
+					hasOverride={override !== null}
+					onChange={(n) => {
+						setPageSize(n);
+						void navigate({
+							to: "/journal",
+							search: { ...search, page_size: undefined, page: 1 },
+						});
+					}}
+					onReset={() => {
+						clear();
+						void navigate({
+							to: "/journal",
+							search: { ...search, page_size: undefined, page: 1 },
+						});
+					}}
 				/>
-			)}
+			</div>
 		</div>
 	);
 }

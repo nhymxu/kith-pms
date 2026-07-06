@@ -53,6 +53,11 @@ func (s *Service) List(ctx context.Context, p ListParams) ([]Entry, error) {
 	return s.repo.List(ctx, s.db, p)
 }
 
+// Count returns the total number of entries matching the same filters as List, ignoring pagination.
+func (s *Service) Count(ctx context.Context, p ListParams) (int, error) {
+	return s.repo.Count(ctx, s.db, p)
+}
+
 // Purge deletes entries older than days. days=0 is a no-op.
 func (s *Service) Purge(ctx context.Context, days int) (int64, error) {
 	if days <= 0 {

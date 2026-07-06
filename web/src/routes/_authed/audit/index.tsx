@@ -1,27 +1,24 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
+import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
 import { listAudit } from "#/endpoints/audit";
 import { getSettings } from "#/endpoints/settings";
 import { AuditTable } from "#/features/audit/audit-table";
+import { usePageSizeOverride } from "#/lib/use-page-size-override";
 import { keys } from "#/query-keys";
 
 const searchSchema = z.object({
 	from_date: z.string().optional(),
 	to_date: z.string().optional(),
+	page: z.coerce.number().min(1).optional().default(1),
 	page_size: z.coerce.number().min(1).max(200).optional(),
 });
 
 export const Route = createFileRoute("/_authed/audit/")({
 	validateSearch: searchSchema,
 	component: AuditPage,
-	pendingComponent: () => (
-		<p className="text-[13px] text-zinc-500 py-4">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-[13px] text-red-600">Failed to load audit log.</p>
-	),
 });
 
 function AuditPage() {
@@ -32,21 +29,25 @@ function AuditPage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 	});
+	const { override, setPageSize, clear } = usePageSizeOverride("audit");
 	const effectivePageSize =
-		search.page_size ?? settingsData?.default_page_size ?? 20;
+		search.page_size ?? override ?? settingsData?.default_page_size ?? 20;
 
-	const { data } = useSuspenseQuery({
+	const { data } = useQuery({
 		queryKey: keys.audit.list({
+			page: search.page,
 			from_date: search.from_date,
 			to_date: search.to_date,
 			page_size: effectivePageSize,
 		}),
 		queryFn: () =>
 			listAudit({
+				page: search.page,
 				from_date: search.from_date,
 				to_date: search.to_date,
 				page_size: effectivePageSize,
 			}),
+		placeholderData: keepPreviousData,
 	});
 
 	return (
@@ -73,6 +74,7 @@ function AuditPage() {
 								search: {
 									...search,
 									from_date: e.target.value || undefined,
+									page: 1,
 								},
 							})
 						}
@@ -96,6 +98,7 @@ function AuditPage() {
 								search: {
 									...search,
 									to_date: e.target.value || undefined,
+									page: 1,
 								},
 							})
 						}
@@ -110,8 +113,10 @@ function AuditPage() {
 							void navigate({
 								to: "/audit",
 								search: {
+									...search,
 									from_date: undefined,
 									to_date: undefined,
+									page: 1,
 								},
 							})
 						}
@@ -121,7 +126,35 @@ function AuditPage() {
 				)}
 			</div>
 
-			<AuditTable data={data.data} />
+			<AuditTable
+				data={data?.data ?? []}
+				pageSize={effectivePageSize}
+				totalCount={data?.total ?? 0}
+				pageIndex={search.page - 1}
+				onPageChange={(idx) =>
+					void navigate({ to: "/audit", search: { ...search, page: idx + 1 } })
+				}
+				pageSizeSelector={
+					<PageSizeSelector
+						value={effectivePageSize}
+						hasOverride={override !== null}
+						onChange={(n) => {
+							setPageSize(n);
+							void navigate({
+								to: "/audit",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+						onReset={() => {
+							clear();
+							void navigate({
+								to: "/audit",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+					/>
+				}
+			/>
 		</div>
 	);
 }

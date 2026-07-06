@@ -27,7 +27,7 @@ type AuditAPI struct {
 // @Param        page_size    query  int     false  "Page size"  default(50)
 // @Param        from_date    query  string  false  "From date YYYY-MM-DD"
 // @Param        to_date      query  string  false  "To date YYYY-MM-DD"
-// @Success      200  {object}  object{data=[]object,page=int,page_size=int,has_more=bool}
+// @Success      200  {object}  object{data=[]object,page=int,page_size=int,total=int,has_more=bool}
 // @Failure      501  {object}  envelope
 // @Security     CookieAuth
 // @Security     CSRFHeader
@@ -54,16 +54,23 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		pageSize = 500
 	}
 
-	entries, err := h.Svc.List(c.Request().Context(), audit.ListParams{
+	listParams := audit.ListParams{
 		EntityType: entityType,
 		EntityID:   entityID,
 		Page:       page,
 		PageSize:   pageSize,
 		FromDate:   c.QueryParam("from_date"),
 		ToDate:     c.QueryParam("to_date"),
-	})
+	}
+
+	entries, err := h.Svc.List(c.Request().Context(), listParams)
 	if err != nil {
 		return err
+	}
+
+	total, err := h.Svc.Count(c.Request().Context(), listParams)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 
 	type row struct {
@@ -95,6 +102,7 @@ func (h *AuditAPI) List(c *echo.Context) error {
 		"data":      out,
 		"page":      page,
 		"page_size": pageSize,
+		"total":     total,
 		"has_more":  len(entries) == pageSize,
 	})
 }

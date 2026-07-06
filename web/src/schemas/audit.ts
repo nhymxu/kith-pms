@@ -43,6 +43,7 @@ export const auditListEnvelopeSchema = z.object({
 	data: z.array(auditEntrySchema),
 	page: z.number(),
 	page_size: z.number(),
+	total: z.number(),
 	has_more: z.boolean(),
 });
 

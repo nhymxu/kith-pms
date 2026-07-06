@@ -13,6 +13,11 @@ import type { AuditEntry, AuditMetadata } from "#/schemas/audit";
 interface AuditTableProps {
 	data: AuditEntry[];
 	toolbarActions?: React.ReactNode;
+	pageSizeSelector?: React.ReactNode;
+	pageSize?: number;
+	totalCount?: number;
+	pageIndex?: number;
+	onPageChange?: (pageIndex: number) => void;
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -82,7 +87,15 @@ function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
 	);
 }
 
-export function AuditTable({ data, toolbarActions }: AuditTableProps) {
+export function AuditTable({
+	data,
+	toolbarActions,
+	pageSizeSelector,
+	pageSize,
+	totalCount,
+	pageIndex,
+	onPageChange,
+}: AuditTableProps) {
 	const columns = useMemo<ColumnDef<AuditEntry>[]>(
 		() => [
 			{
@@ -150,6 +163,11 @@ export function AuditTable({ data, toolbarActions }: AuditTableProps) {
 			columns={columns}
 			data={data}
 			toolbarActions={toolbarActions}
+			pageSizeSelector={pageSizeSelector}
+			pageSize={pageSize}
+			totalCount={totalCount}
+			pageIndex={pageIndex}
+			onPageChange={onPageChange}
 			emptyState={
 				<span className="text-sm text-foreground/50">No audit entries.</span>
 			}

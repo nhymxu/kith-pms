@@ -10,7 +10,7 @@ import {
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
 	Table,
 	TableBody,
@@ -39,6 +39,7 @@ interface DataTableProps<T> {
 	onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 	getRowId?: (row: T) => string;
 	hideToolbar?: boolean;
+	pageSizeSelector?: ReactNode;
 }
 
 export function DataTable<T>({
@@ -56,14 +57,26 @@ export function DataTable<T>({
 	onRowSelectionChange,
 	getRowId,
 	hideToolbar = false,
+	pageSizeSelector,
 }: DataTableProps<T>) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
+	const [internalPageIndex, setInternalPageIndex] = useState(0);
 
 	const isServerPaginated =
 		totalCount !== undefined &&
 		pageIndex !== undefined &&
 		onPageChange !== undefined;
+
+	// Client-side pagination page count depends on `data.length / pageSize`;
+	// reset to page 0 whenever either changes so the page index can't point
+	// past the end (e.g. after picking a smaller page size or a new fetch).
+	// biome-ignore lint/correctness/useExhaustiveDependencies: data/pageSize are props, not derived state — both must trigger the reset
+	useEffect(() => {
+		if (!isServerPaginated) setInternalPageIndex(0);
+	}, [data, pageSize, isServerPaginated]);
+
+	const resolvedPageIndex = isServerPaginated ? pageIndex : internalPageIndex;
 
 	const checkboxCol: ColumnDef<T> = {
 		id: "select",
@@ -97,32 +110,33 @@ export function DataTable<T>({
 		state: {
 			sorting,
 			globalFilter,
-			...(isServerPaginated && {
-				pagination: { pageIndex, pageSize },
-			}),
+			pagination: { pageIndex: resolvedPageIndex, pageSize },
 			...(enableRowSelection && { rowSelection: rowSelection ?? {} }),
 		},
 		onSortingChange: setSorting,
 		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: (updater) => {
+			const next =
+				typeof updater === "function"
+					? updater({ pageIndex: resolvedPageIndex, pageSize })
+					: updater;
+			if (isServerPaginated) {
+				onPageChange(next.pageIndex);
+			} else {
+				setInternalPageIndex(next.pageIndex);
+			}
+		},
 		...(enableRowSelection && { onRowSelectionChange }),
 		...(getRowId && { getRowId }),
 		...(isServerPaginated && {
 			manualPagination: true,
 			rowCount: totalCount,
-			onPaginationChange: (updater) => {
-				const next =
-					typeof updater === "function"
-						? updater({ pageIndex, pageSize })
-						: updater;
-				onPageChange(next.pageIndex);
-			},
 		}),
 		enableRowSelection,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
-		initialState: { pagination: { pageSize } },
 	});
 
 	const rows = table.getRowModel().rows;
@@ -210,7 +224,7 @@ export function DataTable<T>({
 				</TableBody>
 			</Table>
 
-			<DataTablePagination table={table} />
+			<DataTablePagination table={table} pageSizeSelector={pageSizeSelector} />
 		</div>
 	);
 }

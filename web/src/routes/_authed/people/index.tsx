@@ -2,10 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 import { z } from "zod";
+import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
 import { getSettings } from "#/endpoints/settings";
 import { PeopleTable } from "#/features/people/people-table";
 import { initialSearch } from "#/lib/initial-search";
+import { usePageSizeOverride } from "#/lib/use-page-size-override";
 
 const VALID_SORTS = [
 	"name",
@@ -47,8 +49,9 @@ function PeoplePage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 	});
+	const { override, setPageSize, clear } = usePageSizeOverride("people");
 	const effectivePageSize =
-		searchPageSize ?? settingsData?.default_page_size ?? 20;
+		searchPageSize ?? override ?? settingsData?.default_page_size ?? 20;
 	const appliedDefaultRef = useRef(false);
 
 	// One-shot: apply settings-derived defaults only on a bare first visit (no
@@ -251,6 +254,26 @@ function PeoplePage() {
 				favoriteOnly={search.favorite_only}
 				favoriteFirst={search.favorite_first}
 				allowToggle={settingsData?.allow_favorite_toggle_on_list ?? true}
+				pageSizeSelector={
+					<PageSizeSelector
+						value={effectivePageSize}
+						hasOverride={override !== null}
+						onChange={(n) => {
+							setPageSize(n);
+							void navigate({
+								to: "/people",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+						onReset={() => {
+							clear();
+							void navigate({
+								to: "/people",
+								search: { ...search, page_size: undefined, page: 1 },
+							});
+						}}
+					/>
+				}
 				onSearchChange={handleSearchChange}
 				onLabelsChange={handleLabelsChange}
 				onPageChange={handlePageChange}

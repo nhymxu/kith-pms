@@ -50,6 +50,7 @@ interface PeopleTableProps {
 	favoriteOnly?: boolean;
 	favoriteFirst?: boolean;
 	allowToggle?: boolean;
+	pageSizeSelector?: React.ReactNode;
 	onSearchChange: (q: string) => void;
 	onLabelsChange: (labels: number[]) => void;
 	onPageChange: (page: number) => void;
@@ -197,6 +198,7 @@ export function PeopleTable({
 	favoriteOnly = false,
 	favoriteFirst = false,
 	allowToggle = true,
+	pageSizeSelector,
 	onSearchChange,
 	onLabelsChange,
 	onPageChange,
@@ -345,6 +347,7 @@ export function PeopleTable({
 				totalCount={data?.total}
 				pageIndex={page - 1}
 				onPageChange={(idx) => onPageChange(idx + 1)}
+				pageSizeSelector={pageSizeSelector}
 				hideToolbar
 				enableRowSelection
 				rowSelection={rowSelection}

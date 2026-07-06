@@ -328,6 +328,38 @@ Examples:
 
 No AI references in commit messages.
 
+## Pagination & Page Size Configuration
+
+### Page Size Precedence Pattern
+
+Apply this pattern consistently across all paginated list views (people, journal, gifts, audit):
+
+1. **Capture at Module Load**: `initial-search.ts` exports `initialSearch = window.location.search` at module evaluation time (before router mount) to detect bare first-visit
+2. **Apply Defaults Once**: On first visit with no explicit `page_size` param, check user settings and redirect with merged defaults; on back-navigation, respect explicit URL params already present
+3. **Precedence Chain** (in order):
+   - URL `?page_size=N` (explicit user override)
+   - localStorage `kith.page_size.<listKey>` (per-list remembered choice via `use-page-size-override.ts`)
+   - Server `default_page_size` setting (user preference from `/v1/settings`)
+   - Hardcoded fallback (20)
+4. **UI Control**: `page-size-selector.tsx` dropdown with reset-to-default link; stores selection in localStorage per list
+5. **Backend**: Server default in `DefaultPageSize` field (persisted via `user_setting` table); capped at 500
+
+**Reusable for**: Any feature applying backend defaults only truly-once on bare first visit, then respecting explicit URL params thereafter.
+
+### Image Crop Before Upload Pattern
+
+For any image upload with user-facing crop/resize UI (avatars, gift images, etc.):
+
+1. **Crop Dialog Component**: `web/src/components/image-crop-dialog.tsx` wraps `react-easy-crop` with fixed aspect ratio + pan/zoom controls
+2. **Crop Utility**: `web/src/lib/crop-image.ts` exports `cropImageToBlob(imageSrc, cropArea, aspect)` and `blobToFile(blob, filename)` helpers
+3. **Upload Handler**: Before `POST /v1/people/:id/avatar`, open dialog; user confirms crop; convert blob to file; upload
+4. **Constraints Definition**: Store per-domain constraints (aspect ratio, size/MIME limits) in focused modules:
+   - Avatar: 1:1 aspect, 5MB limit, JPEG/PNG/GIF/WebP only
+   - Gift images: 4:3 aspect, 5MB limit, JPEG/PNG/GIF/WebP only (via `gift-image-constraints.ts`)
+5. **Server-Side**: Crop happens client-side only; server validates final file size, MIME, and stores at flat path (no random prefix for avatars)
+
+**Reusable for**: Any image upload requiring user-controlled composition before persistence.
+
 ## File Upload Patterns
 
 ### Avatar Upload Flow

@@ -368,6 +368,26 @@ export function PersonForm() {
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
 
+### Pagination Architecture
+
+**Server-Side Page-Based Pagination**:
+- All list endpoints (`GET /v1/people`, `/v1/journal`, `/v1/gifts`, `/v1/audit`) use real page-based pagination
+- Query parameters: `page` (1-indexed, default 1), `page_size` (configurable, capped at 500)
+- Response envelope includes: `{data: [], page, page_size, total, has_more}`
+- Database-level: `offset := (page-1)*pageSize` with deterministic sort (`created_at DESC, id DESC` for audit; `name ASC` for people; etc.)
+- Audit domain also exposes `Repo.Count` and `Service.Count` methods for total row calculation
+
+**Page Size Configuration**:
+- **Server Default**: `DefaultPageSize` field in `internal/settings` (default 25, persisted via `user_setting` table key/value store)
+- **Frontend Precedence Chain** (per route/list):
+  1. URL query param `?page_size=N` (explicit override)
+  2. localStorage `kith.page_size.<listKey>` (per-list override via `use-page-size-override.ts`)
+  3. Server `default_page_size` setting (user preference from `GET /v1/settings`)
+  4. Hardcoded fallback (20 if all above unavailable)
+- **UI Component**: `page-size-selector.tsx` renders dropdown (10/25/50/100/200) with reset-to-default link; used on audit, gifts, journal, people pages
+- **Integration Pattern**: `usePageSizeOverride(listKey)` hook persists choice per list; `DataTable` respects manual pagination when `totalCount`, `pageIndex`, `onPageChange` all provided (TanStack Table `manualPagination: true`)
+- **Journal Custom Pager**: `JournalPagination` component (Prev/Next + page-jump popover) shown only when `total > page_size`
+
 ### OpenAPI/Swagger Documentation
 
 **Endpoint**: `/swagger/index.html` — interactive Swagger UI (no authentication required)
@@ -438,10 +458,10 @@ The file storage layer handles avatar uploads with security and durability guara
 
 **LocalFileService Implementation**:
 - **Avatar base directory**: Configured via `AVATAR_STORAGE_PATH` (default: `data/avatars`)
-- **Avatar structure**: `data/avatars/{personID}.{ext}` (flat single-file scheme; each person has exactly one avatar)
+- **Avatar structure**: `data/avatars/{personID}.{ext}` (flat single-file scheme; each person has exactly one avatar; new uploads replace old via atomic rename)
 - **Document base directory**: Uses same base `data/` with `documents/` subdirectory
-- **Document structure**: `data/avatars/documents/{personID}/{randomStr}-{sanitized-name}.{ext}` (stored under avatars base for simplicity; preserves per-document uniqueness)
-- **Atomic writes**: Temp file → sync → rename (prevents partial uploads)
+- **Document structure**: `data/documents/{personID}/{randomStr}-{sanitized-name}.{ext}` (preserves per-document uniqueness with random prefix)
+- **Atomic writes**: Temp file → sync → rename via `tempFilePath()` helper (prevents partial uploads and concurrent collision)
 - **Path traversal prevention**: Validates clean path stays within base directory
 
 **Security Controls (Avatars)**:
@@ -664,6 +684,12 @@ person_relationship (N)
   ├─ (N:1) to_person_id (FK to people)
   └─ (N:1) relationship_type_id (FK to relationship_type)
 ```
+
+**Relationship Reciprocals**:
+- **Symmetric Type Reciprocals**: For types without `inverse_type_id` (e.g., "Friend"), `AttachRelationship`/`DetachRelationship` always create and remove reciprocal rows using the same `typeID`
+- **Asymmetric Type Reciprocals**: For paired types with `inverse_type_id` (e.g., "Parent"↔"Child"), reciprocal rows use the inverse type
+- **Implementation**: Both services use `INSERT OR IGNORE` to idempotently insert reciprocals; `migration 0026` backfills existing one-sided symmetric relationships
+- **Effect**: Symmetric type relationships are always bidirectional; asymmetric paired types maintain logical reciprocals automatically
 
 ## Deployment
 

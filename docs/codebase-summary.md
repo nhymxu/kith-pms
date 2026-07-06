@@ -17,7 +17,7 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (25 migrations: 0001-0025)
+│   │   └── migrations/           # SQL schema files (27 migrations: 0001-0027)
 │   ├── testutil/                 # Test utilities
 │   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management
@@ -102,7 +102,7 @@ kith-pms/
 │   │   │   ├── me.go                                 # User profile endpoints
 │   │   │   ├── avatars.go / avatars_test.go          # Avatar endpoints
 │   │   │   ├── people_labels.go / people_labels_test.go # People-label association endpoints
-│   │   │   ├── people_quick.go / people_quick_test.go   # Quick operations endpoints
+│   │   │   ├── people_quick.go / people_quick_test.go   # Quick operations (favorite toggle) endpoints
 │   │   │   ├── work_history.go                       # Work history endpoints
 │   │   │   ├── settings.go                           # Settings endpoints
 │   │   │   ├── response.go                           # Response helpers (ok, created, apiErr)
@@ -146,7 +146,10 @@ kith-pms/
 │   ├── 0021_person_nickname_lower.sql # generated lowercase column for search
 │   ├── 0022_drop_mime_type_columns.sql # MIME type now detected from file extension
 │   ├── 0023_remove_birthday_important_date.sql # Remove birthday from important_dates (use reminders instead)
-│   └── 0024_audit_log_metadata.sql # metadata column for field-level change tracking in audit log
+│   ├── 0024_audit_log_metadata.sql # metadata column for field-level change tracking in audit log
+│   ├── 0025_drop_person_relationship_type.sql # Drop legacy person.relationship_type column
+│   ├── 0026_backfill_symmetric_relationship_reciprocals.sql # Backfill one-sided symmetric relationships
+│   └── 0027_person_favorite.sql # is_favorite column + partial index on person table
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -192,7 +195,7 @@ kith-pms/
 - **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions; extracts underlying `*sql.DB` from `*bun.DB` for schema work
 
 ### `internal/testutil` — Test utilities
-- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, applies all 24 migrations (0001-0024), registers `t.Cleanup` for teardown
+- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, applies all 27 migrations (0001-0027), registers `t.Cleanup` for teardown
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
@@ -206,15 +209,15 @@ kith-pms/
 ### `internal/audit` — Audit logging & change tracking
 - **domain.go**: Entry (id, entity_type, entity_id, entity_name, action, actor_id, created_at, metadata), EntityType enum, Action enum; Metadata struct with Change[] array for field-level change tracking (field name, old value, new value)
 - **context.go**: Helper functions for actor context — `WithActor(ctx, userID)` and `ActorFromCtx(ctx)`
-- **service.go**: `Log(ctx, entityType, entityID, entityName, action, metadata)` — best-effort logging (never blocks, errors logged as warnings); `Purge(ctx, days)` for retention cleanup
-- **repo.go**: Database queries for audit log insertion, list retrieval with filtering, and retention-based purge
-- **service_test.go**: Tests for logging behavior, list queries, and purge operations
+- **service.go**: `Log(ctx, entityType, entityID, entityName, action, metadata)` — best-effort logging (never blocks, errors logged as warnings); `Count(ctx, db)` for pagination; `Purge(ctx, days)` for retention cleanup
+- **repo.go**: Database queries for audit log insertion, list retrieval with filtering, pagination via `offset := (page-1)*pageSize`, `Count(ctx, db)` for total row calculation, and retention-based purge
+- **service_test.go**: Tests for logging behavior, list queries, pagination, and purge operations
 
 ### `internal/people` — Contacts management
-- **domain.go**: Person (name, DOB, type, is_self, last_contact_at), Contact (email, phone), Location (street, city, country)
-- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search; self-profile management (GetSelfPerson, SetSelfPerson); UpdateLastContact(personID, contactTime) for manual updates
-- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations; self-profile queries; UpdateLastContact for timestamp persistence
-- **service_test.go**: Integration tests for CRUD, complex queries, and self-profile operations
+- **domain.go**: Person (name, DOB, type, is_self, last_contact_at, **is_favorite**), Contact (email, phone), Location (street, city, country)
+- **service.go**: CRUD (CreatePerson, GetPerson, UpdatePerson, DeletePerson); query by label, search; self-profile management (GetSelfPerson, SetSelfPerson); UpdateLastContact(personID, contactTime) for manual updates; **SetFavorite(ctx, db, personID, favorite)** — transactional favorite toggle with audit logging
+- **repo.go**: Raw database/sql queries; JOIN queries for contacts & locations; self-profile queries; UpdateLastContact for timestamp persistence; List/Count accept **favoriteOnly** and **favoriteFirst** params (favoriteFirst prefixes `is_favorite DESC,` to ORDER BY)
+- **service_test.go**: Integration tests for CRUD, complex queries, self-profile, and favorite operations
 
 ### `internal/labels` — Tag system
 - **domain.go**: Label (name, color hex)
@@ -255,8 +258,8 @@ kith-pms/
 - **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
 
 ### `internal/settings` — User settings & preferences
-- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days) with Defaults constant
-- **service.go**: Get/Update business logic with validation for format/timezone values; GetRetentionDays helper; ErrInvalidRetentionDays validation
+- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days, **default_page_size**) with Defaults constant; DefaultPageSize range 10–200
+- **service.go**: Get/Update business logic with validation for format/timezone/page_size values; GetRetentionDays and GetDefaultPageSize helpers; validation errors
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
@@ -324,11 +327,12 @@ kith-pms/
 
 ### Directory Structure (`web/src/`)
 ```
-components/ui/           # shadcn components (button, card, input, select, dialog, sheet, etc.)
+components/ui/           # shadcn components (button, card, input, select, dialog, sheet, tooltip, etc.)
 components/app-shell/    # Layout (topbar.tsx with responsive nav, app-layout.tsx)
+components/image-crop-dialog.tsx # Crop/pan/zoom dialog wrapping react-easy-crop with fixed aspect ratio
 endpoints/               # API call functions (per-resource: people.ts, journal.ts, etc.)
 features/
-  dashboard/             # Dashboard widgets + chart theme
+  dashboard/             # Dashboard widgets + chart theme + avatar grids (favorite-people.tsx, last-contacted-people.tsx, person-avatar-tooltip.tsx)
   dates/                 # Date display components
   gifts/                 # Gift form, list, detail
   journal/               # Journal form, timeline, search
@@ -337,7 +341,7 @@ features/
   people/                # People table, detail sections, avatar uploader, quick actions
   reminders/             # Reminder form, table
   settings/              # Two-panel layout (sidebar nav + detail panel); General settings for date/time format + timezone
-lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, format-datetime.ts, etc.)
+lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, format-datetime.ts, crop-image.ts, use-page-size-override.ts, initial-search.ts, etc.)
 routes/                  # TanStack Router file-based routes (_authed/, public/)
 schemas/                 # Zod-style TS type definitions (maintained by hand, not generated)
 styles.css               # Tailwind + design tokens (:root variables)
@@ -430,6 +434,6 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 **Total**: 200+ Go tests passing with race detector. Run all: `make tests`
 
-**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 24 confirmed migrations applied, providing clean per-test isolation.
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 27 confirmed migrations applied, providing clean per-test isolation.
 
 **React Frontend Tests**: Vitest + @testing-library/react; run via `pnpm --dir web test`

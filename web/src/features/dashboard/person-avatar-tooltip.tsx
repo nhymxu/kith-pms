@@ -20,6 +20,7 @@ export function PersonAvatarTooltip({ person }: { person: Person }) {
 					<Link
 						to="/people/$personId"
 						params={{ personId: String(person.id) }}
+						data-avatar
 						className="size-16 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-lg font-medium text-chip-fg font-mono ring-2 ring-transparent hover:ring-accent transition-[box-shadow]"
 					>
 						{person.avatar_path ? (

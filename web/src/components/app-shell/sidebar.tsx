@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import {
 	BarChart3,
 	BookOpen,
@@ -8,6 +10,10 @@ import {
 	Network,
 	Users,
 } from "lucide-react";
+import { getMe } from "#/endpoints/me";
+import { getAvatarUrl } from "#/endpoints/people";
+import { useAuth } from "#/lib/auth-context";
+import { keys } from "#/query-keys";
 import { NavLink } from "./nav-link";
 
 export const NAV_ITEMS = [
@@ -23,12 +29,68 @@ export const NAV_ITEMS = [
 
 interface SidebarProps {
 	onNavClick?: () => void;
+	/** Desktop rail footer (avatar/name/links). Omitted in the mobile drawer. */
+	showFooter?: boolean;
 }
 
-export function Sidebar({ onNavClick }: SidebarProps) {
+function SidebarFooter() {
+	const { user } = useAuth();
+
+	const { data: profile } = useQuery({
+		queryKey: keys.me.profile(),
+		queryFn: getMe,
+		retry: false,
+		enabled: !!user,
+	});
+
+	const displayName = profile
+		? profile.nickname || profile.name
+		: user
+			? `User #${user.id}`
+			: "Account";
+
+	const initials = profile
+		? (profile.nickname || profile.name).charAt(0).toUpperCase()
+		: user
+			? `U${user.id}`
+			: "?";
+
+	return (
+		<div className="mt-auto flex items-center gap-2.5 border-t border-line px-5 py-3.5 shrink-0">
+			<span
+				data-avatar
+				className="size-8 rounded-full bg-accent text-accent-foreground text-[12px] font-medium grid place-items-center shrink-0 overflow-hidden"
+			>
+				{profile?.avatar_path ? (
+					<img
+						src={getAvatarUrl(profile.id)}
+						alt={displayName}
+						className="size-full object-cover"
+					/>
+				) : (
+					initials
+				)}
+			</span>
+			<div className="min-w-0 text-[12.5px] font-semibold truncate">
+				<div className="truncate">{displayName}</div>
+				<div className="text-[11px] font-normal text-sub truncate">
+					<Link to="/me" className="hover:text-ink transition-colors">
+						Self profile
+					</Link>
+					{" · "}
+					<Link to="/settings" className="hover:text-ink transition-colors">
+						Settings
+					</Link>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export function Sidebar({ onNavClick, showFooter = false }: SidebarProps) {
 	return (
 		<div className="flex h-full flex-col bg-sidebar">
-			<div className="flex h-14 items-center border-b border-line px-5">
+			<div className="flex h-14 items-center border-b border-line px-5 shrink-0">
 				<span className="text-[15px] font-semibold tracking-tight">Kith</span>
 			</div>
 
@@ -43,6 +105,8 @@ export function Sidebar({ onNavClick }: SidebarProps) {
 					/>
 				))}
 			</nav>
+
+			{showFooter && <SidebarFooter />}
 		</div>
 	);
 }

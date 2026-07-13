@@ -8,6 +8,7 @@ import {
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
+import { Pill } from "#/components/ui/pill";
 import { formatDate, formatDateTime } from "#/lib/format-datetime";
 import type { ReminderWithPerson } from "#/schemas/reminder";
 import { CompleteButton } from "./complete-button";
@@ -35,19 +36,15 @@ function StatusBadge({
 }) {
 	if (completed)
 		return (
-			<span className="font-mono text-[10px] uppercase text-sub line-through">
+			<Pill variant="plain" strike>
 				Done
-			</span>
+			</Pill>
 		);
 	const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
 	return isOverdue ? (
-		<span className="font-mono text-[10px] uppercase text-danger-fg">
-			Overdue
-		</span>
+		<Pill variant="danger">Overdue</Pill>
 	) : (
-		<span className="font-mono text-[10px] uppercase text-accent-text">
-			Upcoming
-		</span>
+		<Pill variant="accent">Upcoming</Pill>
 	);
 }
 
@@ -100,9 +97,9 @@ export function RemindersTable({
 				header: "Recurrence",
 				cell: ({ row }) =>
 					row.original.recurrence_rule ? (
-						<span className="font-mono text-[10px] uppercase text-accent-text">
+						<Pill variant="accent">
 							↻ {recurrenceLabel(row.original.recurrence_rule)}
-						</span>
+						</Pill>
 					) : (
 						<span className="text-sub/60">—</span>
 					),

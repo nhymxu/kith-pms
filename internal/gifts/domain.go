@@ -49,6 +49,7 @@ type ListParams struct {
 	PersonID  *int64
 	Direction Direction
 	DebtType  DebtType
+	Query     string // case-insensitive LIKE match against title/notes; empty = no filter
 	PageSize  int
 	Page      int
 }

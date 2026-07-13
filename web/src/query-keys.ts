@@ -110,4 +110,8 @@ export const keys = {
 		all: ["app"] as const,
 		info: () => ["app", "info"] as const,
 	},
+	search: {
+		all: ["search"] as const,
+		query: (q: string) => ["search", q] as const,
+	},
 } as const;

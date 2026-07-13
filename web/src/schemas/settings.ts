@@ -28,6 +28,7 @@ export const userSettingsSchema = z.object({
 	default_page_size: z.number().int().min(10).max(200).default(25),
 	dashboard_favorites_count: z.number().int().min(1).max(20).default(5),
 	dashboard_last_contact_count: z.number().int().min(1).max(20).default(5),
+	nav_layout: z.enum(["top", "side"]).default("top"),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

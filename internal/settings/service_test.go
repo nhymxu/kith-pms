@@ -46,6 +46,7 @@ func validBase() settings.UserSettings {
 		DashboardFavoritesCount:   5,
 		DashboardLastContactCount: 5,
 		Theme:                     "quiet-ink",
+		NavLayout:                 "top",
 	}
 }
 
@@ -311,5 +312,57 @@ func TestSettings_Update_InvalidTheme_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidTheme) {
 		t.Errorf("want ErrInvalidTheme, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_NavLayout(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	// On a fresh test DB (no nav_layout row), Get() should return the built-in default.
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.NavLayout != "top" {
+		t.Errorf("default nav_layout: want \"top\", got %q", got.NavLayout)
+	}
+}
+
+func TestSettings_Update_NavLayout_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	in := validBase()
+	in.NavLayout = "side"
+
+	out, err := svc.Update(ctx, in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if out.NavLayout != "side" {
+		t.Errorf("out.NavLayout: want \"side\", got %q", out.NavLayout)
+	}
+
+	got, err := svc.Get(ctx)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.NavLayout != "side" {
+		t.Errorf("persisted nav_layout: want \"side\", got %q", got.NavLayout)
+	}
+}
+
+func TestSettings_Update_InvalidNavLayout_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.NavLayout = "bogus"
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidNavLayout) {
+		t.Errorf("want ErrInvalidNavLayout, got %v", err)
 	}
 }

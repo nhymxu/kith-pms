@@ -91,6 +91,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountPeopleQuick(v1, deps)
 	mountSettings(v1, deps)
 	mountAppInfo(v1)
+	mountSearch(v1, deps)
 
 	e.Use(sessionLoader, injectAuditActor())
 
@@ -273,6 +274,15 @@ func mountSettings(g *echo.Group, deps Deps) {
 
 func mountAppInfo(g *echo.Group) {
 	g.GET("/app/info", handler.GetAppInfo)
+}
+
+func mountSearch(g *echo.Group, deps Deps) {
+	h := &handler.SearchAPI{
+		PeopleSvc:  deps.PeopleService,
+		JournalSvc: deps.JournalService,
+		GiftsSvc:   deps.GiftsService,
+	}
+	g.GET("/search", h.Search)
 }
 
 func mountPeopleQuick(g *echo.Group, deps Deps) {

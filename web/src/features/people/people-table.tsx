@@ -322,8 +322,11 @@ export function PeopleTable({
 										: [...labels, l.id];
 									onLabelsChange(next);
 								}}
-								className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
-								style={active ? { borderColor: l.color } : undefined}
+								className="text-xs border rounded-full px-3 py-1 transition-colors text-ink"
+								style={{
+									borderColor: l.color,
+									backgroundColor: active ? `${l.color}26` : undefined,
+								}}
 							>
 								{l.name}
 							</button>

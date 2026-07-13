@@ -29,6 +29,7 @@ export function LastContactedPeople({
 					{["l1", "l2", "l3"].map((key) => (
 						<div
 							key={key}
+							data-avatar
 							className="size-16 rounded-full bg-chip animate-pulse"
 						/>
 					))}

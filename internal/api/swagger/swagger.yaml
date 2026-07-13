@@ -52,6 +52,8 @@ definitions:
         type: string
       favorite_first_default:
         type: boolean
+      nav_layout:
+        type: string
       network_color_by:
         type: string
       network_only_mine_depth:
@@ -2229,6 +2231,32 @@ paths:
       summary: Complete reminder
       tags:
       - reminders
+  /search:
+    get:
+      description: Fans a query out to people/journal/gifts; each group capped at
+        5 hits. Blank q returns empty groups.
+      parameters:
+      - description: Search term
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Global search
+      tags:
+      - search
   /settings:
     get:
       produces:

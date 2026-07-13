@@ -69,8 +69,8 @@ func (r *sqlPersonRepo) List(
 	sq := r.db.NewSelect().Model(&people)
 
 	if q != "" {
-		ql := "%" + strings.ToLower(q) + "%"
-		sq = sq.Where("name_lower LIKE ? OR nickname_lower LIKE ?", ql, ql)
+		ql := "%" + escapeLikeQuery(strings.ToLower(q)) + "%"
+		sq = sq.Where(`name_lower LIKE ? ESCAPE '\' OR nickname_lower LIKE ? ESCAPE '\'`, ql, ql)
 	}
 
 	// AND-semantics: person must have ALL listed labels.
@@ -103,6 +103,16 @@ func (r *sqlPersonRepo) List(
 	return people, nil
 }
 
+// escapeLikeQuery escapes SQL LIKE wildcards ('%', '_') and the escape character
+// itself ('\') so user input matches as a literal substring under `LIKE ? ESCAPE '\'`.
+func escapeLikeQuery(q string) string {
+	q = strings.ReplaceAll(q, `\`, `\\`)
+	q = strings.ReplaceAll(q, `%`, `\%`)
+	q = strings.ReplaceAll(q, `_`, `\_`)
+
+	return q
+}
+
 func (r *sqlPersonRepo) Count(
 	ctx context.Context,
 	q string,
@@ -113,8 +123,8 @@ func (r *sqlPersonRepo) Count(
 	sq := r.db.NewSelect().Model((*Person)(nil))
 
 	if q != "" {
-		ql := "%" + strings.ToLower(q) + "%"
-		sq = sq.Where("name_lower LIKE ? OR nickname_lower LIKE ?", ql, ql)
+		ql := "%" + escapeLikeQuery(strings.ToLower(q)) + "%"
+		sq = sq.Where(`name_lower LIKE ? ESCAPE '\' OR nickname_lower LIKE ? ESCAPE '\'`, ql, ql)
 	}
 
 	if len(labelIDs) > 0 {

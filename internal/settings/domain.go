@@ -21,6 +21,8 @@ type UserSettings struct {
 	DashboardLastContactCount int `json:"dashboard_last_contact_count"`
 
 	Theme string `json:"theme"`
+
+	NavLayout string `json:"nav_layout"`
 }
 
 var Defaults = UserSettings{
@@ -43,6 +45,8 @@ var Defaults = UserSettings{
 	DashboardLastContactCount: 5,
 
 	Theme: "quiet-ink",
+
+	NavLayout: "top",
 }
 
 const (
@@ -65,4 +69,6 @@ const (
 	KeyDashboardLastContactCount = "dashboard_last_contact_count"
 
 	KeyTheme = "theme"
+
+	KeyNavLayout = "nav_layout"
 )

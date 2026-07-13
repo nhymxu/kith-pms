@@ -105,6 +105,7 @@ kith-pms/
 │   │   │   ├── people_quick.go / people_quick_test.go   # Quick operations (favorite toggle) endpoints
 │   │   │   ├── work_history.go                       # Work history endpoints
 │   │   │   ├── settings.go                           # Settings endpoints
+│   │   │   ├── search.go / search_test.go            # Global search endpoint (people/journal/gifts)
 │   │   │   ├── response.go                           # Response helpers (ok, created, apiErr)
 │   │   │   └── testhelpers_test.go                   # Test utilities
 │   │   ├── server.go             # Echo setup (global middleware)
@@ -258,8 +259,8 @@ kith-pms/
 - **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
 
 ### `internal/settings` — User settings & preferences
-- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days, **default_page_size**) with Defaults constant; DefaultPageSize range 10–200
-- **service.go**: Get/Update business logic with validation for format/timezone/page_size values; GetRetentionDays and GetDefaultPageSize helpers; validation errors
+- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days, **default_page_size**, **nav_layout**) with Defaults constant; DefaultPageSize range 10–200; nav_layout default "top" (enum: "top", "side")
+- **service.go**: Get/Update business logic with validation for format/timezone/page_size/nav_layout values; GetRetentionDays, GetDefaultPageSize, and GetNavLayout helpers; validation errors
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
 
 ### `internal/files` — File storage service
@@ -286,6 +287,7 @@ kith-pms/
   - **labels.go**: CRUD with usage counts
   - **relationships.go**: CRUD with usage counts
   - **audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
+  - **search.go**: GET /search for global search (grouped people/journal/gifts DTO, 5 results per type, LIKE-escaped, 128-rune query cap)
   - **me.go**: GET profile, POST setup
   - **avatars.go**: Avatar endpoints (already in handler package)
   - **people_labels.go**: People-label association endpoints
@@ -327,7 +329,7 @@ kith-pms/
 
 ### Directory Structure (`web/src/`)
 ```
-components/ui/           # shadcn components (button, card, input, select, dialog, sheet, tooltip, etc.)
+components/ui/           # shadcn components (button, card, input, select, dialog, sheet, tooltip, command, pill, etc.)
 components/app-shell/    # Layout (topbar.tsx with responsive nav, app-layout.tsx)
 components/image-crop-dialog.tsx # Crop/pan/zoom dialog wrapping react-easy-crop with fixed aspect ratio
 endpoints/               # API call functions (per-resource: people.ts, journal.ts, etc.)
@@ -338,8 +340,9 @@ features/
   journal/               # Journal form, timeline, search
   me/                    # User profile section
   network/               # Relationship network graph (force-directed, ego view, graph-data.ts utility)
-  people/                # People table, detail sections, avatar uploader, quick actions
+  people/                # People table, detail sections, avatar uploader, quick actions (quick-journal-dialog.tsx, quick-gift-dialog.tsx)
   reminders/             # Reminder form, table
+  search/                # Global search (command-palette.tsx) with cmdk integration
   settings/              # Two-panel layout (sidebar nav + detail panel); General settings for date/time format + timezone
 lib/                     # Utilities (api-client.ts, auth-context.tsx, query-client.ts, format-datetime.ts, crop-image.ts, use-page-size-override.ts, initial-search.ts, etc.)
 routes/                  # TanStack Router file-based routes (_authed/, public/)
@@ -367,10 +370,29 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **Date/Time Formatting**: `lib/format-datetime.ts` utility converts UTC backend times to user's locale/timezone; settings stored in localStorage (date format, timezone)
 
 ### Dashboard Feature
-- **Components**: summary-cards, relationship-pulse-chart, action-queue, recent-relationship-activity, upcoming-moments
+- **Components**: favorite-people, last-contacted-people, person-avatar-tooltip (redesigned 2-column layout with quick-journal dialog)
+- **Previous Components**: summary-cards, recent-journal-activity (deprecated in Phase 7 redesign)
+- **Quick Journal Integration**: "+ Log interaction" quick-journal dialog with person picker directly in dashboard
 - **Data Adapter**: `dashboard-data.ts` derives KPIs and shapes API responses for widgets
 - **Per-card Refresh**: TanStack Query invalidation on refresh button click
 - **Chart Library**: Recharts v3.8.1 with custom Indigo/Zinc theme
+
+### Quick-Add Dialogs
+- **Quick Journal Dialog** (`features/people/quick-journal-dialog.tsx`): Title+notes form; `personId` optional (shows person picker when omitted); used in person detail page AND dashboard (non-exclusive usage). Invalidates both `keys.journal.all` and `keys.people.all` on save (latter because `last_contact_at` updates affect dashboard favorites/recent widgets).
+- **Quick Gift Dialog** (`features/people/quick-gift-dialog.tsx`): Title-only form with debtor/creditor tracking; `personId` required; used in person detail quick-actions bar.
+- **Extraction Pattern**: Previously inline ~146 lines in `quick-actions.tsx`; extracted into separate, reusable components to serve both person detail and dashboard contexts.
+
+### Global Search Feature
+- **Command Palette**: ⌘K search interface using cmdk library
+- **Search Endpoint**: GET /v1/search returns grouped people/journal/gifts (5 results each)
+- **Components**: `features/search/command-palette.tsx`, `components/ui/command.tsx`
+- **Endpoints**: `endpoints/search.ts` with query parameter handling
+- **Schemas**: `schemas/search.ts` for search result types
+
+### Pill Component (Unified Badge Primitive)
+- **Implementation** (`components/ui/pill.tsx`): CVA (class-variance-authority) based variant badge; variants: `success`, `warning`, `danger`, `accent`, `plain`; optional `strike` modifier (line-through).
+- **Adoption**: Replaces ad-hoc badge styling in `gifts-table.tsx` (DebtBadge: Given/Received/I owe/They owe/Planned), `audit-table.tsx` (action-type badges), `reminders-table.tsx` (StatusBadge: Done/Overdue/Upcoming).
+- **Design**: Monospace uppercase text with semantic color tokens; strike variant for completion states (reminders marked done).
 
 **Validation:**
 - Build: `pnpm --dir web build` ✅
@@ -413,7 +435,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 - **Build**: `make web` (pnpm build → copy SPA) then `CGO_ENABLED=0 go build` for single static binary
 - **Binary name**: `kith-pms` (compiled to `bin/kith-pms`)
 - **Frontend**: `web/` pnpm workspace; `pnpm build` outputs to `web/dist/`; copied to `internal/api/spa/public/` for embedding
-- **Frontend Stack**: React 19.2.7, TypeScript 6.0.3, Vite 8.1.0, TailwindCSS 4.3.1, Biome 2.5.1, pnpm 11.5.3
+- **Frontend Stack**: React 19.2.7, TypeScript 6.0.3, Vite 8.1.0, TailwindCSS 4.3.1, Biome 2.5.1, pnpm 11.5.3, cmdk (command palette), Recharts (charting), @base-ui/react (accessible primitives)
 
 ## Test Coverage
 

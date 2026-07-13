@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { listAudit } from "#/endpoints/audit";
 import { listGifts } from "#/endpoints/gifts";
 import { listUpcomingDates } from "#/endpoints/important-dates";
@@ -24,6 +25,7 @@ import { RecentRelationshipActivity } from "#/features/dashboard/recent-relation
 import { RelationshipPulseChart } from "#/features/dashboard/relationship-pulse-chart";
 import { SummaryCards } from "#/features/dashboard/summary-cards";
 import { UpcomingMoments } from "#/features/dashboard/upcoming-moments";
+import { QuickJournalDialog } from "#/features/people/quick-journal-dialog";
 import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/")({
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/_authed/")({
 function DashboardPage() {
 	const queryClient = useQueryClient();
 	const [refreshingId, setRefreshingId] = useState<string>();
+	const [journalDialogOpen, setJournalDialogOpen] = useState(false);
 	const settings = useQuery({
 		queryKey: ["settings"],
 		queryFn: getSettings,
@@ -124,6 +127,8 @@ function DashboardPage() {
 	];
 	const hasError = dashboardQueries.some((query) => query.isError);
 	const isStale = dashboardQueries.some((query) => query.isError && query.data);
+	const followupsCount =
+		viewModel.summaryCards.find((card) => card.id === "followups")?.value ?? 0;
 
 	async function refresh(
 		id:
@@ -145,13 +150,24 @@ function DashboardPage() {
 
 	return (
 		<div className="space-y-4">
-			<header className="flex items-end justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					Dashboard
-				</h1>
-				<span className="font-mono text-[11px] text-sub">
-					Last refreshed {formatTime(viewModel.lastUpdatedAt)}
-				</span>
+			<header className="flex flex-wrap items-end justify-between gap-3">
+				<div>
+					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
+						Dashboard
+					</h1>
+					<p className="text-[12px] text-sub mt-0.5">
+						{formatHeaderDate(viewModel.lastUpdatedAt)} — {followupsCount}{" "}
+						follow-up{followupsCount === 1 ? "" : "s"} need attention
+					</p>
+				</div>
+				<div className="flex items-center gap-3">
+					<span className="font-mono text-[11px] text-sub">
+						Last refreshed {formatTime(viewModel.lastUpdatedAt)}
+					</span>
+					<Button onClick={() => setJournalDialogOpen(true)}>
+						+ Log interaction
+					</Button>
+				</div>
 			</header>
 
 			{hasError ? (
@@ -167,35 +183,36 @@ function DashboardPage() {
 				isStale={isStale}
 			/>
 
-			<RelationshipPulseChart
-				data={viewModel.pulse}
-				isLoading={journal.isLoading}
-				onRefresh={() => refresh("pulse")}
-				isRefreshing={refreshingId === "pulse"}
-			/>
-
-			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-				<LastContactedPeople
-					people={viewModel.lastContacted}
-					isLoading={lastContactedPeople.isLoading}
-					onRefresh={() => refresh("lastContacted")}
-					isRefreshing={refreshingId === "lastContacted"}
+			<div className="grid grid-cols-1 xl:grid-cols-[1.25fr_1fr] gap-4">
+				<RelationshipPulseChart
+					data={viewModel.pulse}
+					isLoading={journal.isLoading}
+					onRefresh={() => refresh("pulse")}
+					isRefreshing={refreshingId === "pulse"}
 				/>
-				<FavoritePeople
-					people={viewModel.favorites}
-					isLoading={favoritePeople.isLoading}
-					onRefresh={() => refresh("favorites")}
-					isRefreshing={refreshingId === "favorites"}
-				/>
-			</div>
-
-			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 				<ActionQueue
 					actions={viewModel.actions}
 					isLoading={reminders.isLoading || gifts.isLoading}
 					onRefresh={() => refresh("actions")}
 					isRefreshing={refreshingId === "actions"}
 				/>
+			</div>
+
+			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+				<div className="space-y-4">
+					<LastContactedPeople
+						people={viewModel.lastContacted}
+						isLoading={lastContactedPeople.isLoading}
+						onRefresh={() => refresh("lastContacted")}
+						isRefreshing={refreshingId === "lastContacted"}
+					/>
+					<FavoritePeople
+						people={viewModel.favorites}
+						isLoading={favoritePeople.isLoading}
+						onRefresh={() => refresh("favorites")}
+						isRefreshing={refreshingId === "favorites"}
+					/>
+				</div>
 				<div className="space-y-4">
 					<RecentRelationshipActivity
 						activities={viewModel.activities}
@@ -211,6 +228,11 @@ function DashboardPage() {
 					/>
 				</div>
 			</div>
+
+			<QuickJournalDialog
+				open={journalDialogOpen}
+				onClose={() => setJournalDialogOpen(false)}
+			/>
 		</div>
 	);
 }
@@ -249,5 +271,13 @@ function formatTime(value: string): string {
 	return new Intl.DateTimeFormat(undefined, {
 		hour: "numeric",
 		minute: "2-digit",
+	}).format(new Date(value));
+}
+
+function formatHeaderDate(value: string): string {
+	return new Intl.DateTimeFormat(undefined, {
+		weekday: "long",
+		month: "long",
+		day: "numeric",
 	}).format(new Date(value));
 }

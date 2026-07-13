@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Clock, Gift } from "lucide-react";
 import { useState } from "react";
 import { SubmitButton } from "#/components/form/submit-button";
-import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -11,155 +10,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
-import { Textarea } from "#/components/ui/textarea";
 import { apiFetch } from "#/lib/api-client";
 import { formatDateTime } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
+import { QuickGiftDialog } from "./quick-gift-dialog";
+import { QuickJournalDialog } from "./quick-journal-dialog";
 
 interface QuickActionsProps {
 	personId: number;
-}
-
-export function QuickJournalDialog({
-	personId,
-	open,
-	onClose,
-}: {
-	personId: number;
-	open: boolean;
-	onClose: () => void;
-}) {
-	const [title, setTitle] = useState("");
-	const [content, setContent] = useState("");
-	const [error, setError] = useState<string | null>(null);
-	const qc = useQueryClient();
-
-	const mutation = useMutation({
-		mutationFn: () =>
-			apiFetch(`/v1/people/${personId}/journal/quick`, {
-				method: "POST",
-				body: JSON.stringify({ title, content }),
-			}),
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.journal.all });
-			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
-			setTitle("");
-			setContent("");
-			onClose();
-		},
-		onError: (err) => setError(err instanceof Error ? err.message : "Failed"),
-	});
-
-	return (
-		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Quick journal entry</DialogTitle>
-				</DialogHeader>
-				{error && (
-					<Alert variant="destructive">
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				)}
-				<div className="space-y-3">
-					<div>
-						<Label>Title</Label>
-						<Input
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder="What happened?"
-						/>
-					</div>
-					<div>
-						<Label>Notes</Label>
-						<Textarea
-							value={content}
-							onChange={(e) => setContent(e.target.value)}
-							rows={3}
-							placeholder="Details…"
-						/>
-					</div>
-				</div>
-				<DialogFooter>
-					<Button variant="neutral" onClick={onClose}>
-						Cancel
-					</Button>
-					<SubmitButton
-						isPending={mutation.isPending}
-						onClick={() => mutation.mutate()}
-						type="button"
-					>
-						Save
-					</SubmitButton>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	);
-}
-
-export function QuickGiftDialog({
-	personId,
-	open,
-	onClose,
-}: {
-	personId: number;
-	open: boolean;
-	onClose: () => void;
-}) {
-	const [title, setTitle] = useState("");
-	const [error, setError] = useState<string | null>(null);
-	const qc = useQueryClient();
-
-	const mutation = useMutation({
-		mutationFn: () =>
-			apiFetch(`/v1/people/${personId}/gifts/quick`, {
-				method: "POST",
-				body: JSON.stringify({ title }),
-			}),
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: keys.gifts.all });
-			setTitle("");
-			onClose();
-		},
-		onError: (err) => setError(err instanceof Error ? err.message : "Failed"),
-	});
-
-	return (
-		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Quick gift note</DialogTitle>
-				</DialogHeader>
-				{error && (
-					<Alert variant="destructive">
-						<AlertDescription>{error}</AlertDescription>
-					</Alert>
-				)}
-				<div>
-					<Label>Gift title</Label>
-					<Input
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						placeholder="e.g. Birthday gift idea"
-					/>
-				</div>
-				<DialogFooter>
-					<Button variant="neutral" onClick={onClose}>
-						Cancel
-					</Button>
-					<SubmitButton
-						isPending={mutation.isPending}
-						onClick={() => mutation.mutate()}
-						type="button"
-					>
-						Save
-					</SubmitButton>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	);
 }
 
 export function QuickActions({ personId }: QuickActionsProps) {

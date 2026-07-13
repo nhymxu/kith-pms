@@ -31,6 +31,10 @@ var (
 	ErrInvalidTheme = errors.New(
 		"settings: theme must be one of quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger",
 	)
+	// ErrInvalidNavLayout is returned when nav_layout is not "top" or "side". Keep the
+	// valid set in sync with the zod enum in web/src/schemas/settings.ts, the registry
+	// in web/src/lib/nav-layout.ts, and the DEFAULTS in web/src/lib/format-datetime.ts.
+	ErrInvalidNavLayout = errors.New("settings: nav_layout must be one of top, side")
 )
 
 var validDateFormats = map[string]bool{
@@ -68,6 +72,11 @@ var validThemes = map[string]bool{
 	"nightdesk":  true,
 	"softclay":   true,
 	"ledger":     true,
+}
+
+var validNavLayout = map[string]bool{
+	"top":  true,
+	"side": true,
 }
 
 type Service struct {
@@ -157,6 +166,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.Theme = v
 	}
 
+	if v, ok := rows[KeyNavLayout]; ok {
+		result.NavLayout = v
+	}
+
 	return result, nil
 }
 
@@ -205,6 +218,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidTheme
 	}
 
+	if !validNavLayout[in.NavLayout] {
+		return UserSettings{}, ErrInvalidNavLayout
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:                in.DateFormat,
@@ -223,6 +240,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyDashboardFavoritesCount:   strconv.Itoa(in.DashboardFavoritesCount),
 		KeyDashboardLastContactCount: strconv.Itoa(in.DashboardLastContactCount),
 		KeyTheme:                     in.Theme,
+		KeyNavLayout:                 in.NavLayout,
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

@@ -7,7 +7,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { listGifts } from "#/endpoints/gifts";
 import { keys } from "#/query-keys";
-import { QuickGiftDialog } from "./quick-actions";
+import { QuickGiftDialog } from "./quick-gift-dialog";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (

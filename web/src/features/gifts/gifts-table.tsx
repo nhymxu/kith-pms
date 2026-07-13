@@ -8,6 +8,7 @@ import {
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
+import { Pill } from "#/components/ui/pill";
 import { formatDate } from "#/lib/format-datetime";
 import type { GiftWithPerson } from "#/schemas/gift";
 
@@ -28,31 +29,11 @@ function DebtBadge({
 	debtType: string;
 	direction: string;
 }) {
-	if (direction === "given")
-		return (
-			<span className="font-mono text-[10px] uppercase text-sub">Given</span>
-		);
-	if (direction === "received")
-		return (
-			<span className="font-mono text-[10px] uppercase text-accent-text">
-				Received
-			</span>
-		);
-	if (debtType === "i_owe")
-		return (
-			<span className="font-mono text-[10px] uppercase text-warning-fg">
-				I owe
-			</span>
-		);
-	if (debtType === "they_owe")
-		return (
-			<span className="font-mono text-[10px] uppercase text-success-fg">
-				They owe
-			</span>
-		);
-	return (
-		<span className="font-mono text-[10px] uppercase text-sub">Planned</span>
-	);
+	if (direction === "given") return <Pill variant="plain">Given</Pill>;
+	if (direction === "received") return <Pill variant="accent">Received</Pill>;
+	if (debtType === "i_owe") return <Pill variant="warning">I owe</Pill>;
+	if (debtType === "they_owe") return <Pill variant="success">They owe</Pill>;
+	return <Pill variant="plain">Planned</Pill>;
 }
 
 export function GiftsTable({

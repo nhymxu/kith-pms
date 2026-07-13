@@ -7,6 +7,7 @@ import {
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
+import { Pill, type PillVariant } from "#/components/ui/pill";
 import { formatDateTime } from "#/lib/format-datetime";
 import type { AuditEntry, AuditMetadata } from "#/schemas/audit";
 
@@ -20,12 +21,12 @@ interface AuditTableProps {
 	onPageChange?: (pageIndex: number) => void;
 }
 
-const ACTION_COLORS: Record<string, string> = {
-	create: "text-success-fg",
-	update: "text-accent-text",
-	delete: "text-danger-fg",
-	login: "text-sub",
-	logout: "text-sub",
+const ACTION_VARIANTS: Record<string, PillVariant> = {
+	create: "success",
+	update: "accent",
+	delete: "danger",
+	login: "plain",
+	logout: "plain",
 };
 
 const DETAIL_ACTION_LABELS: Record<string, string> = {
@@ -51,11 +52,7 @@ function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
 
 	return (
 		<div className="space-y-1">
-			{label && (
-				<span className="inline-block text-[11px] font-medium text-chip-fg bg-chip border-bw border-chip-line rounded-base px-1.5 py-0.5 capitalize">
-					{label}
-				</span>
-			)}
+			{label && <Pill variant="plain">{label}</Pill>}
 			{meta.changes && meta.changes.length > 0 && (
 				<div className="space-y-0.5">
 					{meta.changes.map((c) => (
@@ -120,11 +117,7 @@ export function AuditTable({
 				header: sortableHeader<AuditEntry>("Action"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span
-						className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-sub"}`}
-					>
-						{val}
-					</span>
+					<Pill variant={ACTION_VARIANTS[val] ?? "plain"}>{val}</Pill>
 				)),
 			},
 			{

@@ -49,6 +49,17 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Gift photos/images with upload support
 - Debt type tracking (owed/owe)
 
+### Dashboard
+- **At-a-Glance Widgets**: Favorite people list, last-contacted people list (configurable counts via settings)
+- **Quick Actions**: "+ Log interaction" button opens journal dialog with optional person picker (for logging multi-person interactions without pre-selecting)
+- **Responsive Layout**: 2-column grid on desktop; stacks on mobile
+- **Relationship Activity**: Recent relationship events and upcoming important moments displayed below widgets
+
+### Person Detail Quick Actions
+- **Quick Journal Dialog**: Log interaction title+notes without leaving detail page; auto-links to the person; invalidates both journal and people cache on save
+- **Quick Gift Dialog**: Record a gift quickly (title only) with debtor/creditor tracking
+- **Header Positioning**: Quick-action buttons appear in person detail header alongside name and favorite-star toggle
+
 ### Audit Log
 - Automatic change tracking for all entities
 - Timestamps and user attribution
@@ -60,8 +71,15 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Auto-spawn next occurrence when reminder marked complete
 - Optional end date cutoff to prevent spawning after specified date
 
+### Global Search & Command Palette
+- **Command Palette** (Cmd-K / Ctrl-K): Full-screen search interface using cmdk library
+- **Search Endpoint** (`GET /v1/search`): Aggregates people/journal/gifts queries; returns grouped DTO with 5 results per entity type
+- **Query Handling**: User input capped at 128 runes; LIKE queries escaped to prevent metacharacter injection (%, _, \)
+- **Navigation**: Results link to typed TanStack Router routes (/people/$id, /journal/$id, /gifts/$id)
+- **Frontend Components**: `command-palette.tsx` (search interface), `command.tsx` (cmdk primitives wrapper)
+
 ### OpenAPI/Swagger Documentation
-- Interactive Swagger UI at `/swagger/index.html` with 28 endpoints documented
+- Interactive Swagger UI at `/swagger/index.html` with 29 endpoints documented (includes /search)
 - OpenAPI 2.0 spec generation from swaggo annotations in all handler files
 - Zero external Swagger dependencies (custom Echo v5 handler)
 
@@ -101,6 +119,8 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 | Tables           | TanStack Table v8                           | Headless table library for data-heavy views                              |
 | Network Graph    | react-force-graph-2d 1.29.1                 | Force-directed graph visualization for relationship networks              |
 | UI Components    | Local shadcn-style primitives + Base UI 1.6 | Accessible local component APIs with Tailwind theming                    |
+| UI Variants      | class-variance-authority (CVA)              | Type-safe variant composition for stateful UI primitives                  |
+| Command Palette  | cmdk                                        | Accessible command menu with real-time search (Cmd-K global search)       |
 | Styling          | Tailwind CSS 4.3.1                          | Utility-first CSS with Indigo-600 accent, Zinc surfaces                  |
 | Build            | Vite 8.1.0                                  | Fast bundler; code splitting, lazy loading, HMR                          |
 | Linter/Formatter | Biome 2.5.1                                 | Rust-based linter + formatter for JS/TS                                  |
@@ -116,7 +136,12 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 
 ## Design System
 
-Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Inter + JetBrains Mono typography, hairline borders, no shadows, responsive horizontal topbar. Built with React 19 CSR SPA and shadcn/ui components, styled via Tailwind CSS v4 design tokens.
+Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Inter + JetBrains Mono typography, hairline borders, no shadows. Built with React 19 CSR SPA and shadcn/ui components, styled via Tailwind CSS v4 design tokens.
+
+### Navigation Layout
+- **Top Navbar Mode** (default): Full-width topbar with horizontal navigation; traditional horizontal app shell layout
+- **Side Rail Mode**: 212px sticky sidebar with slim topbar; improved vertical space for content; reorganizes layout on response; mobile drawer in both modes
+- **User Setting**: Configurable per-user in Settings > Appearance; stored in `nav_layout` database setting with reactive query-cache subscriptions (instant switching without reload)
 
 ## Deployment & Self-Hosting
 

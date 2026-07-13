@@ -25,6 +25,72 @@
 - **Migration Files**: `0NNN_description.sql` in `internal/db/migrations/`; load programmatically in `internal/db/migrations.go`
 - **Transactions**: Begin with `db.BeginTx(ctx, nil)`, always defer rollback, execute statements, commit when done
 
+### Query Builder Pattern: Shared Builders Reused by List and Count
+When a repo implements `List()` with pagination and filtering, extract the shared WHERE/JOIN logic into a private `buildXxxQuery(params *ListParams) *bun.SelectQuery` function reused by both:
+- `List()` — add pagination (LIMIT, OFFSET) and ORDER BY to the base query
+- `Count()` — uses the same base query but returns a COUNT(*) for total
+
+**Example** (`internal/people/repo.go`):
+```go
+// Private builder; encapsulates shared WHERE/JOIN logic
+func (r *repo) buildPeopleQuery(params *ListParams) *bun.SelectQuery {
+    q := r.db.NewSelect().Model((*Person)(nil))
+    if params.Query != "" {
+        // Apply search filters
+        q = q.Where("name LIKE ? OR nickname LIKE ?", "%"+params.Query+"%", "%"+params.Query+"%")
+    }
+    // Other filters (labels, dates, etc.)
+    return q
+}
+
+// List uses builder + pagination
+func (r *repo) List(ctx context.Context, params *ListParams) (*ListResult, error) {
+    q := r.buildPeopleQuery(params)
+    // Add pagination
+    q = q.Limit(params.PageSize).Offset((params.Page - 1) * params.PageSize)
+    q = q.Order("name ASC")
+    var items []Person
+    err := q.Scan(ctx, &items)
+    return &ListResult{Items: items}, err
+}
+
+// Count uses same builder
+func (r *repo) Count(ctx context.Context, params *ListParams) (int64, error) {
+    q := r.buildPeopleQuery(params)
+    return q.Count(ctx)
+}
+```
+
+### Escaped-LIKE Search Convention (SQL Injection Prevention)
+When exposing free-text search on user-controlled LIKE queries (people/gifts/etc.), escape the user input to neutralize `%`, `_`, and `\` metacharacters. Use `LIKE ? ESCAPE '\'`:
+
+```go
+// Private helper; escapes user input for LIKE queries
+func escapeLikeQuery(userInput string) string {
+    s := strings.Builder{}
+    for _, r := range userInput {
+        switch r {
+        case '%', '_', '\\':
+            s.WriteRune('\\')
+        }
+        s.WriteRune(r)
+    }
+    return s.String()
+}
+
+// Usage in list queries
+func (r *repo) List(ctx context.Context, params *ListParams) (*ListResult, error) {
+    escaped := escapeLikeQuery(params.Query)
+    q := r.db.NewSelect().Model((*Person)(nil))
+    if params.Query != "" {
+        q = q.Where("name LIKE ? ESCAPE '\\'", "%"+escaped+"%")
+    }
+    // ...
+}
+```
+
+**Why**: Raw LIKE patterns allow attackers to inject `%` (match any substring) or `_` (match single char) wildcards. The ESCAPE clause neutralizes these by treating the escaped char literally. Never trust user input in LIKE queries — always use this pattern.
+
 ### Struct Organization (Domain Models)
 ```go
 // domain.go — data structures
@@ -54,6 +120,68 @@ type Repo struct {
 - Panic only at startup for unrecoverable config failures
 - All service methods return `error` as last return value
 
+### Sentinel Error + Allowlist Validation Pattern
+When a field has a fixed enum of valid values (theme, nav_layout, date_format, timezone, etc.), use a combination of:
+1. **Sentinel errors** — one per invalid field (`ErrInvalidTheme`, `ErrInvalidNavLayout`, etc.)
+2. **Allowlist map** — `validThemes map[string]bool`, `validNavLayout map[string]bool`, etc.
+3. **Update validation in service** — call the map in `Service.Update()` before persisting
+4. **Error mapping in handler** — switch on `errors.Is()` to return appropriate HTTP status (422 Unprocessable Entity)
+
+**Example** (`internal/settings/service.go` + `internal/settings/domain.go`):
+```go
+// domain.go — sentinel errors and allowlist
+var (
+    ErrInvalidTheme = errors.New("settings: theme must be one of quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger")
+    ErrInvalidNavLayout = errors.New("settings: nav_layout must be one of top, side")
+)
+
+var validThemes = map[string]bool{
+    "quiet-ink":  true,
+    "warm-album": true,
+    "bold-press": true,
+    "nightdesk":  true,
+    "softclay":   true,
+    "ledger":     true,
+}
+
+var validNavLayout = map[string]bool{
+    "top":  true,
+    "side": true,
+}
+
+// service.go — validation before persist
+func (s *Service) Update(ctx context.Context, updates *UserSettings) error {
+    if !validThemes[updates.Theme] {
+        return ErrInvalidTheme
+    }
+    if !validNavLayout[updates.NavLayout] {
+        return ErrInvalidNavLayout
+    }
+    // Persist...
+    return s.repo.Set(ctx, updates)
+}
+
+// handler.go — map sentinel errors to HTTP status
+func (h *SettingsAPI) Update(c echo.Context) error {
+    var req *settings.UserSettings
+    c.Bind(&req)
+    
+    if err := h.Svc.Update(c.Request().Context(), req); err != nil {
+        switch {
+        case errors.Is(err, settings.ErrInvalidTheme):
+            return apiErr(c, http.StatusUnprocessableEntity, err.Error())
+        case errors.Is(err, settings.ErrInvalidNavLayout):
+            return apiErr(c, http.StatusUnprocessableEntity, err.Error())
+        default:
+            return apiErr(c, http.StatusInternalServerError, "internal server error")
+        }
+    }
+    return ok(c, req)
+}
+```
+
+**Why**: Centralizes enum contract in one place (the allowlist); prevents typos in validation; makes the error message come from the canonical source, not duplicated across handlers.
+
 ### Logging
 - Use `log/slog` (standard library) throughout — no third-party logging imports in business logic
 - Structured key-value pairs: `slog.Info("msg", "key", value)`
@@ -80,6 +208,35 @@ type Repo struct {
 - Use `c.QueryParam()`, `c.Param()` for individual values
 - Response: JSON REST API only (SPA handles all UI rendering)
 - CSRF middleware applied globally in `internal/api/server.go`; validates `X-Requested-With: kith-spa` header for state-changing calls
+
+### Fan-Out / Aggregating Handler Exception
+Most handlers depend on one service (e.g., `PeopleAPI` uses `PeopleSvc`). However, cross-domain endpoints that aggregate results from multiple services are legitimate:
+
+**Example** (`SearchAPI` in `internal/api/handler/search.go`):
+```go
+// Aggregates queries to multiple services; NOT a code smell
+type SearchAPI struct {
+    PeopleSvc  *people.Service
+    JournalSvc *journal.Service
+    GiftsSvc   *gifts.Service
+}
+
+// Fans a single user query out to three services and assembles grouped results
+func (h *SearchAPI) Search(c *echo.Context) error {
+    peopleList, _ := h.PeopleSvc.List(ctx, people.ListParams{Query: q, PageSize: 5})
+    journalList, _ := h.JournalSvc.List(ctx, journal.ListParams{Query: q, PageSize: 5})
+    giftsList, _ := h.GiftsSvc.List(ctx, gifts.ListParams{Query: q, PageSize: 5})
+    
+    result := SearchResult{
+        People:  toDTOs(peopleList.Items),
+        Journal: toDTOs(journalList.Items),
+        Gifts:   toDTOs(giftsList.Items),
+    }
+    return ok(c, result)
+}
+```
+
+**Scope**: Use only for query (read-only) aggregation. Do NOT use for mutation handlers — keep writes focused per service.
 
 ### Middleware & Auth
 - Register global middleware in `internal/api/server.go` (Recover, RequestID, Gzip, CSRF)
@@ -133,6 +290,52 @@ if err := tx.Commit(); err != nil {
 - Use `#/` path alias for imports: `import { Button } from '#/components/ui/button'` (not `@/`)
 - Shared primitives live in `web/src/components/ui`; use `@base-ui/react` for accessible primitive behavior when needed and preserve shadcn-style local component APIs
 - Lucide React for icons only; no emojis
+
+### Variant-Based Styling with CVA (class-variance-authority)
+UI primitives that support multiple visual states (success, warning, danger, etc.) use `class-variance-authority` (CVA) for type-safe variant composition. This provides:
+- Typescript-safe variant names (catches typos at build time)
+- Composable, reusable style sets
+- Self-documenting component prop signatures
+
+**Example** (`web/src/components/ui/pill.tsx` — minimal badge component):
+```typescript
+import { cva, type VariantProps } from "class-variance-authority";
+
+const pillVariants = cva(
+    "inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide",
+    {
+        variants: {
+            variant: {
+                success: "text-success-fg",
+                warning: "text-warning-fg",
+                danger: "text-danger-fg",
+                accent: "text-accent-text",
+                plain: "text-sub",
+            },
+            strike: {
+                true: "line-through",
+                false: "",
+            },
+        },
+        defaultVariants: {
+            variant: "plain",
+            strike: false,
+        },
+    }
+);
+
+export type PillVariant = NonNullable<VariantProps<typeof pillVariants>["variant"]>;
+
+interface PillProps extends React.ComponentProps<"span">, VariantProps<typeof pillVariants> {}
+
+function Pill({ className, variant, strike, ...props }: PillProps) {
+    return <span className={cn(pillVariants({ variant, strike }), className)} {...props} />;
+}
+```
+
+**Usage**: `<Pill variant="success">Done</Pill>`, `<Pill variant="warning" strike>Overdue</Pill>`
+
+**Adoption**: Used across gifts-table (DebtBadge), audit-table (action-type badges), and reminders-table (StatusBadge) for consistent badge styling.
 
 ### Data Fetching
 - **TanStack Query v5** with 5-minute stale time, 10-minute cache duration

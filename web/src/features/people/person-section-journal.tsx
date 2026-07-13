@@ -7,7 +7,7 @@ import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
 import { PersonChip } from "#/features/journal/person-label-chip";
 import { keys } from "#/query-keys";
-import { QuickJournalDialog } from "./quick-actions";
+import { QuickJournalDialog } from "./quick-journal-dialog";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (

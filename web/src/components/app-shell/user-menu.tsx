@@ -50,7 +50,10 @@ export function UserMenu() {
 					type="button"
 					className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-[13px] hover:bg-chip transition-colors"
 				>
-					<span className="size-7 rounded-full bg-accent text-accent-foreground text-[11px] font-medium grid place-items-center shrink-0 overflow-hidden">
+					<span
+						data-avatar
+						className="size-7 rounded-full bg-accent text-accent-foreground text-[11px] font-medium grid place-items-center shrink-0 overflow-hidden"
+					>
 						{profile?.avatar_path ? (
 							<img
 								src={getAvatarUrl(profile.id)}
@@ -61,7 +64,7 @@ export function UserMenu() {
 							initials
 						)}
 					</span>
-					<span className="max-w-[100px] truncate hidden sm:block">
+					<span className="max-w-[72px] sm:max-w-[100px] truncate">
 						{displayName}
 					</span>
 				</button>

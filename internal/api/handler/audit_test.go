@@ -70,6 +70,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		DashboardFavoritesCount:   5,
 		DashboardLastContactCount: 5,
 		Theme:                     "quiet-ink",
+		NavLayout:                 "top",
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

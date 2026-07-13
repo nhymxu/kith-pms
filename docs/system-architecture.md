@@ -35,6 +35,7 @@
 │  │                                                          │   │
 │  │  API Routes (all /v1, SessionOrBearer auth):              │   │
 │  │  ├─ POST /auth/login, logout, logout-all, /me, /password│   │
+│  │  ├─ GET /search (global search: people/journal/gifts)   │   │
 │  │  ├─ GET/POST/PUT/DELETE /people(/avatar, /relationships)│   │
 │  │  ├─ GET/POST/PUT/DELETE /journal, /gifts, /reminders    │   │
 │  │  ├─ GET /dates/upcoming, /labels, /relationship-types   │   │
@@ -204,9 +205,19 @@ routes/
 - **Radius**: 0.375rem (compact aesthetic)
 - **Typography**: Inter primary, JetBrains Mono for numerics; font-weight 600 headings
 
-**Navigation**: `topbar.tsx` sticky header (h-14, border-b):
-- Desktop (md+): Full nav inline with indigo underline active state
-- Mobile (<md): Hamburger menu toggle; nav items in collapsible sidebar
+**Navigation Layout** (configurable per user via Settings > Appearance `nav_layout` setting):
+- **Top Navbar Mode** (default, `nav_layout: "top"`): Full-width topbar (h-14) with horizontal navigation; traditional single-bar layout; responsive hamburger on mobile
+- **Side Rail Mode** (`nav_layout: "side"`): 212px sticky sidebar with main nav items; slim topbar (h-12) without wordmark; improved vertical space for content; responsive Sheet drawer on mobile in both modes
+- **Reactive Switching**: Layout switches instantly when user changes setting via Settings > Appearance (powered by TanStack Query cache subscription in `useNavLayoutMode()` hook in `app-shell.tsx`; no page reload required)
+- **Mobile Responsiveness**: Both modes adapt to mobile with drawer navigation; layout preference persists in user settings database
+
+**Topbar** (`topbar.tsx`): Sticky header with sticky positioning. In top mode: full nav. In side mode: slim variant (no wordmark, reduced padding). Always includes:
+- Search button (dispatches `kith:open-command-palette` event for Cmd-K global search)
+- User menu with avatar, nickname/name fallback, settings link, logout
+
+**Sidebar** (`sidebar.tsx`, side-rail-only): 212px sticky rail with:
+- Main nav links (People, Journal, Gifts, Reminders, Dates, Audit, Network)
+- Footer section (user avatar, name, settings/logout links) when `showFooter` prop enabled
 
 **Charts**: Recharts v3.8.1 with custom indigo/zinc theme for dashboard visualizations
 

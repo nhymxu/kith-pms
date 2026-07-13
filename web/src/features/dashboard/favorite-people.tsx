@@ -29,6 +29,7 @@ export function FavoritePeople({
 					{["f1", "f2", "f3"].map((key) => (
 						<div
 							key={key}
+							data-avatar
 							className="size-16 rounded-full bg-chip animate-pulse"
 						/>
 					))}

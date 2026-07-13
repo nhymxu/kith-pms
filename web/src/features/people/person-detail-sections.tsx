@@ -144,8 +144,6 @@ function OverviewSection({
 				showControls={editing}
 			/>
 
-			{!editing && <QuickActions personId={person.id} />}
-
 			{editing ? (
 				<div className="space-y-3">
 					<div>
@@ -333,8 +331,8 @@ function PersonDetailSectionsInner({
 
 	return (
 		<div className="space-y-3">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-2">
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 						{person.name}
 					</h1>
@@ -349,6 +347,7 @@ function PersonDetailSectionsInner({
 							className={`size-4 ${person.is_favorite ? "fill-warning-fg text-warning-fg" : ""}`}
 						/>
 					</button>
+					{!editing && <QuickActions personId={person.id} />}
 				</div>
 				{onClose && (
 					<Button variant="neutral" size="sm" onClick={onClose}>
@@ -357,42 +356,52 @@ function PersonDetailSectionsInner({
 				)}
 			</div>
 
-			<SectionCard>
-				<OverviewSection
-					person={person}
-					editing={editing}
-					onEdit={() => setEditing(true)}
-					onCancel={() => setEditing(false)}
-				/>
-			</SectionCard>
+			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+				<SectionCard>
+					<OverviewSection
+						person={person}
+						editing={editing}
+						onEdit={() => setEditing(true)}
+						onCancel={() => setEditing(false)}
+					/>
+				</SectionCard>
 
-			<SectionCard>
-				<ContactsSection person={person} />
-			</SectionCard>
-			<SectionCard>
-				<LocationsSection person={person} />
-			</SectionCard>
-			<SectionCard>
-				<LabelsSection person={person} />
-			</SectionCard>
-			<SectionCard>
-				<RelationshipsSection personId={personId} />
-			</SectionCard>
-			<SectionCard>
-				<PersonSectionRelationshipGraph personId={personId} />
-			</SectionCard>
-			<SectionCard>
-				<JournalSection personId={personId} />
-			</SectionCard>
-			<SectionCard>
-				<WorkHistorySection personId={personId} />
-			</SectionCard>
-			<SectionCard>
-				<ImportantDatesSection personId={personId} person={person} />
-			</SectionCard>
-			<SectionCard>
-				<GiftsSection personId={personId} />
-			</SectionCard>
+				<div className="space-y-3">
+					<SectionCard>
+						<ContactsSection person={person} />
+					</SectionCard>
+					<SectionCard>
+						<LabelsSection person={person} />
+					</SectionCard>
+				</div>
+
+				<SectionCard>
+					<RelationshipsSection personId={personId} />
+				</SectionCard>
+				<SectionCard>
+					<ImportantDatesSection personId={personId} person={person} />
+				</SectionCard>
+
+				<SectionCard>
+					<JournalSection personId={personId} />
+				</SectionCard>
+				<SectionCard>
+					<GiftsSection personId={personId} />
+				</SectionCard>
+
+				<SectionCard>
+					<LocationsSection person={person} />
+				</SectionCard>
+				<SectionCard>
+					<WorkHistorySection personId={personId} />
+				</SectionCard>
+
+				<div className="lg:col-span-2">
+					<SectionCard>
+						<PersonSectionRelationshipGraph personId={personId} />
+					</SectionCard>
+				</div>
+			</div>
 		</div>
 	);
 }

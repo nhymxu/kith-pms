@@ -3,6 +3,7 @@ package gifts
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -60,15 +61,11 @@ func (r *Repo) GetByIDWithPerson(ctx context.Context, id int64) (*GiftWithPerson
 	}, nil
 }
 
-func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, error) {
-	var rows []struct {
-		Gift
-		PersonName string `bun:"person_name"`
-	}
-
+// buildGiftQuery constructs a shared base SELECT with all WHERE/JOIN filters applied,
+// mirroring the journal repo's buildActivityQuery pattern.
+func (r *Repo) buildGiftQuery(params ListParams) *bun.SelectQuery {
 	q := r.db.NewSelect().
 		TableExpr("gift g").
-		ColumnExpr("g.*, p.name AS person_name").
 		Join("JOIN person p ON p.id = g.person_id")
 
 	if params.Direction != "" {
@@ -82,6 +79,33 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 	if params.DebtType != "" {
 		q = q.Where("g.debt_type = ?", string(params.DebtType))
 	}
+
+	if query := strings.TrimSpace(params.Query); query != "" {
+		like := "%" + escapeGiftLikeQuery(query) + "%"
+		q = q.Where("(g.title LIKE ? ESCAPE '\\' OR g.notes LIKE ? ESCAPE '\\')", like, like)
+	}
+
+	return q
+}
+
+// escapeGiftLikeQuery escapes SQL LIKE wildcard characters ('%', '_') and the escape
+// character itself ('\') so arbitrary user input is treated as a literal substring
+// match rather than a pattern, when used with a parameterized `LIKE ? ESCAPE '\'` clause.
+func escapeGiftLikeQuery(q string) string {
+	q = strings.ReplaceAll(q, `\`, `\\`)
+	q = strings.ReplaceAll(q, `%`, `\%`)
+	q = strings.ReplaceAll(q, `_`, `\_`)
+
+	return q
+}
+
+func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, error) {
+	var rows []struct {
+		Gift
+		PersonName string `bun:"person_name"`
+	}
+
+	q := r.buildGiftQuery(params).ColumnExpr("g.*, p.name AS person_name")
 
 	q = q.OrderExpr("g.created_at DESC")
 
@@ -111,19 +135,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 }
 
 func (r *Repo) Count(ctx context.Context, params ListParams) (int, error) {
-	q := r.db.NewSelect().TableExpr("gift g").ColumnExpr("COUNT(*)")
-
-	if params.Direction != "" {
-		q = q.Where("g.direction = ?", string(params.Direction))
-	}
-
-	if params.PersonID != nil {
-		q = q.Where("g.person_id = ?", *params.PersonID)
-	}
-
-	if params.DebtType != "" {
-		q = q.Where("g.debt_type = ?", string(params.DebtType))
-	}
+	q := r.buildGiftQuery(params).ColumnExpr("COUNT(*)")
 
 	var total int
 	if err := q.Scan(ctx, &total); err != nil {

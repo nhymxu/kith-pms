@@ -1,4 +1,5 @@
-// Journal timeline: groups entries by month/year, shows date dot, time, title, preview, people chips, label chips
+// Journal timeline: groups entries by month/year; each entry has a 64px mono date gutter
+// (weekday/day/time) + rail dot + content column (title, preview, label/people chips)
 import { Link } from "@tanstack/react-router";
 import { LabelChip, PersonChip } from "#/features/journal/person-label-chip";
 import type { JournalActivity } from "#/schemas/journal";
@@ -12,9 +13,14 @@ function formatMonthYear(dateStr: string): string {
 	return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-function formatDay(dateStr: string): string {
+function formatWeekday(dateStr: string): string {
 	const d = new Date(dateStr);
-	return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
+	return d.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+function formatDayNum(dateStr: string): string {
+	const d = new Date(dateStr);
+	return d.toLocaleDateString(undefined, { day: "numeric" });
 }
 
 function groupByMonth(
@@ -49,27 +55,31 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 						{group.label}
 					</h2>
 					<div className="relative">
-						{/* vertical line */}
+						{/* vertical line, offset past the 64px date gutter + gap */}
 						<div
-							className="absolute left-[7px] top-2 bottom-2 w-px bg-line"
+							className="absolute left-[calc(5rem+7px)] top-2 bottom-2 w-px bg-line"
 							aria-hidden
 						/>
 						<ul className="space-y-5">
 							{group.items.map((entry) => (
-								<li key={entry.id} className="flex gap-4 pl-6 relative">
-									{/* dot */}
-									<span className="absolute left-0 top-[6px] size-[15px] rounded-full border-2 border-line bg-panel" />
-									<div className="flex-1 min-w-0">
-										<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 mb-1">
-											<span className="font-mono text-[11px] text-sub shrink-0">
-												{formatDay(entry.occurred_at_date)}
-												{entry.occurred_at_time && (
-													<span className="ml-1 text-sub">
-														· {entry.occurred_at_time}
-													</span>
-												)}
-											</span>
+								<li key={entry.id} className="flex gap-4 relative">
+									{/* date gutter */}
+									<div className="w-16 shrink-0 text-right font-mono leading-tight pt-0.5">
+										<div className="text-[10px] uppercase tracking-wide text-sub">
+											{formatWeekday(entry.occurred_at_date)}
 										</div>
+										<div className="text-[15px] font-semibold text-ink">
+											{formatDayNum(entry.occurred_at_date)}
+										</div>
+										{entry.occurred_at_time && (
+											<div className="text-[10px] text-sub">
+												{entry.occurred_at_time}
+											</div>
+										)}
+									</div>
+									{/* dot */}
+									<span className="absolute left-20 top-[6px] size-[15px] rounded-full border-2 border-line bg-panel" />
+									<div className="flex-1 min-w-0 pl-6">
 										<Link
 											to="/journal/$entryId"
 											params={{ entryId: String(entry.id) }}

@@ -59,7 +59,7 @@ function BulkActionBarInner({
 	});
 
 	return (
-		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-panel border-2 border-[var(--border)] shadow-[4px_4px_0_0_var(--border)] rounded-md">
+		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-panel border-bw border-line shadow-shadow rounded-full">
 			<span className="text-sm font-medium text-ink">
 				{selectedCount} selected
 			</span>

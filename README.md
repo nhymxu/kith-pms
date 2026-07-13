@@ -13,7 +13,9 @@
 - **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types; bulk connect-to-person action; network depth filter (direct/indirect contacts)
 - **Relationship Network** — force-directed graph visualization of your entire contact network (global at `/network`; per-person ego view)
 - **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking; 7 recurrence types including birthday reminders
-- **Dashboard** — at-a-glance counts and recent activity on the homepage
+- **Global Search** — Cmd-K command palette for instant full-text search across people, journal entries, and gifts
+- **Dashboard** — at-a-glance counts, favorite and last-contacted people widgets, recent activity, and quick-action buttons
+- **Navigation Layout** — choose between horizontal topbar (default) or 212px side rail layout; configurable per user
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
 - **Single binary** — no runtime dependencies; ships as a static binary (`CGO_ENABLED=0`)

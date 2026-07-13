@@ -7,13 +7,13 @@
     <!-- FOUC guard: apply cached theme before CSS paints. Keep the list in sync
          with THEMES in src/lib/theme.ts and validThemes in internal/settings. -->
     <script>
-      (function () {
+      (() => {
         try {
-          var p = JSON.parse(localStorage.getItem('kith_user_prefs') || '{}');
-          var t = p.theme;
-          var ok = ['quiet-ink', 'warm-album', 'bold-press', 'nightdesk', 'softclay', 'ledger'];
+          const p = JSON.parse(localStorage.getItem('kith_user_prefs') || '{}');
+          const t = p.theme;
+          const ok = ['quiet-ink', 'warm-album', 'bold-press', 'nightdesk', 'softclay', 'ledger'];
           if (t && t !== 'quiet-ink' && ok.indexOf(t) !== -1) document.documentElement.setAttribute('data-theme', t);
-        } catch (e) {}
+        } catch (_e) {}
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

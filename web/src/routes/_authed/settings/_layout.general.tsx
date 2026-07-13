@@ -99,6 +99,7 @@ function GeneralSettingsPage() {
 				default_page_size: 25,
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
+				nav_layout: p.navLayout,
 			};
 		},
 	});
@@ -181,6 +182,7 @@ function GeneralSettingsPage() {
 		dashboard_favorites_count: apiSettings?.dashboard_favorites_count ?? 5,
 		dashboard_last_contact_count:
 			apiSettings?.dashboard_last_contact_count ?? 5,
+		nav_layout: apiSettings?.nav_layout ?? getUserPrefs().navLayout,
 		...overrides,
 	});
 

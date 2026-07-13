@@ -415,3 +415,32 @@ body {
 .shadow-shadow {
   box-shadow: var(--shadow);
 }
+
+/*
+ * Per-theme flourishes (Phase 09)
+ * Each rule is scoped to a single html[data-theme='...'] so it is invisible
+ * in the other five themes. No new tokens — reuses existing theme variables.
+ */
+
+/* bold-press: neobrutalist shadow on buttons and the active nav pill */
+html[data-theme='bold-press'] [data-slot='button'],
+html[data-theme='bold-press'] .bg-nav-active {
+  box-shadow: var(--shadow-sm);
+}
+
+/* softclay: soft-shadow search field instead of a hard border */
+html[data-theme='softclay'] [data-search-field] {
+  border: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ledger: squared-off avatars to match the tabular/ledger aesthetic */
+html[data-theme='ledger'] [data-avatar] {
+  border-radius: var(--radius);
+}
+
+/* ledger: uppercase card titles for a document/ledger heading feel */
+html[data-theme='ledger'] [data-slot='card-title'] {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}

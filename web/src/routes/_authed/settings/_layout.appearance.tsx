@@ -12,6 +12,13 @@ import {
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import { getUserPrefs } from "#/lib/format-datetime";
 import {
+	getNavLayout,
+	NAV_LAYOUT_META,
+	type NavLayout,
+	type NavLayoutMeta,
+	setNavLayout,
+} from "#/lib/nav-layout";
+import {
 	getTheme,
 	setTheme,
 	THEME_META,
@@ -47,6 +54,30 @@ function ThemeSwatch({ meta }: { meta: ThemeMeta }) {
 	);
 }
 
+// Small schematic preview of a top-bar vs side-rail layout, semantic tokens only.
+function NavLayoutPreview({ meta }: { meta: NavLayoutMeta }) {
+	if (meta.id === "side") {
+		return (
+			<div
+				className="flex h-10 w-full gap-1 rounded-base border border-line p-1"
+				aria-hidden="true"
+			>
+				<span className="h-full w-3 shrink-0 rounded-sm bg-chip" />
+				<span className="h-full flex-1 rounded-sm bg-panel" />
+			</div>
+		);
+	}
+	return (
+		<div
+			className="flex h-10 w-full flex-col gap-1 rounded-base border border-line p-1"
+			aria-hidden="true"
+		>
+			<span className="h-2.5 w-full shrink-0 rounded-sm bg-chip" />
+			<span className="flex-1 w-full rounded-sm bg-panel" />
+		</div>
+	);
+}
+
 function AppearancePage() {
 	const queryClient = useQueryClient();
 
@@ -72,17 +103,23 @@ function AppearancePage() {
 				default_page_size: 25,
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
+				nav_layout: p.navLayout,
 			};
 		},
 	});
 
 	const [active, setActive] = useState<Theme>(() => getTheme());
+	const [activeLayout, setActiveLayout] = useState<NavLayout>(() =>
+		getNavLayout(),
+	);
 
 	// Reflect the DB value once real settings arrive (cross-device change).
 	useEffect(() => {
 		if (apiSettings && !isPlaceholderData) {
 			setActive(apiSettings.theme);
 			setTheme(apiSettings.theme);
+			setActiveLayout(apiSettings.nav_layout);
+			setNavLayout(apiSettings.nav_layout);
 		}
 	}, [apiSettings, isPlaceholderData]);
 
@@ -90,6 +127,16 @@ function AppearancePage() {
 		mutationFn: (theme: Theme) => {
 			if (!apiSettings) return Promise.reject(new Error("settings not loaded"));
 			return updateSettings({ ...apiSettings, theme });
+		},
+		onSuccess: (saved) => {
+			queryClient.setQueryData(["settings"], saved);
+		},
+	});
+
+	const layoutMutation = useMutation({
+		mutationFn: (nav_layout: NavLayout) => {
+			if (!apiSettings) return Promise.reject(new Error("settings not loaded"));
+			return updateSettings({ ...apiSettings, nav_layout });
 		},
 		onSuccess: (saved) => {
 			queryClient.setQueryData(["settings"], saved);
@@ -105,6 +152,19 @@ function AppearancePage() {
 			onError: () => {
 				setActive(prev);
 				setTheme(prev);
+			},
+		});
+	};
+
+	const onSelectLayout = (layout: NavLayout) => {
+		if (layout === activeLayout) return;
+		const prev = activeLayout;
+		setActiveLayout(layout);
+		setNavLayout(layout);
+		layoutMutation.mutate(layout, {
+			onError: () => {
+				setActiveLayout(prev);
+				setNavLayout(prev);
 			},
 		});
 	};
@@ -152,6 +212,53 @@ function AppearancePage() {
 					{mutation.isError && (
 						<p className="text-[12px] text-danger-fg mt-3">
 							Failed to save theme. Your previous theme was restored.
+						</p>
+					)}
+				</CardContent>
+			</Card>
+
+			<Card>
+				<CardHeader>
+					<CardTitle>Navigation layout</CardTitle>
+					<CardDescription>
+						Choose where the main navigation appears.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+						{NAV_LAYOUT_META.map((meta) => {
+							const selected = activeLayout === meta.id;
+							return (
+								<button
+									key={meta.id}
+									type="button"
+									aria-pressed={selected}
+									disabled={isPlaceholderData || layoutMutation.isPending}
+									onClick={() => onSelectLayout(meta.id)}
+									className={`text-left rounded-base border-bw p-3 space-y-2 transition-colors disabled:opacity-60 ${
+										selected
+											? "border-accent ring-2 ring-ring"
+											: "border-line hover:border-sub"
+									}`}
+								>
+									<NavLayoutPreview meta={meta} />
+									<div className="flex items-center gap-1.5">
+										<span className="text-[13px] font-medium text-ink">
+											{meta.label}
+										</span>
+										{selected && (
+											<Check className="size-3.5 text-accent-text shrink-0" />
+										)}
+									</div>
+									<p className="text-[12px] text-sub">{meta.description}</p>
+								</button>
+							);
+						})}
+					</div>
+					{layoutMutation.isError && (
+						<p className="text-[12px] text-danger-fg mt-3">
+							Failed to save navigation layout. Your previous layout was
+							restored.
 						</p>
 					)}
 				</CardContent>

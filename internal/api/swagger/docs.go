@@ -3349,6 +3349,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/search": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "CSRFHeader": []
+                    }
+                ],
+                "description": "Fans a query out to people/journal/gifts; each group capped at 5 hits. Blank q returns empty groups.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Global search",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search term",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handler.envelope"
+                        }
+                    }
+                }
+            }
+        },
         "/settings": {
             "get": {
                 "security": [
@@ -3505,6 +3547,9 @@ const docTemplate = `{
                 },
                 "favorite_first_default": {
                     "type": "boolean"
+                },
+                "nav_layout": {
+                    "type": "string"
                 },
                 "network_color_by": {
                     "type": "string"

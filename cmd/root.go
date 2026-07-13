@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"os"
 
@@ -54,10 +55,7 @@ func dependencyInit(cfgFile string) {
 
 func newBaseHandler() slog.Handler {
 	if config.C.Debug {
-		return tint.NewHandler(os.Stdout, &tint.Options{
-			Level:      slog.LevelDebug,
-			TimeFormat: "15:04:05.000",
-		})
+		return tint.NewTextHandler(os.Stdout, &tint.Options{Level: slog.LevelDebug, TimeFormat: "15:04:05.000"})
 	}
 
 	return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})

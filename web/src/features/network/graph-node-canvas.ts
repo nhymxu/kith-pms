@@ -1,27 +1,68 @@
+// Soft overlap: pending plan 260629-1555-relationship-network-visualization also
+// touches features/network/*. Re-audit for reintroduced palette classes/literal
+// hex colors when that plan lands (whichever lands second grep-checks the other).
+
 import { formatPersonName } from "#/lib/format-person-name";
+import { readToken } from "#/lib/read-css-token";
 import { getOrLoadImage } from "./graph-image-cache";
 import type { ColorBy, GraphNode } from "./graph-types";
 
-const PRIMARY = "#4f46e5";
-const NEUTRAL_EDGE = "#e4e4e7";
-const MUTED_FG = "#71717a";
 const DIM_ALPHA = 0.15;
 
-const EDGE_PALETTE = [
-	"#6366f1",
-	"#0ea5e9",
-	"#10b981",
-	"#f59e0b",
-	"#ef4444",
-	"#8b5cf6",
-	"#ec4899",
-	"#14b8a6",
-];
+// Canvas paint colors sourced from CSS design tokens (getComputedStyle), the
+// one legitimate JS token read in the app — canvas can't consume Tailwind
+// classes. Cached here and refreshed on theme change via refreshPaintTokens().
+interface PaintTokens {
+	accent: string;
+	edgeNeutral: string;
+	mutedFg: string;
+	ink: string;
+	dimFg: string;
+	edgePalette: string[];
+}
+
+function readPaintTokens(): PaintTokens {
+	return {
+		accent: readToken("--accent", "#4f46e5"),
+		edgeNeutral: readToken("--line", "#e4e4e7"),
+		mutedFg: readToken("--sub", "#71717a"),
+		ink: readToken("--ink", "#18181b"),
+		dimFg: readToken("--sub", "#a1a1aa"),
+		edgePalette: [
+			readToken("--chart-1", "#4f46e5"),
+			readToken("--chart-2", "#a1a1aa"),
+			readToken("--chart-3", "#14b8a6"),
+			readToken("--chart-4", "#f59e0b"),
+		],
+	};
+}
+
+let tokens: PaintTokens = readPaintTokens();
+
+/** Re-reads all paint tokens from the document root. Call after a theme change. */
+export function refreshPaintTokens(): void {
+	tokens = readPaintTokens();
+}
+
+function hexToRgb(hex: string): [number, number, number] | null {
+	const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+	if (!m) return null;
+	const n = parseInt(m[1], 16);
+	return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Neutral edge color at reduced alpha, for dimmed/inactive links. */
+export function dimmedLinkColor(alpha = 0.15): string {
+	const rgb = hexToRgb(tokens.edgeNeutral);
+	return rgb
+		? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`
+		: `rgba(228,228,231,${alpha})`;
+}
 
 function hashColor(str: string): string {
 	let h = 0;
 	for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-	return EDGE_PALETTE[h % EDGE_PALETTE.length] ?? PRIMARY;
+	return tokens.edgePalette[h % tokens.edgePalette.length] ?? tokens.accent;
 }
 
 export function typeColor(type: string): string {
@@ -32,12 +73,12 @@ export function labelColor(
 	group: string,
 	groupColorMap: Map<string, string>,
 ): string {
-	if (!group) return MUTED_FG;
-	return groupColorMap.get(group) ?? MUTED_FG;
+	if (!group) return tokens.mutedFg;
+	return groupColorMap.get(group) ?? tokens.mutedFg;
 }
 
 export function linkColor(type: string, colorBy: ColorBy): string {
-	return colorBy === "type" ? typeColor(type) : NEUTRAL_EDGE;
+	return colorBy === "type" ? typeColor(type) : tokens.edgeNeutral;
 }
 
 interface DrawNodeOpts {
@@ -73,7 +114,9 @@ export function drawNode(
 	ctx.globalAlpha = alpha;
 
 	const fill =
-		colorBy === "labels" ? labelColor(node.group, groupColorMap) : MUTED_FG;
+		colorBy === "labels"
+			? labelColor(node.group, groupColorMap)
+			: tokens.mutedFg;
 
 	const img =
 		showAvatar && node.avatar
@@ -100,6 +143,8 @@ export function drawNode(
 		const initial = (node.name?.[0] ?? "?").toUpperCase();
 		const fontSize = Math.max(r * 1.1, 4);
 		ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+		// Fixed white — contrasts against arbitrary user-chosen label colors and
+		// the 4-slot chart palette, not a themed surface fill.
 		ctx.fillStyle = "#ffffff";
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
@@ -109,14 +154,14 @@ export function drawNode(
 	// Group/self ring
 	ctx.beginPath();
 	ctx.arc(x, y, r, 0, Math.PI * 2);
-	ctx.strokeStyle = node.is_self ? PRIMARY : fill;
+	ctx.strokeStyle = node.is_self ? tokens.accent : fill;
 	ctx.lineWidth = ringWidth;
 	ctx.stroke();
 
 	// Name label below node
 	const fontSize = Math.max(10 / globalScale, 2);
 	ctx.font = `${fontSize}px Inter, sans-serif`;
-	ctx.fillStyle = dimmed ? "#a1a1aa" : "#18181b";
+	ctx.fillStyle = dimmed ? tokens.dimFg : tokens.ink;
 	ctx.textAlign = "center";
 	ctx.textBaseline = "top";
 	ctx.fillText(
@@ -144,4 +189,4 @@ export function drawHitArea(
 	void globalScale;
 }
 
-export { DIM_ALPHA, NEUTRAL_EDGE };
+export { DIM_ALPHA };

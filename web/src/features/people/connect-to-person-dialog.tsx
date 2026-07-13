@@ -93,25 +93,23 @@ export function ConnectToPersonDialog({
 
 				<div className="space-y-4">
 					<div>
-						<p className="text-sm font-medium text-zinc-700 mb-1.5">
-							Target person
-						</p>
+						<p className="text-sm font-medium text-sub mb-1.5">Target person</p>
 						<PersonSinglePicker value={target} onChange={setTarget} />
 						{target && toIds.length === 0 && (
-							<p className="text-xs text-zinc-500 mt-1">
+							<p className="text-xs text-sub mt-1">
 								No other people to connect — target is the only selection.
 							</p>
 						)}
 					</div>
 
 					<div>
-						<p className="text-sm font-medium text-zinc-700 mb-1.5">
+						<p className="text-sm font-medium text-sub mb-1.5">
 							Relationship type
 						</p>
 						<select
 							value={typeId}
 							onChange={(e) => setTypeId(e.target.value)}
-							className="w-full h-10 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+							className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm"
 						>
 							<option value="">Select type…</option>
 							{types?.map((t) => (
@@ -121,7 +119,7 @@ export function ConnectToPersonDialog({
 							))}
 						</select>
 						{target && selectedType && (
-							<p className="text-xs text-zinc-500 mt-1">
+							<p className="text-xs text-sub mt-1">
 								{target.name} will be set as{" "}
 								<span className="font-medium">
 									{selectedType.reverse_name || selectedType.name}
@@ -133,7 +131,7 @@ export function ConnectToPersonDialog({
 					</div>
 
 					{resultMsg && (
-						<p className="text-sm text-zinc-700 font-medium">{resultMsg}</p>
+						<p className="text-sm text-ink font-medium">{resultMsg}</p>
 					)}
 				</div>
 

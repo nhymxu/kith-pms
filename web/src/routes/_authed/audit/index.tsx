@@ -52,7 +52,7 @@ function AuditPage() {
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				Audit Log
 			</h1>
 
@@ -60,7 +60,7 @@ function AuditPage() {
 				<div className="space-y-1">
 					<label
 						htmlFor="from-date"
-						className="text-[11px] font-medium text-zinc-500"
+						className="text-[11px] font-medium text-sub"
 					>
 						From
 					</label>
@@ -78,14 +78,11 @@ function AuditPage() {
 								},
 							})
 						}
-						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				<div className="space-y-1">
-					<label
-						htmlFor="to-date"
-						className="text-[11px] font-medium text-zinc-500"
-					>
+					<label htmlFor="to-date" className="text-[11px] font-medium text-sub">
 						To
 					</label>
 					<input
@@ -102,7 +99,7 @@ function AuditPage() {
 								},
 							})
 						}
-						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				{(search.from_date || search.to_date) && (

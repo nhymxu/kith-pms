@@ -49,9 +49,9 @@ function LoginPage() {
 	});
 
 	return (
-		<div className="min-h-screen grid place-items-center bg-zinc-50 p-4">
+		<div className="min-h-screen grid place-items-center bg-sidebar p-4">
 			<div className="w-full max-w-[360px]">
-				<h1 className="text-[28px] font-semibold text-center mb-8 tracking-tight">
+				<h1 className="text-[28px] font-semibold text-center mb-8 tracking-tight text-ink font-display">
 					Kith
 				</h1>
 				<form
@@ -59,9 +59,9 @@ function LoginPage() {
 						e.preventDefault();
 						form.handleSubmit();
 					}}
-					className="border border-zinc-200 rounded-md bg-white p-6 space-y-4"
+					className="border-bw border-line rounded-base bg-panel shadow-shadow p-6 space-y-4"
 				>
-					<p className="text-[15px] font-semibold text-zinc-900">Sign in</p>
+					<p className="text-[15px] font-semibold text-ink">Sign in</p>
 
 					{apiError && (
 						<Alert variant="destructive">

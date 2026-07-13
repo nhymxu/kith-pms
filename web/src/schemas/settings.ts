@@ -4,6 +4,16 @@ export const userSettingsSchema = z.object({
 	date_format: z.enum(["YYYY-MM-DD", "MM/DD/YYYY", "DD/MM/YYYY"]),
 	time_format: z.enum(["24h", "12h"]),
 	timezone: z.string().min(1),
+	theme: z
+		.enum([
+			"quiet-ink",
+			"warm-album",
+			"bold-press",
+			"nightdesk",
+			"softclay",
+			"ledger",
+		])
+		.default("quiet-ink"),
 	audit_log_retention_days: z.number().int().min(0).default(0),
 	network_color_by: z.enum(["labels", "type"]).default("labels"),
 	network_show_avatar: z.boolean().default(false),

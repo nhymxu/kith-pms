@@ -11,13 +11,11 @@ function JournalCard({ entry }: { entry: JournalActivity }) {
 		<Link
 			to="/journal/$entryId"
 			params={{ entryId: String(entry.id) }}
-			className="block py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 -mx-4 px-4 transition-colors"
+			className="block py-3 border-b border-line-soft last:border-b-0 hover:bg-chip -mx-4 px-4 transition-colors"
 		>
 			<div className="flex items-start justify-between gap-2">
-				<p className="text-[13px] text-zinc-900 truncate flex-1">
-					{entry.title}
-				</p>
-				<span className="font-mono text-[10px] text-zinc-500 shrink-0">
+				<p className="text-[13px] text-ink truncate flex-1">{entry.title}</p>
+				<span className="font-mono text-[10px] text-sub shrink-0">
 					{entry.occurred_at_date}
 				</span>
 			</div>
@@ -27,7 +25,7 @@ function JournalCard({ entry }: { entry: JournalActivity }) {
 						<PersonChip key={p.person_id} p={p} />
 					))}
 					{entry.people.length > 3 && (
-						<span className="text-[10px] text-zinc-400">
+						<span className="text-[10px] text-sub">
 							+{entry.people.length - 3}
 						</span>
 					)}
@@ -44,10 +42,10 @@ export function RecentJournalActivity() {
 	});
 
 	return (
-		<div className="border border-zinc-200 rounded-md bg-white">
-			<div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200">
-				<BookOpen className="size-3.5 text-zinc-400" />
-				<p className="text-[13px] font-medium text-zinc-900">
+		<div className="border-bw border-line rounded-base bg-panel shadow-shadow">
+			<div className="flex items-center gap-2 px-4 py-3 border-b border-line">
+				<BookOpen className="size-3.5 text-sub" />
+				<p className="text-[13px] font-medium text-ink">
 					Recent journal entries
 				</p>
 			</div>
@@ -57,11 +55,11 @@ export function RecentJournalActivity() {
 						<div
 							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no reordering
 							key={i}
-							className="h-12 bg-zinc-100 animate-pulse rounded my-2"
+							className="h-12 bg-chip animate-pulse rounded my-2"
 						/>
 					))}
 				{!isLoading && !data?.items.length && (
-					<p className="text-[13px] text-zinc-500 py-6 text-center">
+					<p className="text-[13px] text-sub py-6 text-center">
 						No journal entries yet.
 					</p>
 				)}

@@ -23,12 +23,12 @@ export function JournalPagination({
 
 	return (
 		<div className="flex justify-center pt-2">
-			<div className="inline-flex items-stretch rounded-md border border-zinc-200 overflow-hidden">
+			<div className="inline-flex items-stretch rounded-md border-bw border-line overflow-hidden">
 				<button
 					type="button"
 					disabled={page <= 1}
 					onClick={() => onPageChange(page - 1)}
-					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 disabled:pointer-events-none border-r border-zinc-200"
+					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-ink hover:bg-chip disabled:opacity-40 disabled:pointer-events-none border-r border-line"
 				>
 					<ChevronLeft className="size-4" /> Prev
 				</button>
@@ -43,7 +43,7 @@ export function JournalPagination({
 					type="button"
 					disabled={page >= pageCount}
 					onClick={() => onPageChange(page + 1)}
-					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 disabled:pointer-events-none border-l border-zinc-200"
+					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-ink hover:bg-chip disabled:opacity-40 disabled:pointer-events-none border-l border-line"
 				>
 					Next <ChevronRight className="size-4" />
 				</button>
@@ -83,13 +83,13 @@ function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
 				if (next) setValue(String(page));
 			}}
 		>
-			<PopoverTrigger className="flex items-center justify-center min-w-16 px-3 h-9 text-[13px] font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
+			<PopoverTrigger className="flex items-center justify-center min-w-16 px-3 h-9 text-[13px] font-semibold bg-accent text-accent-foreground hover:bg-accent/90">
 				{page}/{pageCount}
 			</PopoverTrigger>
 			<PopoverContent className="w-44">
 				<label
 					htmlFor="journal-page-jump"
-					className="text-[11px] font-medium text-zinc-500"
+					className="text-[11px] font-medium text-sub"
 				>
 					Jump to page
 				</label>
@@ -108,12 +108,12 @@ function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
 								submit();
 							}
 						}}
-						className="h-8 w-full border border-zinc-200 rounded-md bg-white px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-8 w-full border-bw border-line rounded-md bg-field px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 					<button
 						type="button"
 						onClick={submit}
-						className="h-8 px-3 rounded-md bg-indigo-600 text-white text-[13px] font-medium hover:bg-indigo-700 shrink-0"
+						className="h-8 px-3 rounded-md bg-accent text-accent-foreground text-[13px] font-medium hover:bg-accent/90 shrink-0"
 					>
 						Go
 					</button>

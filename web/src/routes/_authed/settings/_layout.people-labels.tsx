@@ -185,21 +185,21 @@ function PeopleLabelsList({
 	return (
 		<>
 			{data.length === 0 && (
-				<p className="text-[13px] text-zinc-500">
+				<p className="text-[13px] text-sub">
 					No labels yet. Create one to start categorising people.
 				</p>
 			)}
 
-			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
+			<ul className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
 				{data.map((label) => (
 					<li key={label.id} className="flex items-center gap-3 px-4 py-3">
 						<span
 							className="size-3 rounded-full shrink-0"
 							style={{ backgroundColor: label.color }}
 						/>
-						<span className="text-[13px] text-zinc-900">{label.name}</span>
+						<span className="text-[13px] text-ink">{label.name}</span>
 						{label.count !== undefined && label.count > 0 && (
-							<span className="font-mono text-[11px] text-zinc-400">
+							<span className="font-mono text-[11px] text-sub">
 								{label.count} people
 							</span>
 						)}
@@ -243,7 +243,7 @@ function PeopleLabelsPage() {
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					People Labels
 				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>

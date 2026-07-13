@@ -46,10 +46,10 @@ export function PageSizeSettingsCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-[14px] font-medium text-zinc-900">
+				<CardTitle className="text-[14px] font-medium text-ink">
 					Page size
 				</CardTitle>
-				<CardDescription className="text-[12px] text-zinc-500">
+				<CardDescription className="text-[12px] text-sub">
 					Default rows per page for the Journal, People, and Audit lists.
 					Applies unless a page size is set explicitly in the URL.
 				</CardDescription>
@@ -69,9 +69,9 @@ export function PageSizeSettingsCard({
 									value={size}
 									checked={defaultPageSize === size}
 									onChange={() => setDefaultPageSize(size)}
-									className="accent-indigo-600"
+									className="accent-accent"
 								/>
-								<span className="text-[13px] text-zinc-700">{size}</span>
+								<span className="text-[13px] text-ink">{size}</span>
 							</label>
 						))}
 					</div>
@@ -89,7 +89,7 @@ export function PageSizeSettingsCard({
 							: "Save default"}
 				</Button>
 				{pageSizeMutation.isError && (
-					<p className="text-[12px] text-red-500">
+					<p className="text-[12px] text-danger-fg">
 						Failed to save. Please try again.
 					</p>
 				)}

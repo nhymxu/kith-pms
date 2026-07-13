@@ -11,7 +11,7 @@ import { QuickGiftDialog } from "./quick-actions";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -28,7 +28,7 @@ function GiftsListInner({ personId }: GiftsListInnerProps) {
 	});
 
 	if (!data.items.length) {
-		return <p className="text-sm text-zinc-400">No gifts.</p>;
+		return <p className="text-sm text-sub">No gifts.</p>;
 	}
 
 	return (
@@ -38,14 +38,12 @@ function GiftsListInner({ personId }: GiftsListInnerProps) {
 					key={g.id}
 					to="/gifts/$giftId"
 					params={{ giftId: String(g.id) }}
-					className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2 hover:bg-zinc-50"
+					className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2 hover:bg-chip"
 				>
 					<span className="font-medium flex-1">{g.title}</span>
 					<Badge variant="neutral">{g.direction}</Badge>
 					{g.date && (
-						<span className="font-mono text-[12px] text-zinc-500">
-							{g.date}
-						</span>
+						<span className="font-mono text-[12px] text-sub">{g.date}</span>
 					)}
 				</Link>
 			))}

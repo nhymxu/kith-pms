@@ -75,7 +75,7 @@ function buildColumns(
 				if (!allowToggle) {
 					return (
 						<Star
-							className={`size-4 ${p.is_favorite ? "fill-amber-400 text-amber-500" : "text-zinc-300"}`}
+							className={`size-4 ${p.is_favorite ? "fill-warning-fg text-warning-fg" : "text-sub"}`}
 							aria-label={p.is_favorite ? "Favorite" : undefined}
 						/>
 					);
@@ -88,12 +88,12 @@ function buildColumns(
 							e.stopPropagation();
 							favoriteMutation.mutate({ id: p.id, favorite: !p.is_favorite });
 						}}
-						className="text-zinc-300 hover:text-amber-500 disabled:opacity-50"
+						className="text-sub hover:text-warning-fg disabled:opacity-50"
 						disabled={favoriteMutation.isPending}
 						aria-label={p.is_favorite ? "Unfavorite" : "Favorite"}
 					>
 						<Star
-							className={`size-4 ${p.is_favorite ? "fill-amber-400 text-amber-500" : ""}`}
+							className={`size-4 ${p.is_favorite ? "fill-warning-fg text-warning-fg" : ""}`}
 						/>
 					</button>
 				);
@@ -112,7 +112,7 @@ function buildColumns(
 						params={{ personId: String(p.id) }}
 						className="flex items-center gap-2 hover:underline"
 					>
-						<div className="size-7 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[11px] font-medium text-zinc-700 font-mono">
+						<div className="size-7 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-[11px] font-medium text-chip-fg font-mono">
 							{hasAvatar ? (
 								<img
 									src={getAvatarUrl(p.id)}
@@ -124,9 +124,9 @@ function buildColumns(
 							)}
 						</div>
 						<div>
-							<p className="text-[13px] text-zinc-900">{p.name}</p>
+							<p className="text-[13px] text-ink">{p.name}</p>
 							{p.nickname && (
-								<p className="text-[11px] text-zinc-500">"{p.nickname}"</p>
+								<p className="text-[11px] text-sub">"{p.nickname}"</p>
 							)}
 						</div>
 					</Link>
@@ -163,11 +163,11 @@ function buildColumns(
 			cell: ({ getValue }) => {
 				const v = getValue<string | null>();
 				return v ? (
-					<span className="font-mono text-[12px] text-zinc-500">
+					<span className="font-mono text-[12px] text-sub">
 						{formatDate(v)}
 					</span>
 				) : (
-					<span className="text-[12px] text-zinc-300">—</span>
+					<span className="text-[12px] text-sub">—</span>
 				);
 			},
 		},
@@ -290,20 +290,20 @@ export function PeopleTable({
 				<button
 					type="button"
 					onClick={() => onFavoriteOnlyChange(!favoriteOnly)}
-					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
 				>
 					<Star
-						className={`size-3 ${favoriteOnly ? "fill-amber-400 text-amber-500" : ""}`}
+						className={`size-3 ${favoriteOnly ? "fill-warning-fg text-warning-fg" : ""}`}
 					/>
 					Favorites only
 				</button>
 				<button
 					type="button"
 					onClick={() => onFavoriteFirstChange(!favoriteFirst)}
-					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteFirst ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteFirst ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
 				>
 					<Star
-						className={`size-3 ${favoriteFirst ? "fill-amber-400 text-amber-500" : ""}`}
+						className={`size-3 ${favoriteFirst ? "fill-warning-fg text-warning-fg" : ""}`}
 					/>
 					Favorites first
 				</button>
@@ -322,7 +322,7 @@ export function PeopleTable({
 										: [...labels, l.id];
 									onLabelsChange(next);
 								}}
-								className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+								className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
 								style={active ? { borderColor: l.color } : undefined}
 							>
 								{l.name}
@@ -333,7 +333,7 @@ export function PeopleTable({
 						<button
 							type="button"
 							onClick={() => onLabelsChange([])}
-							className="text-xs text-zinc-400 hover:text-zinc-700"
+							className="text-xs text-sub hover:text-ink"
 						>
 							Clear
 						</button>

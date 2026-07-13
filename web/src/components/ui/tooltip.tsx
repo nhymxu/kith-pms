@@ -40,7 +40,7 @@ function TooltipContent({
 				<TooltipPrimitive.Popup
 					data-slot="tooltip-content"
 					className={cn(
-						"z-50 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-[12px] text-zinc-700 shadow-lg outline-none data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 transition-[scale,opacity]",
+						"z-50 rounded-base border-bw border-line bg-panel px-3 py-1.5 text-[12px] text-ink shadow-lg outline-none data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 transition-[scale,opacity]",
 						className,
 					)}
 					{...props}

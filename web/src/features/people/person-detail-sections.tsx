@@ -41,7 +41,7 @@ import { QuickActions } from "./quick-actions";
 
 function SectionCard({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-zinc-200 bg-white p-4">
+		<div className="rounded-base border-bw border-line bg-panel shadow-shadow p-4">
 			{children}
 		</div>
 	);
@@ -49,7 +49,7 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -219,7 +219,7 @@ function OverviewSection({
 								<RadioGroupItem value="" id="edit-gender-unselected" />
 								<Label
 									htmlFor="edit-gender-unselected"
-									className="font-normal cursor-pointer text-zinc-400"
+									className="font-normal cursor-pointer text-sub"
 								>
 									Unselected
 								</Label>
@@ -255,13 +255,13 @@ function OverviewSection({
 					<dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
 						{person.nickname && (
 							<>
-								<dt className="font-medium text-zinc-500">Nickname</dt>
+								<dt className="font-medium text-sub">Nickname</dt>
 								<dd>{person.nickname}</dd>
 							</>
 						)}
 						{person.is_self ? (
 							<>
-								<dt className="font-medium text-zinc-500">Relationship</dt>
+								<dt className="font-medium text-sub">Relationship</dt>
 								<dd>
 									<Badge variant="neutral">Self profile</Badge>
 								</dd>
@@ -269,7 +269,7 @@ function OverviewSection({
 						) : null}
 						{person.date_of_birth && (
 							<>
-								<dt className="font-medium text-zinc-500">Date of birth</dt>
+								<dt className="font-medium text-sub">Date of birth</dt>
 								<dd className="flex items-center gap-2">
 									{formatDate(person.date_of_birth)}
 									{person.has_birthday_reminder && (
@@ -280,7 +280,7 @@ function OverviewSection({
 						)}
 						{person.gender && (
 							<>
-								<dt className="font-medium text-zinc-500">Gender</dt>
+								<dt className="font-medium text-sub">Gender</dt>
 								<dd>
 									{genderOptions.find((o) => o.value === person.gender)
 										?.label ?? person.gender}
@@ -289,7 +289,7 @@ function OverviewSection({
 						)}
 						{person.last_contact_at && (
 							<>
-								<dt className="font-medium text-zinc-500">Last contact</dt>
+								<dt className="font-medium text-sub">Last contact</dt>
 								<dd>{formatDate(person.last_contact_at)}</dd>
 							</>
 						)}
@@ -335,7 +335,7 @@ function PersonDetailSectionsInner({
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 						{person.name}
 					</h1>
 					<button
@@ -343,10 +343,10 @@ function PersonDetailSectionsInner({
 						onClick={() => favoriteMutation.mutate()}
 						disabled={favoriteMutation.isPending}
 						aria-label={person.is_favorite ? "Unfavorite" : "Favorite"}
-						className="text-zinc-300 hover:text-amber-500 disabled:opacity-50"
+						className="text-sub hover:text-warning-fg disabled:opacity-50"
 					>
 						<Star
-							className={`size-4 ${person.is_favorite ? "fill-amber-400 text-amber-500" : ""}`}
+							className={`size-4 ${person.is_favorite ? "fill-warning-fg text-warning-fg" : ""}`}
 						/>
 					</button>
 				</div>
@@ -398,7 +398,7 @@ function PersonDetailSectionsInner({
 }
 
 const personDetailFallback = (
-	<div className="py-12 text-center text-zinc-400 font-base">Loading…</div>
+	<div className="py-12 text-center text-sub font-base">Loading…</div>
 );
 
 interface PersonDetailSectionsProps {

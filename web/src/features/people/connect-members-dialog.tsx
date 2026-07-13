@@ -76,11 +76,11 @@ export function ConnectMembersDialog({
 
 				<div className="space-y-4">
 					<div>
-						<p className="text-sm font-medium text-zinc-700 mb-1.5">
+						<p className="text-sm font-medium text-sub mb-1.5">
 							Relationship type
 						</p>
 						{typesQuery.data?.length === 0 ? (
-							<p className="text-sm text-zinc-500">
+							<p className="text-sm text-sub">
 								No symmetric relationship types available. Create one (e.g.
 								Co-worker) in Settings → Relationship Types.
 							</p>
@@ -88,7 +88,7 @@ export function ConnectMembersDialog({
 							<select
 								value={typeId}
 								onChange={(e) => setTypeId(e.target.value)}
-								className="w-full h-10 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+								className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm"
 							>
 								<option value="">Select…</option>
 								{typesQuery.data?.map((t) => (
@@ -101,25 +101,25 @@ export function ConnectMembersDialog({
 					</div>
 
 					{previewQuery.isLoading && (
-						<p className="text-sm text-zinc-400">Loading preview…</p>
+						<p className="text-sm text-sub">Loading preview…</p>
 					)}
 
 					{preview && preview.member_count < 2 && (
-						<p className="text-sm text-zinc-500">
+						<p className="text-sm text-sub">
 							Need at least 2 members to connect. This label has{" "}
 							{preview.member_count}.
 						</p>
 					)}
 
 					{preview && preview.member_count >= 2 && (
-						<p className="text-sm text-zinc-500">
+						<p className="text-sm text-sub">
 							Will create up to {preview.pair_count} relationships between{" "}
 							{preview.member_count} people. Existing relationships are skipped.
 						</p>
 					)}
 
 					{resultMsg && (
-						<p className="text-sm text-zinc-700 font-medium">{resultMsg}</p>
+						<p className="text-sm text-ink font-medium">{resultMsg}</p>
 					)}
 				</div>
 

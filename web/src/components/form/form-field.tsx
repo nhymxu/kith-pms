@@ -72,7 +72,7 @@ export function FormField({
 			{hasError && (
 				<ul className="space-y-0.5">
 					{errors.map((err) => (
-						<li key={err} className="text-[11px] text-red-600 mt-1">
+						<li key={err} className="text-[11px] text-danger-fg mt-1">
 							{errorMessage(err)}
 						</li>
 					))}

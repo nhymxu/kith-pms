@@ -146,16 +146,16 @@ function DashboardPage() {
 	return (
 		<div className="space-y-4">
 			<header className="flex items-end justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					Dashboard
 				</h1>
-				<span className="font-mono text-[11px] text-zinc-500">
+				<span className="font-mono text-[11px] text-sub">
 					Last refreshed {formatTime(viewModel.lastUpdatedAt)}
 				</span>
 			</header>
 
 			{hasError ? (
-				<div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800">
+				<div className="rounded-md border-bw border-warning-line bg-warning-bg px-4 py-3 text-[13px] text-warning-fg">
 					Some dashboard data could not load. Available sections are shown with
 					cached or empty data.
 				</div>

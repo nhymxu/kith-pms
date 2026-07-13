@@ -119,7 +119,7 @@ export function AvatarUploader({
 				onKeyDown={(e) =>
 					e.key === "Enter" && showControls && inputRef.current?.click()
 				}
-				className={`w-24 h-24 rounded-md border border-dashed border-zinc-300 overflow-hidden bg-secondary-background flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-main" : "cursor-default"}`}
+				className={`w-24 h-24 rounded-md border-bw border-dashed border-line overflow-hidden bg-secondary-background flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-main" : "cursor-default"}`}
 			>
 				{currentSrc ? (
 					<img

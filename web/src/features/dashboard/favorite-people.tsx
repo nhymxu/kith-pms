@@ -29,7 +29,7 @@ export function FavoritePeople({
 					{["f1", "f2", "f3"].map((key) => (
 						<div
 							key={key}
-							className="size-16 rounded-full bg-zinc-100 animate-pulse"
+							className="size-16 rounded-full bg-chip animate-pulse"
 						/>
 					))}
 				</div>

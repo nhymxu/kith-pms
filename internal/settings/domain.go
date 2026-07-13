@@ -19,6 +19,8 @@ type UserSettings struct {
 
 	DashboardFavoritesCount   int `json:"dashboard_favorites_count"`
 	DashboardLastContactCount int `json:"dashboard_last_contact_count"`
+
+	Theme string `json:"theme"`
 }
 
 var Defaults = UserSettings{
@@ -39,6 +41,8 @@ var Defaults = UserSettings{
 
 	DashboardFavoritesCount:   5,
 	DashboardLastContactCount: 5,
+
+	Theme: "quiet-ink",
 }
 
 const (
@@ -59,4 +63,6 @@ const (
 
 	KeyDashboardFavoritesCount   = "dashboard_favorites_count"
 	KeyDashboardLastContactCount = "dashboard_last_contact_count"
+
+	KeyTheme = "theme"
 )

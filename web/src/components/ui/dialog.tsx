@@ -78,13 +78,13 @@ function DialogContent({
 			<DialogPrimitive.Popup
 				data-slot="dialog-content"
 				className={cn(
-					"bg-white fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-md border border-zinc-200 p-6 shadow-lg duration-200 sm:max-w-lg data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 transition-[scale,opacity]",
+					"bg-panel fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-base border-bw border-line p-6 shadow-lg duration-200 sm:max-w-lg data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 transition-[scale,opacity]",
 					className,
 				)}
 				{...props}
 			>
 				{children}
-				<DialogPrimitive.Close className="absolute right-4 top-4 rounded-md text-zinc-400 hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+				<DialogPrimitive.Close className="absolute right-4 top-4 rounded-base text-sub hover:text-ink focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
 					<X />
 					<span className="sr-only">Close</span>
 				</DialogPrimitive.Close>
@@ -124,7 +124,7 @@ function DialogTitle({
 		<DialogPrimitive.Title
 			data-slot="dialog-title"
 			className={cn(
-				"text-[16px] font-semibold leading-none tracking-tight text-zinc-900",
+				"text-[16px] font-display leading-none tracking-tight text-ink",
 				className,
 			)}
 			{...props}
@@ -139,7 +139,7 @@ function DialogDescription({
 	return (
 		<DialogPrimitive.Description
 			data-slot="dialog-description"
-			className={cn("text-[13px] text-zinc-500", className)}
+			className={cn("text-[13px] text-sub", className)}
 			{...props}
 		/>
 	);

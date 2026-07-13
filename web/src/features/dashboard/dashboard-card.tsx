@@ -19,21 +19,23 @@ export function DashboardCard({
 	className?: string;
 }) {
 	return (
-		<div className={`border border-zinc-200 rounded-md bg-white ${className}`}>
-			<div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+		<div
+			className={`border-bw border-line rounded-base bg-panel shadow-shadow ${className}`}
+		>
+			<div className="flex items-center justify-between px-4 py-3 border-b border-line">
 				<div className="min-w-0">
-					<p className="flex items-center gap-2 text-[13px] font-medium text-zinc-900">
-						{Icon ? <Icon className="size-3.5 text-zinc-400 shrink-0" /> : null}
+					<p className="flex items-center gap-2 text-[13px] font-medium text-ink">
+						{Icon ? <Icon className="size-3.5 text-sub shrink-0" /> : null}
 						{title}
 					</p>
 					{subtitle ? (
-						<p className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</p>
+						<p className="text-[11px] text-sub mt-0.5">{subtitle}</p>
 					) : null}
 				</div>
 				{onRefresh ? (
 					<button
 						type="button"
-						className="size-6 shrink-0 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700 transition-colors"
+						className="size-6 shrink-0 flex items-center justify-center rounded text-sub hover:text-ink transition-colors"
 						onClick={onRefresh}
 						aria-label={`Refresh ${title}`}
 					>

@@ -193,7 +193,7 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 			>
 				{isPending ? "Logging out…" : "Log out all sessions"}
 			</Button>
-			{err && <p className="text-[11px] text-red-600">{err}</p>}
+			{err && <p className="text-[11px] text-danger-fg">{err}</p>}
 		</div>
 	);
 }
@@ -201,16 +201,16 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 function SecurityPage() {
 	return (
 		<div className="space-y-6 max-w-md">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				Security
 			</h1>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium text-zinc-900">
+					<CardTitle className="text-[14px] font-medium">
 						Change password
 					</CardTitle>
-					<CardDescription className="text-[12px] text-zinc-500">
+					<CardDescription className="text-[12px]">
 						Update your login password.
 					</CardDescription>
 				</CardHeader>

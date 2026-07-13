@@ -69,9 +69,7 @@ function recurrenceLabel(rule: RecurrenceRule): string {
 }
 
 const formFallback = (
-	<div className="py-8 text-center text-[13px] text-zinc-400">
-		Loading form…
-	</div>
+	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
 );
 
 export function ReminderForm(props: ReminderFormProps) {
@@ -241,8 +239,8 @@ function ReminderFormInner({
 			</div>
 
 			{isBirthday && (
-				<div className="space-y-3 rounded-md border border-zinc-200 p-3">
-					<p className="text-sm text-zinc-500">
+				<div className="space-y-3 rounded-base border-bw border-line p-3">
+					<p className="text-sm text-sub">
 						Select a person with a date of birth. Due date is computed
 						automatically.
 					</p>
@@ -288,7 +286,7 @@ function ReminderFormInner({
 			)}
 
 			{recurring && (
-				<div className="space-y-3 rounded-md border border-zinc-200 p-3">
+				<div className="space-y-3 rounded-base border-bw border-line p-3">
 					<form.Field name="recurrence_rule">
 						{(field) => {
 							const rule = field.state.value ?? { type: "weekly" as const };
@@ -399,7 +397,7 @@ function ReminderFormInner({
 													})
 												}
 											/>
-											<span className="text-sm text-zinc-500">
+											<span className="text-sm text-sub">
 												days after last journal entry
 											</span>
 										</div>

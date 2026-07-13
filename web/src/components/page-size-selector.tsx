@@ -15,14 +15,14 @@ export function PageSizeSelector({
 }: PageSizeSelectorProps) {
 	return (
 		<div className="flex items-center gap-1.5">
-			<label htmlFor="page-size-select" className="text-[12px] text-zinc-500">
+			<label htmlFor="page-size-select" className="text-[12px] text-sub">
 				Rows
 			</label>
 			<select
 				id="page-size-select"
 				value={value}
 				onChange={(e) => onChange(Number(e.target.value))}
-				className="h-8 border border-zinc-200 rounded-md bg-white px-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+				className="h-8 border-bw border-line rounded-base bg-field px-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ring"
 			>
 				{PAGE_SIZE_OPTIONS.map((n) => (
 					<option key={n} value={n}>
@@ -34,7 +34,7 @@ export function PageSizeSelector({
 				<button
 					type="button"
 					onClick={onReset}
-					className="text-[11px] text-zinc-400 hover:text-zinc-700"
+					className="text-[11px] text-sub hover:text-ink"
 				>
 					Reset
 				</button>

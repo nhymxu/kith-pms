@@ -59,6 +59,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "From date YYYY-MM-DD",
                         "name": "from_date",
@@ -90,6 +97,9 @@ const docTemplate = `{
                                     "type": "integer"
                                 },
                                 "page_size": {
+                                    "type": "integer"
+                                },
+                                "total": {
                                     "type": "integer"
                                 }
                             }
@@ -456,6 +466,13 @@ const docTemplate = `{
                         "default": 1,
                         "description": "Page number",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Page size",
+                        "name": "page_size",
                         "in": "query"
                     },
                     {
@@ -3471,8 +3488,17 @@ const docTemplate = `{
                     "description": "0 = disabled",
                     "type": "integer"
                 },
+                "dashboard_favorites_count": {
+                    "type": "integer"
+                },
+                "dashboard_last_contact_count": {
+                    "type": "integer"
+                },
                 "date_format": {
                     "type": "string"
+                },
+                "default_page_size": {
+                    "type": "integer"
                 },
                 "default_people_sort": {
                     "type": "string"
@@ -3495,6 +3521,9 @@ const docTemplate = `{
                 },
                 "network_show_unconnected": {
                     "type": "boolean"
+                },
+                "theme": {
+                    "type": "string"
                 },
                 "time_format": {
                     "type": "string"

@@ -238,7 +238,7 @@ function PeoplePage() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					People
 				</h1>
 				<Button asChild>

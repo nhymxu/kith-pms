@@ -21,11 +21,11 @@ interface AuditTableProps {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-	create: "text-emerald-700",
-	update: "text-indigo-700",
-	delete: "text-red-700",
-	login: "text-zinc-600",
-	logout: "text-zinc-600",
+	create: "text-success-fg",
+	update: "text-accent-text",
+	delete: "text-danger-fg",
+	login: "text-sub",
+	logout: "text-sub",
 };
 
 const DETAIL_ACTION_LABELS: Record<string, string> = {
@@ -42,7 +42,7 @@ function formatValue(val: unknown): string {
 }
 
 function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
-	if (!meta) return <span className="text-zinc-400 text-[12px]">—</span>;
+	if (!meta) return <span className="text-sub text-[12px]">—</span>;
 
 	const label = meta.detail_action
 		? (DETAIL_ACTION_LABELS[meta.detail_action] ??
@@ -52,7 +52,7 @@ function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
 	return (
 		<div className="space-y-1">
 			{label && (
-				<span className="inline-block text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 capitalize">
+				<span className="inline-block text-[11px] font-medium text-chip-fg bg-chip border-bw border-chip-line rounded-base px-1.5 py-0.5 capitalize">
 					{label}
 				</span>
 			)}
@@ -63,18 +63,16 @@ function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
 							key={c.field}
 							className="flex items-baseline gap-1 text-[11px] leading-tight"
 						>
-							<span className="text-zinc-500 font-mono shrink-0">
-								{c.field}:
-							</span>
+							<span className="text-sub font-mono shrink-0">{c.field}:</span>
 							<span
-								className="text-red-500 line-through truncate max-w-[80px]"
+								className="text-danger-fg line-through truncate max-w-[80px]"
 								title={formatValue(c.old)}
 							>
 								{formatValue(c.old)}
 							</span>
-							<span className="text-zinc-400">→</span>
+							<span className="text-sub">→</span>
 							<span
-								className="text-emerald-700 truncate max-w-[80px]"
+								className="text-success-fg truncate max-w-[80px]"
 								title={formatValue(c.new)}
 							>
 								{formatValue(c.new)}
@@ -107,7 +105,7 @@ export function AuditTable({
 					if (!val) return "—";
 					try {
 						return (
-							<span className="font-mono text-[12px] text-zinc-500">
+							<span className="font-mono text-[12px] text-sub">
 								{formatDateTime(val)}
 							</span>
 						);
@@ -123,7 +121,7 @@ export function AuditTable({
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
 					<span
-						className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-zinc-600"}`}
+						className={`font-mono text-[12px] uppercase ${ACTION_COLORS[val] ?? "text-sub"}`}
 					>
 						{val}
 					</span>
@@ -135,7 +133,7 @@ export function AuditTable({
 				header: sortableHeader<AuditEntry>("Type"),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className="text-[12px] text-zinc-500 capitalize">
+					<span className="text-[12px] text-sub capitalize">
 						{val.replace("_", " ")}
 					</span>
 				)),
@@ -145,7 +143,7 @@ export function AuditTable({
 				accessorKey: "entity_name",
 				header: "Target",
 				cell: valueCell<AuditEntry, string>((val) => (
-					<span className="text-[13px] text-zinc-700">{val || "—"}</span>
+					<span className="text-[13px] text-ink">{val || "—"}</span>
 				)),
 			},
 			{

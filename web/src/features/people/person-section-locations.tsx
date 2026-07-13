@@ -18,7 +18,7 @@ import type { Location, Person } from "#/schemas/person";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -40,10 +40,10 @@ function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
 	const [postalCode, setPostalCode] = useState(location.postal_code ?? "");
 
 	return (
-		<div className="border border-zinc-300 rounded-md p-3 bg-zinc-50 space-y-2">
+		<div className="border-bw border-line rounded-md p-3 bg-muted space-y-2">
 			<div className="flex gap-2 items-center">
 				<select
-					className="h-8 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+					className="h-8 border-bw border-line rounded-md bg-field px-2 text-sm"
 					value={type}
 					onChange={(e) => setType(e.target.value)}
 				>
@@ -66,14 +66,14 @@ function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
 								postal_code: postalCode,
 							})
 						}
-						className="text-green-600 hover:text-green-700"
+						className="text-success-fg hover:opacity-80"
 					>
 						<Check className="size-4" />
 					</button>
 					<button
 						type="button"
 						onClick={onCancel}
-						className="text-zinc-400 hover:text-zinc-600"
+						className="text-sub hover:text-ink"
 					>
 						<X className="size-4" />
 					</button>
@@ -206,7 +206,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 					) : (
 						<div
 							key={l.id}
-							className="text-sm border border-zinc-200 rounded-md p-3 space-y-1"
+							className="text-sm border-bw border-line rounded-md p-3 space-y-1"
 						>
 							<div className="flex items-center gap-2">
 								<Badge variant="neutral">{l.type}</Badge>
@@ -243,7 +243,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 					/>
 				)}
 				{person.locations.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-zinc-400">No locations.</p>
+					<p className="text-sm text-sub">No locations.</p>
 				)}
 			</div>
 			<Dialog
@@ -257,7 +257,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 					{(() => {
 						const l = person.locations.find((l) => l.id === confirmDeleteId);
 						return l ? (
-							<p className="text-[13px] text-zinc-600">
+							<p className="text-[13px] text-sub">
 								Remove the <span className="font-medium">{l.type}</span>{" "}
 								location{l.address ? ` at ${l.address}` : ""}?
 							</p>

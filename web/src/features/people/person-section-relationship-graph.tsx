@@ -9,7 +9,7 @@ const LazyRelationshipGraph = lazy(
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -26,7 +26,7 @@ function EgoGraphInner({ personId }: EgoGraphInnerProps) {
 	});
 
 	if (data.nodes.length <= 1) {
-		return <p className="text-sm text-zinc-400">No connections yet.</p>;
+		return <p className="text-sm text-sub">No connections yet.</p>;
 	}
 
 	return (
@@ -46,7 +46,7 @@ export function PersonSectionRelationshipGraph({
 			<SectionHeading>Relationship Network</SectionHeading>
 			<Suspense
 				fallback={
-					<div className="flex items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 py-8 text-[13px] text-zinc-400">
+					<div className="flex items-center justify-center rounded-md border-bw border-line bg-muted py-8 text-[13px] text-sub">
 						Loading…
 					</div>
 				}

@@ -179,23 +179,23 @@ function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
 	return (
 		<>
 			{data.length === 0 && (
-				<p className="text-[13px] text-zinc-500">No relationship types yet.</p>
+				<p className="text-[13px] text-sub">No relationship types yet.</p>
 			)}
 
-			<ul className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
+			<ul className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
 				{data.map((rt) => (
 					<li
 						key={rt.id}
 						className="flex items-center gap-3 px-4 py-3 text-[13px]"
 					>
-						<span className="text-zinc-900 font-medium">{rt.name}</span>
+						<span className="text-ink font-medium">{rt.name}</span>
 						{rt.reverse_name && (
-							<span className="text-zinc-400 font-mono text-[11px]">
+							<span className="text-sub font-mono text-[11px]">
 								↔ {rt.reverse_name}
 							</span>
 						)}
 						{(rt.usage_count ?? 0) > 0 && (
-							<span className="font-mono text-[11px] text-zinc-400">
+							<span className="font-mono text-[11px] text-sub">
 								{rt.usage_count} uses
 							</span>
 						)}
@@ -228,7 +228,7 @@ function RelationshipTypesPage() {
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					Relationship Types
 				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>

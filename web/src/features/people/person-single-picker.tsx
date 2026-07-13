@@ -41,7 +41,7 @@ export function PersonSinglePicker({
 					<button
 						type="button"
 						onClick={handleClear}
-						className="text-zinc-400 hover:text-zinc-700"
+						className="text-sub hover:text-ink"
 					>
 						<X className="size-3" />
 					</button>
@@ -54,7 +54,7 @@ export function PersonSinglePicker({
 				/>
 			)}
 			{!value && results && results.items.length > 0 && (
-				<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100 max-h-36 overflow-y-auto">
+				<div className="border-bw border-line rounded-md bg-panel divide-y divide-line-soft max-h-36 overflow-y-auto">
 					{results.items.map((p) => (
 						<button
 							key={p.id}
@@ -65,7 +65,7 @@ export function PersonSinglePicker({
 									name: formatPersonName(p.name, p.nickname),
 								})
 							}
-							className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
+							className="w-full text-left px-3 py-2 text-sm hover:bg-chip"
 						>
 							{formatPersonName(p.name, p.nickname)}
 						</button>

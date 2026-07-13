@@ -18,9 +18,9 @@ export function PersonChip({ p }: { p: ActivityPerson }) {
 		<Link
 			to="/people/$personId"
 			params={{ personId: String(p.person_id) }}
-			className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5 hover:border-indigo-400 hover:bg-indigo-50 transition-colors"
+			className="flex items-center gap-1.5 rounded-full border-bw border-line bg-panel px-2 py-0.5 hover:border-accent hover:bg-accent/10 transition-colors"
 		>
-			<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+			<span className="size-5 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-[9px] font-medium text-chip-fg">
 				{hasAvatar ? (
 					<img
 						src={getAvatarUrl(p.person_id)}
@@ -31,7 +31,7 @@ export function PersonChip({ p }: { p: ActivityPerson }) {
 					p.name.charAt(0).toUpperCase()
 				)}
 			</span>
-			<span className="text-[11px] text-zinc-700 leading-none">{display}</span>
+			<span className="text-[11px] text-ink leading-none">{display}</span>
 		</Link>
 	);
 }

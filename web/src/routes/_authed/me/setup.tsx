@@ -37,10 +37,10 @@ function MeSetupPage() {
 
 	return (
 		<div className="space-y-4 max-w-[480px]">
-			<h1 className="text-[24px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[24px] font-semibold tracking-tight text-ink font-display">
 				Who are you?
 			</h1>
-			<p className="text-[13px] text-zinc-500">
+			<p className="text-[13px] text-sub">
 				Select which person in your contacts represents you.
 			</p>
 
@@ -98,27 +98,27 @@ function PeopleSelectionList({
 						type="button"
 						onClick={() => onSelect(p.id)}
 						className={[
-							"w-full text-left border rounded-md px-3 py-2.5 transition-colors text-[13px]",
+							"w-full text-left border-bw rounded-base px-3 py-2.5 transition-colors text-[13px]",
 							selected === p.id
-								? "border-indigo-600 bg-indigo-50 text-zinc-900"
-								: "border-zinc-200 hover:border-zinc-300 text-zinc-700",
+								? "border-accent bg-nav-active text-ink"
+								: "border-line hover:border-line-soft text-ink",
 						].join(" ")}
 					>
 						<p className="font-medium">{p.name}</p>
 						{p.nickname && (
-							<p className="text-[11px] text-zinc-400">"{p.nickname}"</p>
+							<p className="text-[11px] text-sub">"{p.nickname}"</p>
 						)}
 					</button>
 				))}
 				{people.length === 0 && (
-					<p className="text-[13px] text-zinc-500">No people found.</p>
+					<p className="text-[13px] text-sub">No people found.</p>
 				)}
 			</div>
 
 			{selectedPerson && (
 				<Card>
 					<CardHeader className="pb-2">
-						<CardTitle className="text-[13px] font-medium text-zinc-900">
+						<CardTitle className="text-[13px] font-medium">
 							Selected: {selectedPerson.name}
 						</CardTitle>
 					</CardHeader>

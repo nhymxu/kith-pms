@@ -16,7 +16,7 @@ const LazyRelationshipGraph = lazy(
 export const Route = createFileRoute("/_authed/network/")({
 	component: NetworkPage,
 	errorComponent: () => (
-		<p className="py-4 text-[13px] text-red-600">
+		<p className="py-4 text-[13px] text-danger-fg">
 			Failed to load network graph.
 		</p>
 	),
@@ -85,7 +85,7 @@ function NetworkGraph({
 
 	if (displayData.nodes.length === 0) {
 		return (
-			<div className="flex items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 py-16 text-[13px] text-zinc-400">
+			<div className="flex items-center justify-center rounded-base border-bw border-line bg-sidebar py-16 text-[13px] text-sub">
 				No connections yet. Add relationships to people to see your network.
 			</div>
 		);
@@ -119,14 +119,14 @@ function NetworkPage() {
 	const [panelCollapsed, setPanelCollapsed] = useState(false);
 
 	const fallback = (
-		<div className="flex items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 py-16 text-[13px] text-zinc-400">
+		<div className="flex items-center justify-center rounded-base border-bw border-line bg-sidebar py-16 text-[13px] text-sub">
 			Loading network…
 		</div>
 	);
 
 	return (
 		<div className="space-y-4">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				Your Network
 			</h1>
 

@@ -79,7 +79,7 @@ function SheetContent({
 			<SheetPrimitive.Popup
 				data-slot="sheet-content"
 				className={cn(
-					"bg-white fixed z-50 flex flex-col gap-4 border-zinc-200 shadow-lg transition ease-in-out duration-300",
+					"bg-panel fixed z-50 flex flex-col gap-4 border-line shadow-lg transition ease-in-out duration-300",
 					side === "right" &&
 						"data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
 					side === "left" &&
@@ -93,7 +93,7 @@ function SheetContent({
 				{...props}
 			>
 				{children}
-				<SheetPrimitive.Close className="absolute right-4 top-4 rounded-md text-zinc-400 hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:pointer-events-none">
+				<SheetPrimitive.Close className="absolute right-4 top-4 rounded-base text-sub hover:text-ink focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
 					<X className="h-4 w-4" />
 					<span className="sr-only">Close</span>
 				</SheetPrimitive.Close>
@@ -129,7 +129,7 @@ function SheetTitle({
 	return (
 		<SheetPrimitive.Title
 			data-slot="sheet-title"
-			className={cn("text-zinc-900 font-semibold text-[15px]", className)}
+			className={cn("text-ink font-display text-[15px]", className)}
 			{...props}
 		/>
 	);
@@ -142,7 +142,7 @@ function SheetDescription({
 	return (
 		<SheetPrimitive.Description
 			data-slot="sheet-description"
-			className={cn("text-[13px] text-zinc-500", className)}
+			className={cn("text-[13px] text-sub", className)}
 			{...props}
 		/>
 	);

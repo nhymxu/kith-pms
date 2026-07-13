@@ -53,7 +53,7 @@ export function ActionQueue({
 			{isLoading ? (
 				<div className="space-y-px">
 					{["a1", "a2", "a3", "a4", "a5"].map((key) => (
-						<div key={key} className="h-14 bg-zinc-100 animate-pulse rounded" />
+						<div key={key} className="h-14 bg-chip animate-pulse rounded" />
 					))}
 				</div>
 			) : visibleActions.length ? (
@@ -61,14 +61,14 @@ export function ActionQueue({
 					{visibleActions.map((action) => (
 						<div
 							key={action.id}
-							className="px-0 py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 -mx-4 px-4 transition-colors"
+							className="px-0 py-3 border-b border-line-soft last:border-b-0 hover:bg-chip -mx-4 px-4 transition-colors"
 						>
 							<div className="flex items-start justify-between gap-3">
 								<div className="min-w-0">
-									<p className="truncate text-[13px] text-zinc-900">
+									<p className="truncate text-[13px] text-ink">
 										{action.label}
 									</p>
-									<p className="text-[11px] text-zinc-500 mt-0.5">
+									<p className="text-[11px] text-sub mt-0.5">
 										{action.personName ? `${action.personName} · ` : ""}
 										{action.detail}
 									</p>
@@ -84,7 +84,7 @@ export function ActionQueue({
 					{filteredActions.length > 8 ? (
 						<button
 							type="button"
-							className="w-full py-2 text-[11px] text-zinc-600 hover:bg-zinc-50 border-t border-zinc-200 -mx-4 px-4 mt-1 transition-colors"
+							className="w-full py-2 text-[11px] text-sub hover:bg-chip border-t border-line -mx-4 px-4 mt-1 transition-colors"
 							onClick={() => setExpanded((v) => !v)}
 						>
 							{expanded
@@ -109,8 +109,8 @@ function itemLabel(value: ActionFilter | DashboardAction["type"]): string {
 }
 
 function statusClass(type: DashboardAction["type"]): string {
-	if (type === "overdue") return "text-red-600";
-	if (type === "today") return "text-indigo-600";
-	if (type === "gift") return "text-amber-600";
-	return "text-zinc-500";
+	if (type === "overdue") return "text-danger-fg";
+	if (type === "today") return "text-accent-text";
+	if (type === "gift") return "text-warning-fg";
+	return "text-sub";
 }

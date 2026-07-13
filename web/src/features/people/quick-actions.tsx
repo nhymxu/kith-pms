@@ -218,7 +218,7 @@ export function QuickActions({ personId }: QuickActionsProps) {
 					<DialogHeader>
 						<DialogTitle>Update last contact?</DialogTitle>
 					</DialogHeader>
-					<p className="text-sm text-zinc-600">
+					<p className="text-sm text-sub">
 						This will set the last contact date to{" "}
 						<span className="font-medium">
 							{formatDateTime(new Date().toISOString())}

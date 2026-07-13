@@ -71,10 +71,10 @@ export function FavoritesSettingsCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-[14px] font-medium text-zinc-900">
+				<CardTitle className="text-[14px] font-medium text-ink">
 					Favorites
 				</CardTitle>
-				<CardDescription className="text-[12px] text-zinc-500">
+				<CardDescription className="text-[12px] text-sub">
 					Controls how favoriting behaves on the People list. Toggling favorite
 					status on a person's own page is always available.
 				</CardDescription>
@@ -90,9 +90,9 @@ export function FavoritesSettingsCard({
 								allowToggleOnList: e.target.checked,
 							}))
 						}
-						className="accent-indigo-600"
+						className="accent-accent"
 					/>
-					<span className="text-[13px] text-zinc-700">
+					<span className="text-[13px] text-ink">
 						Allow favorite/unfavorite directly on the People list
 					</span>
 				</label>
@@ -107,9 +107,9 @@ export function FavoritesSettingsCard({
 								favoriteFirstDefault: e.target.checked,
 							}))
 						}
-						className="accent-indigo-600"
+						className="accent-accent"
 					/>
-					<span className="text-[13px] text-zinc-700">
+					<span className="text-[13px] text-ink">
 						Show favorites first by default
 					</span>
 				</label>
@@ -133,9 +133,9 @@ export function FavoritesSettingsCard({
 											defaultSort: opt.value,
 										}))
 									}
-									className="accent-indigo-600"
+									className="accent-accent"
 								/>
-								<span className="text-[13px] text-zinc-700">{opt.label}</span>
+								<span className="text-[13px] text-ink">{opt.label}</span>
 							</label>
 						))}
 					</div>
@@ -153,7 +153,7 @@ export function FavoritesSettingsCard({
 							: "Save defaults"}
 				</Button>
 				{favoritesMutation.isError && (
-					<p className="text-[12px] text-red-500">
+					<p className="text-[12px] text-danger-fg">
 						Failed to save. Please try again.
 					</p>
 				)}

@@ -12,7 +12,7 @@ import { keys } from "#/query-keys";
 function MeNotSetUp() {
 	return (
 		<div className="space-y-4 max-w-md">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				My Profile
 			</h1>
 			<Card>
@@ -32,7 +32,7 @@ function MeNotSetUp() {
 
 export const Route = createFileRoute("/_authed/me/")({
 	component: MePage,
-	pendingComponent: () => <p className="text-[13px] text-zinc-500">Loading…</p>,
+	pendingComponent: () => <p className="text-[13px] text-sub">Loading…</p>,
 	errorComponent: MeNotSetUp,
 });
 
@@ -45,12 +45,12 @@ function MePage() {
 
 	return (
 		<div className="space-y-4 max-w-md">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				My Profile
 			</h1>
 			<Card>
 				<CardHeader className="flex flex-row items-center gap-4">
-					<div className="size-16 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center text-2xl font-medium text-zinc-700 shrink-0">
+					<div className="size-16 rounded-full overflow-hidden bg-chip flex items-center justify-center text-2xl font-medium text-chip-fg shrink-0">
 						{data.avatar_path ? (
 							<img
 								src={getAvatarUrl(data.id)}
@@ -64,17 +64,15 @@ function MePage() {
 					<div>
 						<CardTitle>{data.name}</CardTitle>
 						{data.nickname && (
-							<p className="text-[12px] text-zinc-500">"{data.nickname}"</p>
+							<p className="text-[12px] text-sub">"{data.nickname}"</p>
 						)}
 					</div>
 				</CardHeader>
 				<CardContent className="space-y-3 text-[13px]">
 					{data.date_of_birth && (
 						<div className="flex gap-2">
-							<span className="text-zinc-500 w-32 shrink-0">Date of birth</span>
-							<span className="font-mono text-zinc-900">
-								{data.date_of_birth}
-							</span>
+							<span className="text-sub w-32 shrink-0">Date of birth</span>
+							<span className="font-mono text-ink">{data.date_of_birth}</span>
 						</div>
 					)}
 					{data.labels && data.labels.length > 0 && (

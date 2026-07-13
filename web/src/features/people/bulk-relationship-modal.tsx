@@ -192,11 +192,11 @@ export function BulkRelationshipModal({
 				<div className="space-y-4">
 					<div className="flex gap-2 items-end">
 						<div className="flex-1 space-y-1.5">
-							<p className="text-xs font-medium text-zinc-600">Type</p>
+							<p className="text-xs font-medium text-sub">Type</p>
 							<select
 								value={selectedTypeId}
 								onChange={(e) => setSelectedTypeId(e.target.value)}
-								className="w-full h-9 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+								className="w-full h-9 border-bw border-line rounded-md bg-field px-2 text-sm"
 							>
 								<option value="">Select type…</option>
 								{types?.map((t) => (
@@ -216,13 +216,13 @@ export function BulkRelationshipModal({
 							Add to list
 						</Button>
 					</div>
-					<p className="text-xs text-zinc-400 -mt-2">
+					<p className="text-xs text-sub -mt-2">
 						⇄ marks symmetric types — these support label quick-select below
 					</p>
 
 					<div className="space-y-1.5">
 						<div className="flex items-center gap-2">
-							<p className="text-xs font-medium text-zinc-600">
+							<p className="text-xs font-medium text-sub">
 								People (select multiple)
 							</p>
 							{myProfile &&
@@ -239,7 +239,7 @@ export function BulkRelationshipModal({
 												),
 											})
 										}
-										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
 										+ Me
 									</button>
@@ -256,7 +256,7 @@ export function BulkRelationshipModal({
 									value={labelAddAllId}
 									onChange={(e) => setLabelAddAllId(e.target.value)}
 									disabled={addAllWithLabelMutation.isPending}
-									className="flex-1 h-8 border border-zinc-200 rounded-md bg-white px-2 text-xs"
+									className="flex-1 h-8 border-bw border-line rounded-md bg-field px-2 text-xs"
 								>
 									<option value="">Add all with label…</option>
 									{labels.map((l) => (
@@ -276,20 +276,20 @@ export function BulkRelationshipModal({
 							</div>
 						)}
 						{labelAddAllMsg && (
-							<p className="text-xs text-zinc-500">{labelAddAllMsg}</p>
+							<p className="text-xs text-sub">{labelAddAllMsg}</p>
 						)}
 						{selectedPeople.length > 0 && (
 							<div className="flex flex-wrap gap-1">
 								{selectedPeople.map((p) => (
 									<span
 										key={p.id}
-										className="inline-flex items-center gap-1 text-xs border border-zinc-300 rounded px-1.5 py-0.5 bg-zinc-50"
+										className="inline-flex items-center gap-1 text-xs border-bw border-chip-line rounded px-1.5 py-0.5 bg-chip"
 									>
 										{p.name}
 										<button
 											type="button"
 											onClick={() => togglePerson(p)}
-											className="text-zinc-400 hover:text-zinc-700"
+											className="text-sub hover:text-ink"
 										>
 											<X className="size-3" />
 										</button>
@@ -298,7 +298,7 @@ export function BulkRelationshipModal({
 							</div>
 						)}
 						{filteredResults && filteredResults.length > 0 && (
-							<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100 max-h-36 overflow-y-auto">
+							<div className="border-bw border-line rounded-md bg-panel divide-y divide-line-soft max-h-36 overflow-y-auto">
 								{filteredResults.map((p) => {
 									const isSelected = selectedPeople.some(
 										(sel) => sel.id === p.id,
@@ -313,7 +313,7 @@ export function BulkRelationshipModal({
 													name: formatPersonName(p.name, p.nickname),
 												})
 											}
-											className={`w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 ${isSelected ? "bg-zinc-100 font-medium" : ""}`}
+											className={`w-full text-left px-3 py-2 text-sm hover:bg-chip ${isSelected ? "bg-chip font-medium" : ""}`}
 										>
 											{formatPersonName(p.name, p.nickname)}
 										</button>
@@ -324,22 +324,20 @@ export function BulkRelationshipModal({
 					</div>
 
 					{pending.length > 0 && (
-						<div className="border border-zinc-200 rounded-md divide-y divide-zinc-100 max-h-40 overflow-y-auto">
+						<div className="border-bw border-line rounded-md divide-y divide-line-soft max-h-40 overflow-y-auto">
 							{pending.map((pair, idx) => (
 								<div
 									key={`${pair.typeId}-${pair.toPersonId}`}
 									className="flex items-center gap-2 px-3 py-2 text-sm"
 								>
-									<span className="text-xs border border-zinc-300 rounded px-1.5 py-0.5 bg-zinc-50 shrink-0">
+									<span className="text-xs border-bw border-chip-line rounded px-1.5 py-0.5 bg-chip shrink-0">
 										{pair.typeName}
 									</span>
-									<span className="flex-1 text-zinc-700">
-										{pair.toPersonName}
-									</span>
+									<span className="flex-1 text-ink">{pair.toPersonName}</span>
 									<button
 										type="button"
 										onClick={() => removePair(idx)}
-										className="text-zinc-400 hover:text-zinc-700"
+										className="text-sub hover:text-ink"
 									>
 										<X className="size-3" />
 									</button>
@@ -349,7 +347,7 @@ export function BulkRelationshipModal({
 					)}
 
 					{resultMsg && (
-						<p className="text-sm text-zinc-700 font-medium">{resultMsg}</p>
+						<p className="text-sm text-ink font-medium">{resultMsg}</p>
 					)}
 				</div>
 

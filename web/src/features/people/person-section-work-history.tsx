@@ -23,7 +23,7 @@ import type { WorkEntry } from "#/schemas/work-history";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -44,7 +44,7 @@ function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
 	const [description, setDescription] = useState(entry.description ?? "");
 
 	return (
-		<div className="border border-zinc-300 rounded-md p-3 bg-zinc-50 space-y-2">
+		<div className="border-bw border-line rounded-md p-3 bg-muted space-y-2">
 			<div className="flex gap-2">
 				<Input
 					className="h-8 flex-1"
@@ -206,7 +206,7 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 					) : (
 						<div
 							key={e.id}
-							className="text-sm border border-zinc-200 rounded-md p-3 space-y-1"
+							className="text-sm border-bw border-line rounded-md p-3 space-y-1"
 						>
 							<div className="flex items-start gap-2">
 								<p className="font-medium flex-1">
@@ -229,17 +229,15 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 								</button>
 							</div>
 							{(e.start_date || e.end_date) && (
-								<p className="font-mono text-[12px] text-zinc-500">
+								<p className="font-mono text-[12px] text-sub">
 									{e.start_date
 										? `${e.start_date} – ${e.end_date || "Present"}`
 										: `– ${e.end_date}`}
 								</p>
 							)}
-							{e.location && <p className="text-zinc-500">{e.location}</p>}
+							{e.location && <p className="text-sub">{e.location}</p>}
 							{e.description && (
-								<p className="text-zinc-600 whitespace-pre-wrap">
-									{e.description}
-								</p>
+								<p className="text-sub whitespace-pre-wrap">{e.description}</p>
 							)}
 						</div>
 					),
@@ -252,7 +250,7 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 					/>
 				)}
 				{data.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-zinc-400">No work history.</p>
+					<p className="text-sm text-sub">No work history.</p>
 				)}
 			</div>
 			<Dialog
@@ -266,7 +264,7 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 					{(() => {
 						const e = data.find((e) => e.id === confirmDeleteId);
 						return e ? (
-							<p className="text-[13px] text-zinc-600">
+							<p className="text-[13px] text-sub">
 								Remove <span className="font-medium">{e.company}</span>
 								{e.title ? ` · ${e.title}` : ""}?
 							</p>

@@ -84,7 +84,7 @@ export function DataTable<T>({
 		header: ({ table }) => (
 			<input
 				type="checkbox"
-				className="size-4 cursor-pointer accent-indigo-600"
+				className="size-4 cursor-pointer accent-accent"
 				checked={table.getIsAllPageRowsSelected()}
 				onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
 				aria-label="Select all"
@@ -93,7 +93,7 @@ export function DataTable<T>({
 		cell: ({ row }) => (
 			<input
 				type="checkbox"
-				className="size-4 cursor-pointer accent-indigo-600"
+				className="size-4 cursor-pointer accent-accent"
 				checked={row.getIsSelected()}
 				onChange={(e) => row.toggleSelected(e.target.checked)}
 				onClick={(e) => e.stopPropagation()}
@@ -142,7 +142,7 @@ export function DataTable<T>({
 	const rows = table.getRowModel().rows;
 
 	return (
-		<div className="border border-zinc-200 rounded-md bg-white">
+		<div className="border-bw border-line rounded-base bg-panel">
 			{!hideToolbar && (
 				<div className="px-4">
 					<DataTableToolbar

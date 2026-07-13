@@ -27,8 +27,8 @@ interface SidebarProps {
 
 export function Sidebar({ onNavClick }: SidebarProps) {
 	return (
-		<div className="flex h-full flex-col">
-			<div className="flex h-14 items-center border-b border-zinc-200 px-5">
+		<div className="flex h-full flex-col bg-sidebar">
+			<div className="flex h-14 items-center border-b border-line px-5">
 				<span className="text-[15px] font-semibold tracking-tight">Kith</span>
 			</div>
 

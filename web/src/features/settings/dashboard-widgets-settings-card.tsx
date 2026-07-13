@@ -59,10 +59,10 @@ export function DashboardWidgetsSettingsCard({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-[14px] font-medium text-zinc-900">
+				<CardTitle className="text-[14px] font-medium text-ink">
 					Dashboard Widgets
 				</CardTitle>
-				<CardDescription className="text-[12px] text-zinc-500">
+				<CardDescription className="text-[12px] text-sub">
 					How many people to show in the Favorites and Last Contact widgets on
 					the dashboard.
 				</CardDescription>
@@ -78,7 +78,7 @@ export function DashboardWidgetsSettingsCard({
 						onChange={(e) =>
 							setFavoritesCount(clamp(parseInt(e.target.value, 10)))
 						}
-						className="h-9 w-24 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 w-24 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 
@@ -92,7 +92,7 @@ export function DashboardWidgetsSettingsCard({
 						onChange={(e) =>
 							setLastContactCount(clamp(parseInt(e.target.value, 10)))
 						}
-						className="h-9 w-24 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 w-24 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 
@@ -108,7 +108,7 @@ export function DashboardWidgetsSettingsCard({
 							: "Save"}
 				</Button>
 				{widgetsMutation.isError && (
-					<p className="text-[12px] text-red-500">
+					<p className="text-[12px] text-danger-fg">
 						Failed to save. Please try again.
 					</p>
 				)}

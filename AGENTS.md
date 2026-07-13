@@ -28,9 +28,9 @@ See `README.md` for full stack details, auth contract, frontend conventions, kno
 ### Frontend notes
 
 - **Path alias**: use `#/` (not `@/`) — mapped in `package.json` `imports` as `"#/*": "./src/*"`.
-- **Dark mode**: dropped for v1 — do not add `.dark` CSS blocks.
+- **Theme system**: 6 user-selectable themes applied via `html[data-theme]` attribute (quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger). Nightdesk is a dark *theme variant*, not a `.dark` mode — still NO `.dark` class blocks anywhere. New UI must use semantic token classes (bg-panel, text-ink, text-sub, border-line, border-bw, status triads, bg-chip, etc.) instead of hardcoded Tailwind palette classes (zinc, gray, indigo, etc.).
 - **UI components**: `pnpm dlx shadcn add` is blocked by the Biome hook in this environment. Fetch registry JSON from `https://neobrutalism.dev/r/<name>.json` and write the component file to `src/components/ui/` manually.
-- **Neobrutalism tokens**: `--main`, `--main-foreground`, `--secondary-background`, `--border`, `--shadow` (`= 4px 4px 0 0 var(--border)`).
+- **Neobrutalism tokens**: `--main`, `--main-foreground`, `--secondary-background`, `--border`, `--shadow` (`= 4px 4px 0 0 var(--border)`) — deprecated; use semantic tokens instead.
 - **Sentry**: server-side only — no `@sentry/react` or browser Sentry SDK in the frontend bundle.
 
 ### Known gotchas
@@ -39,6 +39,7 @@ See `README.md` for full stack details, auth contract, frontend conventions, kno
 - **SPA embed**: `internal/web/spa/public/` is baked into the binary at compile time; changes to `web/src/` require `make web` + recompile.
 - **`placeholder.txt`**: must stay in `internal/web/spa/public/` so `//go:embed all:public` compiles on a fresh checkout.
 - **FormData CSRF**: multipart form endpoints (avatar upload) use `FormData`; the `X-Requested-With: kith-spa` header must still be included.
+- **Theme system consistency**: The FOUC guard in `web/index.html` hardcodes the theme allow-list — it must stay in sync with the `THEMES` array in `web/src/lib/theme.ts`, the `theme` zod enum in `web/src/schemas/settings.ts`, and `validThemes` in `internal/settings/service.go`. Drift between these four sources causes silent enum validation failures.
 
 ## Stack
 

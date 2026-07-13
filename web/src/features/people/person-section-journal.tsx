@@ -11,7 +11,7 @@ import { QuickJournalDialog } from "./quick-actions";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -30,9 +30,7 @@ function JournalListInner({ personId }: JournalListInnerProps) {
 
 	if (entries.length === 0) {
 		return (
-			<p className="text-sm text-zinc-400">
-				No journal entries for this person.
-			</p>
+			<p className="text-sm text-sub">No journal entries for this person.</p>
 		);
 	}
 
@@ -43,14 +41,14 @@ function JournalListInner({ personId }: JournalListInnerProps) {
 					key={e.id}
 					to="/journal/$entryId"
 					params={{ entryId: String(e.id) }}
-					className="block p-2 border border-zinc-200 rounded-md hover:bg-zinc-50 text-sm"
+					className="block p-2 border-bw border-line rounded-md hover:bg-chip text-sm"
 				>
 					<div className="flex items-center gap-2">
 						<span className="font-medium flex-1">{e.title}</span>
-						<span className="text-zinc-400 text-xs">{e.occurred_at_date}</span>
+						<span className="text-sub text-xs">{e.occurred_at_date}</span>
 					</div>
 					{e.content && (
-						<p className="text-zinc-500 text-xs mt-1 line-clamp-2">
+						<p className="text-sub text-xs mt-1 line-clamp-2">
 							{e.content.length > 100
 								? `${e.content.slice(0, 100)}…`
 								: e.content}
@@ -86,7 +84,7 @@ export function JournalSection({ personId }: JournalSectionProps) {
 					<Link
 						to="/journal"
 						search={{ people: [personId] }}
-						className="flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-800"
+						className="flex items-center gap-1 text-xs font-medium text-sub hover:text-ink"
 					>
 						View all <ExternalLink className="size-3" />
 					</Link>

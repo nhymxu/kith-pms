@@ -45,26 +45,26 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 		<div className="space-y-8">
 			{groups.map((group) => (
 				<div key={group.label}>
-					<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-4 pb-2 border-b border-zinc-100">
+					<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-4 pb-2 border-b border-line-soft">
 						{group.label}
 					</h2>
 					<div className="relative">
 						{/* vertical line */}
 						<div
-							className="absolute left-[7px] top-2 bottom-2 w-px bg-zinc-200"
+							className="absolute left-[7px] top-2 bottom-2 w-px bg-line"
 							aria-hidden
 						/>
 						<ul className="space-y-5">
 							{group.items.map((entry) => (
 								<li key={entry.id} className="flex gap-4 pl-6 relative">
 									{/* dot */}
-									<span className="absolute left-0 top-[6px] size-[15px] rounded-full border-2 border-zinc-300 bg-white" />
+									<span className="absolute left-0 top-[6px] size-[15px] rounded-full border-2 border-line bg-panel" />
 									<div className="flex-1 min-w-0">
 										<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 mb-1">
-											<span className="font-mono text-[11px] text-zinc-400 shrink-0">
+											<span className="font-mono text-[11px] text-sub shrink-0">
 												{formatDay(entry.occurred_at_date)}
 												{entry.occurred_at_time && (
-													<span className="ml-1 text-zinc-300">
+													<span className="ml-1 text-sub">
 														· {entry.occurred_at_time}
 													</span>
 												)}
@@ -73,12 +73,12 @@ export function JournalTimeline({ data }: JournalTimelineProps) {
 										<Link
 											to="/journal/$entryId"
 											params={{ entryId: String(entry.id) }}
-											className="text-[14px] font-medium text-zinc-900 hover:text-indigo-600 hover:underline leading-snug"
+											className="text-[14px] font-medium text-ink hover:text-accent-text hover:underline leading-snug"
 										>
 											{entry.title}
 										</Link>
 										{entry.content && (
-											<p className="mt-0.5 text-[12px] text-zinc-500 line-clamp-2 leading-relaxed">
+											<p className="mt-0.5 text-[12px] text-sub line-clamp-2 leading-relaxed">
 												{entry.content}
 											</p>
 										)}

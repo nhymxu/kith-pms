@@ -74,10 +74,10 @@ function EditGiftPage() {
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
 				<div>
-					<p className="text-xs text-zinc-400 uppercase tracking-wide font-medium">
+					<p className="text-xs text-sub uppercase tracking-wide font-medium">
 						Editing
 					</p>
-					<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 						{data.title}
 					</h1>
 				</div>
@@ -102,7 +102,7 @@ function EditGiftPage() {
 							<img
 								src={`/v1/gifts/${id}/image`}
 								alt={data.title}
-								className="max-h-48 rounded border border-zinc-200 object-contain"
+								className="max-h-48 rounded-base border-bw border-line object-contain"
 							/>
 							<Button
 								variant="destructive"
@@ -114,7 +114,7 @@ function EditGiftPage() {
 							</Button>
 						</div>
 					) : (
-						<p className="text-sm text-zinc-500">No image uploaded.</p>
+						<p className="text-sm text-sub">No image uploaded.</p>
 					)}
 					<div className="space-y-1.5">
 						<Label>Upload new image</Label>
@@ -137,12 +137,14 @@ function EditGiftPage() {
 							}}
 							className="text-sm"
 						/>
-						{imageError && <p className="text-xs text-red-600">{imageError}</p>}
+						{imageError && (
+							<p className="text-xs text-danger-fg">{imageError}</p>
+						)}
 						{uploadImageMutation.isPending && (
-							<p className="text-xs text-zinc-500">Uploading…</p>
+							<p className="text-xs text-sub">Uploading…</p>
 						)}
 						{uploadImageMutation.isError && (
-							<p className="text-xs text-red-600">Upload failed.</p>
+							<p className="text-xs text-danger-fg">Upload failed.</p>
 						)}
 					</div>
 				</CardContent>

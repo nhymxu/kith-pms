@@ -47,17 +47,17 @@ export function PersonFormLocations({ value, onChange }: Props) {
 				</Button>
 			</div>
 			{value.length === 0 && (
-				<p className="text-xs font-base text-zinc-400">No locations yet.</p>
+				<p className="text-xs font-base text-sub">No locations yet.</p>
 			)}
 			{value.map((row, i) => (
 				<div
 					// biome-ignore lint/suspicious/noArrayIndexKey: no stable id on unsaved rows
 					key={i}
-					className="border border-zinc-200 rounded-md p-3 space-y-2"
+					className="border-bw border-line rounded-md p-3 space-y-2"
 				>
 					<div className="flex items-center justify-between">
 						<select
-							className="h-9 border border-zinc-200 rounded-md bg-white px-2 text-sm font-base"
+							className="h-9 border-bw border-line rounded-md bg-field px-2 text-sm font-base"
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>

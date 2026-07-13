@@ -65,7 +65,7 @@ function GiftDetailPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					{data.title}
 				</h1>
 				<div className="flex gap-2">
@@ -90,7 +90,7 @@ function GiftDetailPage() {
 						<Link
 							to="/people/$personId"
 							params={{ personId: String(data.person_id) }}
-							className="text-indigo-600 hover:underline"
+							className="text-accent-text hover:underline"
 						>
 							{data.person_name}
 						</Link>
@@ -121,10 +121,10 @@ function GiftDetailPage() {
 							<img
 								src={`/v1/gifts/${data.id}/image`}
 								alt={data.title}
-								className="mt-1 rounded border border-zinc-200 max-h-64 object-contain"
+								className="mt-1 rounded-base border-bw border-line max-h-64 object-contain"
 							/>
 						) : (
-							<span className="text-zinc-400">No image</span>
+							<span className="text-sub">No image</span>
 						)}
 					</div>
 				</CardContent>

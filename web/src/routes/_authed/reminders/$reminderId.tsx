@@ -56,7 +56,7 @@ function ReminderDetailPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					{data.title}
 				</h1>
 				<div className="flex gap-2">
@@ -82,9 +82,7 @@ function ReminderDetailPage() {
 						{data.completed ? (
 							<Badge variant="neutral">Done</Badge>
 						) : isOverdue ? (
-							<Badge className="bg-red-300 text-black border-black">
-								Overdue
-							</Badge>
+							<Badge variant="destructive">Overdue</Badge>
 						) : (
 							<Badge>Upcoming</Badge>
 						)}

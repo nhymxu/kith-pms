@@ -35,17 +35,17 @@ function StatusBadge({
 }) {
 	if (completed)
 		return (
-			<span className="font-mono text-[10px] uppercase text-zinc-400 line-through">
+			<span className="font-mono text-[10px] uppercase text-sub line-through">
 				Done
 			</span>
 		);
 	const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
 	return isOverdue ? (
-		<span className="font-mono text-[10px] uppercase text-red-600">
+		<span className="font-mono text-[10px] uppercase text-danger-fg">
 			Overdue
 		</span>
 	) : (
-		<span className="font-mono text-[10px] uppercase text-indigo-600">
+		<span className="font-mono text-[10px] uppercase text-accent-text">
 			Upcoming
 		</span>
 	);
@@ -67,7 +67,7 @@ export function RemindersTable({
 					<Link
 						to="/reminders/$reminderId"
 						params={{ reminderId: String(row.id) }}
-						className="text-[13px] text-zinc-900 hover:text-indigo-600 hover:underline"
+						className="text-[13px] text-ink hover:text-accent-text hover:underline"
 					>
 						{val}
 					</Link>
@@ -87,11 +87,11 @@ export function RemindersTable({
 				enableSorting: true,
 				cell: valueCell<ReminderWithPerson, string>((val) =>
 					val ? (
-						<span className="font-mono text-[12px] text-zinc-500">
+						<span className="font-mono text-[12px] text-sub">
 							{hasTime(val) ? formatDateTime(val) : formatDate(val)}
 						</span>
 					) : (
-						<span className="text-zinc-300">—</span>
+						<span className="text-sub/60">—</span>
 					),
 				),
 			},
@@ -100,11 +100,11 @@ export function RemindersTable({
 				header: "Recurrence",
 				cell: ({ row }) =>
 					row.original.recurrence_rule ? (
-						<span className="font-mono text-[10px] uppercase text-indigo-500">
+						<span className="font-mono text-[10px] uppercase text-accent-text">
 							↻ {recurrenceLabel(row.original.recurrence_rule)}
 						</span>
 					) : (
-						<span className="text-zinc-300">—</span>
+						<span className="text-sub/60">—</span>
 					),
 			},
 			{

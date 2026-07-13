@@ -37,7 +37,7 @@ export function RelationshipPulseChart({
 			isRefreshing={isRefreshing}
 		>
 			{isLoading ? (
-				<div className="h-60 rounded bg-zinc-100 animate-pulse" />
+				<div className="h-60 rounded bg-chip animate-pulse" />
 			) : hasActivity ? (
 				<div className="h-60">
 					<ResponsiveContainer width="100%" height="100%">
@@ -80,7 +80,7 @@ export function RelationshipPulseChart({
 								activeDot={{
 									r: 4,
 									fill: CHART_COLORS.primary,
-									stroke: "#fff",
+									stroke: "var(--panel)",
 									strokeWidth: 2,
 								}}
 							/>
@@ -94,7 +94,7 @@ export function RelationshipPulseChart({
 								activeDot={{
 									r: 3,
 									fill: CHART_COLORS.secondary,
-									stroke: "#fff",
+									stroke: "var(--panel)",
 									strokeWidth: 2,
 								}}
 							/>
@@ -124,8 +124,8 @@ function PulseTooltip({
 	if (!active || !payload?.length) return null;
 
 	return (
-		<div className="border border-zinc-200 bg-white p-2 text-[11px] font-mono rounded-md">
-			<p className="text-zinc-900 mb-1">{label}</p>
+		<div className="border-bw border-line bg-panel p-2 text-[11px] font-mono rounded-md">
+			<p className="text-ink mb-1">{label}</p>
 			{payload.map((entry) => (
 				<p key={entry.name} style={{ color: entry.color }}>
 					{entry.name}: {entry.value ?? 0}

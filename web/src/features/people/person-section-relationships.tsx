@@ -34,7 +34,7 @@ import { BulkRelationshipModal } from "./bulk-relationship-modal";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -129,13 +129,13 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 				</div>
 			</div>
 			{!rels.length ? (
-				<p className="text-sm text-zinc-400">No relationships yet.</p>
+				<p className="text-sm text-sub">No relationships yet.</p>
 			) : (
 				<div className="space-y-2">
 					{rels.map((r) => (
 						<div
 							key={r.id}
-							className="flex items-center gap-3 border border-zinc-200 rounded-md p-2 text-sm"
+							className="flex items-center gap-3 border-bw border-line rounded-md p-2 text-sm"
 						>
 							<Badge variant="neutral">{r.type_name}</Badge>
 							<Link
@@ -146,7 +146,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 								{formatPersonName(r.other_person_name, r.other_person_nickname)}
 							</Link>
 							{r.notes && (
-								<span className="text-zinc-400 text-xs truncate max-w-[140px]">
+								<span className="text-sub text-xs truncate max-w-[140px]">
 									{r.notes}
 								</span>
 							)}
@@ -176,7 +176,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 						<div>
 							<Label>Type</Label>
 							<select
-								className="w-full h-10 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+								className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm"
 								value={typeId}
 								onChange={(e) => setTypeId(Number(e.target.value))}
 							>
@@ -201,14 +201,14 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 											);
 											setPersonSearch("");
 										}}
-										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
 										+ Me
 									</button>
 								)}
 							</div>
 							{otherPersonId ? (
-								<div className="flex items-center gap-2 border border-zinc-200 rounded-md px-3 py-2 text-sm">
+								<div className="flex items-center gap-2 border-bw border-line rounded-md px-3 py-2 text-sm">
 									<span className="flex-1 font-medium">{otherPersonName}</span>
 									<button
 										type="button"
@@ -217,7 +217,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 											setOtherPersonName("");
 											setPersonSearch("");
 										}}
-										className="text-zinc-400 hover:text-destructive"
+										className="text-sub hover:text-destructive"
 									>
 										<X className="size-3" />
 									</button>
@@ -225,17 +225,17 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 							) : (
 								<div className="space-y-1">
 									<div className="relative">
-										<Search className="absolute left-2.5 top-2.5 size-3.5 text-zinc-400" />
+										<Search className="absolute left-2.5 top-2.5 size-3.5 text-sub" />
 										<input
 											type="text"
 											value={personSearch}
 											onChange={(e) => setPersonSearch(e.target.value)}
 											placeholder="Search by name…"
-											className="h-9 w-full border border-zinc-200 rounded-md bg-white pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+											className="h-9 w-full border-bw border-line rounded-md bg-field pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 										/>
 									</div>
 									{personResults?.items && personResults.items.length > 0 && (
-										<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100 max-h-40 overflow-y-auto">
+										<div className="border-bw border-line rounded-md bg-panel divide-y divide-line-soft max-h-40 overflow-y-auto">
 											{personResults.items
 												.filter((p) => p.id !== personId)
 												.map((p) => (
@@ -249,7 +249,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 															);
 															setPersonSearch("");
 														}}
-														className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
+														className="w-full text-left px-3 py-2 text-sm hover:bg-chip"
 													>
 														{formatPersonName(p.name, p.nickname)}
 													</button>
@@ -306,7 +306,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 						<DialogTitle>Remove relationship?</DialogTitle>
 					</DialogHeader>
 					{confirmRel && (
-						<p className="text-[13px] text-zinc-600">
+						<p className="text-[13px] text-sub">
 							Remove the{" "}
 							<span className="font-medium">{confirmRel.type_name}</span>{" "}
 							relationship with{" "}

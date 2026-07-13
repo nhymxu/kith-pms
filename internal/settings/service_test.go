@@ -45,6 +45,7 @@ func validBase() settings.UserSettings {
 		DefaultPageSize:           25,
 		DashboardFavoritesCount:   5,
 		DashboardLastContactCount: 5,
+		Theme:                     "quiet-ink",
 	}
 }
 
@@ -258,5 +259,57 @@ func TestSettings_Update_InvalidDashboardLastContactCount_ReturnsError(t *testin
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidDashboardLastContactCount) {
 		t.Errorf("want ErrInvalidDashboardLastContactCount, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_Theme(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	// On a fresh test DB (no theme row), Get() should return the built-in default.
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.Theme != "quiet-ink" {
+		t.Errorf("default theme: want \"quiet-ink\", got %q", got.Theme)
+	}
+}
+
+func TestSettings_Update_Theme_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	in := validBase()
+	in.Theme = "nightdesk"
+
+	out, err := svc.Update(ctx, in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if out.Theme != "nightdesk" {
+		t.Errorf("out.Theme: want \"nightdesk\", got %q", out.Theme)
+	}
+
+	got, err := svc.Get(ctx)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.Theme != "nightdesk" {
+		t.Errorf("persisted theme: want \"nightdesk\", got %q", got.Theme)
+	}
+}
+
+func TestSettings_Update_InvalidTheme_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.Theme = "bogus"
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidTheme) {
+		t.Errorf("want ErrInvalidTheme, got %v", err)
 	}
 }

@@ -69,6 +69,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		DefaultPageSize:           25,
 		DashboardFavoritesCount:   5,
 		DashboardLastContactCount: 5,
+		Theme:                     "quiet-ink",
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}

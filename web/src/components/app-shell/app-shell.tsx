@@ -21,13 +21,13 @@ function AppShellInner({ children }: AppShellProps) {
 	const [mobileOpen, setMobileOpen] = useState(false);
 
 	return (
-		<div className="flex flex-col min-h-screen bg-background text-foreground">
+		<div className="flex flex-col min-h-screen bg-bg text-foreground">
 			<Topbar onMenuClick={() => setMobileOpen(true)} />
 
 			<Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
 				<SheetContent
 					side="left"
-					className="w-72 border-r border-zinc-200 bg-white p-0"
+					className="w-72 border-r border-line bg-sidebar p-0"
 				>
 					<SheetTitle className="sr-only">Navigation</SheetTitle>
 					<Sidebar onNavClick={() => setMobileOpen(false)} />

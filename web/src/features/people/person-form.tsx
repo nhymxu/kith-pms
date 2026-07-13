@@ -153,7 +153,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 
 			{/* Identity */}
 			<div className="space-y-4">
-				<h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+				<h2 className="text-sm font-medium uppercase tracking-wide text-sub">
 					Identity
 				</h2>
 				<div className="grid grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 									<RadioGroupItem value="" id="gender-unselected" />
 									<Label
 										htmlFor="gender-unselected"
-										className="font-normal cursor-pointer text-zinc-400"
+										className="font-normal cursor-pointer text-sub"
 									>
 										Unselected
 									</Label>

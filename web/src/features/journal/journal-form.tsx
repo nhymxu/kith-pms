@@ -34,9 +34,7 @@ interface JournalFormProps {
 }
 
 const formFallback = (
-	<div className="py-8 text-center text-[13px] text-zinc-400">
-		Loading form…
-	</div>
+	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
 );
 
 export function JournalForm(props: JournalFormProps) {
@@ -158,7 +156,7 @@ function JournalFormInner({
 										onClick={() =>
 											f.handleChange([...selectedIds, myProfile.id])
 										}
-										className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
 										+ Me
 									</button>
@@ -169,9 +167,9 @@ function JournalFormInner({
 									{selectedPeople.map((p) => (
 										<span
 											key={p.id}
-											className="flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5"
+											className="flex items-center gap-1.5 rounded-full border-bw border-line bg-panel px-2 py-0.5"
 										>
-											<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+											<span className="size-5 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-[9px] font-medium text-chip-fg">
 												{p.avatar_path ? (
 													<img
 														src={getAvatarUrl(p.id)}
@@ -182,7 +180,7 @@ function JournalFormInner({
 													p.name.charAt(0).toUpperCase()
 												)}
 											</span>
-											<span className="text-[11px] text-zinc-700 leading-none">
+											<span className="text-[11px] text-ink leading-none">
 												{p.nickname || p.name}
 											</span>
 											<button
@@ -206,7 +204,7 @@ function JournalFormInner({
 									value={searchQ}
 									onChange={(e) => setSearchQ(e.target.value)}
 									placeholder="Search people to add…"
-									className="h-9 w-full border border-zinc-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+									className="h-9 w-full border-bw border-line rounded-md bg-field px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 								/>
 								{unselected.length > 0 && (
 									<div className="flex flex-wrap gap-1 pt-1">
@@ -215,9 +213,9 @@ function JournalFormInner({
 												key={p.id}
 												type="button"
 												onClick={() => f.handleChange([...selectedIds, p.id])}
-												className="flex items-center gap-1.5 rounded-full border border-dashed border-zinc-300 bg-white px-2 py-0.5 hover:border-main transition-colors"
+												className="flex items-center gap-1.5 rounded-full border-bw border-dashed border-line bg-panel px-2 py-0.5 hover:border-main transition-colors"
 											>
-												<span className="size-5 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+												<span className="size-5 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-[9px] font-medium text-chip-fg">
 													{p.avatar_path ? (
 														<img
 															src={getAvatarUrl(p.id)}
@@ -228,10 +226,10 @@ function JournalFormInner({
 														p.name.charAt(0).toUpperCase()
 													)}
 												</span>
-												<span className="text-[11px] text-zinc-700 leading-none">
+												<span className="text-[11px] text-ink leading-none">
 													{p.nickname || p.name}
 												</span>
-												<Plus className="size-3 text-zinc-400" />
+												<Plus className="size-3 text-sub" />
 											</button>
 										))}
 									</div>
@@ -289,7 +287,7 @@ function JournalFormInner({
 												key={l.id}
 												type="button"
 												onClick={() => f.handleChange([...selectedIds, l.id])}
-												className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
+												className="flex items-center gap-1 text-xs border-bw border-dashed border-line rounded-md px-2 py-1 hover:border-main transition-colors"
 											>
 												<Plus className="size-3" />
 												{l.name}
@@ -298,11 +296,11 @@ function JournalFormInner({
 									</div>
 								)
 							) : (
-								<p className="text-[12px] text-zinc-400">
+								<p className="text-[12px] text-sub">
 									No labels yet. Create some in{" "}
 									<Link
 										to="/settings/journal-labels"
-										className="text-indigo-600 hover:underline"
+										className="text-accent-text hover:underline"
 									>
 										Settings → Journal Labels
 									</Link>

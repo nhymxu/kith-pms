@@ -40,8 +40,14 @@ definitions:
       audit_log_retention_days:
         description: 0 = disabled
         type: integer
+      dashboard_favorites_count:
+        type: integer
+      dashboard_last_contact_count:
+        type: integer
       date_format:
         type: string
+      default_page_size:
+        type: integer
       default_people_sort:
         type: string
       favorite_first_default:
@@ -57,6 +63,8 @@ definitions:
         type: boolean
       network_show_unconnected:
         type: boolean
+      theme:
+        type: string
       time_format:
         type: string
       timezone:
@@ -254,6 +262,11 @@ paths:
         in: query
         name: page
         type: integer
+      - default: 50
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
       - description: From date YYYY-MM-DD
         in: query
         name: from_date
@@ -278,6 +291,8 @@ paths:
               page:
                 type: integer
               page_size:
+                type: integer
+              total:
                 type: integer
             type: object
         "501":
@@ -487,6 +502,11 @@ paths:
         description: Page number
         in: query
         name: page
+        type: integer
+      - default: 50
+        description: Page size
+        in: query
+        name: page_size
         type: integer
       - description: Filter by person ID
         in: query

@@ -33,9 +33,7 @@ interface GiftFormProps {
 }
 
 const formFallback = (
-	<div className="py-8 text-center text-[13px] text-zinc-400">
-		Loading form…
-	</div>
+	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
 );
 
 export function GiftForm(props: GiftFormProps) {
@@ -150,17 +148,15 @@ function GiftFormInner({
 									onFocus={() => setPersonSearch("")}
 								/>
 								{personSearch && (
-									<div className="border border-zinc-200 rounded-md bg-white shadow-sm max-h-48 overflow-y-auto">
+									<div className="border-bw border-line rounded-base bg-panel shadow-shadow max-h-48 overflow-y-auto">
 										{filteredPeople.length === 0 ? (
-											<p className="px-3 py-2 text-sm text-zinc-400">
-												No results
-											</p>
+											<p className="px-3 py-2 text-sm text-sub">No results</p>
 										) : (
 											filteredPeople.map((p) => (
 												<button
 													key={p.id}
 													type="button"
-													className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50"
+													className="w-full text-left px-3 py-2 text-sm hover:bg-chip"
 													onClick={() => {
 														field.handleChange(p.id);
 														setPersonSearch("");
@@ -312,7 +308,7 @@ function GiftFormInner({
 						<img
 							src={croppedPreview}
 							alt="Selected gift"
-							className="max-h-32 rounded border border-zinc-200 object-contain"
+							className="max-h-32 rounded-base border-bw border-line object-contain"
 						/>
 					)}
 					<input

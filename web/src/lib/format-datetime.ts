@@ -1,6 +1,8 @@
 // Date/time formatting utilities that respect user preferences stored in localStorage.
 // localStorage is a write-through cache; the DB (via /v1/settings) is the source of truth.
 
+import type { Theme } from "#/lib/theme";
+
 export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
 export type TimeFormat = "12h" | "24h";
 export type NetworkColorBy = "labels" | "type";
@@ -10,6 +12,7 @@ export interface UserPrefs {
 	dateFormat: DateFormat;
 	timeFormat: TimeFormat;
 	timezone: string;
+	theme: Theme;
 	networkColorBy: NetworkColorBy;
 	networkShowAvatar: boolean;
 	networkShowOnlyMine: boolean;
@@ -23,6 +26,7 @@ const DEFAULTS: UserPrefs = {
 	dateFormat: "YYYY-MM-DD",
 	timeFormat: "24h",
 	timezone: "UTC",
+	theme: "quiet-ink",
 	networkColorBy: "labels",
 	networkShowAvatar: false,
 	networkShowOnlyMine: false,
@@ -41,8 +45,12 @@ export function getUserPrefs(): UserPrefs {
 }
 
 export function saveUserPrefs(prefs: Partial<UserPrefs>): void {
-	const current = getUserPrefs();
-	localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
+	try {
+		const current = getUserPrefs();
+		localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
+	} catch {
+		// Storage unavailable (private mode / quota) — cache skipped, DB still persists.
+	}
 }
 
 export function getNetworkPrefs(): Pick<
@@ -67,17 +75,21 @@ export function getNetworkPrefs(): Pick<
 export async function syncSettingsFromApi(): Promise<void> {
 	try {
 		const { getSettings } = await import("#/endpoints/settings");
+		const { applyTheme, getTheme } = await import("#/lib/theme");
 		const s = await getSettings();
 		saveUserPrefs({
 			dateFormat: s.date_format as DateFormat,
 			timeFormat: s.time_format as TimeFormat,
 			timezone: s.timezone,
+			theme: s.theme,
 			networkColorBy: s.network_color_by,
 			networkShowAvatar: s.network_show_avatar,
 			networkShowOnlyMine: s.network_show_only_mine,
 			networkShowUnconnected: s.network_show_unconnected,
 			networkOnlyMineDepth: s.network_only_mine_depth as NetworkOnlyMineDepth,
 		});
+		// Reflect a cross-device theme change immediately on load.
+		applyTheme(getTheme());
 	} catch {
 		// Non-fatal: fall back to whatever is already in localStorage / defaults.
 	}

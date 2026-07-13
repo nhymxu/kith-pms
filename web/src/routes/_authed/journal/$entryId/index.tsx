@@ -54,13 +54,10 @@ function JournalEntryPage() {
 		<div className="max-w-[760px] space-y-4">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					<Link
-						to="/journal"
-						className="text-[12px] text-zinc-400 hover:text-zinc-700"
-					>
+					<Link to="/journal" className="text-[12px] text-sub hover:text-ink">
 						← Journal
 					</Link>
-					<h1 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+					<h1 className="text-[20px] font-semibold tracking-tight text-ink font-display">
 						{data.title}
 					</h1>
 				</div>
@@ -78,7 +75,7 @@ function JournalEntryPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="font-mono text-[12px] text-zinc-500">
+					<CardTitle className="font-mono text-[12px] text-sub">
 						{formatDate(data.occurred_at_date)}
 						{data.occurred_at_time
 							? ` at ${formatTime(data.occurred_at_time)}`
@@ -88,7 +85,7 @@ function JournalEntryPage() {
 				<CardContent className="space-y-3">
 					{data.labels.length > 0 && (
 						<div>
-							<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+							<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
 								Labels
 							</p>
 							<div className="flex flex-wrap gap-1.5">
@@ -99,7 +96,7 @@ function JournalEntryPage() {
 						</div>
 					)}
 					<div>
-						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
 							People
 						</p>
 						{data.people.length > 0 ? (
@@ -109,19 +106,19 @@ function JournalEntryPage() {
 								))}
 							</div>
 						) : (
-							<p className="text-[13px] text-zinc-400">No people linked.</p>
+							<p className="text-[13px] text-sub">No people linked.</p>
 						)}
 					</div>
 					<div>
-						<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-1">
+						<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
 							Notes
 						</p>
 						{data.content ? (
-							<p className="text-[13px] text-zinc-700 whitespace-pre-wrap leading-relaxed">
+							<p className="text-[13px] text-ink whitespace-pre-wrap leading-relaxed">
 								{data.content}
 							</p>
 						) : (
-							<p className="text-[13px] text-zinc-400">No notes.</p>
+							<p className="text-[13px] text-sub">No notes.</p>
 						)}
 					</div>
 				</CardContent>

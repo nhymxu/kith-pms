@@ -6,7 +6,7 @@ interface QueryBoundaryProps {
 }
 
 const defaultFallback = (
-	<div className="py-8 text-center text-[13px] text-zinc-400">Loading…</div>
+	<div className="py-8 text-center text-[13px] text-sub">Loading…</div>
 );
 
 export function QueryBoundary({

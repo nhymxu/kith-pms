@@ -18,9 +18,9 @@ export function DataTablePagination<T>({
 	pageSizeSelector,
 }: DataTablePaginationProps<T>) {
 	return (
-		<div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200">
+		<div className="flex items-center justify-between px-4 py-3 border-t border-line">
 			<div className="flex items-center gap-4">
-				<p className="font-mono text-[12px] text-zinc-500">
+				<p className="font-mono text-[12px] text-sub">
 					{table.options.manualPagination
 						? table.getRowModel().rows.length
 						: table.getFilteredSelectedRowModel().rows.length}{" "}
@@ -35,7 +35,7 @@ export function DataTablePagination<T>({
 			</div>
 
 			<div className="flex items-center gap-2">
-				<p className="font-mono text-[12px] text-zinc-500">
+				<p className="font-mono text-[12px] text-sub">
 					Page {table.getState().pagination.pageIndex + 1} of{" "}
 					{table.getPageCount()}
 				</p>

@@ -18,7 +18,7 @@ import type { ContactInfo, Person } from "#/schemas/person";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -59,9 +59,9 @@ function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
 	const [label, setLabel] = useState(contact.label ?? "");
 
 	return (
-		<div className="flex flex-wrap gap-2 items-center border border-zinc-300 rounded-md p-2 bg-zinc-50">
+		<div className="flex flex-wrap gap-2 items-center border-bw border-line rounded-md p-2 bg-muted">
 			<select
-				className="h-8 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+				className="h-8 border-bw border-line rounded-md bg-field px-2 text-sm"
 				value={type}
 				onChange={(e) => setType(e.target.value)}
 			>
@@ -86,14 +86,14 @@ function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
 			<button
 				type="button"
 				onClick={() => onSave({ ...contact, type, value, label })}
-				className="text-green-600 hover:text-green-700"
+				className="text-success-fg hover:opacity-80"
 			>
 				<Check className="size-4" />
 			</button>
 			<button
 				type="button"
 				onClick={onCancel}
-				className="text-zinc-400 hover:text-zinc-600"
+				className="text-sub hover:text-ink"
 			>
 				<X className="size-4" />
 			</button>
@@ -199,7 +199,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 					) : (
 						<div
 							key={c.id}
-							className="flex gap-3 text-sm border border-zinc-200 rounded-md p-2 items-center"
+							className="flex gap-3 text-sm border-bw border-line rounded-md p-2 items-center"
 						>
 							<Badge variant="neutral">{c.type}</Badge>
 							{c.type === "social" ? (
@@ -213,7 +213,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 											className="font-base flex-1 flex items-center gap-1 hover:underline text-inherit"
 										>
 											{c.value}
-											<ExternalLink className="size-3 text-zinc-400 shrink-0" />
+											<ExternalLink className="size-3 text-sub shrink-0" />
 										</a>
 									) : (
 										<span className="font-base flex-1">{c.value}</span>
@@ -222,7 +222,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 							) : (
 								<span className="font-base flex-1">{c.value}</span>
 							)}
-							{c.label && <span className="text-zinc-400">{c.label}</span>}
+							{c.label && <span className="text-sub">{c.label}</span>}
 							<button
 								type="button"
 								onClick={() => setEditingId(c.id)}
@@ -248,7 +248,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 					/>
 				)}
 				{person.contacts.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-zinc-400">No contacts.</p>
+					<p className="text-sm text-sub">No contacts.</p>
 				)}
 			</div>
 			<Dialog
@@ -262,7 +262,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 					{(() => {
 						const c = person.contacts.find((c) => c.id === confirmContactId);
 						return c ? (
-							<p className="text-[13px] text-zinc-600">
+							<p className="text-[13px] text-sub">
 								Remove the <span className="font-medium">{c.type}</span> contact{" "}
 								<span className="font-medium">{c.value}</span>
 								{c.label ? ` (${c.label})` : ""}?

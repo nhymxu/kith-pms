@@ -1,3 +1,7 @@
+// Soft overlap: pending plan 260629-1555-relationship-network-visualization also
+// touches features/network/*. Re-audit for reintroduced palette classes when
+// that plan lands.
+
 import { formatPersonName } from "#/lib/format-person-name";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
@@ -46,7 +50,7 @@ export function GraphSelectedPanel({
 				onClick={() => onCollapsedChange(false)}
 				title="Expand panel"
 				aria-label="Expand selected panel"
-				className="flex h-9 w-9 shrink-0 items-center justify-center self-start rounded-md border border-zinc-200 bg-white text-zinc-400 hover:border-indigo-400 hover:text-indigo-600"
+				className="flex h-9 w-9 shrink-0 items-center justify-center self-start rounded-base border-bw border-line bg-panel text-sub hover:border-accent hover:text-accent-text"
 			>
 				<ChevronIcon direction="left" />
 			</button>
@@ -54,9 +58,9 @@ export function GraphSelectedPanel({
 	}
 
 	return (
-		<div className="rounded-md border border-zinc-200 bg-white p-4">
+		<div className="rounded-base border-bw border-line bg-panel p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h2 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+				<h2 className="text-[10px] font-semibold uppercase tracking-wider text-sub">
 					Selected
 				</h2>
 				<button
@@ -64,21 +68,19 @@ export function GraphSelectedPanel({
 					onClick={() => onCollapsedChange(true)}
 					title="Collapse panel"
 					aria-label="Collapse selected panel"
-					className="flex h-6 w-6 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+					className="flex h-6 w-6 items-center justify-center rounded-base text-sub hover:bg-chip hover:text-ink"
 				>
 					<ChevronIcon direction="right" />
 				</button>
 			</div>
 
 			{!selected ? (
-				<p className="text-[13px] text-zinc-400">
-					Click any node to inspect it.
-				</p>
+				<p className="text-[13px] text-sub">Click any node to inspect it.</p>
 			) : (
 				<div className="space-y-3">
 					{/* Name + nickname + group */}
 					<div>
-						<div className="text-[14px] font-semibold text-zinc-900">
+						<div className="text-[14px] font-semibold text-ink">
 							{formatPersonName(selected.node.name, selected.node.nickname)}
 						</div>
 						{selected.node.groups && selected.node.groups.length > 0 && (
@@ -86,7 +88,7 @@ export function GraphSelectedPanel({
 								{selected.node.groups.map((g) => (
 									<span
 										key={g}
-										className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-500"
+										className="rounded-base bg-chip px-1 py-0.5 text-[10px] font-medium text-chip-fg"
 									>
 										{g}
 									</span>
@@ -97,7 +99,7 @@ export function GraphSelectedPanel({
 
 					{/* Birthday */}
 					{selected.node.date_of_birth && (
-						<div className="flex items-center gap-1.5 text-[12px] text-zinc-500">
+						<div className="flex items-center gap-1.5 text-[12px] text-sub">
 							<span>🎂</span>
 							<span>{formatBirthdayLabel(selected.node.date_of_birth)}</span>
 						</div>
@@ -105,7 +107,7 @@ export function GraphSelectedPanel({
 
 					{/* Last contacted */}
 					{selected.node.last_contact_at && (
-						<div className="flex items-center gap-1.5 text-[12px] text-zinc-500">
+						<div className="flex items-center gap-1.5 text-[12px] text-sub">
 							<span>🕐</span>
 							<span>
 								Last contacted{" "}
@@ -116,7 +118,7 @@ export function GraphSelectedPanel({
 
 					{/* Connections list */}
 					{selected.connections.length > 0 && (
-						<div className="text-[12px] text-zinc-600">
+						<div className="text-[12px] text-sub">
 							<span className="font-medium">
 								{selected.connections.length} connection
 								{selected.connections.length !== 1 ? "s" : ""}
@@ -125,10 +127,10 @@ export function GraphSelectedPanel({
 								{selected.connections.map((c, i) => (
 									// biome-ignore lint/suspicious/noArrayIndexKey: stable ordered list
 									<li key={i} className="flex items-baseline gap-1.5">
-										<span className="shrink-0 rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-500">
+										<span className="shrink-0 rounded-base bg-chip px-1 py-0.5 text-[10px] font-medium text-chip-fg">
 											{c.type}
 										</span>
-										<span className="text-zinc-700">{c.otherName}</span>
+										<span className="text-ink">{c.otherName}</span>
 									</li>
 								))}
 							</ul>

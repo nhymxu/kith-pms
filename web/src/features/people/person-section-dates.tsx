@@ -27,7 +27,7 @@ import type { Person } from "#/schemas/person";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -48,10 +48,10 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 	const [recurring, setRecurring] = useState(date.recurring ?? false);
 
 	return (
-		<div className="border border-zinc-300 rounded-md p-3 bg-zinc-50 space-y-2">
+		<div className="border-bw border-line rounded-md p-3 bg-muted space-y-2">
 			<div className="flex gap-2">
 				<select
-					className="h-8 border border-zinc-200 rounded-md bg-white px-2 text-sm"
+					className="h-8 border-bw border-line rounded-md bg-field px-2 text-sm"
 					value={kind}
 					onChange={(e) => setKind(e.target.value)}
 				>
@@ -75,7 +75,7 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 					onChange={(e) => setDateValue(e.target.value)}
 					placeholder="Date (YYYY-MM-DD or --MM-DD)"
 				/>
-				<label className="flex items-center gap-1 text-sm text-zinc-600 cursor-pointer">
+				<label className="flex items-center gap-1 text-sm text-sub cursor-pointer">
 					<input
 						type="checkbox"
 						checked={recurring}
@@ -185,12 +185,12 @@ function ImportantDatesSectionInner({
 			<div className="space-y-2">
 				{/* Birthday from DOB — read-only */}
 				{person.date_of_birth && (
-					<div className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2 bg-zinc-50">
+					<div className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2 bg-muted">
 						<Badge variant="neutral">Birthday</Badge>
-						<span className="font-mono text-[12px] text-zinc-500 flex-1">
+						<span className="font-mono text-[12px] text-sub flex-1">
 							{person.date_of_birth}
 						</span>
-						<Lock className="size-3 text-zinc-300" />
+						<Lock className="size-3 text-sub" />
 					</div>
 				)}
 				{data.map((d) =>
@@ -204,14 +204,14 @@ function ImportantDatesSectionInner({
 					) : (
 						<div
 							key={d.id}
-							className="flex items-center gap-3 text-sm border border-zinc-200 rounded-md p-2"
+							className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2"
 						>
 							<Badge variant="neutral">{d.kind}</Badge>
-							{d.label && <span className="text-zinc-500">{d.label}</span>}
-							<span className="font-mono text-[12px] text-zinc-500 flex-1">
+							{d.label && <span className="text-sub">{d.label}</span>}
+							<span className="font-mono text-[12px] text-sub flex-1">
 								{d.date_value}
 							</span>
-							{d.recurring && <span className="text-zinc-400 text-xs">↻</span>}
+							{d.recurring && <span className="text-sub text-xs">↻</span>}
 							<button
 								type="button"
 								onClick={() => setEditingId(d.id)}
@@ -237,7 +237,7 @@ function ImportantDatesSectionInner({
 					/>
 				)}
 				{data.length === 0 && !person.date_of_birth && editingId !== "new" && (
-					<p className="text-sm text-zinc-400">No important dates.</p>
+					<p className="text-sm text-sub">No important dates.</p>
 				)}
 			</div>
 			<Dialog
@@ -251,7 +251,7 @@ function ImportantDatesSectionInner({
 					{(() => {
 						const d = data.find((d) => d.id === confirmDeleteId);
 						return d ? (
-							<p className="text-[13px] text-zinc-600">
+							<p className="text-[13px] text-sub">
 								Remove the <span className="font-medium">{d.kind}</span>
 								{d.label ? ` (${d.label})` : ""} date{" "}
 								<span className="font-medium">{d.date_value}</span>?

@@ -4,18 +4,19 @@ import * as React from "react";
 import { cn } from "#/lib/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+	"inline-flex items-center justify-center whitespace-nowrap rounded-base text-sm font-medium ring-offset-background transition-colors gap-2 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
 	{
 		variants: {
 			variant: {
-				default: "bg-indigo-600 text-white hover:bg-indigo-700",
-				noShadow: "bg-indigo-600 text-white hover:bg-indigo-700",
+				default:
+					"bg-accent text-accent-foreground hover:bg-accent/90 shadow-shadow",
+				noShadow: "bg-accent text-accent-foreground hover:bg-accent/90",
 				neutral:
-					"bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200",
-				reverse: "bg-indigo-600 text-white hover:bg-indigo-700",
-				ghost: "hover:bg-zinc-100 text-zinc-700 border border-transparent",
-				outline:
-					"border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50",
+					"bg-chip text-chip-fg border-bw border-chip-line hover:bg-chip/80",
+				reverse:
+					"bg-accent text-accent-foreground hover:bg-accent/90 shadow-shadow",
+				ghost: "hover:bg-chip text-sub border border-transparent",
+				outline: "border-bw border-line bg-panel text-sub hover:bg-chip",
 				destructive:
 					"bg-destructive text-destructive-foreground hover:bg-destructive/90",
 			},

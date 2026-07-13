@@ -27,11 +27,11 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				enableSorting: true,
 				cell: valueCell<JournalActivity, string>((val) =>
 					val ? (
-						<span className="font-mono text-[12px] text-zinc-500">
+						<span className="font-mono text-[12px] text-sub">
 							{formatDate(val)}
 						</span>
 					) : (
-						<span className="text-zinc-300">—</span>
+						<span className="text-sub">—</span>
 					),
 				),
 			},
@@ -44,7 +44,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 					<Link
 						to="/journal/$entryId"
 						params={{ entryId: String(row.id) }}
-						className="text-[13px] text-zinc-900 hover:text-indigo-600 hover:underline"
+						className="text-[13px] text-ink hover:text-accent-text hover:underline"
 					>
 						{val}
 					</Link>
@@ -56,14 +56,14 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				cell: ({ row }) => {
 					const people = row.original.people ?? [];
 					if (!people.length)
-						return <span className="text-zinc-300 text-[12px]">—</span>;
+						return <span className="text-sub text-[12px]">—</span>;
 					return (
 						<div className="flex flex-wrap gap-1.5">
 							{people.slice(0, 3).map((p) => (
 								<PersonChip key={p.person_id} p={p} />
 							))}
 							{people.length > 3 && (
-								<span className="text-[10px] text-zinc-400 self-center">
+								<span className="text-[10px] text-sub self-center">
 									+{people.length - 3}
 								</span>
 							)}
@@ -79,7 +79,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 					const preview =
 						content.length > 80 ? `${content.slice(0, 80)}…` : content;
 					return (
-						<span className="text-[12px] text-zinc-500 line-clamp-2">
+						<span className="text-[12px] text-sub line-clamp-2">
 							{preview || "—"}
 						</span>
 					);

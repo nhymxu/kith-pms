@@ -28,6 +28,9 @@ var (
 	ErrInvalidDashboardLastContactCount = errors.New(
 		"settings: dashboard_last_contact_count must be between 1 and 20",
 	)
+	ErrInvalidTheme = errors.New(
+		"settings: theme must be one of quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -56,6 +59,15 @@ var validDefaultPeopleSort = map[string]bool{
 	"-name":         true,
 	"last_contact":  true,
 	"-last_contact": true,
+}
+
+var validThemes = map[string]bool{
+	"quiet-ink":  true,
+	"warm-album": true,
+	"bold-press": true,
+	"nightdesk":  true,
+	"softclay":   true,
+	"ledger":     true,
 }
 
 type Service struct {
@@ -141,6 +153,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		}
 	}
 
+	if v, ok := rows[KeyTheme]; ok {
+		result.Theme = v
+	}
+
 	return result, nil
 }
 
@@ -185,6 +201,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidDashboardLastContactCount
 	}
 
+	if !validThemes[in.Theme] {
+		return UserSettings{}, ErrInvalidTheme
+	}
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:                in.DateFormat,
@@ -202,6 +222,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyDefaultPageSize:           strconv.Itoa(in.DefaultPageSize),
 		KeyDashboardFavoritesCount:   strconv.Itoa(in.DashboardFavoritesCount),
 		KeyDashboardLastContactCount: strconv.Itoa(in.DashboardLastContactCount),
+		KeyTheme:                     in.Theme,
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

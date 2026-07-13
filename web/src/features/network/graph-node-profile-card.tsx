@@ -1,4 +1,9 @@
+// Soft overlap: pending plan 260629-1555-relationship-network-visualization also
+// touches features/network/*. Re-audit for reintroduced palette classes when
+// that plan lands.
+
 import { Link } from "@tanstack/react-router";
+import { readToken } from "#/lib/read-css-token";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
 
@@ -23,9 +28,10 @@ function NodeAvatarDisc({
 	groupColorMap: Map<string, string>;
 	size: number;
 }) {
+	const mutedFg = readToken("--sub", "#71717a");
 	const color = node.group
-		? (groupColorMap.get(node.group) ?? "#71717a")
-		: "#71717a";
+		? (groupColorMap.get(node.group) ?? mutedFg)
+		: mutedFg;
 	const initial = (node.name?.[0] ?? "?").toUpperCase();
 
 	if (showAvatar && node.avatar) {
@@ -45,6 +51,8 @@ function NodeAvatarDisc({
 	}
 
 	return (
+		// text-white is fixed here (not text-accent-foreground) — background is an
+		// arbitrary user-chosen label color, not a themed accent fill.
 		<div
 			className="flex flex-none items-center justify-center rounded-full text-white font-semibold"
 			style={{
@@ -76,7 +84,7 @@ export function GraphNodeProfileCard({
 
 	return (
 		<div
-			className="absolute z-20 w-[220px] overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg"
+			className="absolute z-20 w-[220px] overflow-hidden rounded-base border-bw border-line bg-panel shadow-lg"
 			style={{
 				left: posX,
 				top: posY,
@@ -93,11 +101,11 @@ export function GraphNodeProfileCard({
 					size={36}
 				/>
 				<div className="min-w-0 flex-1">
-					<div className="truncate text-[13px] font-semibold text-zinc-900">
+					<div className="truncate text-[13px] font-semibold text-ink">
 						{node.name}
 					</div>
 					{node.nickname && (
-						<div className="truncate text-[11px] text-zinc-400 italic">
+						<div className="truncate text-[11px] text-sub italic">
 							{node.nickname}
 						</div>
 					)}
@@ -106,7 +114,7 @@ export function GraphNodeProfileCard({
 							{node.groups.map((g) => (
 								<span
 									key={g}
-									className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-500"
+									className="rounded-base bg-chip px-1 py-0.5 text-[10px] font-medium text-chip-fg"
 								>
 									{g}
 								</span>
@@ -117,7 +125,7 @@ export function GraphNodeProfileCard({
 				<button
 					type="button"
 					onClick={onClose}
-					className="flex-none text-[16px] leading-none text-zinc-400 hover:text-zinc-600"
+					className="flex-none text-[16px] leading-none text-sub hover:text-ink"
 					aria-label="Close"
 				>
 					×
@@ -126,15 +134,15 @@ export function GraphNodeProfileCard({
 
 			{/* Details */}
 			{(birthday || lastContacted) && (
-				<div className="space-y-1 border-t border-zinc-100 px-3 py-2">
+				<div className="space-y-1 border-t border-line-soft px-3 py-2">
 					{birthday && (
-						<div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+						<div className="flex items-center gap-1.5 text-[11px] text-sub">
 							<span>🎂</span>
 							<span>{birthday}</span>
 						</div>
 					)}
 					{lastContacted && (
-						<div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+						<div className="flex items-center gap-1.5 text-[11px] text-sub">
 							<span>🕐</span>
 							<span>Last contacted {lastContacted}</span>
 						</div>
@@ -143,13 +151,13 @@ export function GraphNodeProfileCard({
 			)}
 
 			{/* Action */}
-			<div className="border-t border-zinc-100 px-3 py-2.5">
+			<div className="border-t border-line-soft px-3 py-2.5">
 				<Link
 					to="/people/$personId"
 					params={{ personId: String(node.id) }}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-[12px] font-medium text-indigo-600 hover:underline"
+					className="text-[12px] font-medium text-accent-text hover:underline"
 				>
 					Open profile →
 				</Link>

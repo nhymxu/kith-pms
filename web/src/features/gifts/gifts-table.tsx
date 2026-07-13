@@ -30,32 +30,28 @@ function DebtBadge({
 }) {
 	if (direction === "given")
 		return (
-			<span className="font-mono text-[10px] uppercase text-zinc-500">
-				Given
-			</span>
+			<span className="font-mono text-[10px] uppercase text-sub">Given</span>
 		);
 	if (direction === "received")
 		return (
-			<span className="font-mono text-[10px] uppercase text-indigo-600">
+			<span className="font-mono text-[10px] uppercase text-accent-text">
 				Received
 			</span>
 		);
 	if (debtType === "i_owe")
 		return (
-			<span className="font-mono text-[10px] uppercase text-amber-600">
+			<span className="font-mono text-[10px] uppercase text-warning-fg">
 				I owe
 			</span>
 		);
 	if (debtType === "they_owe")
 		return (
-			<span className="font-mono text-[10px] uppercase text-emerald-600">
+			<span className="font-mono text-[10px] uppercase text-success-fg">
 				They owe
 			</span>
 		);
 	return (
-		<span className="font-mono text-[10px] uppercase text-zinc-400">
-			Planned
-		</span>
+		<span className="font-mono text-[10px] uppercase text-sub">Planned</span>
 	);
 }
 
@@ -78,14 +74,14 @@ export function GiftsTable({
 					const gift = row.original;
 					if (!gift.image_path) {
 						return (
-							<div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200" />
+							<div className="w-8 h-8 rounded-base bg-chip border-bw border-line" />
 						);
 					}
 					return (
 						<img
 							src={`/v1/gifts/${gift.id}/image`}
 							alt=""
-							className="w-8 h-8 rounded object-cover border border-zinc-200"
+							className="w-8 h-8 rounded-base object-cover border-bw border-line"
 						/>
 					);
 				},
@@ -99,7 +95,7 @@ export function GiftsTable({
 					<Link
 						to="/gifts/$giftId"
 						params={{ giftId: String(row.id) }}
-						className="text-[13px] text-zinc-900 hover:text-indigo-600 hover:underline"
+						className="text-[13px] text-ink hover:text-accent-text hover:underline"
 					>
 						{val}
 					</Link>
@@ -115,7 +111,7 @@ export function GiftsTable({
 						<Link
 							to="/people/$personId"
 							params={{ personId: String(row.person_id) }}
-							className="text-indigo-600 hover:underline"
+							className="text-accent-text hover:underline"
 						>
 							{val}
 						</Link>
@@ -131,11 +127,11 @@ export function GiftsTable({
 				enableSorting: true,
 				cell: valueCell<GiftWithPerson, string>((val) =>
 					val ? (
-						<span className="font-mono text-[12px] text-zinc-500">
+						<span className="font-mono text-[12px] text-sub">
 							{formatDate(val)}
 						</span>
 					) : (
-						<span className="text-zinc-300">—</span>
+						<span className="text-sub/60">—</span>
 					),
 				),
 			},
@@ -145,11 +141,11 @@ export function GiftsTable({
 				header: "Amount",
 				cell: valueCell<GiftWithPerson, number | null>((val, row) =>
 					val != null ? (
-						<span className="font-mono text-[12px] text-zinc-700">
+						<span className="font-mono text-[12px] text-ink">
 							{row.currency || "USD"} {(val / 100).toFixed(2)}
 						</span>
 					) : (
-						<span className="text-zinc-300">—</span>
+						<span className="text-sub/60">—</span>
 					),
 				),
 			},

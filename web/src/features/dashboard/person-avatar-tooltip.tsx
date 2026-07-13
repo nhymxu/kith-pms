@@ -20,7 +20,7 @@ export function PersonAvatarTooltip({ person }: { person: Person }) {
 					<Link
 						to="/people/$personId"
 						params={{ personId: String(person.id) }}
-						className="size-16 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-lg font-medium text-zinc-700 font-mono ring-2 ring-transparent hover:ring-indigo-300 transition-[box-shadow]"
+						className="size-16 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-lg font-medium text-chip-fg font-mono ring-2 ring-transparent hover:ring-accent transition-[box-shadow]"
 					>
 						{person.avatar_path ? (
 							<img
@@ -35,11 +35,11 @@ export function PersonAvatarTooltip({ person }: { person: Person }) {
 				}
 			/>
 			<TooltipContent>
-				<p className="font-medium text-zinc-900">
+				<p className="font-medium text-ink">
 					{person.name}
 					{person.nickname ? ` (${person.nickname})` : ""}
 				</p>
-				<p className="text-zinc-500">Last contact: {lastContact}</p>
+				<p className="text-sub">Last contact: {lastContact}</p>
 			</TooltipContent>
 		</Tooltip>
 	);

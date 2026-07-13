@@ -48,9 +48,9 @@ export function UserMenu() {
 			<DropdownMenuTrigger asChild>
 				<button
 					type="button"
-					className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-[13px] hover:bg-zinc-100 transition-colors"
+					className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-[13px] hover:bg-chip transition-colors"
 				>
-					<span className="size-7 rounded-full bg-zinc-900 text-white text-[11px] font-medium grid place-items-center shrink-0 overflow-hidden">
+					<span className="size-7 rounded-full bg-accent text-accent-foreground text-[11px] font-medium grid place-items-center shrink-0 overflow-hidden">
 						{profile?.avatar_path ? (
 							<img
 								src={getAvatarUrl(profile.id)}

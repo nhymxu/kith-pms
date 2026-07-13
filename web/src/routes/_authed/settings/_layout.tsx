@@ -4,7 +4,7 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
-import { BookOpen, Link2, Settings, Shield, Tag } from "lucide-react";
+import { BookOpen, Link2, Palette, Settings, Shield, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/settings/_layout")({
 	component: SettingsLayout,
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/_authed/settings/_layout")({
 
 const NAV_ITEMS = [
 	{ to: "/settings/general" as const, icon: Settings, label: "General" },
+	{ to: "/settings/appearance" as const, icon: Palette, label: "Appearance" },
 	{ to: "/settings/people-labels" as const, icon: Tag, label: "People Labels" },
 	{
 		to: "/settings/journal-labels" as const,
@@ -33,7 +34,7 @@ function SettingsLayout() {
 		<div className="flex gap-8 min-h-[60vh]">
 			{/* Sidebar */}
 			<nav className="w-48 shrink-0">
-				<p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+				<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-3">
 					Settings
 				</p>
 				<ul className="space-y-0.5">
@@ -43,10 +44,10 @@ function SettingsLayout() {
 							<li key={to}>
 								<Link
 									to={to}
-									className={`flex items-center gap-2 px-3 py-2 rounded-md text-[13px] transition-colors ${
+									className={`flex items-center gap-2 px-3 py-2 rounded-base text-[13px] transition-colors ${
 										active
-											? "bg-indigo-50 text-indigo-700 font-medium"
-											: "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+											? "bg-nav-active text-nav-active-fg font-medium"
+											: "text-sub hover:bg-chip hover:text-ink"
 									}`}
 								>
 									<Icon className="size-4 shrink-0" />

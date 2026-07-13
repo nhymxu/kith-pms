@@ -4,6 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kith</title>
+    <!-- FOUC guard: apply cached theme before CSS paints. Keep the list in sync
+         with THEMES in src/lib/theme.ts and validThemes in internal/settings. -->
+    <script>
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem('kith_user_prefs') || '{}');
+          var t = p.theme;
+          var ok = ['quiet-ink', 'warm-album', 'bold-press', 'nightdesk', 'softclay', 'ledger'];
+          if (t && t !== 'quiet-ink' && ok.indexOf(t) !== -1) document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />

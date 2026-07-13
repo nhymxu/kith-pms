@@ -59,13 +59,11 @@ function BulkActionBarInner({
 	});
 
 	return (
-		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-white border-2 border-[var(--border)] shadow-[4px_4px_0_0_var(--border)] rounded-md">
-			<span className="text-sm font-medium text-zinc-700">
+		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-panel border-2 border-[var(--border)] shadow-[4px_4px_0_0_var(--border)] rounded-md">
+			<span className="text-sm font-medium text-ink">
 				{selectedCount} selected
 			</span>
-			{lastResult && (
-				<span className="text-xs text-zinc-500">{lastResult}</span>
-			)}
+			{lastResult && <span className="text-xs text-sub">{lastResult}</span>}
 			<Select
 				value={labelId}
 				onValueChange={(v) => {

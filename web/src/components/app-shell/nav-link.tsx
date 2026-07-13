@@ -21,10 +21,10 @@ export function NavLink({
 			<Link
 				to={to}
 				onClick={onClick}
-				className="relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-zinc-500 hover:text-zinc-900 transition-colors"
+				className="relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-sub hover:text-ink transition-colors"
 				activeProps={{
 					className:
-						"relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-zinc-900 after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:bg-indigo-600",
+						"relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-nav-active-fg after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:bg-nav-active",
 				}}
 			>
 				<Icon className="size-3.5 shrink-0" />
@@ -37,10 +37,10 @@ export function NavLink({
 		<Link
 			to={to}
 			onClick={onClick}
-			className="flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-zinc-700 hover:bg-zinc-100 transition-colors"
+			className="flex items-center gap-3 px-3 py-2 rounded-md text-[13px] text-sub hover:bg-chip transition-colors"
 			activeProps={{
 				className:
-					"flex items-center gap-3 px-3 py-2 rounded-md text-[13px] bg-zinc-100 text-zinc-900 font-medium",
+					"flex items-center gap-3 px-3 py-2 rounded-md text-[13px] bg-nav-active text-nav-active-fg font-medium",
 			}}
 		>
 			<Icon className="size-4 shrink-0" />

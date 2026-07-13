@@ -39,30 +39,32 @@ function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
 	if (days === 0)
 		return (
 			<div className="flex flex-col items-end gap-0.5">
-				<span className="font-mono text-[11px] text-indigo-600 font-medium">
+				<span className="font-mono text-[11px] text-accent-text font-medium">
 					Today
 				</span>
-				<span className="text-[10px] text-zinc-400">{exact}</span>
+				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
 		);
 	if (days <= 7)
 		return (
 			<div className="flex flex-col items-end gap-0.5">
-				<span className="font-mono text-[11px] text-amber-600">In {days}d</span>
-				<span className="text-[10px] text-zinc-400">{exact}</span>
+				<span className="font-mono text-[11px] text-warning-fg">
+					In {days}d
+				</span>
+				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
 		);
 	if (days <= 30)
 		return (
 			<div className="flex flex-col items-end gap-0.5">
-				<span className="font-mono text-[11px] text-zinc-500">In {days}d</span>
-				<span className="text-[10px] text-zinc-400">{exact}</span>
+				<span className="font-mono text-[11px] text-sub">In {days}d</span>
+				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
 		);
 	return (
 		<div className="flex flex-col items-end gap-0.5">
-			<span className="font-mono text-[11px] text-zinc-400">In {days}d</span>
-			<span className="text-[10px] text-zinc-400">{exact}</span>
+			<span className="font-mono text-[11px] text-sub">In {days}d</span>
+			<span className="text-[10px] text-sub">{exact}</span>
 		</div>
 	);
 }
@@ -75,7 +77,7 @@ function DatesListInner() {
 
 	if (!data.length)
 		return (
-			<p className="text-[13px] text-zinc-500">
+			<p className="text-[13px] text-sub">
 				No upcoming dates in the next 90 days.
 			</p>
 		);
@@ -92,18 +94,18 @@ function DatesListInner() {
 		<div className="space-y-6">
 			{Array.from(groups.entries()).map(([month, items]) => (
 				<div key={month}>
-					<h2 className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 mb-2">
+					<h2 className="text-[11px] font-medium uppercase tracking-wider text-sub mb-2">
 						{month}
 					</h2>
-					<div className="border border-zinc-200 rounded-md bg-white divide-y divide-zinc-100">
+					<div className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
 						{items.map((item, _i) => {
 							const days = daysUntil(item.next_occurrence);
 							return (
 								<div
 									key={`${item.person.id}-${item.kind}`}
-									className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 transition-colors"
+									className="flex items-center gap-3 px-4 py-3 hover:bg-chip transition-colors"
 								>
-									<div className="size-10 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-sm font-medium text-zinc-700 font-mono">
+									<div className="size-10 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-sm font-medium text-chip-fg font-mono">
 										{item.person.avatar_path ? (
 											<img
 												src={getAvatarUrl(item.person.id)}
@@ -118,11 +120,11 @@ function DatesListInner() {
 										<Link
 											to="/people/$personId"
 											params={{ personId: String(item.person.id) }}
-											className="text-[13px] text-zinc-900 hover:text-indigo-600 hover:underline"
+											className="text-[13px] text-ink hover:text-accent-text hover:underline"
 										>
 											{item.person.name}
 										</Link>
-										<p className="text-[11px] text-zinc-500 capitalize">
+										<p className="text-[11px] text-sub capitalize">
 											{item.kind}
 											{item.years_since > 0
 												? ` · ${item.years_since + 1} years`
@@ -141,7 +143,7 @@ function DatesListInner() {
 }
 
 const datesListFallback = (
-	<p className="text-[13px] text-zinc-500">Loading upcoming dates…</p>
+	<p className="text-[13px] text-sub">Loading upcoming dates…</p>
 );
 
 export function DatesList() {

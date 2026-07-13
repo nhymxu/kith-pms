@@ -24,6 +24,7 @@ import {
 	saveUserPrefs,
 	type TimeFormat,
 } from "#/lib/format-datetime";
+import { getTheme } from "#/lib/theme";
 import type { UserSettings } from "#/schemas/settings";
 
 export const Route = createFileRoute("/_authed/settings/_layout/general")({
@@ -85,6 +86,7 @@ function GeneralSettingsPage() {
 				date_format: p.dateFormat,
 				time_format: p.timeFormat,
 				timezone: p.timezone,
+				theme: p.theme,
 				audit_log_retention_days: 0,
 				network_color_by: p.networkColorBy,
 				network_show_avatar: p.networkShowAvatar,
@@ -163,6 +165,7 @@ function GeneralSettingsPage() {
 		date_format: prefs.dateFormat,
 		time_format: prefs.timeFormat,
 		timezone: prefs.timezone,
+		theme: apiSettings?.theme ?? getTheme(),
 		audit_log_retention_days:
 			apiSettings?.audit_log_retention_days ?? retentionDays,
 		network_color_by: networkDefaults.colorBy,
@@ -233,16 +236,16 @@ function GeneralSettingsPage() {
 
 	return (
 		<div className="space-y-6 max-w-md">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				General
 			</h1>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium text-zinc-900">
+					<CardTitle className="text-[14px] font-medium">
 						Date &amp; Time
 					</CardTitle>
-					<CardDescription className="text-[12px] text-zinc-500">
+					<CardDescription className="text-[12px]">
 						Controls how dates and times are displayed throughout the app. The
 						backend always stores UTC.
 					</CardDescription>
@@ -265,10 +268,10 @@ function GeneralSettingsPage() {
 										onChange={() =>
 											setPrefs((p) => ({ ...p, dateFormat: opt.value }))
 										}
-										className="accent-indigo-600"
+										className="accent-accent"
 									/>
-									<span className="text-[13px] text-zinc-700">{opt.label}</span>
-									<span className="font-mono text-[11px] text-zinc-400">
+									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="font-mono text-[11px] text-sub">
 										{opt.example}
 									</span>
 								</label>
@@ -293,10 +296,10 @@ function GeneralSettingsPage() {
 										onChange={() =>
 											setPrefs((p) => ({ ...p, timeFormat: opt.value }))
 										}
-										className="accent-indigo-600"
+										className="accent-accent"
 									/>
-									<span className="text-[13px] text-zinc-700">{opt.label}</span>
-									<span className="font-mono text-[11px] text-zinc-400">
+									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="font-mono text-[11px] text-sub">
 										{opt.example}
 									</span>
 								</label>
@@ -314,14 +317,14 @@ function GeneralSettingsPage() {
 								setPrefs((p) => ({ ...p, timezone: e.target.value }))
 							}
 							placeholder="e.g. Asia/Saigon"
-							className="h-9 w-full border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+							className="h-9 w-full border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
 						<datalist id="tz-list">
 							{COMMON_TIMEZONES.map((tz) => (
 								<option key={tz} value={tz} />
 							))}
 						</datalist>
-						<p className="text-[11px] text-zinc-400">
+						<p className="text-[11px] text-sub">
 							Used for display only. Default: UTC.
 						</p>
 					</div>
@@ -329,7 +332,7 @@ function GeneralSettingsPage() {
 					<Button
 						onClick={() => prefsMutation.mutate()}
 						size="sm"
-						disabled={prefsMutation.isPending}
+						disabled={isPlaceholderData || prefsMutation.isPending}
 					>
 						{prefsMutation.isPending
 							? "Saving…"
@@ -338,7 +341,7 @@ function GeneralSettingsPage() {
 								: "Save preferences"}
 					</Button>
 					{prefsMutation.isError && (
-						<p className="text-[12px] text-red-500">
+						<p className="text-[12px] text-danger-fg">
 							Failed to save. Please try again.
 						</p>
 					)}
@@ -347,10 +350,8 @@ function GeneralSettingsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium text-zinc-900">
-						Audit Log
-					</CardTitle>
-					<CardDescription className="text-[12px] text-zinc-500">
+					<CardTitle className="text-[14px] font-medium">Audit Log</CardTitle>
+					<CardDescription className="text-[12px]">
 						Automatically remove audit entries older than the specified number
 						of days. Set to 0 to keep all entries.
 					</CardDescription>
@@ -365,18 +366,16 @@ function GeneralSettingsPage() {
 							onChange={(e) =>
 								setRetentionDays(Math.max(0, parseInt(e.target.value, 10) || 0))
 							}
-							className="h-9 w-32 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+							className="h-9 w-32 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
-						<p className="text-[11px] text-zinc-400">
-							0 = keep forever (disabled)
-						</p>
+						<p className="text-[11px] text-sub">0 = keep forever (disabled)</p>
 					</div>
 
 					<div className="flex items-center gap-3">
 						<Button
 							onClick={() => auditMutation.mutate()}
 							size="sm"
-							disabled={auditMutation.isPending}
+							disabled={isPlaceholderData || auditMutation.isPending}
 						>
 							{auditMutation.isPending
 								? "Saving…"
@@ -395,13 +394,13 @@ function GeneralSettingsPage() {
 					</div>
 
 					{cleanupMutation.isSuccess && (
-						<p className="text-[12px] text-zinc-500">
+						<p className="text-[12px] text-sub">
 							Deleted {cleanupMutation.data.deleted}{" "}
 							{cleanupMutation.data.deleted === 1 ? "entry" : "entries"}.
 						</p>
 					)}
 					{cleanupMutation.isError && (
-						<p className="text-[12px] text-red-500">
+						<p className="text-[12px] text-danger-fg">
 							Cleanup failed. Please try again.
 						</p>
 					)}
@@ -410,10 +409,10 @@ function GeneralSettingsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium text-zinc-900">
+					<CardTitle className="text-[14px] font-medium">
 						Network Defaults
 					</CardTitle>
-					<CardDescription className="text-[12px] text-zinc-500">
+					<CardDescription className="text-[12px]">
 						Default filter settings applied when you open the Network page. You
 						can still change them on the fly.
 					</CardDescription>
@@ -435,9 +434,9 @@ function GeneralSettingsPage() {
 										onChange={() =>
 											setNetworkDefaults((n) => ({ ...n, colorBy: val }))
 										}
-										className="accent-indigo-600"
+										className="accent-accent"
 									/>
-									<span className="text-[13px] text-zinc-700">
+									<span className="text-[13px] text-ink">
 										{val === "labels" ? "Labels" : "Rel. type"}
 									</span>
 								</label>
@@ -475,9 +474,9 @@ function GeneralSettingsPage() {
 													[key]: e.target.checked,
 												}))
 											}
-											className="accent-indigo-600"
+											className="accent-accent"
 										/>
-										<span className="text-[13px] text-zinc-700">{label}</span>
+										<span className="text-[13px] text-ink">{label}</span>
 									</label>
 									{key === "showOnlyMine" && networkDefaults.showOnlyMine && (
 										<div className="ml-6 mt-1.5 flex gap-4">
@@ -498,9 +497,9 @@ function GeneralSettingsPage() {
 																	onlyMineDepth: v,
 																}))
 															}
-															className="accent-indigo-600"
+															className="accent-accent"
 														/>
-														<span className="text-[12px] text-zinc-600">
+														<span className="text-[12px] text-sub">
 															{v === "direct"
 																? "Direct only"
 																: "Include alters (2nd level)"}
@@ -518,7 +517,7 @@ function GeneralSettingsPage() {
 					<Button
 						onClick={() => networkMutation.mutate()}
 						size="sm"
-						disabled={networkMutation.isPending}
+						disabled={isPlaceholderData || networkMutation.isPending}
 					>
 						{networkMutation.isPending
 							? "Saving…"
@@ -527,7 +526,7 @@ function GeneralSettingsPage() {
 								: "Save defaults"}
 					</Button>
 					{networkMutation.isError && (
-						<p className="text-[12px] text-red-500">
+						<p className="text-[12px] text-danger-fg">
 							Failed to save. Please try again.
 						</p>
 					)}

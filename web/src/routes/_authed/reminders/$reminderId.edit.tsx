@@ -41,7 +41,7 @@ function EditReminderPage() {
 
 	return (
 		<div className="max-w-lg space-y-4">
-			<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				Edit Reminder
 			</h1>
 			<ReminderForm

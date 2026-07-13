@@ -22,7 +22,7 @@ import type { Person } from "#/schemas/person";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
-		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-2">
+		<h2 className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-2">
 			{children}
 		</h2>
 	);
@@ -63,7 +63,7 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 		<>
 			<div className="space-y-3">
 				<div>
-					<p className="text-[11px] text-zinc-400 mb-1">Attached</p>
+					<p className="text-[11px] text-sub mb-1">Attached</p>
 					<div className="flex flex-wrap gap-2">
 						{attached.map((l) => (
 							<div key={l.id} className="flex items-center gap-1">
@@ -78,20 +78,20 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 							</div>
 						))}
 						{attached.length === 0 && (
-							<p className="text-sm text-zinc-400">None attached.</p>
+							<p className="text-sm text-sub">None attached.</p>
 						)}
 					</div>
 				</div>
 				{available.length > 0 && (
 					<div>
-						<p className="text-[11px] text-zinc-400 mb-1">Available</p>
+						<p className="text-[11px] text-sub mb-1">Available</p>
 						<div className="flex flex-wrap gap-2">
 							{available.map((l) => (
 								<button
 									key={l.id}
 									type="button"
 									onClick={() => attach.mutate(l.id)}
-									className="flex items-center gap-1 text-xs border border-dashed border-zinc-300 rounded-md px-2 py-1 hover:border-main transition-colors"
+									className="flex items-center gap-1 text-xs border-bw border-dashed border-line rounded-md px-2 py-1 hover:border-main transition-colors"
 								>
 									<Plus className="size-3" />
 									{l.name}
@@ -112,7 +112,7 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 					{(() => {
 						const l = attached.find((l) => l.id === confirmDetachId);
 						return l ? (
-							<p className="text-[13px] text-zinc-600">
+							<p className="text-[13px] text-sub">
 								Remove the label <span className="font-medium">{l.name}</span>?
 							</p>
 						) : null;

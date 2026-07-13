@@ -40,7 +40,7 @@ export function PersonFormContacts({ value, onChange }: Props) {
 				</Button>
 			</div>
 			{value.length === 0 && (
-				<p className="text-xs font-base text-zinc-400">No contacts yet.</p>
+				<p className="text-xs font-base text-sub">No contacts yet.</p>
 			)}
 			{value.map((row, i) => (
 				<div
@@ -51,7 +51,7 @@ export function PersonFormContacts({ value, onChange }: Props) {
 					<div>
 						<Label className="text-xs">Type</Label>
 						<select
-							className="w-full h-10 border border-zinc-200 rounded-md bg-white px-2 text-sm font-base"
+							className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm font-base"
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>

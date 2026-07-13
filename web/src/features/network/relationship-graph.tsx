@@ -1,3 +1,7 @@
+// Soft overlap: pending plan 260629-1555-relationship-network-visualization also
+// touches features/network/*. Re-audit for reintroduced palette classes when
+// that plan lands.
+
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
@@ -6,10 +10,17 @@ import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import { getNetworkPrefs } from "#/lib/format-datetime";
 import { formatPersonName } from "#/lib/format-person-name";
 import { cloneGraphData } from "#/lib/graph-data";
+import { readToken } from "#/lib/read-css-token";
 import { keys } from "#/query-keys";
 import { GraphControls } from "./graph-controls";
 import { GraphLegend } from "./graph-legend";
-import { drawHitArea, drawNode, linkColor } from "./graph-node-canvas";
+import {
+	dimmedLinkColor,
+	drawHitArea,
+	drawNode,
+	linkColor,
+	refreshPaintTokens,
+} from "./graph-node-canvas";
 import { GraphNodeProfileCard } from "./graph-node-profile-card";
 import type { SelectedNodeInfo } from "./graph-selected-panel";
 import type {
@@ -19,9 +30,10 @@ import type {
 	RelationshipGraph as RelationshipGraphData,
 } from "./graph-types";
 
+// Dot pattern references CSS tokens directly via var() — resolves per-theme
+// automatically at paint time, no JS re-read needed.
 const DOTTED_BG =
-	"radial-gradient(circle at 1px 1px,#e4e4e7 1px,transparent 0) 0 0/22px 22px,#fafafa";
-const PRIMARY = "#4f46e5";
+	"radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px,var(--sidebar)";
 
 interface RelationshipGraphProps {
 	data: RelationshipGraphData;
@@ -119,10 +131,16 @@ export default function RelationshipGraph({
 		return [...s].sort();
 	}, [data.links]);
 
+	// Re-read each render (cheap) so it reflects the current theme after repaintKey
+	// bumps from a theme change.
+	const accentColor = readToken("--accent", "#4f46e5");
+
 	const selfColor = useMemo(() => {
 		const self = data.nodes.find((n) => n.is_self);
-		return self?.group ? (groupColorMap.get(self.group) ?? PRIMARY) : PRIMARY;
-	}, [data.nodes, groupColorMap]);
+		return self?.group
+			? (groupColorMap.get(self.group) ?? accentColor)
+			: accentColor;
+	}, [data.nodes, groupColorMap, accentColor]);
 
 	const dimmedNodeIds = useMemo(() => {
 		const dimmed = new Set<number>();
@@ -170,6 +188,19 @@ export default function RelationshipGraph({
 		fg.d3Force("charge")?.strength?.(-300);
 		fg.d3Force("link")?.distance?.(80);
 		fg.d3ReheatSimulation();
+	}, []);
+
+	// Re-read chart/token colors and repaint the canvas when the theme changes.
+	useEffect(() => {
+		const observer = new MutationObserver(() => {
+			refreshPaintTokens();
+			setRepaintKey((k) => k + 1);
+		});
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["data-theme"],
+		});
+		return () => observer.disconnect();
 	}, []);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional — re-zoom when data swaps
@@ -246,13 +277,13 @@ export default function RelationshipGraph({
 					? (l.target as GraphNode).id
 					: (l.target as number);
 			if (dimmedNodeIds.has(srcId) && dimmedNodeIds.has(tgtId))
-				return "rgba(228,228,231,0.15)";
+				return dimmedLinkColor();
 			if (
 				activeRelType !== null &&
 				l.type !== activeRelType &&
 				(l.reverse_type ?? "") !== activeRelType
 			)
-				return "rgba(228,228,231,0.15)";
+				return dimmedLinkColor();
 			return linkColor(l.type ?? "", colorBy);
 		},
 		[colorBy, dimmedNodeIds, activeRelType],
@@ -346,7 +377,7 @@ export default function RelationshipGraph({
 	return (
 		<div
 			ref={containerRef}
-			className="relative min-w-0 rounded-md border border-zinc-200 bg-white"
+			className="relative min-w-0 rounded-base border-bw border-line bg-panel"
 		>
 			<GraphControls
 				title={title}
@@ -420,14 +451,21 @@ export default function RelationshipGraph({
 				/>
 			)}
 
-			{/* Hover tooltip */}
+			{/* Hover tooltip — fixed dark bubble regardless of theme (matches native
+			    tooltip conventions); deliberate exception to the token system since
+			    it must stay legible over the canvas on every theme. */}
 			{tooltip && (
 				<div
-					className="pointer-events-none absolute z-10 max-w-[180px] rounded bg-zinc-900/85 px-2 py-1 text-[11px] text-white"
-					style={{ left: tooltip.x + 8, top: tooltip.y - 36 }}
+					className="pointer-events-none absolute z-10 max-w-[180px] rounded-base px-2 py-1 text-[11px]"
+					style={{
+						left: tooltip.x + 8,
+						top: tooltip.y - 36,
+						backgroundColor: "rgba(24,24,27,0.85)",
+						color: "#ffffff",
+					}}
 				>
 					<span className="font-semibold">{tooltip.name}</span>
-					<span className="text-zinc-400">
+					<span style={{ color: "#a1a1aa" }}>
 						{tooltip.isSelf
 							? " · you"
 							: tooltip.group
@@ -435,7 +473,7 @@ export default function RelationshipGraph({
 								: ""}
 					</span>
 					{tooltip.relTypes.length > 0 && (
-						<div className="mt-0.5 text-zinc-400">
+						<div className="mt-0.5" style={{ color: "#a1a1aa" }}>
 							{tooltip.relTypes.join(", ")}
 						</div>
 					)}

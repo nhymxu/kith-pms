@@ -10,10 +10,10 @@ export function DashboardFilterPill({
 	return (
 		<button
 			type="button"
-			className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors border ${
+			className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors border-bw ${
 				active
-					? "bg-zinc-900 text-white border-zinc-900"
-					: "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+					? "bg-accent text-accent-foreground border-accent"
+					: "bg-panel text-sub border-line hover:bg-chip"
 			}`}
 			onClick={onClick}
 		>

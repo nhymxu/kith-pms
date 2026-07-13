@@ -96,7 +96,7 @@ function JournalPage() {
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-[18px] font-semibold tracking-tight text-zinc-900">
+				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 					Journal
 				</h1>
 				<Button asChild>
@@ -109,7 +109,7 @@ function JournalPage() {
 				<div className="space-y-1">
 					<label
 						htmlFor="journal-from-date"
-						className="text-[11px] font-medium text-zinc-500"
+						className="text-[11px] font-medium text-sub"
 					>
 						From
 					</label>
@@ -127,13 +127,13 @@ function JournalPage() {
 								},
 							})
 						}
-						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 border-bw border-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				<div className="space-y-1">
 					<label
 						htmlFor="journal-to-date"
-						className="text-[11px] font-medium text-zinc-500"
+						className="text-[11px] font-medium text-sub"
 					>
 						To
 					</label>
@@ -151,7 +151,7 @@ function JournalPage() {
 								},
 							})
 						}
-						className="h-9 border border-zinc-200 rounded-md bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-600"
+						className="h-9 border-bw border-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				{(search.from_date || search.to_date) && (
@@ -178,9 +178,7 @@ function JournalPage() {
 			{/* People filter */}
 			<div className="space-y-1">
 				<div className="flex items-center justify-between">
-					<p className="text-[11px] font-medium text-zinc-500">
-						Filter by person
-					</p>
+					<p className="text-[11px] font-medium text-sub">Filter by person</p>
 					<label className="flex items-center gap-1.5 cursor-pointer select-none">
 						<input
 							type="checkbox"
@@ -190,9 +188,9 @@ function JournalPage() {
 								setOnlyWithJournal(val);
 								localStorage.setItem(PEOPLE_FILTER_KEY, String(val));
 							}}
-							className="accent-indigo-600 size-3"
+							className="accent-accent size-3"
 						/>
-						<span className="text-[11px] text-zinc-500">With journal only</span>
+						<span className="text-[11px] text-sub">With journal only</span>
 					</label>
 				</div>
 				{allPeople.items.length > 0 && (
@@ -218,9 +216,9 @@ function JournalPage() {
 											},
 										});
 									}}
-									className={`flex items-center gap-1.5 text-xs border rounded-full px-2 py-0.5 transition-colors ${active ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-zinc-200 hover:border-zinc-400"}`}
+									className={`flex items-center gap-1.5 text-xs border rounded-full px-2 py-0.5 transition-colors ${active ? "border-accent bg-accent/10 text-accent-text" : "border-line hover:border-sub"}`}
 								>
-									<span className="size-4 rounded-full overflow-hidden shrink-0 bg-zinc-100 flex items-center justify-center text-[9px] font-medium text-zinc-600">
+									<span className="size-4 rounded-full overflow-hidden shrink-0 bg-chip flex items-center justify-center text-[9px] font-medium text-chip-fg">
 										{p.avatar_path ? (
 											<img
 												src={`${base}/v1/people/${p.id}/avatar`}
@@ -244,7 +242,7 @@ function JournalPage() {
 										search: { ...search, people: undefined, page: 1 },
 									})
 								}
-								className="text-xs text-zinc-400 hover:text-zinc-700"
+								className="text-xs text-sub hover:text-ink"
 							>
 								Clear
 							</button>
@@ -256,9 +254,7 @@ function JournalPage() {
 			{/* Journal label filter */}
 			{allJournalLabels.length > 0 && (
 				<div className="space-y-1">
-					<p className="text-[11px] font-medium text-zinc-500">
-						Filter by label
-					</p>
+					<p className="text-[11px] font-medium text-sub">Filter by label</p>
 					<div className="flex flex-wrap gap-2">
 						{allJournalLabels.map((l) => {
 							const active = (search.labels ?? []).includes(l.id);
@@ -279,7 +275,7 @@ function JournalPage() {
 											},
 										});
 									}}
-									className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-zinc-200 hover:border-zinc-400"}`}
+									className={`text-xs border rounded-md px-2 py-1 transition-colors ${active ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
 									style={active ? { borderColor: l.color } : undefined}
 								>
 									{l.name}
@@ -295,7 +291,7 @@ function JournalPage() {
 										search: { ...search, labels: undefined, page: 1 },
 									})
 								}
-								className="text-xs text-zinc-400 hover:text-zinc-700"
+								className="text-xs text-sub hover:text-ink"
 							>
 								Clear
 							</button>

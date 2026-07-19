@@ -425,7 +425,11 @@ export function PersonDetailSections({
 }: PersonDetailSectionsProps) {
 	return (
 		<QueryBoundary fallback={personDetailFallback}>
-			<PersonDetailSectionsInner personId={personId} onClose={onClose} />
+			<PersonDetailSectionsInner
+				key={personId}
+				personId={personId}
+				onClose={onClose}
+			/>
 		</QueryBoundary>
 	);
 }

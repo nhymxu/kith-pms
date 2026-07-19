@@ -43,8 +43,8 @@
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Service Layer (auth, people, labels, journal_labels,     │   │
-│  │                journal, dates, reminders, gifts, files,   │   │
-│  │                audit)                                      │   │
+│  │                journal, dates, reminders, gifts, notes,   │   │
+│  │                files, audit, settings, relationships)     │   │
 │  │  ├─ Business logic (CRUD, search, validation)            │   │
 │  │  └─ Repository patterns (data access abstraction)        │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -204,6 +204,14 @@ routes/
 - **Borders**: Hairline (1px) zinc-200 throughout; no box shadows
 - **Radius**: 0.375rem (compact aesthetic)
 - **Typography**: Inter primary, JetBrains Mono for numerics; font-weight 600 headings
+
+**Theme System** (6 user-selectable themes, configurable via Settings > Appearance):
+- **Available Themes**: quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger
+- **Implementation**: Applied via `html[data-theme]` attribute; theme persisted in user settings (`user_setting` table key: `theme`)
+- **Storage**: `web/src/lib/theme.ts` exports `THEMES` array and theme helper functions
+- **CSS Variables**: Design tokens defined per-theme in `web/src/styles.css` with CSS custom properties (--main, --main-foreground, --secondary-background, --border, --shadow, semantic tokens like bg-panel, text-ink, text-sub, border-line, etc.)
+- **FOUC Guard**: `web/index.html` hardcodes theme allowlist in script to prevent flash of unstyled content on page load; must stay in sync with `THEMES` array in `web/src/lib/theme.ts`, zod enum in `web/src/schemas/settings.ts`, and `validThemes` in `internal/settings/service.go`
+- **Semantic Tokens**: All UI uses semantic token classes (bg-panel, text-ink, border-line, etc.) instead of hardcoded Tailwind palette (zinc, gray, indigo) — enables theme switching without component changes
 
 **Navigation Layout** (configurable per user via Settings > Appearance `nav_layout` setting):
 - **Top Navbar Mode** (default, `nav_layout: "top"`): Full-width topbar (h-14) with horizontal navigation; traditional single-bar layout; responsive hamburger on mobile
@@ -373,9 +381,19 @@ export function PersonForm() {
 
 **Relationships** — GET types, POST/DELETE type defs
 
+**Global Search**:
+- `GET /search` — unified search across people, journal, gifts, notes; query parameter `q` (max 128 chars); returns grouped results (`{people, journal, gifts, notes}`) with 5 hits per type; respects user's `search_scope` setting (array of entity types) to filter which domains are searched
+
+**Notes** (owner-scoped freeform notes):
+- `GET /people/:id/notes` — person's notes (paginated)
+- `POST /people/:id/notes` — create note for person
+- `GET /notes/:id` — retrieve note detail
+- `PUT /notes/:id` — update note
+- `DELETE /notes/:id` — delete note (cascades via person_id FK)
+
 **Audit** — GET audit log entries, `POST /audit/cleanup` (manual purge of entries older than retention period)
 
-**Settings** — `GET /settings`, `PUT /settings` (user preferences including audit log retention days)
+**Settings** — `GET /settings`, `PUT /settings` (user preferences including date/time format, timezone, audit log retention, theme, nav_layout, search_scope array, dashboard widget counts)
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
 
@@ -594,8 +612,12 @@ err := db.NewRaw("SELECT activities.* FROM activities WHERE rowid IN (SELECT row
 | `0023_remove_birthday_important_date.sql` | remove legacy important_date.is_birthday column (birthday tracking via reminders instead) |
 | `0024_audit_metadata.sql` | add metadata TEXT column to audit_log for structured field-level change tracking |
 | `0025_drop_person_relationship_type.sql` | drop legacy person.relationship_type column (replaced by structured person_relationship table from migration 0015) |
+| `0026_backfill_symmetric_relationship_reciprocals.sql` | backfill existing one-sided symmetric relationships with reciprocal rows |
+| `0027_person_favorite.sql` | is_favorite column on person table with partial index for favorite filtering |
+| `0028_note.sql` | note table (person_id, title, content) with CASCADE delete + note_fts FTS5 virtual table with auto-update triggers |
+| `0029_rename_person_other_notes_to_bio.sql` | rename person.other_notes column to person.bio for clarity |
 
-**Total Migrations**: 25 migrations applied in order; tracked via schema_migrations table.
+**Total Migrations**: 29 migrations applied in order; tracked via schema_migrations table.
 
 **Loading**: `internal/db/migrations.go` — loads SQL files in order, tracks applied versions in schema_migrations table.
 

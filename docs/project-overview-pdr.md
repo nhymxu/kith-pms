@@ -34,9 +34,10 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Auto-update last contact for participants when self-profile is involved
 
 ### Memory & Notes
-- Free-form journal entries tied to people
-- Important dates with recurring support
-- Searchable via FTS5 full-text index
+- **Journal Entries**: Date-stamped free-form activity log tied to multiple people; full-text searchable via FTS5
+- **Owner-Scoped Notes**: Free-form notes module with optional title + required content, owner-scoped to a single person; searchable via FTS5; useful for personal thoughts, observations, or reminders about a person that don't fit in the journal
+- **Important Dates**: Birthdays, anniversaries, milestones with recurring support
+- **Full-Text Search**: All journal entries and notes searchable via FTS5 with sanitized query handling
 
 ### Timeline & Reminders
 - "On this day" widget showing upcoming important dates
@@ -73,9 +74,10 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 
 ### Global Search & Command Palette
 - **Command Palette** (Cmd-K / Ctrl-K): Full-screen search interface using cmdk library
-- **Search Endpoint** (`GET /v1/search`): Aggregates people/journal/gifts queries; returns grouped DTO with 5 results per entity type
-- **Query Handling**: User input capped at 128 runes; LIKE queries escaped to prevent metacharacter injection (%, _, \)
-- **Navigation**: Results link to typed TanStack Router routes (/people/$id, /journal/$id, /gifts/$id)
+- **Search Endpoint** (`GET /v1/search`): Aggregates people/journal/gifts/notes queries; respects user's `search_scope` setting to filter which domains are searched; returns grouped DTO with 5 results per entity type
+- **Query Handling**: User input capped at 128 runes; LIKE/FTS queries properly escaped to prevent injection; sanitized FTS terms
+- **Navigation**: Results link to typed TanStack Router routes (/people/$id, /journal/$id, /gifts/$id, /notes/... when accessed from person notes or search)
+- **Configurable Scope**: User settings allow filtering search to specific entity types (people, journal, gifts, notes); search_scope array persisted per-user
 - **Frontend Components**: `command-palette.tsx` (search interface), `command.tsx` (cmdk primitives wrapper)
 
 ### OpenAPI/Swagger Documentation
@@ -142,6 +144,13 @@ Linear/Stripe minimal aesthetic: indigo-600 (#4f46e5) accent, zinc surfaces, Int
 - **Top Navbar Mode** (default): Full-width topbar with horizontal navigation; traditional horizontal app shell layout
 - **Side Rail Mode**: 212px sticky sidebar with slim topbar; improved vertical space for content; reorganizes layout on response; mobile drawer in both modes
 - **User Setting**: Configurable per-user in Settings > Appearance; stored in `nav_layout` database setting with reactive query-cache subscriptions (instant switching without reload)
+
+### Theme System (6 User-Selectable Themes)
+- **Available Themes**: quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger
+- **Implementation**: Themes applied via `html[data-theme]` attribute; CSS variables define semantic tokens (bg-panel, text-ink, border-line, etc.) per theme
+- **Persistence**: User's theme choice stored in `user_setting` table under `theme` key; applied on app load via FOUC guard script
+- **Instant Switching**: No page reload required when user changes theme via Settings > Appearance
+- **Semantic Tokens**: All UI components use semantic token classes instead of hardcoded color names, enabling theme-agnostic component design
 
 ## Deployment & Self-Hosting
 

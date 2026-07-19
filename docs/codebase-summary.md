@@ -155,7 +155,9 @@ kith-pms/
 │   ├── 0024_audit_log_metadata.sql # metadata column for field-level change tracking in audit log
 │   ├── 0025_drop_person_relationship_type.sql # Drop legacy person.relationship_type column
 │   ├── 0026_backfill_symmetric_relationship_reciprocals.sql # Backfill one-sided symmetric relationships
-│   └── 0027_person_favorite.sql # is_favorite column + partial index on person table
+│   ├── 0027_person_favorite.sql # is_favorite column + partial index on person table
+│   ├── 0028_note.sql             # note table with person_id FK + note_fts FTS5 virtual table
+│   └── 0029_rename_person_other_notes_to_bio.sql # Rename person.other_notes to person.bio
 ├── scripts/
 │   ├── lint.sh                   # Runs golangci-lint
 │   ├── dependency-graph.sh       # Generates module dependency graph
@@ -270,9 +272,9 @@ kith-pms/
 - **service_test.go**: 10 integration tests covering paired rows, self-loop guards, FK constraints, symmetric type bidirectionality
 
 ### `internal/settings` — User settings & preferences
-- **domain.go**: UserSettings (date_format, time_format, timezone, audit_log_retention_days, **default_page_size**, **nav_layout**) with Defaults constant; DefaultPageSize range 10–200; nav_layout default "top" (enum: "top", "side")
-- **service.go**: Get/Update business logic with validation for format/timezone/page_size/nav_layout values; GetRetentionDays, GetDefaultPageSize, and GetNavLayout helpers; validation errors
-- **repo.go**: Key/value store queries (GetAll, Set) for user_setting table
+- **domain.go**: UserSettings struct with 24 fields: date_format, time_format, timezone, audit_log_retention_days, network settings (color_by, show_avatar, show_only_mine, show_unconnected, only_mine_depth), favorite settings (allow_toggle_on_list, favorite_first_default, default_people_sort), pagination (default_page_size 10–200), dashboard counts (favorites_count, last_contact_count), **theme** (enum: quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger), **nav_layout** (enum: top, side), and **search_scope** (array of entity types: people, journal, gifts, notes)
+- **service.go**: Get/Update business logic with validation for all enum fields (theme, nav_layout, search_scope); helper methods GetRetentionDays, GetDefaultPageSize, GetNavLayout
+- **repo.go**: Key/value store queries (GetAll, Set) for user_setting table with JSON marshaling for complex types (search_scope array)
 
 ### `internal/files` — File storage service
 - **service.go**: LocalFileService for avatar uploads and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 5MB); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type to `documents/<personID>/` (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic numbers, size limits, path traversal prevention, atomic writes)
@@ -469,6 +471,6 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 **Total**: 200+ Go tests passing with race detector. Run all: `make tests`
 
-**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 27 confirmed migrations applied, providing clean per-test isolation.
+**Test Pattern**: All test files use `testutil.NewDB(t)` to create isolated in-memory SQLite databases with all 29 migrations applied, providing clean per-test isolation.
 
 **React Frontend Tests**: Vitest + @testing-library/react; run via `pnpm --dir web test`

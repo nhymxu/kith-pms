@@ -53,6 +53,7 @@ function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
 	return (
 		<div className="space-y-1">
 			{label && <Pill variant="plain">{label}</Pill>}
+			{meta.label && <span className="text-[13px] text-ink">{meta.label}</span>}
 			{meta.changes && meta.changes.length > 0 && (
 				<div className="space-y-0.5">
 					{meta.changes.map((c) => (

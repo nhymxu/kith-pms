@@ -31,6 +31,7 @@ const (
 // Metadata holds optional structured context for an audit event.
 type Metadata struct {
 	DetailAction string   `json:"detail_action,omitempty"`
+	Label        string   `json:"label,omitempty"` // freeform display text for the Detail column, e.g. a gift's title
 	Changes      []Change `json:"changes,omitempty"`
 }
 

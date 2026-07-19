@@ -23,6 +23,7 @@ export const auditChangeSchema = z.object({
 
 export const auditMetadataSchema = z.object({
 	detail_action: z.string().optional(),
+	label: z.string().optional(),
 	changes: z.array(auditChangeSchema).optional(),
 });
 

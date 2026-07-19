@@ -39,6 +39,23 @@ func (r *Repo) GetByID(ctx context.Context, id int64) (*Gift, error) {
 	return &g, nil
 }
 
+// PersonName looks up a person's name by ID, for audit logging where the gift
+// itself isn't the loggable subject the person it belongs to is.
+func (r *Repo) PersonName(ctx context.Context, personID int64) (string, error) {
+	var name string
+
+	err := r.db.NewSelect().
+		TableExpr("person").
+		Column("name").
+		Where("id = ?", personID).
+		Scan(ctx, &name)
+	if err != nil {
+		return "", fmt.Errorf("lookup person name: %w", err)
+	}
+
+	return name, nil
+}
+
 func (r *Repo) GetByIDWithPerson(ctx context.Context, id int64) (*GiftWithPerson, error) {
 	var row struct {
 		Gift

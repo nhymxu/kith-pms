@@ -42,7 +42,9 @@ func (s *Service) Create(ctx context.Context, g *Gift) (int64, error) {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, id, g.Title, audit.ActionCreate)
+		personName, _ := s.repo.PersonName(ctx, g.PersonID)
+		s.Audit.Log(ctx, audit.EntityGift, id, personName, audit.ActionCreate,
+			audit.Metadata{Label: g.Title})
 	}
 
 	return id, nil
@@ -99,7 +101,9 @@ func (s *Service) Update(ctx context.Context, g *Gift) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, g.ID, g.Title, audit.ActionUpdate)
+		personName, _ := s.repo.PersonName(ctx, g.PersonID)
+		s.Audit.Log(ctx, audit.EntityGift, g.ID, personName, audit.ActionUpdate,
+			audit.Metadata{Label: g.Title})
 	}
 
 	return nil
@@ -108,11 +112,13 @@ func (s *Service) Update(ctx context.Context, g *Gift) error {
 func (s *Service) Delete(ctx context.Context, id int64) error {
 	var (
 		title     string
+		personID  int64
 		imagePath string
 	)
 
 	if g, err := s.repo.GetByID(ctx, id); err == nil && g != nil {
 		title = g.Title
+		personID = g.PersonID
 		imagePath = g.ImagePath
 	}
 
@@ -135,7 +141,9 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, id, title, audit.ActionDelete)
+		personName, _ := s.repo.PersonName(ctx, personID)
+		s.Audit.Log(ctx, audit.EntityGift, id, personName, audit.ActionDelete,
+			audit.Metadata{Label: title})
 	}
 
 	return nil
@@ -152,10 +160,16 @@ func (s *Service) UploadImage(
 	}
 
 	// Capture old path and title before overwriting.
-	var oldPath, giftTitle string
+	var (
+		oldPath   string
+		giftTitle string
+		personID  int64
+	)
+
 	if existing, err := s.repo.GetByID(ctx, giftID); err == nil && existing != nil {
 		oldPath = existing.ImagePath
 		giftTitle = existing.Title
+		personID = existing.PersonID
 	}
 
 	path, err := s.FileSvc.SaveGiftImage(giftID, file, header)
@@ -182,8 +196,9 @@ func (s *Service) UploadImage(
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, giftID, giftTitle, audit.ActionUpdate,
-			audit.Metadata{DetailAction: "image_upload"})
+		personName, _ := s.repo.PersonName(ctx, personID)
+		s.Audit.Log(ctx, audit.EntityGift, giftID, personName, audit.ActionUpdate,
+			audit.Metadata{DetailAction: "image_upload", Label: giftTitle})
 	}
 
 	return nil
@@ -216,7 +231,9 @@ func (s *Service) DeleteImage(ctx context.Context, giftID int64) error {
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityGift, giftID, g.Title, audit.ActionUpdate)
+		personName, _ := s.repo.PersonName(ctx, g.PersonID)
+		s.Audit.Log(ctx, audit.EntityGift, giftID, personName, audit.ActionUpdate,
+			audit.Metadata{Label: g.Title})
 	}
 
 	return nil

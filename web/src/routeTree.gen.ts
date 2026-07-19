@@ -15,6 +15,7 @@ import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
 import { Route as AuthedRemindersIndexRouteImport } from './routes/_authed/reminders/index'
 import { Route as AuthedPeopleIndexRouteImport } from './routes/_authed/people/index'
+import { Route as AuthedNotesIndexRouteImport } from './routes/_authed/notes/index'
 import { Route as AuthedNetworkIndexRouteImport } from './routes/_authed/network/index'
 import { Route as AuthedMeIndexRouteImport } from './routes/_authed/me/index'
 import { Route as AuthedJournalIndexRouteImport } from './routes/_authed/journal/index'
@@ -72,6 +73,11 @@ const AuthedRemindersIndexRoute = AuthedRemindersIndexRouteImport.update({
 const AuthedPeopleIndexRoute = AuthedPeopleIndexRouteImport.update({
   id: '/people/',
   path: '/people/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedNotesIndexRoute = AuthedNotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedNetworkIndexRoute = AuthedNetworkIndexRouteImport.update({
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/journal/': typeof AuthedJournalIndexRoute
   '/me/': typeof AuthedMeIndexRoute
   '/network/': typeof AuthedNetworkIndexRoute
+  '/notes/': typeof AuthedNotesIndexRoute
   '/people/': typeof AuthedPeopleIndexRoute
   '/reminders/': typeof AuthedRemindersIndexRoute
   '/settings/': typeof AuthedSettingsIndexRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/journal': typeof AuthedJournalIndexRoute
   '/me': typeof AuthedMeIndexRoute
   '/network': typeof AuthedNetworkIndexRoute
+  '/notes': typeof AuthedNotesIndexRoute
   '/people': typeof AuthedPeopleIndexRoute
   '/reminders': typeof AuthedRemindersIndexRoute
   '/gifts/$giftId/edit': typeof AuthedGiftsGiftIdEditRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/_authed/journal/': typeof AuthedJournalIndexRoute
   '/_authed/me/': typeof AuthedMeIndexRoute
   '/_authed/network/': typeof AuthedNetworkIndexRoute
+  '/_authed/notes/': typeof AuthedNotesIndexRoute
   '/_authed/people/': typeof AuthedPeopleIndexRoute
   '/_authed/reminders/': typeof AuthedRemindersIndexRoute
   '/_authed/settings/': typeof AuthedSettingsIndexRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/journal/'
     | '/me/'
     | '/network/'
+    | '/notes/'
     | '/people/'
     | '/reminders/'
     | '/settings/'
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/me'
     | '/network'
+    | '/notes'
     | '/people'
     | '/reminders'
     | '/gifts/$giftId/edit'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/_authed/journal/'
     | '/_authed/me/'
     | '/_authed/network/'
+    | '/_authed/notes/'
     | '/_authed/people/'
     | '/_authed/reminders/'
     | '/_authed/settings/'
@@ -497,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/people'
       fullPath: '/people/'
       preLoaderRoute: typeof AuthedPeopleIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/notes/': {
+      id: '/_authed/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof AuthedNotesIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/network/': {
@@ -805,6 +824,7 @@ interface AuthedRouteChildren {
   AuthedJournalIndexRoute: typeof AuthedJournalIndexRoute
   AuthedMeIndexRoute: typeof AuthedMeIndexRoute
   AuthedNetworkIndexRoute: typeof AuthedNetworkIndexRoute
+  AuthedNotesIndexRoute: typeof AuthedNotesIndexRoute
   AuthedPeopleIndexRoute: typeof AuthedPeopleIndexRoute
   AuthedRemindersIndexRoute: typeof AuthedRemindersIndexRoute
   AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
@@ -828,6 +848,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedJournalIndexRoute: AuthedJournalIndexRoute,
   AuthedMeIndexRoute: AuthedMeIndexRoute,
   AuthedNetworkIndexRoute: AuthedNetworkIndexRoute,
+  AuthedNotesIndexRoute: AuthedNotesIndexRoute,
   AuthedPeopleIndexRoute: AuthedPeopleIndexRoute,
   AuthedRemindersIndexRoute: AuthedRemindersIndexRoute,
   AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,

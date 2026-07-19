@@ -27,6 +27,12 @@ export type GiftFilters = {
 	page_size?: number;
 };
 
+export type NoteFilters = {
+	person_id: number;
+	page?: number;
+	page_size?: number;
+};
+
 export type ReminderFilters = {
 	person_id?: number;
 	completed?: boolean;
@@ -62,6 +68,10 @@ export const keys = {
 		all: ["gifts"] as const,
 		list: (filters: GiftFilters = {}) => ["gifts", "list", filters] as const,
 		detail: (id: number) => ["gifts", "detail", id] as const,
+	},
+	notes: {
+		all: ["notes"] as const,
+		list: (filters: NoteFilters) => ["notes", "list", filters] as const,
 	},
 	reminders: {
 		all: ["reminders"] as const,

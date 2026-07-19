@@ -14,12 +14,13 @@ import { useDebounce } from "#/hooks/use-debounce";
 import { keys } from "#/query-keys";
 import type { SearchItem } from "#/schemas/search";
 
-type ResultGroup = "people" | "journal" | "gifts";
+type ResultGroup = "people" | "journal" | "gifts" | "notes";
 
 const GROUP_LABELS: Record<ResultGroup, string> = {
 	people: "People",
 	journal: "Journal",
 	gifts: "Gifts",
+	notes: "Notes",
 };
 
 export function CommandPalette() {
@@ -76,6 +77,16 @@ export function CommandPalette() {
 			case "gifts":
 				navigate({ to: "/gifts/$giftId", params: { giftId: id } });
 				break;
+			case "notes":
+				if (item.url === "/notes") {
+					navigate({ to: "/notes" });
+				} else {
+					navigate({
+						to: "/people/$personId",
+						params: { personId: item.url.replace("/people/", "") },
+					});
+				}
+				break;
 		}
 	}
 
@@ -84,6 +95,7 @@ export function CommandPalette() {
 				{ key: "people", items: data.people },
 				{ key: "journal", items: data.journal },
 				{ key: "gifts", items: data.gifts },
+				{ key: "notes", items: data.notes },
 			]
 		: [];
 	const hasResults = groups.some((g) => g.items.length > 0);
@@ -93,7 +105,7 @@ export function CommandPalette() {
 			open={open}
 			onOpenChange={setOpen}
 			title="Search"
-			description="Search people, journal entries, and gifts"
+			description="Search people, journal entries, gifts, and notes"
 			shouldFilter={false}
 		>
 			<CommandInput

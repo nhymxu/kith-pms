@@ -8,6 +8,7 @@ import {
 	Heart,
 	LayoutDashboard,
 	Network,
+	StickyNote,
 	Users,
 } from "lucide-react";
 import { getMe } from "#/endpoints/me";
@@ -21,6 +22,7 @@ export const NAV_ITEMS = [
 	{ to: "/people", icon: Users, label: "People" },
 	{ to: "/network", icon: Network, label: "Network" },
 	{ to: "/journal", icon: BookOpen, label: "Journal" },
+	{ to: "/notes", icon: StickyNote, label: "Notes" },
 	{ to: "/gifts", icon: Gift, label: "Gifts" },
 	{ to: "/important-dates", icon: Calendar, label: "Dates" },
 	{ to: "/reminders", icon: Heart, label: "Reminders" },

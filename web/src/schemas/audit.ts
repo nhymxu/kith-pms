@@ -11,6 +11,7 @@ export const auditEntityTypeSchema = z.enum([
 	"gift",
 	"relationship_type",
 	"person_relationship",
+	"note",
 ]);
 
 export const auditActionSchema = z.enum(["create", "update", "delete"]);

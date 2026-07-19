@@ -34,6 +34,7 @@ import { GiftsSection } from "./person-section-gifts";
 import { JournalSection } from "./person-section-journal";
 import { LabelsSection } from "./person-section-labels";
 import { LocationsSection } from "./person-section-locations";
+import { NotesSection } from "./person-section-notes";
 import { PersonSectionRelationshipGraph } from "./person-section-relationship-graph";
 import { RelationshipsSection } from "./person-section-relationships";
 import { WorkHistorySection } from "./person-section-work-history";
@@ -79,7 +80,7 @@ function OverviewSection({
 	const [lastContactAt, setLastContactAt] = useState(
 		utcToDatetimeLocal(person.last_contact_at),
 	);
-	const [notes, setNotes] = useState(person.other_notes);
+	const [bio, setBio] = useState(person.bio);
 
 	const saveMutation = useMutation({
 		mutationFn: () =>
@@ -92,7 +93,7 @@ function OverviewSection({
 				last_contact_at: lastContactAt
 					? datetimeLocalToUtc(lastContactAt)
 					: null,
-				other_notes: notes,
+				bio,
 				contacts: person.contacts.map((c, i) => ({
 					type: c.type,
 					value: c.value,
@@ -239,12 +240,12 @@ function OverviewSection({
 						</RadioGroup>
 					</div>
 					<div>
-						<Label>Notes</Label>
+						<Label>Bio</Label>
 						<Textarea
 							rows={3}
-							value={notes}
-							onChange={(e) => setNotes(e.target.value)}
-							placeholder="Notes…"
+							value={bio}
+							onChange={(e) => setBio(e.target.value)}
+							placeholder="Bio…"
 						/>
 					</div>
 				</div>
@@ -292,9 +293,9 @@ function OverviewSection({
 							</>
 						)}
 					</dl>
-					{person.other_notes && (
+					{person.bio && (
 						<p className="text-sm font-base whitespace-pre-wrap border-l-2 border-border pl-3">
-							{person.other_notes}
+							{person.bio}
 						</p>
 					)}
 				</>
@@ -387,6 +388,9 @@ function PersonDetailSectionsInner({
 				</SectionCard>
 				<SectionCard>
 					<GiftsSection personId={personId} />
+				</SectionCard>
+				<SectionCard>
+					<NotesSection personId={personId} />
 				</SectionCard>
 
 				<SectionCard>

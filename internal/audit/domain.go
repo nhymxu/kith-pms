@@ -22,6 +22,7 @@ const (
 	EntityGift               EntityType = "gift"
 	EntityRelationshipType   EntityType = "relationship_type"
 	EntityPersonRelationship EntityType = "person_relationship"
+	EntityNote               EntityType = "note"
 
 	ActionCreate Action = "create"
 	ActionUpdate Action = "update"

@@ -148,7 +148,7 @@ Open [http://localhost:8000](http://localhost:8000) and verify:
 | first_name + last_name | Person name | |
 | middle_name | Person name | Included between first and last |
 | nickname | Nickname | |
-| description | OtherNotes | Prepended before work info |
+| description | Bio | Prepended before work info |
 | job + company | Work history | Stored as a work history entry; start date defaults to 2000 since Monica doesn't export it |
 | birthdate (with year) | Person DOB + Important date (birthday) | |
 | birthdate (year unknown) | Important date only | Stored as `--MM-DD` |

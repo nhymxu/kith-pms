@@ -17,7 +17,7 @@ kith-pms/
 │   ├── db/                       # Database layer
 │   │   ├── sqlite.go             # SQLite + bun.DB connection with WAL + ForeignKeys PRAGMAs
 │   │   ├── migrations.go         # SQL migration loader and executor
-│   │   └── migrations/           # SQL schema files (27 migrations: 0001-0027)
+│   │   └── migrations/           # SQL schema files (29 migrations: 0001-0029)
 │   ├── testutil/                 # Test utilities
 │   │   └── db.go                 # NewDB(t) helper: in-memory DB + migrations for testing
 │   ├── auth/                     # Authentication & session management
@@ -67,6 +67,11 @@ kith-pms/
 │   │   ├── domain.go             # Gift, GiftWithPerson structures; Direction, DebtType constants
 │   │   ├── service.go            # CRUD, image upload/delete business logic
 │   │   ├── repo.go               # Database queries for gifts
+│   │   └── service_test.go       # Service integration tests
+│   ├── note/                     # Owner-scoped freeform notes
+│   │   ├── domain.go             # Note, List, WithPerson structures
+│   │   ├── service.go            # CRUD, ListByPerson, Search; person-as-target audit
+│   │   ├── repo.go               # Database queries for notes + note_fts search
 │   │   └── service_test.go       # Service integration tests
 │   ├── relationships/            # Person-to-person relationship junctions
 │   │   ├── domain.go             # RelationshipType, PersonRelationship, RelationshipView structures
@@ -196,7 +201,7 @@ kith-pms/
 - **migrations.go**: Loads SQL files from `internal/db/migrations/`, executes in order, tracks applied versions; extracts underlying `*sql.DB` from `*bun.DB` for schema work
 
 ### `internal/testutil` — Test utilities
-- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, applies all 27 migrations (0001-0027), registers `t.Cleanup` for teardown
+- **db.go**: Provides `NewDB(t *testing.T) *bun.DB` helper function — opens in-memory SQLite, applies all 29 migrations (0001-0029), registers `t.Cleanup` for teardown
 
 ### `internal/auth` — Single-user authentication
 - **domain.go**: User, Session, CSRFToken, PasswordReset data structures
@@ -252,6 +257,12 @@ kith-pms/
 - **repo.go**: Queries for gifts with person joins; UpdateImage metadata updates; GetByIDWithPerson for detail view
 - **service_test.go**: Integration tests for gift CRUD and image operations
 
+### `internal/note` — Owner-scoped freeform notes
+- **domain.go**: Note (person_id, title, content, created_at, updated_at), List (paginated), WithPerson (note + person_name, for search results)
+- **service.go**: Create/GetByID/Update/Delete/ListByPerson/Search; audits person-as-target (mirrors `gifts`), falling back to a ~60-char content snippet in the audit label when title is empty
+- **repo.go**: Bun queries for note CRUD + `ListByPerson` (paginated, newest-first) + `Search` (FTS5 `note_fts` via `sanitizeFTSQuery`, byte-for-byte mirror of `journal`'s pattern)
+- **service_test.go**: Integration tests for CRUD, pagination/ordering, person-delete cascade, audit rows, FTS index presence/absence
+
 ### `internal/relationships` — Person-to-person relationships
 - **domain.go**: RelationshipType (name, reverse_name, optional inverse_type_id), PersonRelationship (from/to person IDs, type, notes), RelationshipView (rendered relationship with resolved type names)
 - **service.go**: CreateType/UpdateType/DeleteType for relationship types; AttachRelationship/DetachRelationship for person junctions; handles symmetric and asymmetric paired types with bidirectional row creation
@@ -282,12 +293,13 @@ kith-pms/
   - **people.go**: CRUD + avatar upload/delete/get + relationships + labels + dates + work-history + quick journal/gift + last-contact
   - **journal.go**: CRUD with multi-person tagging, search, date range filter
   - **gifts.go**: CRUD + image upload/delete/get, filterable by person/direction/debt_type
+  - **note.go**: CRUD via `/people/:id/notes` + `/notes/:id`; owner (`person_id`) fixed from path, never body
   - **reminders.go**: CRUD + PATCH complete, filterable upcoming/overdue/all
   - **dates.go**: GET /upcoming (30-day window)
   - **labels.go**: CRUD with usage counts
   - **relationships.go**: CRUD with usage counts
   - **audit.go**: GET with entity_type/entity_id filter, paginated; POST /cleanup for manual purge of entries older than retention period
-  - **search.go**: GET /search for global search (grouped people/journal/gifts DTO, 5 results per type, LIKE-escaped, 128-rune query cap)
+  - **search.go**: GET /search for global search (grouped people/journal/gifts/notes DTO, 5 results per type, LIKE-escaped, 128-rune query cap); note hits resolve self-vs-person navigation URL via `people.Service.GetSelf`
   - **me.go**: GET profile, POST setup
   - **avatars.go**: Avatar endpoints (already in handler package)
   - **people_labels.go**: People-label association endpoints
@@ -315,7 +327,7 @@ kith-pms/
 - **internal/api/swagger/docs.go**: Go package with embedded spec
 - **internal/api/swagger_handler.go**: Custom Echo v5 handler serving Swagger UI at `/swagger/*` and spec at `/swagger/doc.json`; wraps `swaggo/files/v2` embedded assets; no external `labstack/echo-swagger` dependency
 
-**Annotations**: All 16 handler files in `internal/api/handler/` include swaggo comments on endpoint methods documenting request/response schemas, parameters, and security requirements.
+**Annotations**: All 22 handler files in `internal/api/handler/` include swaggo comments on endpoint methods documenting request/response schemas, parameters, and security requirements.
 
 **Access**: Open [http://localhost:8000/swagger/index.html](http://localhost:8000/swagger/index.html) to browse interactive API documentation (no auth required).
 
@@ -340,6 +352,7 @@ features/
   journal/               # Journal form, timeline, search
   me/                    # User profile section
   network/               # Relationship network graph (force-directed, ego view, graph-data.ts utility)
+  notes/                 # Shared owner-scoped notes list+editor (notes-list.tsx), mounted from self /notes route and person-section-notes.tsx
   people/                # People table, detail sections, avatar uploader, quick actions (quick-journal-dialog.tsx, quick-gift-dialog.tsx)
   reminders/             # Reminder form, table
   search/                # Global search (command-palette.tsx) with cmdk integration
@@ -384,7 +397,7 @@ styles.css               # Tailwind + design tokens (:root variables)
 
 ### Global Search Feature
 - **Command Palette**: ⌘K search interface using cmdk library
-- **Search Endpoint**: GET /v1/search returns grouped people/journal/gifts (5 results each)
+- **Search Endpoint**: GET /v1/search returns grouped people/journal/gifts/notes (5 results each)
 - **Components**: `features/search/command-palette.tsx`, `components/ui/command.tsx`
 - **Endpoints**: `endpoints/search.ts` with query parameter handling
 - **Schemas**: `schemas/search.ts` for search result types

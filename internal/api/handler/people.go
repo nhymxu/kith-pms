@@ -48,7 +48,7 @@ type personRequest struct {
 	Gender                 string            `json:"gender"`          // "" | "male" | "female" | "rather_not_say"
 	DateOfBirth            string            `json:"date_of_birth"`   // "YYYY-MM-DD" or ""
 	LastContactAt          string            `json:"last_contact_at"` // RFC3339 UTC or ""
-	OtherNotes             string            `json:"other_notes"`
+	Bio                    string            `json:"bio"`
 	Contacts               []contactRequest  `json:"contacts"`
 	Locations              []locationRequest `json:"locations"`
 	CreateBirthdayReminder bool              `json:"create_birthday_reminder"`
@@ -323,11 +323,11 @@ func parseID(c *echo.Context) (int64, error) {
 
 func mapPersonRequest(id int64, req personRequest) (people.Person, []people.ContactInfo, []people.Location) {
 	p := people.Person{
-		ID:         id,
-		Name:       req.Name,
-		Nickname:   req.Nickname,
-		Gender:     req.Gender,
-		OtherNotes: req.OtherNotes,
+		ID:       id,
+		Name:     req.Name,
+		Nickname: req.Nickname,
+		Gender:   req.Gender,
+		Bio:      req.Bio,
 	}
 
 	if req.DateOfBirth != "" {

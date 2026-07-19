@@ -120,7 +120,7 @@ func mapPerson(c Contact, nameOrder string) people.Person {
 		Nickname: c.Nickname,
 	}
 
-	// Build OtherNotes from description + work info.
+	// Build Bio from description + work info.
 	var notesParts []string
 	if c.Description != "" {
 		notesParts = append(notesParts, c.Description)
@@ -139,7 +139,7 @@ func mapPerson(c Contact, nameOrder string) people.Person {
 		notesParts = append(notesParts, "Work: "+strings.Join(workParts, " "))
 	}
 
-	p.OtherNotes = strings.Join(notesParts, "\n")
+	p.Bio = strings.Join(notesParts, "\n")
 
 	// Parse birthdate into Person.DateOfBirth (both year-having and yearless).
 	if c.Information.Birthdate != "" {

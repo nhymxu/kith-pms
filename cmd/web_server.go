@@ -21,6 +21,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/important_dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/metrics"
+	"github.com/nhymxu/kith-pms/internal/note"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -153,6 +154,10 @@ Can scale later.`,
 			giftFileSvc := files.NewLocalFileService(giftStoragePath)
 			giftsSvc.FileSvc = giftFileSvc
 
+			// Wire note service.
+			noteSvc := note.NewService(db)
+			noteSvc.Audit = auditSvc
+
 			// Wire relationships service.
 			relsSvc := relationships.NewService(db)
 			relsSvc.Audit = auditSvc
@@ -173,6 +178,7 @@ Can scale later.`,
 				WorkHistoryService:   workHistorySvc,
 				AuditService:         auditSvc,
 				GiftsService:         giftsSvc,
+				NoteService:          noteSvc,
 				RelationshipsService: relsSvc,
 				SettingsService:      settingsSvc,
 				FileSvc:              fileSvc,

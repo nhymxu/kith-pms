@@ -67,7 +67,7 @@ func TestCreate_GetRoundtrip(t *testing.T) {
 		Name:        "Alice Example",
 		Nickname:    "Ali",
 		DateOfBirth: &dob,
-		OtherNotes:  "met at conference",
+		Bio:         "met at conference",
 	}
 	contacts := []people.ContactInfo{
 		{Type: "email", Value: "alice@example.com", Label: "work"},

@@ -10,6 +10,7 @@ import (
 
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
+	"github.com/nhymxu/kith-pms/internal/note"
 	"github.com/nhymxu/kith-pms/internal/people"
 )
 
@@ -27,6 +28,7 @@ type SearchAPI struct {
 	PeopleSvc  *people.Service
 	JournalSvc *journal.Service
 	GiftsSvc   *gifts.Service
+	NoteSvc    *note.Service
 }
 
 // SearchItem is a single grouped search result row.
@@ -43,6 +45,7 @@ type SearchResult struct {
 	People  []SearchItem `json:"people"`
 	Journal []SearchItem `json:"journal"`
 	Gifts   []SearchItem `json:"gifts"`
+	Notes   []SearchItem `json:"notes"`
 }
 
 // Search godoc
@@ -67,6 +70,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 		People:  []SearchItem{},
 		Journal: []SearchItem{},
 		Gifts:   []SearchItem{},
+		Notes:   []SearchItem{},
 	}
 
 	if q == "" {
@@ -123,7 +127,51 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 		}
 	}
 
+	if h.NoteSvc != nil {
+		var selfID int64
+
+		if h.PeopleSvc != nil {
+			if self, err := h.PeopleSvc.GetSelf(ctx); err == nil && self != nil {
+				selfID = self.ID
+			}
+		}
+
+		hits, err := h.NoteSvc.Search(ctx, q, searchLimitPerType)
+		if err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		for _, n := range hits {
+			url := fmt.Sprintf("/people/%d", n.PersonID)
+			if selfID != 0 && n.PersonID == selfID {
+				url = "/notes"
+			}
+
+			result.Notes = append(result.Notes, SearchItem{
+				ID:       n.ID,
+				Title:    noteSearchTitle(n.Title, n.Content),
+				Subtitle: n.PersonName,
+				URL:      url,
+			})
+		}
+	}
+
 	return ok(c, result)
+}
+
+// noteSearchTitle returns the note title, falling back to a truncated content
+// snippet — notes, unlike journal entries, allow an empty title.
+func noteSearchTitle(title, content string) string {
+	if title != "" {
+		return title
+	}
+
+	content = strings.TrimSpace(content)
+	if utf8.RuneCountInString(content) <= 60 {
+		return content
+	}
+
+	return string([]rune(content)[:60]) + "…"
 }
 
 // personSubtitle returns the nickname when set, otherwise the last-contact date

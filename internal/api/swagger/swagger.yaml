@@ -167,8 +167,17 @@ definitions:
       type:
         type: string
     type: object
+  internal_api_handler.noteRequest:
+    properties:
+      content:
+        type: string
+      title:
+        type: string
+    type: object
   internal_api_handler.personRequest:
     properties:
+      bio:
+        type: string
       contacts:
         items:
           $ref: '#/definitions/internal_api_handler.contactRequest'
@@ -191,8 +200,6 @@ definitions:
       name:
         type: string
       nickname:
-        type: string
-      other_notes:
         type: string
     type: object
   internal_api_handler.reminderRequest:
@@ -1018,6 +1025,97 @@ paths:
       summary: Setup self profile
       tags:
       - me
+  /notes/{id}:
+    delete:
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete note
+      tags:
+      - notes
+    get:
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get note
+      tags:
+      - notes
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Note ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Note data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.noteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Update note
+      tags:
+      - notes
   /people:
     get:
       parameters:
@@ -1700,6 +1798,73 @@ paths:
       summary: Update last contact timestamp
       tags:
       - people
+  /people/{id}/notes:
+    get:
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List notes for person
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Person ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Note data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.noteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create note
+      tags:
+      - notes
   /people/{id}/relationships:
     get:
       parameters:

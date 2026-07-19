@@ -62,7 +62,8 @@ func (h *SettingsAPI) Update(c *echo.Context) error {
 			errors.Is(err, settings.ErrInvalidDashboardFavoritesCount),
 			errors.Is(err, settings.ErrInvalidDashboardLastContactCount),
 			errors.Is(err, settings.ErrInvalidTheme),
-			errors.Is(err, settings.ErrInvalidNavLayout):
+			errors.Is(err, settings.ErrInvalidNavLayout),
+			errors.Is(err, settings.ErrInvalidSearchScope):
 			return apiErr(c, http.StatusUnprocessableEntity, err.Error())
 		default:
 			return apiErr(c, http.StatusInternalServerError, "internal server error")

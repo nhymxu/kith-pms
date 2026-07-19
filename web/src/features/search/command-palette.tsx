@@ -10,6 +10,7 @@ import {
 	CommandList,
 } from "#/components/ui/command";
 import { searchAll } from "#/endpoints/search";
+import { getSettings } from "#/endpoints/settings";
 import { useDebounce } from "#/hooks/use-debounce";
 import { keys } from "#/query-keys";
 import type { SearchItem } from "#/schemas/search";
@@ -55,9 +56,18 @@ export function CommandPalette() {
 
 	const trimmedQuery = debouncedQuery.trim();
 
+	// Settings query is shared with the settings page cache (["settings"]); if
+	// not yet loaded, `types` is omitted and the backend defaults to all groups.
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+		enabled: open,
+	});
+	const searchScope = settingsData?.search_scope;
+
 	const { data, isFetching } = useQuery({
-		queryKey: keys.search.query(trimmedQuery),
-		queryFn: () => searchAll(trimmedQuery),
+		queryKey: keys.search.query(trimmedQuery, searchScope),
+		queryFn: () => searchAll(trimmedQuery, searchScope),
 		enabled: open && trimmedQuery.length > 0,
 		staleTime: 10_000,
 	});

@@ -3,6 +3,7 @@ package settings_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/uptrace/bun"
@@ -47,6 +48,7 @@ func validBase() settings.UserSettings {
 		DashboardLastContactCount: 5,
 		Theme:                     "quiet-ink",
 		NavLayout:                 "top",
+		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}
 }
 
@@ -364,5 +366,88 @@ func TestSettings_Update_InvalidNavLayout_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidNavLayout) {
 		t.Errorf("want ErrInvalidNavLayout, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_SearchScope(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	// On a fresh test DB (no search_scope row), Get() should return all four types.
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	want := []string{"people", "journal", "gifts", "notes"}
+	if !slices.Equal(got.SearchScope, want) {
+		t.Errorf("default search_scope: want %v, got %v", want, got.SearchScope)
+	}
+}
+
+func TestSettings_Update_SearchScope_SubsetRoundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	in := validBase()
+	in.SearchScope = []string{"people", "notes"}
+
+	out, err := svc.Update(ctx, in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	want := []string{"notes", "people"} // stored canonical: sorted
+	if !slices.Equal(out.SearchScope, want) {
+		t.Errorf("out.SearchScope: want %v, got %v", want, out.SearchScope)
+	}
+
+	got, err := svc.Get(ctx)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if !slices.Equal(got.SearchScope, want) {
+		t.Errorf("persisted search_scope: want %v, got %v", want, got.SearchScope)
+	}
+}
+
+func TestSettings_Update_SearchScope_CanonicalOrderDeduped(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.SearchScope = []string{"notes", "people", "notes", "gifts"}
+
+	out, err := svc.Update(context.Background(), in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	want := []string{"gifts", "notes", "people"}
+	if !slices.Equal(out.SearchScope, want) {
+		t.Errorf("out.SearchScope: want %v, got %v", want, out.SearchScope)
+	}
+}
+
+func TestSettings_Update_InvalidSearchScope_UnknownToken_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.SearchScope = []string{"people", "bogus"}
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidSearchScope) {
+		t.Errorf("want ErrInvalidSearchScope, got %v", err)
+	}
+}
+
+func TestSettings_Update_EmptySearchScope_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.SearchScope = nil
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidSearchScope) {
+		t.Errorf("want ErrInvalidSearchScope, got %v", err)
 	}
 }

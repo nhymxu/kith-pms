@@ -15,6 +15,7 @@ import { getSettings, updateSettings } from "#/endpoints/settings";
 import { DashboardWidgetsSettingsCard } from "#/features/settings/dashboard-widgets-settings-card";
 import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
 import { PageSizeSettingsCard } from "#/features/settings/page-size-settings-card";
+import { SearchScopeSettingsCard } from "#/features/settings/search-scope-settings-card";
 import {
 	type DateFormat,
 	getNetworkPrefs,
@@ -100,6 +101,7 @@ function GeneralSettingsPage() {
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
+				search_scope: ["people", "journal", "gifts", "notes"],
 			};
 		},
 	});
@@ -183,6 +185,12 @@ function GeneralSettingsPage() {
 		dashboard_last_contact_count:
 			apiSettings?.dashboard_last_contact_count ?? 5,
 		nav_layout: apiSettings?.nav_layout ?? getUserPrefs().navLayout,
+		search_scope: apiSettings?.search_scope ?? [
+			"people",
+			"journal",
+			"gifts",
+			"notes",
+		],
 		...overrides,
 	});
 
@@ -550,6 +558,13 @@ function GeneralSettingsPage() {
 			/>
 
 			<DashboardWidgetsSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
+
+			<SearchScopeSettingsCard
 				apiSettings={apiSettings}
 				isPlaceholderData={isPlaceholderData}
 				buildPayload={buildPayload}

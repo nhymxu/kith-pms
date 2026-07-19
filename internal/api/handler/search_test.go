@@ -166,6 +166,100 @@ func TestSearch_BlankQuery_ReturnsEmptyGroupsWithoutError(t *testing.T) {
 	}
 }
 
+// ---- types param filtering ----------------------------------------------------
+
+func TestSearch_TypesParam_FiltersToRequestedGroup(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.SearchAPI{
+		PeopleSvc:  newPeopleService(db),
+		JournalSvc: newJournalService(db),
+		GiftsSvc:   newGiftsService(db),
+	}
+	seedSearchFixtures(t, h)
+
+	req := jsonRequest(http.MethodGet, "/v1/search?q=alice&types=people", "")
+	rec := execHandler(newTestEcho(), req, nil, h.Search)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	var envelope struct {
+		Data handler.SearchResult `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+
+	if len(envelope.Data.People) != 1 {
+		t.Fatalf("expected 1 people hit, got %d", len(envelope.Data.People))
+	}
+
+	if len(envelope.Data.Journal) != 0 || len(envelope.Data.Gifts) != 0 {
+		t.Fatalf("expected journal/gifts empty when types=people, got: %+v", envelope.Data)
+	}
+}
+
+func TestSearch_TypesParam_MultipleGroups(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.SearchAPI{
+		PeopleSvc:  newPeopleService(db),
+		JournalSvc: newJournalService(db),
+		GiftsSvc:   newGiftsService(db),
+	}
+	seedSearchFixtures(t, h)
+
+	req := jsonRequest(http.MethodGet, "/v1/search?q=alice&types=people,gifts", "")
+	rec := execHandler(newTestEcho(), req, nil, h.Search)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	var envelope struct {
+		Data handler.SearchResult `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+
+	if len(envelope.Data.People) != 1 || len(envelope.Data.Gifts) != 1 {
+		t.Fatalf("expected people+gifts populated, got: %+v", envelope.Data)
+	}
+
+	if len(envelope.Data.Journal) != 0 {
+		t.Fatalf("expected journal empty when types=people,gifts, got: %+v", envelope.Data)
+	}
+}
+
+func TestSearch_TypesParam_UnknownTokenIgnoredNotError(t *testing.T) {
+	db := openTestDB(t)
+	h := &handler.SearchAPI{
+		PeopleSvc:  newPeopleService(db),
+		JournalSvc: newJournalService(db),
+		GiftsSvc:   newGiftsService(db),
+	}
+	seedSearchFixtures(t, h)
+
+	req := jsonRequest(http.MethodGet, "/v1/search?q=alice&types=bogus", "")
+	rec := execHandler(newTestEcho(), req, nil, h.Search)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 (unknown token ignored, not an error), got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	var envelope struct {
+		Data handler.SearchResult `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+
+	if len(envelope.Data.People) != 0 || len(envelope.Data.Journal) != 0 || len(envelope.Data.Gifts) != 0 {
+		t.Fatalf("expected all-empty groups for unknown token, got: %+v", envelope.Data)
+	}
+}
+
 // ---- injection safety --------------------------------------------------------
 
 func TestSearch_MaliciousQuery_IsSafelyParameterized(t *testing.T) {

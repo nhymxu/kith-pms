@@ -104,6 +104,7 @@ function AppearancePage() {
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
+				search_scope: ["people", "journal", "gifts", "notes"],
 			};
 		},
 	});

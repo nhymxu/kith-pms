@@ -681,8 +681,15 @@ func TestSyncBirthdayRemindersForPerson_DOBChange(t *testing.T) {
 		t.Fatalf("GetByID after sync: %v", err)
 	}
 
-	// Due should be recomputed based on new DOB (July 20 - 5 days = July 15, 2026, since that's in the future)
-	wantDue := time.Date(2026, 7, 15, 0, 0, 0, 0, time.UTC)
+	// Due should be recomputed based on new DOB (July 20 - 5 days = July 15), landing on
+	// whichever year keeps it on/after today.
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+
+	wantDue := time.Date(today.Year(), 7, 15, 0, 0, 0, 0, time.UTC)
+	if wantDue.Before(today) {
+		wantDue = time.Date(today.Year()+1, 7, 15, 0, 0, 0, 0, time.UTC)
+	}
+
 	if !updated.DueDate.Equal(wantDue) {
 		t.Errorf("after sync, DueDate = %v, want %v", updated.DueDate, wantDue)
 	}

@@ -3993,6 +3993,9 @@ const docTemplate = `{
         "internal_api_handler.personRequest": {
             "type": "object",
             "properties": {
+                "bio": {
+                    "type": "string"
+                },
                 "contacts": {
                     "type": "array",
                     "items": {
@@ -4024,9 +4027,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nickname": {
-                    "type": "string"
-                },
-                "other_notes": {
                     "type": "string"
                 }
             }

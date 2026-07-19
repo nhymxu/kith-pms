@@ -176,6 +176,8 @@ definitions:
     type: object
   internal_api_handler.personRequest:
     properties:
+      bio:
+        type: string
       contacts:
         items:
           $ref: '#/definitions/internal_api_handler.contactRequest'
@@ -198,8 +200,6 @@ definitions:
       name:
         type: string
       nickname:
-        type: string
-      other_notes:
         type: string
     type: object
   internal_api_handler.reminderRequest:

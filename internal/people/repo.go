@@ -239,7 +239,7 @@ func (r *sqlPersonRepo) Update(ctx context.Context, db bun.IDB, p Person) error 
 
 	_, err := db.NewUpdate().Model(&p).WherePK().
 		Column("prefix", "name", "nickname", "gender", "date_of_birth",
-			"last_contact_at", "other_notes", "updated_at").
+			"last_contact_at", "bio", "updated_at").
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("people: update person: %w", err)

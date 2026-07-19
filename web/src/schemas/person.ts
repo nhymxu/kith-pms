@@ -44,7 +44,7 @@ export const personSchema = z.object({
 	nickname: z.string().optional().default(""),
 	gender: z.string().optional().default(""),
 	date_of_birth: z.string().nullable().optional(),
-	other_notes: z.string().optional().default(""),
+	bio: z.string().optional().default(""),
 	avatar_path: z.string().optional().default(""),
 	avatar_size: z.number().optional().default(0),
 	avatar_uploaded_at: z.string().nullable().optional(),
@@ -89,7 +89,7 @@ export const personRequestSchema = z.object({
 	date_of_birth: z.string().optional().default(""),
 	create_birthday_reminder: z.boolean().optional().default(false),
 	last_contact_at: z.string().nullable().optional().default(""),
-	other_notes: z.string().optional().default(""),
+	bio: z.string().optional().default(""),
 	contacts: z
 		.array(
 			z.object({

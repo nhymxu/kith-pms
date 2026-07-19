@@ -78,12 +78,12 @@ func TestMapContactWorkNotes(t *testing.T) {
 	c := Contact{FirstName: "Alice", Job: "Engineer", Company: "Acme"}
 
 	rec := MapContact(c)
-	if !strings.Contains(rec.Person.OtherNotes, "Engineer") {
-		t.Errorf("expected OtherNotes to contain job, got %q", rec.Person.OtherNotes)
+	if !strings.Contains(rec.Person.Bio, "Engineer") {
+		t.Errorf("expected Bio to contain job, got %q", rec.Person.Bio)
 	}
 
-	if !strings.Contains(rec.Person.OtherNotes, "Acme") {
-		t.Errorf("expected OtherNotes to contain company, got %q", rec.Person.OtherNotes)
+	if !strings.Contains(rec.Person.Bio, "Acme") {
+		t.Errorf("expected Bio to contain company, got %q", rec.Person.Bio)
 	}
 }
 
@@ -91,8 +91,8 @@ func TestMapContactWorkNotesEmpty(t *testing.T) {
 	c := Contact{FirstName: "Alice"}
 
 	rec := MapContact(c)
-	if rec.Person.OtherNotes != "" {
-		t.Errorf("expected empty OtherNotes, got %q", rec.Person.OtherNotes)
+	if rec.Person.Bio != "" {
+		t.Errorf("expected empty Bio, got %q", rec.Person.Bio)
 	}
 }
 

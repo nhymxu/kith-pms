@@ -77,7 +77,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			date_of_birth: initial?.date_of_birth ?? "",
 			create_birthday_reminder: initial?.has_birthday_reminder ?? false,
 			last_contact_at: utcToDatetimeLocal(initial?.last_contact_at),
-			other_notes: initial?.other_notes ?? "",
+			bio: initial?.bio ?? "",
 			contacts: (initial?.contacts ?? []).map((c) => ({
 				type: c.type,
 				value: c.value,
@@ -247,16 +247,16 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 						</div>
 					)}
 				</form.Field>
-				<form.Field name="other_notes">
+				<form.Field name="bio">
 					{(f) => (
 						<div className="space-y-1.5">
-							<Label htmlFor="other_notes">Notes</Label>
+							<Label htmlFor="bio">Bio</Label>
 							<Textarea
-								id="other_notes"
+								id="bio"
 								value={f.state.value}
 								onBlur={f.handleBlur}
 								onChange={(e) => f.handleChange(e.target.value)}
-								placeholder="Any other notes…"
+								placeholder="Background, context, anything worth remembering…"
 								rows={3}
 							/>
 						</div>

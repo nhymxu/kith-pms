@@ -16,6 +16,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/important_dates"
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/metrics"
+	"github.com/nhymxu/kith-pms/internal/note"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -35,6 +36,7 @@ type Deps struct {
 	DatesService         *important_dates.Service
 	AuditService         *audit.Service
 	GiftsService         *gifts.Service
+	NoteService          *note.Service
 	RelationshipsService *relationships.Service
 	SettingsService      *settings.Service
 	AuthService          *auth.Service
@@ -84,6 +86,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountDates(v1, deps)
 	mountAudit(v1, deps)
 	mountGifts(v1, deps)
+	mountNote(v1, deps)
 	mountRelationships(v1, deps)
 	mountPeopleLabelsBulk(v1, deps)
 	mountPeopleLabels(v1, deps)
@@ -180,6 +183,15 @@ func mountGifts(g *echo.Group, deps Deps) {
 	g.POST("/gifts/:id/image", h.UploadImage)
 	g.DELETE("/gifts/:id/image", h.DeleteImage)
 	g.GET("/gifts/:id/image", h.GetImage)
+}
+
+func mountNote(g *echo.Group, deps Deps) {
+	h := &handler.NoteAPI{Svc: deps.NoteService}
+	g.GET("/people/:id/notes", h.ListByPerson)
+	g.POST("/people/:id/notes", h.Create)
+	g.GET("/notes/:id", h.Get)
+	g.PUT("/notes/:id", h.Update)
+	g.DELETE("/notes/:id", h.Delete)
 }
 
 func mountAuth(g *echo.Group, deps Deps) {
@@ -281,6 +293,7 @@ func mountSearch(g *echo.Group, deps Deps) {
 		PeopleSvc:  deps.PeopleService,
 		JournalSvc: deps.JournalService,
 		GiftsSvc:   deps.GiftsService,
+		NoteSvc:    deps.NoteService,
 	}
 	g.GET("/search", h.Search)
 }

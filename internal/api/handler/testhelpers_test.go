@@ -16,6 +16,7 @@ import (
 	internaldb "github.com/nhymxu/kith-pms/internal/db"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/journal"
+	"github.com/nhymxu/kith-pms/internal/note"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 )
@@ -166,6 +167,10 @@ func newJournalService(db *bun.DB) *journal.Service {
 
 func newGiftsService(db *bun.DB) *gifts.Service {
 	return gifts.NewService(db)
+}
+
+func newNoteService(db *bun.DB) *note.Service {
+	return note.NewService(db)
 }
 
 // insertTestPerson inserts a person row and returns its ID.

@@ -11,6 +11,7 @@ export const searchResultSchema = z.object({
 	people: z.array(searchItemSchema),
 	journal: z.array(searchItemSchema),
 	gifts: z.array(searchItemSchema),
+	notes: z.array(searchItemSchema),
 });
 
 export type SearchItem = z.infer<typeof searchItemSchema>;

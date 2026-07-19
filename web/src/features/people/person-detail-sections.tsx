@@ -34,6 +34,7 @@ import { GiftsSection } from "./person-section-gifts";
 import { JournalSection } from "./person-section-journal";
 import { LabelsSection } from "./person-section-labels";
 import { LocationsSection } from "./person-section-locations";
+import { NotesSection } from "./person-section-notes";
 import { PersonSectionRelationshipGraph } from "./person-section-relationship-graph";
 import { RelationshipsSection } from "./person-section-relationships";
 import { WorkHistorySection } from "./person-section-work-history";
@@ -387,6 +388,9 @@ function PersonDetailSectionsInner({
 				</SectionCard>
 				<SectionCard>
 					<GiftsSection personId={personId} />
+				</SectionCard>
+				<SectionCard>
+					<NotesSection personId={personId} />
 				</SectionCard>
 
 				<SectionCard>

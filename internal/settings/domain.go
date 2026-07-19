@@ -23,6 +23,8 @@ type UserSettings struct {
 	Theme string `json:"theme"`
 
 	NavLayout string `json:"nav_layout"`
+
+	SearchScope []string `json:"search_scope"`
 }
 
 var Defaults = UserSettings{
@@ -47,6 +49,8 @@ var Defaults = UserSettings{
 	Theme: "quiet-ink",
 
 	NavLayout: "top",
+
+	SearchScope: []string{"people", "journal", "gifts", "notes"},
 }
 
 const (
@@ -71,4 +75,6 @@ const (
 	KeyTheme = "theme"
 
 	KeyNavLayout = "nav_layout"
+
+	KeySearchScope = "search_scope"
 )

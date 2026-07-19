@@ -122,6 +122,7 @@ export const keys = {
 	},
 	search: {
 		all: ["search"] as const,
-		query: (q: string) => ["search", q] as const,
+		query: (q: string, types?: string[]) =>
+			["search", q, types?.join(",") ?? ""] as const,
 	},
 } as const;

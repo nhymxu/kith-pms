@@ -54,7 +54,8 @@ type SearchResult struct {
 // @Description  Fans a query out to people/journal/gifts; each group capped at 5 hits. Blank q returns empty groups.
 // @Tags         search
 // @Produce      json
-// @Param        q  query  string  false  "Search term"
+// @Param        q      query  string  false  "Search term"
+// @Param        types  query  string  false  "Comma-separated group filter (people,journal,gifts,notes); absent/empty = all"
 // @Success      200  {object}  envelope
 // @Failure      500  {object}  envelope
 // @Security     CookieAuth
@@ -65,6 +66,8 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 	if utf8.RuneCountInString(q) > maxSearchQueryLen {
 		q = string([]rune(q)[:maxSearchQueryLen])
 	}
+
+	want := parseSearchTypes(c.QueryParam("types"))
 
 	result := SearchResult{
 		People:  []SearchItem{},
@@ -79,7 +82,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 
 	ctx := c.Request().Context()
 
-	if h.PeopleSvc != nil {
+	if h.PeopleSvc != nil && want["people"] {
 		list, err := h.PeopleSvc.List(ctx, people.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -95,7 +98,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 		}
 	}
 
-	if h.JournalSvc != nil {
+	if h.JournalSvc != nil && want["journal"] {
 		list, err := h.JournalSvc.List(ctx, journal.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -111,7 +114,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 		}
 	}
 
-	if h.GiftsSvc != nil {
+	if h.GiftsSvc != nil && want["gifts"] {
 		list, err := h.GiftsSvc.List(ctx, gifts.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
 			return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -127,7 +130,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 		}
 	}
 
-	if h.NoteSvc != nil {
+	if h.NoteSvc != nil && want["notes"] {
 		var selfID int64
 
 		if h.PeopleSvc != nil {
@@ -157,6 +160,38 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 	}
 
 	return ok(c, result)
+}
+
+// searchGroups enumerates the SearchResult group keys, the sole source of truth
+// for what a "types" token may reference — keep in sync with SearchResult's JSON tags.
+var searchGroups = []string{"people", "journal", "gifts", "notes"}
+
+// parseSearchTypes builds the enabled-group set from the "types" query param.
+// Absent/empty input enables every group (back-compat); unknown tokens are
+// silently ignored rather than rejected — the endpoint stays a pure function
+// of its inputs and never errors on this param.
+func parseSearchTypes(raw string) map[string]bool {
+	want := make(map[string]bool, len(searchGroups))
+
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		for _, g := range searchGroups {
+			want[g] = true
+		}
+
+		return want
+	}
+
+	for _, tok := range strings.Split(raw, ",") {
+		tok = strings.ToLower(strings.TrimSpace(tok))
+		for _, g := range searchGroups {
+			if tok == g {
+				want[g] = true
+			}
+		}
+	}
+
+	return want
 }
 
 // noteSearchTitle returns the note title, falling back to a truncated content

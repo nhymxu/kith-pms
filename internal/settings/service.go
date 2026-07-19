@@ -3,7 +3,10 @@ package settings
 import (
 	"context"
 	"errors"
+	"slices"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -35,6 +38,13 @@ var (
 	// valid set in sync with the zod enum in web/src/schemas/settings.ts, the registry
 	// in web/src/lib/nav-layout.ts, and the DEFAULTS in web/src/lib/format-datetime.ts.
 	ErrInvalidNavLayout = errors.New("settings: nav_layout must be one of top, side")
+	// ErrInvalidSearchScope is returned when search_scope is empty or contains an
+	// unknown token. Keep the valid set in sync with the zod enum in
+	// web/src/schemas/settings.ts and the SearchResult group keys in
+	// internal/api/handler/search.go.
+	ErrInvalidSearchScope = errors.New(
+		"settings: search_scope must contain at least one of people, journal, gifts, notes",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -79,6 +89,13 @@ var validNavLayout = map[string]bool{
 	"side": true,
 }
 
+var validSearchScope = map[string]bool{
+	"people":  true,
+	"journal": true,
+	"gifts":   true,
+	"notes":   true,
+}
+
 type Service struct {
 	Repo Repo
 }
@@ -94,6 +111,8 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 	}
 
 	result := Defaults
+
+	result.SearchScope = slices.Clone(Defaults.SearchScope)
 	if v, ok := rows[KeyDateFormat]; ok {
 		result.DateFormat = v
 	}
@@ -170,6 +189,21 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.NavLayout = v
 	}
 
+	if v, ok := rows[KeySearchScope]; ok {
+		scope := make([]string, 0, len(Defaults.SearchScope))
+
+		for _, tok := range strings.Split(v, ",") {
+			tok = strings.TrimSpace(tok)
+			if tok != "" && validSearchScope[tok] {
+				scope = append(scope, tok)
+			}
+		}
+
+		if len(scope) > 0 {
+			result.SearchScope = scope
+		}
+	}
+
 	return result, nil
 }
 
@@ -222,6 +256,27 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidNavLayout
 	}
 
+	if len(in.SearchScope) == 0 {
+		return UserSettings{}, ErrInvalidSearchScope
+	}
+
+	scope := make([]string, len(in.SearchScope))
+	copy(scope, in.SearchScope)
+	sort.Strings(scope)
+
+	deduped := scope[:0]
+	for i, tok := range scope {
+		if !validSearchScope[tok] {
+			return UserSettings{}, ErrInvalidSearchScope
+		}
+
+		if i == 0 || scope[i-1] != tok {
+			deduped = append(deduped, tok)
+		}
+	}
+
+	in.SearchScope = deduped
+
 	now := time.Now().UTC()
 	for key, val := range map[string]string{
 		KeyDateFormat:                in.DateFormat,
@@ -241,6 +296,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyDashboardLastContactCount: strconv.Itoa(in.DashboardLastContactCount),
 		KeyTheme:                     in.Theme,
 		KeyNavLayout:                 in.NavLayout,
+		KeySearchScope:               strings.Join(in.SearchScope, ","),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {
 			return UserSettings{}, err

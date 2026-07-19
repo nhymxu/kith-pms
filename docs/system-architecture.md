@@ -35,7 +35,7 @@
 │  │                                                          │   │
 │  │  API Routes (all /v1, SessionOrBearer auth):              │   │
 │  │  ├─ POST /auth/login, logout, logout-all, /me, /password│   │
-│  │  ├─ GET /search (global search: people/journal/gifts)   │   │
+│  │  ├─ GET /search (people/journal/gifts/notes, ?types=)   │   │
 │  │  ├─ GET/POST/PUT/DELETE /people(/avatar, /relationships)│   │
 │  │  ├─ GET/POST/PUT/DELETE /journal, /gifts, /reminders    │   │
 │  │  ├─ GET /dates/upcoming, /labels, /relationship-types   │   │

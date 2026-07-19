@@ -29,6 +29,10 @@ export const userSettingsSchema = z.object({
 	dashboard_favorites_count: z.number().int().min(1).max(20).default(5),
 	dashboard_last_contact_count: z.number().int().min(1).max(20).default(5),
 	nav_layout: z.enum(["top", "side"]).default("top"),
+	search_scope: z
+		.array(z.enum(["people", "journal", "gifts", "notes"]))
+		.min(1)
+		.default(["people", "journal", "gifts", "notes"]),
 });
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;

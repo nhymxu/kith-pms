@@ -3,8 +3,8 @@ module github.com/nhymxu/kith-pms
 go 1.26.5
 
 require (
-	github.com/getsentry/sentry-go v0.47.0
-	github.com/getsentry/sentry-go/echo v0.47.0
+	github.com/getsentry/sentry-go v0.48.0
+	github.com/getsentry/sentry-go/echo v0.48.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/labstack/echo/v5 v5.3.0
 	github.com/lmittmann/tint v1.2.0

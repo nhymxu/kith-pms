@@ -24,15 +24,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/setup@v1
         with:
-          version: 11.13.0
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: pnpm
+          version: 11
+          runtime: node@24
+          cache: true
           cache-dependency-path: web/pnpm-lock.yaml
+          install: false
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile --dir web

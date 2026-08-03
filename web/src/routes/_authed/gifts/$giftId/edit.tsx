@@ -15,11 +15,11 @@ import {
 	updateGift,
 	uploadGiftImage,
 } from "#/endpoints/gifts";
+import { getSettings } from "#/endpoints/settings";
 import { GiftForm } from "#/features/gifts/gift-form";
 import {
 	GIFT_IMAGE_ALLOWED_MIME,
 	GIFT_IMAGE_ASPECT,
-	GIFT_IMAGE_MAX_BYTES,
 } from "#/features/gifts/gift-image-constraints";
 import { keys } from "#/query-keys";
 import type { GiftRequest } from "#/schemas/gift";
@@ -47,6 +47,12 @@ function EditGiftPage() {
 		queryKey: keys.gifts.detail(id),
 		queryFn: () => getGift(id),
 	});
+
+	const { data: settings } = useSuspenseQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const maxImageBytes = settings.max_upload_size_mb * 1024 * 1024;
 
 	const mutation = useMutation({
 		mutationFn: (body: GiftRequest) => updateGift(id, body),
@@ -163,7 +169,7 @@ function EditGiftPage() {
 					onCropped={(file) => {
 						URL.revokeObjectURL(cropSrc);
 						setCropSrc(null);
-						if (file.size > GIFT_IMAGE_MAX_BYTES) {
+						if (file.size > maxImageBytes) {
 							setImageError(
 								"Cropped image is too large — try a smaller zoom area.",
 							);

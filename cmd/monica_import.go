@@ -121,6 +121,7 @@ func monicaImportCommand() *cli.Command {
 			workSvc := work_history.NewService(database)
 			relSvc := relationships.NewService(database)
 			filesSvc := files.NewLocalFileService(config.C.AvatarStoragePath)
+			filesSvc.MaxUploadBytes = config.C.EffectiveMaxUploadBytes()
 
 			return runImport(
 				ctx,
@@ -797,10 +798,9 @@ func saveAvatar(
 	return true
 }
 
-// parseDataURL splits a "data:<mime>;base64,..." string using the avatar (5 MB) size limit.
+// parseDataURL splits a "data:<mime>;base64,..." string using the configured avatar size limit.
 func parseDataURL(dataURL string) (mimeType string, data []byte, err error) {
-	const maxAvatarBytes = 5 * 1024 * 1024
-	return parseDataURLLimit(dataURL, maxAvatarBytes)
+	return parseDataURLLimit(dataURL, int(config.C.EffectiveMaxUploadBytes()))
 }
 
 // parseDataURLLimit splits a "data:<mime>;base64,..." string, rejecting payloads over maxBytes.

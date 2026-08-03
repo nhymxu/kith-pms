@@ -26,7 +26,7 @@ import {
 	type TimeFormat,
 } from "#/lib/format-datetime";
 import { getTheme } from "#/lib/theme";
-import type { UserSettings } from "#/schemas/settings";
+import type { SettingsResponse } from "#/schemas/settings";
 
 export const Route = createFileRoute("/_authed/settings/_layout/general")({
 	component: GeneralSettingsPage,
@@ -81,7 +81,7 @@ function GeneralSettingsPage() {
 		queryKey: ["settings"],
 		queryFn: getSettings,
 		// Seed local state from localStorage while the query loads.
-		placeholderData: (): UserSettings => {
+		placeholderData: (): SettingsResponse => {
 			const p = getUserPrefs();
 			return {
 				date_format: p.dateFormat,
@@ -102,6 +102,7 @@ function GeneralSettingsPage() {
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
 				search_scope: ["people", "journal", "gifts", "notes"],
+				max_upload_size_mb: 5,
 			};
 		},
 	});

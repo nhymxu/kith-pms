@@ -1,13 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from "#/endpoints/people";
+import { getSettings } from "#/endpoints/settings";
 import { keys } from "#/query-keys";
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 interface AvatarUploaderProps {
@@ -27,6 +31,12 @@ export function AvatarUploader({
 	const [cropSrc, setCropSrc] = useState<string | null>(null);
 	const [cropFileName, setCropFileName] = useState("avatar");
 	const qc = useQueryClient();
+
+	const { data: settings } = useSuspenseQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const maxBytes = settings.max_upload_size_mb * 1024 * 1024;
 
 	const invalidate = () => {
 		qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
@@ -64,8 +74,8 @@ export function AvatarUploader({
 			setClientError("Only JPEG, PNG, GIF, or WebP images are allowed.");
 			return;
 		}
-		if (file.size > MAX_BYTES) {
-			setClientError("File must be under 5 MB.");
+		if (file.size > maxBytes) {
+			setClientError(`File must be under ${settings.max_upload_size_mb} MB.`);
 			return;
 		}
 		setCropFileName(file.name);
@@ -80,7 +90,7 @@ export function AvatarUploader({
 	function handleCropped(file: File) {
 		if (cropSrc) URL.revokeObjectURL(cropSrc);
 		setCropSrc(null);
-		if (file.size > MAX_BYTES) {
+		if (file.size > maxBytes) {
 			setClientError("Cropped image is too large — try a smaller zoom area.");
 			return;
 		}

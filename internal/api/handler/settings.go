@@ -7,10 +7,23 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/settings"
+	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 type SettingsAPI struct {
 	Svc *settings.Service
+}
+
+// settingsResponse adds read-only, server-config-derived fields alongside the
+// persisted user settings. Not part of settings.UserSettings since it isn't
+// stored per-user; extra JSON fields sent back on PUT are simply ignored.
+type settingsResponse struct {
+	settings.UserSettings
+	MaxUploadSizeMB int `json:"max_upload_size_mb"`
+}
+
+func withServerConfig(s settings.UserSettings) settingsResponse {
+	return settingsResponse{UserSettings: s, MaxUploadSizeMB: int(config.C.EffectiveMaxUploadBytes() / (1024 * 1024))}
 }
 
 // Get godoc
@@ -29,7 +42,7 @@ func (h *SettingsAPI) Get(c *echo.Context) error {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 
-	return ok(c, s)
+	return ok(c, withServerConfig(s))
 }
 
 // Update godoc
@@ -70,5 +83,5 @@ func (h *SettingsAPI) Update(c *echo.Context) error {
 		}
 	}
 
-	return ok(c, updated)
+	return ok(c, withServerConfig(updated))
 }

@@ -25,7 +25,7 @@ import {
 	type Theme,
 	type ThemeMeta,
 } from "#/lib/theme";
-import type { UserSettings } from "#/schemas/settings";
+import type { SettingsResponse } from "#/schemas/settings";
 
 export const Route = createFileRoute("/_authed/settings/_layout/appearance")({
 	component: AppearancePage,
@@ -84,7 +84,7 @@ function AppearancePage() {
 	const { data: apiSettings, isPlaceholderData } = useQuery({
 		queryKey: ["settings"],
 		queryFn: getSettings,
-		placeholderData: (): UserSettings => {
+		placeholderData: (): SettingsResponse => {
 			const p = getUserPrefs();
 			return {
 				date_format: p.dateFormat,
@@ -105,6 +105,7 @@ function AppearancePage() {
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
 				search_scope: ["people", "journal", "gifts", "notes"],
+				max_upload_size_mb: 5,
 			};
 		},
 	});

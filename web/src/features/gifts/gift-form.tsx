@@ -12,10 +12,10 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
+import { getSettings } from "#/endpoints/settings";
 import {
 	GIFT_IMAGE_ALLOWED_MIME,
 	GIFT_IMAGE_ASPECT,
-	GIFT_IMAGE_MAX_BYTES,
 } from "#/features/gifts/gift-image-constraints";
 import { keys } from "#/query-keys";
 import {
@@ -76,6 +76,12 @@ function GiftFormInner({
 		queryKey: keys.people.list({}),
 		queryFn: () => listPeople({ page_size: 200 }),
 	});
+
+	const { data: settings } = useSuspenseQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const maxImageBytes = settings.max_upload_size_mb * 1024 * 1024;
 
 	const form = useForm({
 		defaultValues: {
@@ -346,7 +352,7 @@ function GiftFormInner({
 							onCropped={(file) => {
 								URL.revokeObjectURL(cropSrc);
 								setCropSrc(null);
-								if (file.size > GIFT_IMAGE_MAX_BYTES) {
+								if (file.size > maxImageBytes) {
 									setImageError(
 										"Cropped image is too large — try a smaller zoom area.",
 									);

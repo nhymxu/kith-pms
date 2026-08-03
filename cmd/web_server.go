@@ -115,6 +115,7 @@ Can scale later.`,
 			}
 
 			fileSvc := files.NewLocalFileService(avatarPath)
+			fileSvc.MaxUploadBytes = config.C.EffectiveMaxUploadBytes()
 			peopleSvc.FileService = fileSvc
 
 			labelsSvc := people.NewLabelService(db)
@@ -152,6 +153,7 @@ Can scale later.`,
 			}
 
 			giftFileSvc := files.NewLocalFileService(giftStoragePath)
+			giftFileSvc.MaxUploadBytes = config.C.EffectiveMaxUploadBytes()
 			giftsSvc.FileSvc = giftFileSvc
 
 			// Wire note service.

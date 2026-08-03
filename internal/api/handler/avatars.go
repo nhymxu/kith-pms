@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/people"
+	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 // sniff512 reads the first 512 bytes from r to detect its content type, then
@@ -32,8 +34,6 @@ func sniff512(r io.ReadSeeker) (string, error) {
 
 	return detected, nil
 }
-
-const maxAvatarBytes = 5 * 1024 * 1024 // 5 MB
 
 var avatarAllowedTypes = map[string]bool{
 	"image/jpeg": true,
@@ -56,7 +56,7 @@ type AvatarsAPI struct {
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        id      path      int   true  "Person ID"
-// @Param        avatar  formData  file  true  "Avatar image (jpeg/png/gif/webp, max 5MB)"
+// @Param        avatar  formData  file  true  "Avatar image (jpeg/png/gif/webp, size limit set by server config)"
 // @Success      200     {object}  envelope{data=object{uploaded=bool}}
 // @Failure      400     {object}  envelope
 // @Failure      413     {object}  envelope
@@ -70,20 +70,23 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
 
-	// Cap request body to 5MB + 1MB multipart overhead.
+	maxAvatarBytes := config.C.EffectiveMaxUploadBytes()
+	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxAvatarBytes/(1024*1024))
+
+	// Cap request body to the configured max + 1MB multipart overhead.
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxAvatarBytes+1024*1024)
 
 	file, err := c.FormFile("avatar")
 	if err != nil {
 		if strings.Contains(err.Error(), "request body too large") {
-			return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+			return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
 		}
 
 		return apiErr(c, http.StatusBadRequest, "no file uploaded")
 	}
 
 	if file.Size > maxAvatarBytes {
-		return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+		return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
 	}
 
 	src, err := file.Open()

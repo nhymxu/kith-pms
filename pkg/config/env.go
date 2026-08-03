@@ -24,12 +24,25 @@ type Config struct {
 	// File Storage
 	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
 	GiftStoragePath   string `koanf:"GIFT_STORAGE_PATH"`
+	MaxUploadSizeMB   int    `koanf:"MAX_UPLOAD_SIZE_MB"`
 
 	// Auth
 	SessionSecret   string        `koanf:"SESSION_SECRET" copier:"-"`
 	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH" copier:"-"`
 	BehindTLS       bool          `koanf:"BEHIND_TLS"`
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
+}
+
+// EffectiveMaxUploadBytes returns the configured avatar/gift image upload cap
+// in bytes, falling back to the 5MB default when unset (e.g. in tests that
+// construct handlers directly without calling config.Load).
+func (c *Config) EffectiveMaxUploadBytes() int64 {
+	mb := c.MaxUploadSizeMB
+	if mb <= 0 {
+		mb = 5
+	}
+
+	return int64(mb) * 1024 * 1024
 }
 
 func (c *Config) Sanitized() Config {
@@ -59,6 +72,7 @@ var configDefaults = map[string]any{
 	// File Storage
 	"AVATAR_STORAGE_PATH": "data/avatars",
 	"GIFT_STORAGE_PATH":   "data/gifts",
+	"MAX_UPLOAD_SIZE_MB":  5,
 
 	// Auth — SESSION_SECRET must be set in production via environment (≥32 bytes)
 	"SESSION_SECRET":    "",

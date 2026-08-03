@@ -765,7 +765,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "Image file (jpeg/png/gif/webp, max 5MB)",
+                        "description": "Image file (jpeg/png/gif/webp, size limit set by server config)",
                         "name": "image",
                         "in": "formData",
                         "required": true
@@ -1853,7 +1853,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "Avatar image (jpeg/png/gif/webp, max 5MB)",
+                        "description": "Avatar image (jpeg/png/gif/webp, size limit set by server config)",
                         "name": "avatar",
                         "in": "formData",
                         "required": true
@@ -3630,6 +3630,12 @@ const docTemplate = `{
                         "description": "Search term",
                         "name": "q",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated group filter (people,journal,gifts,notes); absent/empty = all",
+                        "name": "types",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3823,6 +3829,12 @@ const docTemplate = `{
                 },
                 "network_show_unconnected": {
                     "type": "boolean"
+                },
+                "search_scope": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "theme": {
                     "type": "string"

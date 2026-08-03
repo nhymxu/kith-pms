@@ -65,6 +65,10 @@ definitions:
         type: boolean
       network_show_unconnected:
         type: boolean
+      search_scope:
+        items:
+          type: string
+        type: array
       theme:
         type: string
       time_format:
@@ -718,7 +722,7 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Image file (jpeg/png/gif/webp, max 5MB)
+      - description: Image file (jpeg/png/gif/webp, size limit set by server config)
         in: formData
         name: image
         required: true
@@ -1370,7 +1374,7 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Avatar image (jpeg/png/gif/webp, max 5MB)
+      - description: Avatar image (jpeg/png/gif/webp, size limit set by server config)
         in: formData
         name: avatar
         required: true
@@ -2404,6 +2408,11 @@ paths:
       - description: Search term
         in: query
         name: q
+        type: string
+      - description: Comma-separated group filter (people,journal,gifts,notes); absent/empty
+          = all
+        in: query
+        name: types
         type: string
       produces:
       - application/json

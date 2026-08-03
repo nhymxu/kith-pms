@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"io"
 	"math"
 	"mime"
@@ -14,6 +15,7 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/nhymxu/kith-pms/internal/gifts"
+	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 type GiftsAPI struct {
@@ -152,8 +154,6 @@ func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	return ok(c, g)
 }
 
-const maxGiftImageBytes = 5 * 1024 * 1024
-
 var giftImageAllowedTypes = map[string]bool{
 	"image/jpeg": true,
 	"image/png":  true,
@@ -168,7 +168,7 @@ var giftImageAllowedTypes = map[string]bool{
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        id     path      int   true  "Gift ID"
-// @Param        image  formData  file  true  "Image file (jpeg/png/gif/webp, max 5MB)"
+// @Param        image  formData  file  true  "Image file (jpeg/png/gif/webp, size limit set by server config)"
 // @Success      200    {object}  envelope{data=object{uploaded=bool}}
 // @Failure      400    {object}  envelope
 // @Failure      413    {object}  envelope
@@ -182,19 +182,22 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 		return apiErr(c, http.StatusBadRequest, "invalid id")
 	}
 
+	maxGiftImageBytes := config.C.EffectiveMaxUploadBytes()
+	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxGiftImageBytes/(1024*1024))
+
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxGiftImageBytes+1024*1024)
 
 	file, err := c.FormFile("image")
 	if err != nil {
 		if strings.Contains(err.Error(), "request body too large") {
-			return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+			return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
 		}
 
 		return apiErr(c, http.StatusBadRequest, "no file uploaded")
 	}
 
 	if file.Size > maxGiftImageBytes {
-		return apiErr(c, http.StatusRequestEntityTooLarge, "file too large (max 5MB)")
+		return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
 	}
 
 	src, err := file.Open()

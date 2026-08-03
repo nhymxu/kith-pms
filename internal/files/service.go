@@ -37,10 +37,13 @@ type FileService interface {
 
 type LocalFileService struct {
 	BaseDir string
+	// MaxUploadBytes caps avatar/gift image size; defaults to maxAvatarSize,
+	// override from config.C.MaxUploadSizeMB after construction.
+	MaxUploadBytes int64
 }
 
 func NewLocalFileService(baseDir string) *LocalFileService {
-	return &LocalFileService{BaseDir: baseDir}
+	return &LocalFileService{BaseDir: baseDir, MaxUploadBytes: maxAvatarSize}
 }
 
 func (s *LocalFileService) SaveAvatar(
@@ -48,8 +51,8 @@ func (s *LocalFileService) SaveAvatar(
 	file multipart.File,
 	header *multipart.FileHeader,
 ) (string, error) {
-	if header.Size > maxAvatarSize {
-		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, maxAvatarSize)
+	if header.Size > s.MaxUploadBytes {
+		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, s.MaxUploadBytes)
 	}
 
 	// Verify actual file content (magic number check)
@@ -118,8 +121,8 @@ func (s *LocalFileService) SaveAvatar(
 // SaveAvatarBytes writes raw image bytes to disk without requiring multipart headers.
 // Used by the Monica import CLI to save decoded base64 avatars.
 func (s *LocalFileService) SaveAvatarBytes(personID int64, data []byte, mimeType string) (string, error) {
-	if int64(len(data)) > maxAvatarSize {
-		return "", fmt.Errorf("avatar size %d exceeds maximum %d bytes", len(data), maxAvatarSize)
+	if int64(len(data)) > s.MaxUploadBytes {
+		return "", fmt.Errorf("avatar size %d exceeds maximum %d bytes", len(data), s.MaxUploadBytes)
 	}
 
 	if !allowedMimeTypes[mimeType] {
@@ -257,8 +260,8 @@ func (s *LocalFileService) SaveGiftImage(
 	file multipart.File,
 	header *multipart.FileHeader,
 ) (string, error) {
-	if header.Size > maxAvatarSize {
-		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, maxAvatarSize)
+	if header.Size > s.MaxUploadBytes {
+		return "", fmt.Errorf("file size %d exceeds maximum %d bytes", header.Size, s.MaxUploadBytes)
 	}
 
 	buffer := make([]byte, 512)

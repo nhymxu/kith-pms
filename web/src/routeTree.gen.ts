@@ -9,50 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
-import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
-import { Route as AuthedRemindersIndexRouteImport } from './routes/_authed/reminders/index'
-import { Route as AuthedPeopleIndexRouteImport } from './routes/_authed/people/index'
-import { Route as AuthedNotesIndexRouteImport } from './routes/_authed/notes/index'
-import { Route as AuthedNetworkIndexRouteImport } from './routes/_authed/network/index'
-import { Route as AuthedMeIndexRouteImport } from './routes/_authed/me/index'
-import { Route as AuthedJournalIndexRouteImport } from './routes/_authed/journal/index'
-import { Route as AuthedImportantDatesIndexRouteImport } from './routes/_authed/important-dates/index'
-import { Route as AuthedGiftsIndexRouteImport } from './routes/_authed/gifts/index'
 import { Route as AuthedAuditIndexRouteImport } from './routes/_authed/audit/index'
-import { Route as AuthedSettingsLayoutRouteImport } from './routes/_authed/settings/_layout'
-import { Route as AuthedRemindersNewRouteImport } from './routes/_authed/reminders/new'
-import { Route as AuthedRemindersReminderIdRouteImport } from './routes/_authed/reminders/$reminderId'
-import { Route as AuthedPeopleNewRouteImport } from './routes/_authed/people/new'
-import { Route as AuthedPeoplePersonIdRouteImport } from './routes/_authed/people/$personId'
-import { Route as AuthedMeSetupRouteImport } from './routes/_authed/me/setup'
-import { Route as AuthedJournalNewRouteImport } from './routes/_authed/journal/new'
-import { Route as AuthedGiftsNewRouteImport } from './routes/_authed/gifts/new'
-import { Route as AuthedJournalEntryIdRouteRouteImport } from './routes/_authed/journal/$entryId/route'
+import { Route as AuthedGiftsIndexRouteImport } from './routes/_authed/gifts/index'
 import { Route as AuthedGiftsGiftIdRouteRouteImport } from './routes/_authed/gifts/$giftId/route'
-import { Route as AuthedJournalEntryIdIndexRouteImport } from './routes/_authed/journal/$entryId/index'
+import { Route as AuthedGiftsNewRouteImport } from './routes/_authed/gifts/new'
+import { Route as AuthedImportantDatesIndexRouteImport } from './routes/_authed/important-dates/index'
+import { Route as AuthedJournalIndexRouteImport } from './routes/_authed/journal/index'
+import { Route as AuthedJournalEntryIdRouteRouteImport } from './routes/_authed/journal/$entryId/route'
+import { Route as AuthedJournalNewRouteImport } from './routes/_authed/journal/new'
+import { Route as AuthedMeIndexRouteImport } from './routes/_authed/me/index'
+import { Route as AuthedMeSetupRouteImport } from './routes/_authed/me/setup'
+import { Route as AuthedNetworkIndexRouteImport } from './routes/_authed/network/index'
+import { Route as AuthedNotesIndexRouteImport } from './routes/_authed/notes/index'
+import { Route as AuthedPeopleIndexRouteImport } from './routes/_authed/people/index'
+import { Route as AuthedPeoplePersonIdRouteImport } from './routes/_authed/people/$personId'
+import { Route as AuthedPeopleNewRouteImport } from './routes/_authed/people/new'
+import { Route as AuthedRemindersIndexRouteImport } from './routes/_authed/reminders/index'
+import { Route as AuthedRemindersReminderIdRouteImport } from './routes/_authed/reminders/$reminderId'
+import { Route as AuthedRemindersNewRouteImport } from './routes/_authed/reminders/new'
+import { Route as AuthedSettingsIndexRouteImport } from './routes/_authed/settings/index'
+import { Route as AuthedSettingsLayoutRouteImport } from './routes/_authed/settings/_layout'
 import { Route as AuthedGiftsGiftIdIndexRouteImport } from './routes/_authed/gifts/$giftId/index'
-import { Route as AuthedSettingsLayoutSecurityRouteImport } from './routes/_authed/settings/_layout.security'
-import { Route as AuthedSettingsLayoutRelationshipTypesRouteImport } from './routes/_authed/settings/_layout.relationship-types'
-import { Route as AuthedSettingsLayoutPeopleLabelsRouteImport } from './routes/_authed/settings/_layout.people-labels'
-import { Route as AuthedSettingsLayoutLabelsRouteImport } from './routes/_authed/settings/_layout.labels'
-import { Route as AuthedSettingsLayoutJournalLabelsRouteImport } from './routes/_authed/settings/_layout.journal-labels'
-import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
-import { Route as AuthedSettingsLayoutAppearanceRouteImport } from './routes/_authed/settings/_layout.appearance'
-import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
-import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
-import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId/edit'
 import { Route as AuthedGiftsGiftIdEditRouteImport } from './routes/_authed/gifts/$giftId/edit'
+import { Route as AuthedJournalEntryIdIndexRouteImport } from './routes/_authed/journal/$entryId/index'
+import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/journal/$entryId/edit'
+import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
+import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
+import { Route as AuthedSettingsLayoutAppearanceRouteImport } from './routes/_authed/settings/_layout.appearance'
+import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
+import { Route as AuthedSettingsLayoutJournalLabelsRouteImport } from './routes/_authed/settings/_layout.journal-labels'
+import { Route as AuthedSettingsLayoutLabelsRouteImport } from './routes/_authed/settings/_layout.labels'
+import { Route as AuthedSettingsLayoutPeopleLabelsRouteImport } from './routes/_authed/settings/_layout.people-labels'
+import { Route as AuthedSettingsLayoutRelationshipTypesRouteImport } from './routes/_authed/settings/_layout.relationship-types'
+import { Route as AuthedSettingsLayoutSecurityRouteImport } from './routes/_authed/settings/_layout.security'
 
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedRoute = AuthedRouteImport.update({
-  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedIndexRoute = AuthedIndexRouteImport.update({
@@ -60,39 +60,24 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
+const AuthedAuditIndexRoute = AuthedAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedRemindersIndexRoute = AuthedRemindersIndexRouteImport.update({
-  id: '/reminders/',
-  path: '/reminders/',
+const AuthedGiftsIndexRoute = AuthedGiftsIndexRouteImport.update({
+  id: '/gifts/',
+  path: '/gifts/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedPeopleIndexRoute = AuthedPeopleIndexRouteImport.update({
-  id: '/people/',
-  path: '/people/',
+const AuthedGiftsGiftIdRouteRoute = AuthedGiftsGiftIdRouteRouteImport.update({
+  id: '/gifts/$giftId',
+  path: '/gifts/$giftId',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedNotesIndexRoute = AuthedNotesIndexRouteImport.update({
-  id: '/notes/',
-  path: '/notes/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedNetworkIndexRoute = AuthedNetworkIndexRouteImport.update({
-  id: '/network/',
-  path: '/network/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMeIndexRoute = AuthedMeIndexRouteImport.update({
-  id: '/me/',
-  path: '/me/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedJournalIndexRoute = AuthedJournalIndexRouteImport.update({
-  id: '/journal/',
-  path: '/journal/',
+const AuthedGiftsNewRoute = AuthedGiftsNewRouteImport.update({
+  id: '/gifts/new',
+  path: '/gifts/new',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedImportantDatesIndexRoute =
@@ -101,55 +86,9 @@ const AuthedImportantDatesIndexRoute =
     path: '/important-dates/',
     getParentRoute: () => AuthedRoute,
   } as any)
-const AuthedGiftsIndexRoute = AuthedGiftsIndexRouteImport.update({
-  id: '/gifts/',
-  path: '/gifts/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedAuditIndexRoute = AuthedAuditIndexRouteImport.update({
-  id: '/audit/',
-  path: '/audit/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedSettingsLayoutRoute = AuthedSettingsLayoutRouteImport.update({
-  id: '/settings/_layout',
-  path: '/settings',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedRemindersNewRoute = AuthedRemindersNewRouteImport.update({
-  id: '/reminders/new',
-  path: '/reminders/new',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedRemindersReminderIdRoute =
-  AuthedRemindersReminderIdRouteImport.update({
-    id: '/reminders/$reminderId',
-    path: '/reminders/$reminderId',
-    getParentRoute: () => AuthedRoute,
-  } as any)
-const AuthedPeopleNewRoute = AuthedPeopleNewRouteImport.update({
-  id: '/people/new',
-  path: '/people/new',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedPeoplePersonIdRoute = AuthedPeoplePersonIdRouteImport.update({
-  id: '/people/$personId',
-  path: '/people/$personId',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMeSetupRoute = AuthedMeSetupRouteImport.update({
-  id: '/me/setup',
-  path: '/me/setup',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedJournalNewRoute = AuthedJournalNewRouteImport.update({
-  id: '/journal/new',
-  path: '/journal/new',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedGiftsNewRoute = AuthedGiftsNewRouteImport.update({
-  id: '/gifts/new',
-  path: '/gifts/new',
+const AuthedJournalIndexRoute = AuthedJournalIndexRouteImport.update({
+  id: '/journal/',
+  path: '/journal/',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedJournalEntryIdRouteRoute =
@@ -158,10 +97,81 @@ const AuthedJournalEntryIdRouteRoute =
     path: '/journal/$entryId',
     getParentRoute: () => AuthedRoute,
   } as any)
-const AuthedGiftsGiftIdRouteRoute = AuthedGiftsGiftIdRouteRouteImport.update({
-  id: '/gifts/$giftId',
-  path: '/gifts/$giftId',
+const AuthedJournalNewRoute = AuthedJournalNewRouteImport.update({
+  id: '/journal/new',
+  path: '/journal/new',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedMeIndexRoute = AuthedMeIndexRouteImport.update({
+  id: '/me/',
+  path: '/me/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedMeSetupRoute = AuthedMeSetupRouteImport.update({
+  id: '/me/setup',
+  path: '/me/setup',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedNetworkIndexRoute = AuthedNetworkIndexRouteImport.update({
+  id: '/network/',
+  path: '/network/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedNotesIndexRoute = AuthedNotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPeopleIndexRoute = AuthedPeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPeoplePersonIdRoute = AuthedPeoplePersonIdRouteImport.update({
+  id: '/people/$personId',
+  path: '/people/$personId',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedPeopleNewRoute = AuthedPeopleNewRouteImport.update({
+  id: '/people/new',
+  path: '/people/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedRemindersIndexRoute = AuthedRemindersIndexRouteImport.update({
+  id: '/reminders/',
+  path: '/reminders/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedRemindersReminderIdRoute =
+  AuthedRemindersReminderIdRouteImport.update({
+    id: '/reminders/$reminderId',
+    path: '/reminders/$reminderId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedRemindersNewRoute = AuthedRemindersNewRouteImport.update({
+  id: '/reminders/new',
+  path: '/reminders/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsIndexRoute = AuthedSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsLayoutRoute = AuthedSettingsLayoutRouteImport.update({
+  id: '/settings/_layout',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedGiftsGiftIdIndexRoute = AuthedGiftsGiftIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
+} as any)
+const AuthedGiftsGiftIdEditRoute = AuthedGiftsGiftIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
 } as any)
 const AuthedJournalEntryIdIndexRoute =
   AuthedJournalEntryIdIndexRouteImport.update({
@@ -169,39 +179,28 @@ const AuthedJournalEntryIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthedJournalEntryIdRouteRoute,
   } as any)
-const AuthedGiftsGiftIdIndexRoute = AuthedGiftsGiftIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
-} as any)
-const AuthedSettingsLayoutSecurityRoute =
-  AuthedSettingsLayoutSecurityRouteImport.update({
-    id: '/security',
-    path: '/security',
-    getParentRoute: () => AuthedSettingsLayoutRoute,
+const AuthedJournalEntryIdEditRoute =
+  AuthedJournalEntryIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthedJournalEntryIdRouteRoute,
   } as any)
-const AuthedSettingsLayoutRelationshipTypesRoute =
-  AuthedSettingsLayoutRelationshipTypesRouteImport.update({
-    id: '/relationship-types',
-    path: '/relationship-types',
-    getParentRoute: () => AuthedSettingsLayoutRoute,
+const AuthedPeoplePersonIdEditRoute =
+  AuthedPeoplePersonIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthedPeoplePersonIdRoute,
   } as any)
-const AuthedSettingsLayoutPeopleLabelsRoute =
-  AuthedSettingsLayoutPeopleLabelsRouteImport.update({
-    id: '/people-labels',
-    path: '/people-labels',
-    getParentRoute: () => AuthedSettingsLayoutRoute,
+const AuthedRemindersReminderIdEditRoute =
+  AuthedRemindersReminderIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AuthedRemindersReminderIdRoute,
   } as any)
-const AuthedSettingsLayoutLabelsRoute =
-  AuthedSettingsLayoutLabelsRouteImport.update({
-    id: '/labels',
-    path: '/labels',
-    getParentRoute: () => AuthedSettingsLayoutRoute,
-  } as any)
-const AuthedSettingsLayoutJournalLabelsRoute =
-  AuthedSettingsLayoutJournalLabelsRouteImport.update({
-    id: '/journal-labels',
-    path: '/journal-labels',
+const AuthedSettingsLayoutAppearanceRoute =
+  AuthedSettingsLayoutAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
 const AuthedSettingsLayoutGeneralRoute =
@@ -210,35 +209,36 @@ const AuthedSettingsLayoutGeneralRoute =
     path: '/general',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
-const AuthedSettingsLayoutAppearanceRoute =
-  AuthedSettingsLayoutAppearanceRouteImport.update({
-    id: '/appearance',
-    path: '/appearance',
+const AuthedSettingsLayoutJournalLabelsRoute =
+  AuthedSettingsLayoutJournalLabelsRouteImport.update({
+    id: '/journal-labels',
+    path: '/journal-labels',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
-const AuthedRemindersReminderIdEditRoute =
-  AuthedRemindersReminderIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => AuthedRemindersReminderIdRoute,
+const AuthedSettingsLayoutLabelsRoute =
+  AuthedSettingsLayoutLabelsRouteImport.update({
+    id: '/labels',
+    path: '/labels',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
-const AuthedPeoplePersonIdEditRoute =
-  AuthedPeoplePersonIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => AuthedPeoplePersonIdRoute,
+const AuthedSettingsLayoutPeopleLabelsRoute =
+  AuthedSettingsLayoutPeopleLabelsRouteImport.update({
+    id: '/people-labels',
+    path: '/people-labels',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
-const AuthedJournalEntryIdEditRoute =
-  AuthedJournalEntryIdEditRouteImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => AuthedJournalEntryIdRouteRoute,
+const AuthedSettingsLayoutRelationshipTypesRoute =
+  AuthedSettingsLayoutRelationshipTypesRouteImport.update({
+    id: '/relationship-types',
+    path: '/relationship-types',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
-const AuthedGiftsGiftIdEditRoute = AuthedGiftsGiftIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => AuthedGiftsGiftIdRouteRoute,
-} as any)
+const AuthedSettingsLayoutSecurityRoute =
+  AuthedSettingsLayoutSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
@@ -469,18 +469,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authed': {
       id: '/_authed'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/': {
@@ -490,60 +490,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/settings/': {
-      id: '/_authed/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthedSettingsIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/reminders/': {
-      id: '/_authed/reminders/'
-      path: '/reminders'
-      fullPath: '/reminders/'
-      preLoaderRoute: typeof AuthedRemindersIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/people/': {
-      id: '/_authed/people/'
-      path: '/people'
-      fullPath: '/people/'
-      preLoaderRoute: typeof AuthedPeopleIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/notes/': {
-      id: '/_authed/notes/'
-      path: '/notes'
-      fullPath: '/notes/'
-      preLoaderRoute: typeof AuthedNotesIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/network/': {
-      id: '/_authed/network/'
-      path: '/network'
-      fullPath: '/network/'
-      preLoaderRoute: typeof AuthedNetworkIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/me/': {
-      id: '/_authed/me/'
-      path: '/me'
-      fullPath: '/me/'
-      preLoaderRoute: typeof AuthedMeIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/journal/': {
-      id: '/_authed/journal/'
-      path: '/journal'
-      fullPath: '/journal/'
-      preLoaderRoute: typeof AuthedJournalIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/important-dates/': {
-      id: '/_authed/important-dates/'
-      path: '/important-dates'
-      fullPath: '/important-dates/'
-      preLoaderRoute: typeof AuthedImportantDatesIndexRouteImport
+    '/_authed/audit/': {
+      id: '/_authed/audit/'
+      path: '/audit'
+      fullPath: '/audit/'
+      preLoaderRoute: typeof AuthedAuditIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/gifts/': {
@@ -553,60 +504,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGiftsIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/audit/': {
-      id: '/_authed/audit/'
-      path: '/audit'
-      fullPath: '/audit/'
-      preLoaderRoute: typeof AuthedAuditIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/settings/_layout': {
-      id: '/_authed/settings/_layout'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsLayoutRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/reminders/new': {
-      id: '/_authed/reminders/new'
-      path: '/reminders/new'
-      fullPath: '/reminders/new'
-      preLoaderRoute: typeof AuthedRemindersNewRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/reminders/$reminderId': {
-      id: '/_authed/reminders/$reminderId'
-      path: '/reminders/$reminderId'
-      fullPath: '/reminders/$reminderId'
-      preLoaderRoute: typeof AuthedRemindersReminderIdRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/people/new': {
-      id: '/_authed/people/new'
-      path: '/people/new'
-      fullPath: '/people/new'
-      preLoaderRoute: typeof AuthedPeopleNewRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/people/$personId': {
-      id: '/_authed/people/$personId'
-      path: '/people/$personId'
-      fullPath: '/people/$personId'
-      preLoaderRoute: typeof AuthedPeoplePersonIdRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/me/setup': {
-      id: '/_authed/me/setup'
-      path: '/me/setup'
-      fullPath: '/me/setup'
-      preLoaderRoute: typeof AuthedMeSetupRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/journal/new': {
-      id: '/_authed/journal/new'
-      path: '/journal/new'
-      fullPath: '/journal/new'
-      preLoaderRoute: typeof AuthedJournalNewRouteImport
+    '/_authed/gifts/$giftId': {
+      id: '/_authed/gifts/$giftId'
+      path: '/gifts/$giftId'
+      fullPath: '/gifts/$giftId'
+      preLoaderRoute: typeof AuthedGiftsGiftIdRouteRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/gifts/new': {
@@ -616,6 +518,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGiftsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/important-dates/': {
+      id: '/_authed/important-dates/'
+      path: '/important-dates'
+      fullPath: '/important-dates/'
+      preLoaderRoute: typeof AuthedImportantDatesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/journal/': {
+      id: '/_authed/journal/'
+      path: '/journal'
+      fullPath: '/journal/'
+      preLoaderRoute: typeof AuthedJournalIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/journal/$entryId': {
       id: '/_authed/journal/$entryId'
       path: '/journal/$entryId'
@@ -623,19 +539,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedJournalEntryIdRouteRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/gifts/$giftId': {
-      id: '/_authed/gifts/$giftId'
-      path: '/gifts/$giftId'
-      fullPath: '/gifts/$giftId'
-      preLoaderRoute: typeof AuthedGiftsGiftIdRouteRouteImport
+    '/_authed/journal/new': {
+      id: '/_authed/journal/new'
+      path: '/journal/new'
+      fullPath: '/journal/new'
+      preLoaderRoute: typeof AuthedJournalNewRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/journal/$entryId/': {
-      id: '/_authed/journal/$entryId/'
-      path: '/'
-      fullPath: '/journal/$entryId/'
-      preLoaderRoute: typeof AuthedJournalEntryIdIndexRouteImport
-      parentRoute: typeof AuthedJournalEntryIdRouteRoute
+    '/_authed/me/': {
+      id: '/_authed/me/'
+      path: '/me'
+      fullPath: '/me/'
+      preLoaderRoute: typeof AuthedMeIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/me/setup': {
+      id: '/_authed/me/setup'
+      path: '/me/setup'
+      fullPath: '/me/setup'
+      preLoaderRoute: typeof AuthedMeSetupRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/network/': {
+      id: '/_authed/network/'
+      path: '/network'
+      fullPath: '/network/'
+      preLoaderRoute: typeof AuthedNetworkIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/notes/': {
+      id: '/_authed/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof AuthedNotesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/people/': {
+      id: '/_authed/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof AuthedPeopleIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/people/$personId': {
+      id: '/_authed/people/$personId'
+      path: '/people/$personId'
+      fullPath: '/people/$personId'
+      preLoaderRoute: typeof AuthedPeoplePersonIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/people/new': {
+      id: '/_authed/people/new'
+      path: '/people/new'
+      fullPath: '/people/new'
+      preLoaderRoute: typeof AuthedPeopleNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/reminders/': {
+      id: '/_authed/reminders/'
+      path: '/reminders'
+      fullPath: '/reminders/'
+      preLoaderRoute: typeof AuthedRemindersIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/reminders/$reminderId': {
+      id: '/_authed/reminders/$reminderId'
+      path: '/reminders/$reminderId'
+      fullPath: '/reminders/$reminderId'
+      preLoaderRoute: typeof AuthedRemindersReminderIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/reminders/new': {
+      id: '/_authed/reminders/new'
+      path: '/reminders/new'
+      fullPath: '/reminders/new'
+      preLoaderRoute: typeof AuthedRemindersNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/settings/': {
+      id: '/_authed/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthedSettingsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/settings/_layout': {
+      id: '/_authed/settings/_layout'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsLayoutRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/gifts/$giftId/': {
       id: '/_authed/gifts/$giftId/'
@@ -644,39 +637,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedGiftsGiftIdIndexRouteImport
       parentRoute: typeof AuthedGiftsGiftIdRouteRoute
     }
-    '/_authed/settings/_layout/security': {
-      id: '/_authed/settings/_layout/security'
-      path: '/security'
-      fullPath: '/settings/security'
-      preLoaderRoute: typeof AuthedSettingsLayoutSecurityRouteImport
-      parentRoute: typeof AuthedSettingsLayoutRoute
+    '/_authed/gifts/$giftId/edit': {
+      id: '/_authed/gifts/$giftId/edit'
+      path: '/edit'
+      fullPath: '/gifts/$giftId/edit'
+      preLoaderRoute: typeof AuthedGiftsGiftIdEditRouteImport
+      parentRoute: typeof AuthedGiftsGiftIdRouteRoute
     }
-    '/_authed/settings/_layout/relationship-types': {
-      id: '/_authed/settings/_layout/relationship-types'
-      path: '/relationship-types'
-      fullPath: '/settings/relationship-types'
-      preLoaderRoute: typeof AuthedSettingsLayoutRelationshipTypesRouteImport
-      parentRoute: typeof AuthedSettingsLayoutRoute
+    '/_authed/journal/$entryId/': {
+      id: '/_authed/journal/$entryId/'
+      path: '/'
+      fullPath: '/journal/$entryId/'
+      preLoaderRoute: typeof AuthedJournalEntryIdIndexRouteImport
+      parentRoute: typeof AuthedJournalEntryIdRouteRoute
     }
-    '/_authed/settings/_layout/people-labels': {
-      id: '/_authed/settings/_layout/people-labels'
-      path: '/people-labels'
-      fullPath: '/settings/people-labels'
-      preLoaderRoute: typeof AuthedSettingsLayoutPeopleLabelsRouteImport
-      parentRoute: typeof AuthedSettingsLayoutRoute
+    '/_authed/journal/$entryId/edit': {
+      id: '/_authed/journal/$entryId/edit'
+      path: '/edit'
+      fullPath: '/journal/$entryId/edit'
+      preLoaderRoute: typeof AuthedJournalEntryIdEditRouteImport
+      parentRoute: typeof AuthedJournalEntryIdRouteRoute
     }
-    '/_authed/settings/_layout/labels': {
-      id: '/_authed/settings/_layout/labels'
-      path: '/labels'
-      fullPath: '/settings/labels'
-      preLoaderRoute: typeof AuthedSettingsLayoutLabelsRouteImport
-      parentRoute: typeof AuthedSettingsLayoutRoute
+    '/_authed/people/$personId/edit': {
+      id: '/_authed/people/$personId/edit'
+      path: '/edit'
+      fullPath: '/people/$personId/edit'
+      preLoaderRoute: typeof AuthedPeoplePersonIdEditRouteImport
+      parentRoute: typeof AuthedPeoplePersonIdRoute
     }
-    '/_authed/settings/_layout/journal-labels': {
-      id: '/_authed/settings/_layout/journal-labels'
-      path: '/journal-labels'
-      fullPath: '/settings/journal-labels'
-      preLoaderRoute: typeof AuthedSettingsLayoutJournalLabelsRouteImport
+    '/_authed/reminders/$reminderId/edit': {
+      id: '/_authed/reminders/$reminderId/edit'
+      path: '/edit'
+      fullPath: '/reminders/$reminderId/edit'
+      preLoaderRoute: typeof AuthedRemindersReminderIdEditRouteImport
+      parentRoute: typeof AuthedRemindersReminderIdRoute
+    }
+    '/_authed/settings/_layout/appearance': {
+      id: '/_authed/settings/_layout/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthedSettingsLayoutAppearanceRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
     '/_authed/settings/_layout/general': {
@@ -686,40 +686,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsLayoutGeneralRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
-    '/_authed/settings/_layout/appearance': {
-      id: '/_authed/settings/_layout/appearance'
-      path: '/appearance'
-      fullPath: '/settings/appearance'
-      preLoaderRoute: typeof AuthedSettingsLayoutAppearanceRouteImport
+    '/_authed/settings/_layout/journal-labels': {
+      id: '/_authed/settings/_layout/journal-labels'
+      path: '/journal-labels'
+      fullPath: '/settings/journal-labels'
+      preLoaderRoute: typeof AuthedSettingsLayoutJournalLabelsRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
-    '/_authed/reminders/$reminderId/edit': {
-      id: '/_authed/reminders/$reminderId/edit'
-      path: '/edit'
-      fullPath: '/reminders/$reminderId/edit'
-      preLoaderRoute: typeof AuthedRemindersReminderIdEditRouteImport
-      parentRoute: typeof AuthedRemindersReminderIdRoute
+    '/_authed/settings/_layout/labels': {
+      id: '/_authed/settings/_layout/labels'
+      path: '/labels'
+      fullPath: '/settings/labels'
+      preLoaderRoute: typeof AuthedSettingsLayoutLabelsRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
     }
-    '/_authed/people/$personId/edit': {
-      id: '/_authed/people/$personId/edit'
-      path: '/edit'
-      fullPath: '/people/$personId/edit'
-      preLoaderRoute: typeof AuthedPeoplePersonIdEditRouteImport
-      parentRoute: typeof AuthedPeoplePersonIdRoute
+    '/_authed/settings/_layout/people-labels': {
+      id: '/_authed/settings/_layout/people-labels'
+      path: '/people-labels'
+      fullPath: '/settings/people-labels'
+      preLoaderRoute: typeof AuthedSettingsLayoutPeopleLabelsRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
     }
-    '/_authed/journal/$entryId/edit': {
-      id: '/_authed/journal/$entryId/edit'
-      path: '/edit'
-      fullPath: '/journal/$entryId/edit'
-      preLoaderRoute: typeof AuthedJournalEntryIdEditRouteImport
-      parentRoute: typeof AuthedJournalEntryIdRouteRoute
+    '/_authed/settings/_layout/relationship-types': {
+      id: '/_authed/settings/_layout/relationship-types'
+      path: '/relationship-types'
+      fullPath: '/settings/relationship-types'
+      preLoaderRoute: typeof AuthedSettingsLayoutRelationshipTypesRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
     }
-    '/_authed/gifts/$giftId/edit': {
-      id: '/_authed/gifts/$giftId/edit'
-      path: '/edit'
-      fullPath: '/gifts/$giftId/edit'
-      preLoaderRoute: typeof AuthedGiftsGiftIdEditRouteImport
-      parentRoute: typeof AuthedGiftsGiftIdRouteRoute
+    '/_authed/settings/_layout/security': {
+      id: '/_authed/settings/_layout/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AuthedSettingsLayoutSecurityRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
     }
   }
 }

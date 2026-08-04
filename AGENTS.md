@@ -8,48 +8,53 @@ Before substantial work:
 - Multiple matches: prefer the most specific local skill for the package or concern you are changing; load additional skills only when the task spans multiple packages or concerns.
 <!-- intent-skills:end -->
 
-This file provides guidance to AI when working with code in this repository.
+Read before starting:
+- `README.md` — features, setup, env vars, `make` targets, project layout.
+- `docs/code-standards.md` — Go/React conventions, bun ORM and repo patterns.
 
-See `README.md` for full stack details, auth contract, frontend conventions, known gotchas, and development workflow.
+Stack versions live in `go.mod` and `web/package.json`. Read them; do not trust a copy.
+
+This file records only what those sources do **not** say: invariants that span files, and edges that have already caused bugs.
 
 ---
 
 ## Code Style
 
-- **No pointless comments**: Only add comments when explaining non-obvious "why" decisions — never describe what the code does.
+- **No pointless comments**: comment only non-obvious *why*. Never describe what the code does.
 
-### Auth contract
+### Commit messages
 
-- Authentication uses the `kith_session` **HttpOnly session cookie** set by `POST /v1/auth/login`.
-- All mutating API calls (`POST/PUT/PATCH/DELETE /v1/*`) must include the header `X-Requested-With: kith-spa` — this is the CSRF protection mechanism (a custom header cross-origin attackers cannot set without a preflight the server rejects).
-- `TOKEN_AUTH` is **server-side only** — never expose it in any frontend bundle or `.env` file.
-- `GET /v1/auth/me` returns `{user}` or 401 — used to initialise auth state on load.
+- Conventional Commits: `<type>(<scope>): <description>`.
+- Title ≤50 chars (max 72), imperative, no period. Summarize the objective — no file, variable, or line-count details.
+- Body: max 3 bullets, <15 words each, explaining *why*. No prose.
 
-### Frontend notes
+## Auth contract
 
-- **Path alias**: use `#/` (not `@/`) — mapped in `package.json` `imports` as `"#/*": "./src/*"`.
-- **Theme system**: 6 user-selectable themes applied via `html[data-theme]` attribute (quiet-ink, warm-album, bold-press, nightdesk, softclay, ledger). Nightdesk is a dark *theme variant*, not a `.dark` mode — still NO `.dark` class blocks anywhere. New UI must use semantic token classes (bg-panel, text-ink, text-sub, border-line, border-bw, status triads, bg-chip, etc.) instead of hardcoded Tailwind palette classes (zinc, gray, indigo, etc.).
-- **UI components**: `pnpm dlx shadcn add` is blocked by the Biome hook in this environment. Fetch registry JSON from `https://neobrutalism.dev/r/<name>.json` and write the component file to `src/components/ui/` manually.
-- **Neobrutalism tokens**: `--main`, `--main-foreground`, `--secondary-background`, `--border`, `--shadow` (`= 4px 4px 0 0 var(--border)`) — deprecated; use semantic tokens instead.
-- **Sentry**: server-side only — no `@sentry/react` or browser Sentry SDK in the frontend bundle.
+- Session is the `kith_session` **HttpOnly cookie** set by `POST /v1/auth/login`.
+- Every mutating call (`POST/PUT/PATCH/DELETE /v1/*`) must send `X-Requested-With: kith-spa`. This *is* the CSRF defence — a custom header cross-origin attackers cannot set without a preflight the server rejects. Applies to `FormData`/multipart requests too (avatar, gift images), which is the case most often forgotten.
+- `GET /v1/auth/me` returns `{user}` or 401 — initialises auth state on load.
+- `TOKEN_AUTH` is **server-side only**. Never reference it in frontend code or `web/.env*`.
 
-### Known gotchas
+## Frontend
 
-- **Deep-link refresh**: the Go catch-all in `spa.go` returns `index.html` for all non-API GET paths — required for CSR routing.
-- **SPA embed**: `internal/web/spa/public/` is baked into the binary at compile time; changes to `web/src/` require `make web` + recompile.
-- **`placeholder.txt`**: must stay in `internal/web/spa/public/` so `//go:embed all:public` compiles on a fresh checkout.
-- **FormData CSRF**: multipart form endpoints (avatar upload) use `FormData`; the `X-Requested-With: kith-spa` header must still be included.
-- **Theme system consistency**: The FOUC guard in `web/index.html` hardcodes the theme allow-list — it must stay in sync with the `THEMES` array in `web/src/lib/theme.ts`, the `theme` zod enum in `web/src/schemas/settings.ts`, and `validThemes` in `internal/settings/service.go`. Drift between these four sources causes silent enum validation failures.
+- **Path alias**: `#/`, not `@/` — mapped in `web/package.json` `imports` (`"#/*": "./src/*"`).
+- **Semantic tokens only**: style with the token classes defined in `web/src/styles.css` (`bg-panel`, `text-ink`, `text-sub`, `border-line`, `border-bw`, `bg-chip`, status triads such as `--success-bg/-fg/-line`). Never hardcode Tailwind palette classes (`zinc`, `gray`, `indigo`, …) — they ignore the active theme.
+- **Themes are not a dark mode**: 6 themes apply via `html[data-theme]`. `nightdesk` is a dark *theme variant*, so there is no `.dark` class anywhere — do not add one.
+- **Form controls**: interactive fields (input, textarea, select trigger, checkbox, radio, switch) use `border-field-bw border-field-line`, never `border-bw border-line` — `--field-line` is tuned to ~3:1 against `--field` so fields stay visible, and `--field-bw` stays 1px in softclay where `--bw` is 0. `border-line` remains correct for cards, dividers, and containers.
+- **Dead neobrutalism classes**: the old `--main`, `--main-foreground`, and `--secondary-background` tokens were removed from `styles.css`. Classes like `bg-secondary-background` and `border-main` still linger in a few components (e.g. `web/src/features/people/avatar-uploader.tsx`) and resolve to nothing. Replace them with semantic tokens when touching that code; never add new ones.
+- **New UI components**: `web/components.json` is a standard shadcn config (new-york, zinc, `#/` aliases). Prefer the local `shadcn` skill. If a CLI add is blocked in this environment, write the file into `web/src/components/ui/` by hand — then convert palette classes to semantic tokens before committing.
+- **No browser Sentry**: `sentry-go` is server-side only. Do not add `@sentry/react` or any browser Sentry SDK to the frontend bundle.
 
-## Stack
+## Known gotchas
 
-| Layer    | Technology                                             |
-|----------|--------------------------------------------------------|
-| Language | Go 1.26, `CGO_ENABLED=0`                               |
-| HTTP     | Echo v5                                                |
-| Database | SQLite (modernc.org/sqlite — pure Go)                  |
-| Frontend | React 19, TanStack Router/Query/Table/Form             |
-| UI       | shadcn/ui registry + Tailwind v4                       |
-| Build    | Vite 6, pnpm, Biome (lint/format)                      |
-| Auth     | Argon2id password hash, signed HttpOnly cookies + CSRF |
-| Search   | SQLite FTS5                                            |
+- **Settings enums are duplicated across Go and TS.** Adding a theme, nav layout, or search scope means editing every member of its sync set, or zod/Go validation fails silently. The authoritative lists are the comments beside each `ErrInvalid*` sentinel in `internal/settings/service.go` — read them before editing. `theme` has a fourth site the others lack: the FOUC guard in `web/index.html` hardcodes the allow-list alongside `THEMES` in `web/src/lib/theme.ts` and `validThemes` in `internal/settings/service.go`.
+- **SPA is embedded at compile time.** `//go:embed all:public` in `internal/api/spa/spa.go` bakes in `internal/api/spa/public/`. Changes under `web/src/` need `make web` **and** a Go rebuild before they appear in the binary.
+- **`internal/api/spa/public/.gitignore` must stay tracked.** `.gitignore` ignores the directory contents but whitelists this one file, so `//go:embed` still finds a non-empty dir on a fresh checkout. Deleting it breaks compilation for everyone.
+- **CSP is hardcoded in Go.** `setIndexHeaders` in `internal/api/spa/spa.go` sends `default-src 'self'; script-src 'self'; connect-src 'self'` (plus `img-src` `data:`/`blob:`). Any call to an external host, CDN script, or remote font from the SPA is blocked at runtime with nothing failing at build time. Widening the policy is a deliberate server-side change.
+- **Deep-link refresh depends on the catch-all.** `spaFallback` returns `index.html` for every non-API GET; it explicitly excludes `/health`, `/v1/*`, and `/assets/*` so those still 404 naturally. Mount it last, after API and health routes.
+
+## Before completing any task
+
+- [ ] `make lint` passes — runs `lint-go` (golangci-lint), `lint-biome`, and `lint-tsc`.
+- [ ] Errors are handled, not swallowed.
+- [ ] Tests written and passing: `make tests` (Go, `-race`, integration tag) or `make test-coverage`.

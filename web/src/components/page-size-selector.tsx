@@ -22,7 +22,7 @@ export function PageSizeSelector({
 				id="page-size-select"
 				value={value}
 				onChange={(e) => onChange(Number(e.target.value))}
-				className="h-8 border-bw border-line rounded-base bg-field px-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ring"
+				className="h-8 border-field-bw border-field-line rounded-base bg-field px-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ring"
 			>
 				{PAGE_SIZE_OPTIONS.map((n) => (
 					<option key={n} value={n}>

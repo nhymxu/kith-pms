@@ -176,7 +176,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 						<div>
 							<Label>Type</Label>
 							<select
-								className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm"
+								className="w-full h-10 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 								value={typeId}
 								onChange={(e) => setTypeId(Number(e.target.value))}
 							>
@@ -231,7 +231,7 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 											value={personSearch}
 											onChange={(e) => setPersonSearch(e.target.value)}
 											placeholder="Search by name…"
-											className="h-9 w-full border-bw border-line rounded-md bg-field pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+											className="h-9 w-full border-field-bw border-field-line rounded-md bg-field pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 										/>
 									</div>
 									{personResults?.items && personResults.items.length > 0 && (

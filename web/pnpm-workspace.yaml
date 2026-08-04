@@ -1,4 +1,8 @@
 packages: []
+# Supply-chain cutoff shared with the npm cooldown in .github/dependabot.yml.
+# pnpm 11 applies 1440 by default; pinning it keeps older pnpm and Dependabot's
+# own resolver on the same cutoff instead of a per-version default.
+minimumReleaseAge: 1440
 allowBuilds:
   esbuild: true
   lightningcss: true

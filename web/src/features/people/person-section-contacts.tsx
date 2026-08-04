@@ -61,7 +61,7 @@ function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
 	return (
 		<div className="flex flex-wrap gap-2 items-center border-bw border-line rounded-md p-2 bg-muted">
 			<select
-				className="h-8 border-bw border-line rounded-md bg-field px-2 text-sm"
+				className="h-8 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 				value={type}
 				onChange={(e) => setType(e.target.value)}
 			>

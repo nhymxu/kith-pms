@@ -61,7 +61,7 @@ export function GraphControls({
 					<select
 						value={activeGroup ?? ""}
 						onChange={(e) => onGroupChange(e.target.value || null)}
-						className="h-7 rounded-base border-bw border-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
+						className="h-7 rounded-base border-field-bw border-field-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
 					>
 						<option value="">Any</option>
 						{groups.map((g) => (
@@ -80,7 +80,7 @@ export function GraphControls({
 					<select
 						value={activeRelType ?? ""}
 						onChange={(e) => onRelTypeChange(e.target.value || null)}
-						className="h-7 rounded-base border-bw border-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
+						className="h-7 rounded-base border-field-bw border-field-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
 					>
 						<option value="">Any</option>
 						{relTypes.map((t) => (

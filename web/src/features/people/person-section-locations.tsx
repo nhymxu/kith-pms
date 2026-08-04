@@ -43,7 +43,7 @@ function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
 		<div className="border-bw border-line rounded-md p-3 bg-muted space-y-2">
 			<div className="flex gap-2 items-center">
 				<select
-					className="h-8 border-bw border-line rounded-md bg-field px-2 text-sm"
+					className="h-8 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 					value={type}
 					onChange={(e) => setType(e.target.value)}
 				>

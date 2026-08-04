@@ -204,7 +204,7 @@ function JournalFormInner({
 									value={searchQ}
 									onChange={(e) => setSearchQ(e.target.value)}
 									placeholder="Search people to add…"
-									className="h-9 w-full border-bw border-line rounded-md bg-field px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+									className="h-9 w-full border-field-bw border-field-line rounded-md bg-field px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 								/>
 								{unselected.length > 0 && (
 									<div className="flex flex-wrap gap-1 pt-1">

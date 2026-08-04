@@ -328,7 +328,7 @@ function GeneralSettingsPage() {
 								setPrefs((p) => ({ ...p, timezone: e.target.value }))
 							}
 							placeholder="e.g. Asia/Saigon"
-							className="h-9 w-full border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+							className="h-9 w-full border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
 						<datalist id="tz-list">
 							{COMMON_TIMEZONES.map((tz) => (
@@ -377,7 +377,7 @@ function GeneralSettingsPage() {
 							onChange={(e) =>
 								setRetentionDays(Math.max(0, parseInt(e.target.value, 10) || 0))
 							}
-							className="h-9 w-32 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+							className="h-9 w-32 border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
 						<p className="text-[11px] text-sub">0 = keep forever (disabled)</p>
 					</div>

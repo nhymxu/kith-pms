@@ -88,7 +88,7 @@ export function ConnectMembersDialog({
 							<select
 								value={typeId}
 								onChange={(e) => setTypeId(e.target.value)}
-								className="w-full h-10 border-bw border-line rounded-md bg-field px-2 text-sm"
+								className="w-full h-10 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 							>
 								<option value="">Select…</option>
 								{typesQuery.data?.map((t) => (

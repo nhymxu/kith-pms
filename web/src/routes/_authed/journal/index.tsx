@@ -127,7 +127,7 @@ function JournalPage() {
 								},
 							})
 						}
-						className="h-9 border-bw border-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border-field-bw border-field-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				<div className="space-y-1">
@@ -151,7 +151,7 @@ function JournalPage() {
 								},
 							})
 						}
-						className="h-9 border-bw border-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 border-field-bw border-field-line rounded-md bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 				{(search.from_date || search.to_date) && (

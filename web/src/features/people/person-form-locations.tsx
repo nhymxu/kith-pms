@@ -57,7 +57,7 @@ export function PersonFormLocations({ value, onChange }: Props) {
 				>
 					<div className="flex items-center justify-between">
 						<select
-							className="h-9 border-bw border-line rounded-md bg-field px-2 text-sm font-base"
+							className="h-9 border-field-bw border-field-line rounded-md bg-field px-2 text-sm font-base"
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>

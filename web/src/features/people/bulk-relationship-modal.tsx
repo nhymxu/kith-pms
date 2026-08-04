@@ -196,7 +196,7 @@ export function BulkRelationshipModal({
 							<select
 								value={selectedTypeId}
 								onChange={(e) => setSelectedTypeId(e.target.value)}
-								className="w-full h-9 border-bw border-line rounded-md bg-field px-2 text-sm"
+								className="w-full h-9 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 							>
 								<option value="">Select type…</option>
 								{types?.map((t) => (
@@ -256,7 +256,7 @@ export function BulkRelationshipModal({
 									value={labelAddAllId}
 									onChange={(e) => setLabelAddAllId(e.target.value)}
 									disabled={addAllWithLabelMutation.isPending}
-									className="flex-1 h-8 border-bw border-line rounded-md bg-field px-2 text-xs"
+									className="flex-1 h-8 border-field-bw border-field-line rounded-md bg-field px-2 text-xs"
 								>
 									<option value="">Add all with label…</option>
 									{labels.map((l) => (

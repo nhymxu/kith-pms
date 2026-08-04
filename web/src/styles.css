@@ -26,6 +26,8 @@
   /* Canonical lines */
   --line: #e4e4e7;
   --line-soft: #f4f4f5;
+  /* Form-control border: ~3:1 against --field so inputs read as inputs */
+  --field-line: #94949e;
 
   /* Canonical accent */
   --accent: #4f46e5;
@@ -59,6 +61,8 @@
   /* Structural */
   --radius: 0.375rem;
   --bw: 1px;
+  /* Fields keep a visible border even in themes where --bw is 0 */
+  --field-bw: 1px;
   --shadow: none;
   --shadow-sm: none;
   --reverse-shadow: none;
@@ -104,6 +108,7 @@ html[data-theme='warm-album'] {
   --sub: #857c6c;
   --line: #e3dcc9;
   --line-soft: #efe9da;
+  --field-line: #979184;
   --accent: #33604a;
   --accent-foreground: #ffffff;
   --accent-text: #2c5642;
@@ -143,6 +148,7 @@ html[data-theme='bold-press'] {
   --sub: #3f3f46;
   --line: #18181b;
   --line-soft: #18181b;
+  --field-line: #18181b;
   --accent: #a388ee;
   --accent-foreground: #18181b;
   --accent-text: #6d4fd0;
@@ -166,6 +172,7 @@ html[data-theme='bold-press'] {
   --chart-4: #ff9f6b;
   --radius: 10px;
   --bw: 2px;
+  --field-bw: 2px;
   --shadow: 4px 4px 0 0 #18181b;
   --shadow-sm: 2px 2px 0 0 #18181b;
   --font-display: var(--font-sans);
@@ -182,6 +189,7 @@ html[data-theme='nightdesk'] {
   --sub: #8b91a3;
   --line: #262c3a;
   --line-soft: #1f2532;
+  --field-line: #5b6377;
   --accent: #e3ae4f;
   --accent-foreground: #12151c;
   --accent-text: #e6b968;
@@ -221,6 +229,7 @@ html[data-theme='softclay'] {
   --sub: #7a7f8f;
   --line: #dfe3ee;
   --line-soft: #eaedf4;
+  --field-line: #848da6;
   --accent: #5b6ee8;
   --accent-foreground: #ffffff;
   --accent-text: #4655d0;
@@ -262,6 +271,7 @@ html[data-theme='ledger'] {
   --sub: #57574f;
   --line: #d6d6d0;
   --line-soft: #e8e8e3;
+  --field-line: #8f8f88;
   --accent: #0f766e;
   --accent-foreground: #ffffff;
   --accent-text: #0f766e;
@@ -320,6 +330,7 @@ html[data-theme='ledger'] {
   --color-sub: var(--sub);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
+  --color-field-line: var(--field-line);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-text: var(--accent-text);
@@ -361,6 +372,10 @@ html[data-theme='ledger'] {
 
 @utility border-bw {
   border-width: var(--bw);
+}
+
+@utility border-field-bw {
+  border-width: var(--field-bw);
 }
 
 @utility font-display {

@@ -108,7 +108,7 @@ function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
 								submit();
 							}
 						}}
-						className="h-8 w-full border-bw border-line rounded-md bg-field px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-8 w-full border-field-bw border-field-line rounded-md bg-field px-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 					<button
 						type="button"

@@ -18,7 +18,7 @@ function SearchButton() {
 			onClick={() => {
 				window.dispatchEvent(new CustomEvent("kith:open-command-palette"));
 			}}
-			className="inline-flex items-center gap-2 h-9 px-2.5 sm:px-3 sm:w-[200px] lg:w-[240px] rounded-md border-bw border-line bg-field text-sub hover:border-sub transition-colors shrink-0"
+			className="inline-flex items-center gap-2 h-9 px-2.5 sm:px-3 sm:w-[200px] lg:w-[240px] rounded-md border-field-bw border-field-line bg-field text-sub hover:border-sub transition-colors shrink-0"
 			aria-label="Search people, notes, gifts"
 		>
 			<Search className="size-3.5 shrink-0" />

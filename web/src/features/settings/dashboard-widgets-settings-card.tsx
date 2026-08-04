@@ -78,7 +78,7 @@ export function DashboardWidgetsSettingsCard({
 						onChange={(e) =>
 							setFavoritesCount(clamp(parseInt(e.target.value, 10)))
 						}
-						className="h-9 w-24 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 w-24 border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 
@@ -92,7 +92,7 @@ export function DashboardWidgetsSettingsCard({
 						onChange={(e) =>
 							setLastContactCount(clamp(parseInt(e.target.value, 10)))
 						}
-						className="h-9 w-24 border-bw border-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
+						className="h-9 w-24 border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 					/>
 				</div>
 

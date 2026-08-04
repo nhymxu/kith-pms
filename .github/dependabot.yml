@@ -13,7 +13,10 @@ updates:
     directory: /web
     schedule:
       interval: weekly
-    # Delay PR creation for a newly released dependency by the specified time match with pnpm
+    # Mirrors minimumReleaseAge (1440 min) in web/pnpm-workspace.yaml, so a
+    # proposed direct dependency has already cleared pnpm's cutoff when CI
+    # installs it. Transitive versions are resolved by pnpm, not Dependabot —
+    # they stay covered only while the lockfile is written by pnpm >= 10.16.
     cooldown:
       default-days: 1
     groups:

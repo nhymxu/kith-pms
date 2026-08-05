@@ -59,9 +59,11 @@ func TestParseDataURL(t *testing.T) {
 		t.Error("expected error for invalid base64")
 	}
 
-	// Oversized payload (>6.7 MB encoded)
+	// Oversized payload — state the cap explicitly instead of depending on the
+	// configured default, which would make this vacuous whenever the default
+	// grows past the payload size.
 	oversized := "data:image/jpeg;base64," + strings.Repeat("A", 7*1024*1024)
-	if _, _, err := parseDataURL(oversized); err == nil {
+	if _, _, err := parseDataURLLimit(oversized, 5*1024*1024); err == nil {
 		t.Error("expected error for oversized data URL")
 	}
 }

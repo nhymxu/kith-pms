@@ -277,7 +277,7 @@ kith-pms/
 - **repo.go**: Key/value store queries (GetAll, Set) for user_setting table with JSON marshaling for complex types (search_scope array)
 
 ### `internal/files` — File storage service
-- **service.go**: LocalFileService for avatar uploads and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 5MB); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type to `documents/<personID>/` (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic numbers, size limits, path traversal prevention, atomic writes)
+- **service.go**: LocalFileService for avatar uploads and document storage; `SaveAvatar(personID, file)` handles multipart upload (JPEG/PNG/GIF/WebP, 32MB via `MAX_UPLOAD_SIZE_MB`); `SaveAvatarBytes(personID, data, mimeType)` saves raw bytes for Monica import; `SaveDocument(personID, data, originalName)` stores any file type to `documents/<personID>/` (no MIME allowlist, 50MB limit); all methods include security checks (MIME validation via magic numbers, size limits, path traversal prevention, atomic writes)
 - **service_test.go**: File service unit tests (avatar uploads, document storage, path traversal prevention)
 
 ### `internal/metrics` — Prometheus metrics & observability
@@ -285,7 +285,7 @@ kith-pms/
 - **metrics_test.go**: Unit tests for route-template label cardinality, unknown route handling, scrape format validation
 
 ### `internal/monica` — Monica PRM data import
-- **parser.go**: Unmarshals Monica v4 JSON export format (array-of-groups wire format: `data:[{type, count, values:[]}]`) into typed structs; parses `account.data[type="photo"]` into UUID→dataURL map; extracts nested `properties.avatar.avatar_photo` UUID for contact avatars; decodes documents with embedded base64 dataURLs (5MB limit for avatars, 50MB for documents via `parseDataURLLimit`); date normalization to `YYYY-MM-DD`; supports account-level documents (reports as skipped in dry-run)
+- **parser.go**: Unmarshals Monica v4 JSON export format (array-of-groups wire format: `data:[{type, count, values:[]}]`) into typed structs; parses `account.data[type="photo"]` into UUID→dataURL map; extracts nested `properties.avatar.avatar_photo` UUID for contact avatars; decodes documents with embedded base64 dataURLs (32MB limit for avatars via `MAX_UPLOAD_SIZE_MB`, 50MB for documents via `parseDataURLLimit`); date normalization to `YYYY-MM-DD`; supports account-level documents (reports as skipped in dry-run)
 - **mapper.go**: Pure-function mapping from Monica domain types to kith-pms domain types (Person, ContactInfo, Location, Activity, Reminder, ImportantDate); includes `AvatarDataURL` in `ImportRecord` for downstream avatar processing; includes `MDocument` list for document storage with filename preservation
 - **mapper_test.go**: Unit tests for edge cases (birthdate year handling, contact type classification, name assembly, tag deduplication, document import coverage, array-of-groups parsing)
 

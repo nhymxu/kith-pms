@@ -410,11 +410,12 @@ TanStack Router normalizes the URL bar with schema-defaulted search params befor
 
 ## File Storage Patterns
 
-- **Avatar Storage**: `data/avatars/` with flat single-file scheme per person: `<personID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit; each person has exactly one avatar, new uploads replace old)
-- **Gift Image Storage**: `data/gifts/` with filename pattern `<giftID>.<ext>` (JPEG, PNG, GIF, WebP; 5MB limit)
+- **Avatar Storage**: `data/avatars/` with flat single-file scheme per person: `<personID>.<ext>` (JPEG, PNG, GIF, WebP; 32MB limit via `MAX_UPLOAD_SIZE_MB`; each person has exactly one avatar, new uploads replace old; on a format change `people.Service.UploadAvatar` deletes the previous file post-commit)
+- **Gift Image Storage**: `data/gifts/` with filename pattern `<giftID>.<ext>` (JPEG, PNG, GIF, WebP; 32MB limit via `MAX_UPLOAD_SIZE_MB`; HEIC files converted to JPEG on client before upload)
 - **Document Storage**: `data/documents/<personID>/` with original filename preserved (any file type; 50MB per file)
 - All storage paths are configurable via environment variables (`AVATAR_STORAGE_PATH`, `GIFT_STORAGE_PATH`)
 - MIME type detection at serve-time (no storage in DB); path traversal prevention in all methods
+- **Image Retrieval Caching**: Avatar and gift images now use `Cache-Control: private, no-cache` with `ETag` for efficient 304 revalidation instead of 24-hour public caching
 
 ## Testing
 
@@ -554,12 +555,13 @@ Apply this pattern consistently across all paginated list views (people, journal
 For any image upload with user-facing crop/resize UI (avatars, gift images, etc.):
 
 1. **Crop Dialog Component**: `web/src/components/image-crop-dialog.tsx` wraps `react-easy-crop` with fixed aspect ratio + pan/zoom controls
-2. **Crop Utility**: `web/src/lib/crop-image.ts` exports `cropImageToBlob(imageSrc, cropArea, aspect)` and `blobToFile(blob, filename)` helpers
+2. **Crop Utility**: `web/src/lib/crop-image.ts` exports `cropImageToBlob(imageSrc, cropArea, aspect)` and `blobToFile(blob, filename)` helpers; encodes to JPEG at configurable quality (`IMAGE_JPEG_QUALITY`) with max edge scaling (`IMAGE_MAX_EDGE_PX`)
 3. **Upload Handler**: Before `POST /v1/people/:id/avatar`, open dialog; user confirms crop; convert blob to file; upload
 4. **Constraints Definition**: Store per-domain constraints (aspect ratio, size/MIME limits) in focused modules:
-   - Avatar: 1:1 aspect, 5MB limit, JPEG/PNG/GIF/WebP only
-   - Gift images: 4:3 aspect, 5MB limit, JPEG/PNG/GIF/WebP only (via `gift-image-constraints.ts`)
-5. **Server-Side**: Crop happens client-side only; server validates final file size, MIME, and stores at flat path (no random prefix for avatars)
+   - Avatar: 1:1 aspect, 32MB limit via `MAX_UPLOAD_SIZE_MB`, JPEG/PNG/GIF/WebP only
+   - Gift images: 4:3 aspect, 32MB limit via `MAX_UPLOAD_SIZE_MB`, JPEG/PNG/GIF/WebP only (via `gift-image-constraints.ts`)
+5. **HEIC Support**: Client-side conversion via `heic-to/csp` (libheif WASM, ~2.9MB lazy-loaded chunk) converts HEIC→JPEG before crop dialog; applies to all 3 image inputs (avatar, gift create, gift edit)
+6. **Server-Side**: Crop happens client-side only; server validates final file size, MIME, and stores at flat path (no random prefix for avatars)
 
 **Reusable for**: Any image upload requiring user-controlled composition before persistence.
 
@@ -567,24 +569,24 @@ For any image upload with user-facing crop/resize UI (avatars, gift images, etc.
 
 ### Avatar Upload Flow
 1. **Handler** (`internal/api/handler/people.go`):
-   - Limit request body: `http.MaxBytesReader(w, r.Body, 6*1024*1024)` (5MB file + 1MB overhead)
+   - Limit request body: `http.MaxBytesReader(w, r.Body, (config.C.MaxUploadSizeMB*1024*1024)+bufferBytes)` (configurable via `MAX_UPLOAD_SIZE_MB`, default 32MB + 1MB overhead)
    - Extract multipart file: `c.FormFile("avatar")`
    - Delegate to service: `h.Svc.UploadAvatar(ctx, personID, file, header)`
 
 2. **Service** (`internal/people/service.go`):
    - Call FileService to save file (returns relative path)
    - Begin transaction; update person avatar metadata in DB
-   - On success: commit, then delete old avatar file (best-effort)
+   - On success: commit, then delete the previous avatar file when the new path differs (format change); pruning is post-commit so a failed transaction cannot destroy the avatar the DB still references
    - On error: rollback transaction, delete new file
 
 3. **FileService** (`internal/files/service.go`):
-   - Validate file size against limit (5MB)
+   - Validate file size against `MAX_UPLOAD_SIZE_MB` limit (configurable, default 32MB)
    - Read file header (512 bytes) for magic number check via `http.DetectContentType`
    - Validate MIME type (header + detected) against allowlist (JPEG, PNG, GIF, WebP only)
    - Determine file extension from MIME type
    - Write to temp file, sync, rename to final location (atomic write; prevents partial uploads)
    - Return relative path: `{personID}.{ext}`
-   - Note: Flat scheme with no subdirectory, no random prefix, or filename sanitization — each person has exactly one avatar (new uploads replace old)
+   - Note: Flat scheme with no subdirectory, no random prefix, or filename sanitization — each person has exactly one avatar (new uploads replace old via deterministic naming)
 
 ### Gift Image Upload Flow
 - Similar to avatar flow but stored in `GIFT_STORAGE_PATH` (default: `data/gifts`)
@@ -607,16 +609,17 @@ For any image upload with user-facing crop/resize UI (avatars, gift images, etc.
 **Configuration**:
 - Documents stored under `data/` directory (same base as avatars)
 - Separate `documents/` subdirectory per person
-- 50MB per file limit (vs. 5MB for avatars)
+- 50MB per file limit, hardcoded (avatars/gift images instead use `MAX_UPLOAD_SIZE_MB`, default 32MB)
 - No MIME type validation — accepts all file types from trusted Monica imports
 
 ### Security Controls
 - **MIME validation**: Dual-check (HTTP header + magic number) prevents spoofed uploads
-- **Size limit**: 5MB enforced at handler + service layer
+- **Size limit**: Configurable via `MAX_UPLOAD_SIZE_MB` (default 32MB) enforced at handler + service layer
 - **Path traversal prevention**: `filepath.Clean()` + prefix check ensures file stays in base directory
 - **Filename sanitization**: Removes special chars; limits length to prevent filesystem issues
 - **Atomic writes**: Temp file + sync + rename prevents partial/corrupted uploads
 - **Metadata storage**: MIME type, size, upload timestamp stored in DB for audit trail
+- **Stale file cleanup**: Avatar uploads with different formats delete old siblings to prevent orphaning
 
 ### Avatar Retrieval & Deletion
 - **GET /v1/people/:id/avatar**: Validates path, sets Content-Type from DB, caches 24 hours

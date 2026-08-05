@@ -218,13 +218,39 @@ func TestLocalFileService_SaveAvatar_SameExtOverwrite(t *testing.T) {
 	}
 }
 
+// jpegBytes and pngBytes are minimal headers that http.DetectContentType
+// recognises; the tests never decode them.
+var (
+	jpegBytes = []byte{
+		0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 'J', 'F', 'I', 'F', 0x00, 0x01,
+		0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xd9,
+	}
+	pngBytes = []byte{
+		0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a,
+		0x00, 0x00, 0x00, 0x0d, 'I', 'H', 'D', 'R',
+	}
+)
+
 func saveJPEG(t *testing.T, svc *LocalFileService, personID int64, content []byte) string {
+	t.Helper()
+
+	return saveAvatarAs(t, svc, personID, content, "image/jpeg", "photo.jpg")
+}
+
+func saveAvatarAs(
+	t *testing.T,
+	svc *LocalFileService,
+	personID int64,
+	content []byte,
+	mimeType string,
+	filename string,
+) string {
 	t.Helper()
 
 	buf := new(bytes.Buffer)
 	writer := multipart.NewWriter(buf)
 
-	part, err := writer.CreateFormFile("avatar", "photo.jpg")
+	part, err := writer.CreateFormFile("avatar", filename)
 	if err != nil {
 		t.Fatalf("create form file: %v", err)
 	}
@@ -241,7 +267,7 @@ func saveJPEG(t *testing.T, svc *LocalFileService, personID int64, content []byt
 	defer form.RemoveAll()
 
 	fileHeader := form.File["avatar"][0]
-	fileHeader.Header.Set("Content-Type", "image/jpeg")
+	fileHeader.Header.Set("Content-Type", mimeType)
 
 	file, err := fileHeader.Open()
 	if err != nil {
@@ -255,6 +281,31 @@ func saveJPEG(t *testing.T, svc *LocalFileService, personID int64, content []byt
 	}
 
 	return path
+}
+
+// A format change writes a new deterministic name. Pruning the previous file is
+// the caller's job, post-commit (people.Service.UploadAvatar), so that a failed
+// avatar transaction cannot destroy the avatar that is still referenced by the
+// DB. SaveAvatar itself must leave the old file alone.
+func TestLocalFileService_SaveAvatar_FormatChangeLeavesPruningToCaller(t *testing.T) {
+	tempDir := t.TempDir()
+	svc := NewLocalFileService(tempDir)
+
+	if got := saveAvatarAs(t, svc, 7, pngBytes, "image/png", "photo.png"); got != "7.png" {
+		t.Fatalf("first save path = %q, want %q", got, "7.png")
+	}
+
+	if got := saveJPEG(t, svc, 7, jpegBytes); got != "7.jpg" {
+		t.Fatalf("re-upload path = %q, want %q", got, "7.jpg")
+	}
+
+	if _, err := os.Stat(filepath.Join(tempDir, "7.jpg")); err != nil {
+		t.Errorf("expected 7.jpg to exist: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(tempDir, "7.png")); err != nil {
+		t.Errorf("expected 7.png to survive the write so the caller can prune it: %v", err)
+	}
 }
 
 func TestLocalFileService_DeleteAvatar_PathTraversal(t *testing.T) {

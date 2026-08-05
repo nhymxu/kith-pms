@@ -17,6 +17,10 @@ interface ImageCropDialogProps {
 	fileName: string;
 	/** Fixed crop viewport aspect ratio (width / height). */
 	aspect: number;
+	/** Longest edge of the encoded result; from server config. */
+	maxEdgePx: number;
+	/** JPEG quality 1-100; from server config. */
+	quality: number;
 	onCancel: () => void;
 	onCropped: (file: File) => void;
 }
@@ -26,6 +30,8 @@ export function ImageCropDialog({
 	imageSrc,
 	fileName,
 	aspect,
+	maxEdgePx,
+	quality,
 	onCancel,
 	onCropped,
 }: ImageCropDialogProps) {
@@ -40,7 +46,10 @@ export function ImageCropDialog({
 		setIsSaving(true);
 		setError(null);
 		try {
-			const blob = await cropImageToBlob(imageSrc, cropArea);
+			const blob = await cropImageToBlob(imageSrc, cropArea, {
+				maxEdgePx,
+				quality,
+			});
 			onCropped(blobToFile(blob, fileName));
 		} catch {
 			setError("Couldn't crop this image. Try a different file.");
@@ -56,7 +65,7 @@ export function ImageCropDialog({
 					<DialogTitle>Crop image</DialogTitle>
 				</DialogHeader>
 
-				<div className="relative h-[min(70vh,32rem)] bg-secondary-background rounded-md overflow-hidden">
+				<div className="relative h-[min(70vh,32rem)] bg-chip rounded-md overflow-hidden">
 					<Cropper
 						image={imageSrc}
 						crop={crop}

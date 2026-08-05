@@ -2,14 +2,18 @@ package handler_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/nhymxu/kith-pms/internal/api/handler"
+	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 // ---- stub FileService -------------------------------------------------------
@@ -110,6 +114,108 @@ func buildMultipartRequestWithMIME(t *testing.T, fieldName, filename, mimeType s
 	return req
 }
 
+// ---- Get tests --------------------------------------------------------------
+
+// The avatar URL never changes, so freshness depends on revalidation rather than
+// a long max-age; a stale cache would otherwise hide a re-upload for a full day.
+func TestAvatarsGet_ServesETagAndRevalidates(t *testing.T) {
+	db := openTestDB(t)
+	peopleSvc := newPeopleService(db)
+	personID := insertTestPerson(t, db, "Cara")
+
+	baseDir := t.TempDir()
+	filename := fmt.Sprintf("%d.jpg", personID)
+	jpegContent := []byte{0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 'J', 'F', 'I', 'F', 0}
+
+	if err := os.WriteFile(filepath.Join(baseDir, filename), jpegContent, 0o600); err != nil {
+		t.Fatalf("write avatar file: %v", err)
+	}
+
+	if _, err := db.NewUpdate().
+		Table("person").
+		Set("avatar_path = ?", filename).
+		Where("id = ?", personID).
+		Exec(context.Background()); err != nil {
+		t.Fatalf("set avatar_path: %v", err)
+	}
+
+	h := &handler.AvatarsAPI{
+		PeopleSvc:      peopleSvc,
+		FileSvc:        &stubFileService{},
+		AvatarBasePath: baseDir,
+	}
+	pathParams := map[string]string{"id": fmt.Sprintf("%d", personID)}
+
+	e := newTestEcho()
+	rec := execHandler(e, httptest.NewRequest(http.MethodGet, "/", nil), pathParams, h.Get)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	etag := rec.Header().Get("ETag")
+	if etag == "" {
+		t.Fatal("expected an ETag header")
+	}
+
+	if cc := rec.Header().Get("Cache-Control"); !strings.Contains(cc, "no-cache") {
+		t.Errorf("Cache-Control = %q, want it to force revalidation", cc)
+	}
+
+	if ct := rec.Header().Get("Content-Type"); ct != "image/jpeg" {
+		t.Errorf("Content-Type = %q, want image/jpeg", ct)
+	}
+
+	// Same ETag back → 304, no body.
+	condReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	condReq.Header.Set("If-None-Match", etag)
+
+	condRec := execHandler(newTestEcho(), condReq, pathParams, h.Get)
+	if condRec.Code != http.StatusNotModified {
+		t.Errorf("expected 304 for matching If-None-Match, got %d", condRec.Code)
+	}
+
+	if condRec.Body.Len() != 0 {
+		t.Errorf("expected empty body on 304, got %d bytes", condRec.Body.Len())
+	}
+
+	// A stale ETag must still deliver the bytes.
+	staleReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	staleReq.Header.Set("If-None-Match", `"stale"`)
+
+	staleRec := execHandler(newTestEcho(), staleReq, pathParams, h.Get)
+	if staleRec.Code != http.StatusOK {
+		t.Errorf("expected 200 for non-matching If-None-Match, got %d", staleRec.Code)
+	}
+
+	if !bytes.Equal(staleRec.Body.Bytes(), jpegContent) {
+		t.Error("expected full image bytes when the ETag does not match")
+	}
+
+	// Serving via http.ServeContent advertises range support, so pin that it
+	// actually answers a partial request correctly. The gzip middleware is
+	// configured to skip these paths precisely so a 206 stays coherent.
+	rangeReq := httptest.NewRequest(http.MethodGet, "/", nil)
+	rangeReq.Header.Set("Range", "bytes=0-3")
+
+	rangeRec := execHandler(newTestEcho(), rangeReq, pathParams, h.Get)
+	if rangeRec.Code != http.StatusPartialContent {
+		t.Errorf("expected 206 for a range request, got %d", rangeRec.Code)
+	}
+
+	if got := rangeRec.Body.Len(); got != 4 {
+		t.Errorf("expected 4 bytes for bytes=0-3, got %d", got)
+	}
+
+	if cr := rangeRec.Header().Get("Content-Range"); cr == "" {
+		t.Error("expected a Content-Range header on the 206")
+	}
+
+	if rangeRec.Header().Get("Content-Encoding") != "" {
+		t.Error("partial image responses must not be content-encoded")
+	}
+}
+
 // ---- Upload tests -----------------------------------------------------------
 
 func TestAvatarsUpload_HappyPath(t *testing.T) {
@@ -174,7 +280,16 @@ func TestAvatarsUpload_UnsupportedMIME_Returns422(t *testing.T) {
 	}
 }
 
-func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
+func TestAvatarsUpload_OverConfiguredLimit_Rejected(t *testing.T) {
+	// Pin the cap instead of relying on the default, so this keeps testing the
+	// limit behaviour if the default ever changes again.
+	const capMB = 5
+
+	prev := config.C.MaxUploadSizeMB
+	config.C.MaxUploadSizeMB = capMB
+
+	t.Cleanup(func() { config.C.MaxUploadSizeMB = prev })
+
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Charlie")
 	h := &handler.AvatarsAPI{
@@ -183,8 +298,7 @@ func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 		AvatarBasePath: t.TempDir(),
 	}
 
-	// Build a JPEG-typed file that exceeds 5 MB.
-	oversize := make([]byte, 5*1024*1024+1)
+	oversize := make([]byte, capMB*1024*1024+1)
 	oversize[0] = 0xff
 	oversize[1] = 0xd8 // JPEG magic
 
@@ -192,7 +306,7 @@ func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 	e := newTestEcho()
 	rec := execHandler(e, req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.Upload)
 
-	// The handler caps body at 6MB; file.Size check fires at 5MB+1.
+	// Body is capped at cap+1MB; the file.Size check fires first at cap+1 byte.
 	if rec.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("expected 413, got %d", rec.Code)
 	}

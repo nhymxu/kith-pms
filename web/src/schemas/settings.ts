@@ -37,11 +37,13 @@ export const userSettingsSchema = z.object({
 
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
-// GET/PUT /v1/settings return the persisted UserSettings plus this read-only,
-// server-config-derived field — it's not a user preference, so it's kept out
-// of userSettingsSchema (the PUT request body shape).
+// GET/PUT /v1/settings return the persisted UserSettings plus these read-only,
+// server-config-derived fields — they aren't user preferences, so they're kept
+// out of userSettingsSchema (the PUT request body shape).
 export const settingsResponseSchema = userSettingsSchema.extend({
 	max_upload_size_mb: z.number().int().positive(),
+	image_max_edge_px: z.number().int().positive(),
+	image_jpeg_quality: z.number().int().min(1).max(100),
 });
 
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;

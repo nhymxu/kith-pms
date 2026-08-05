@@ -20,10 +20,18 @@ type SettingsAPI struct {
 type settingsResponse struct {
 	settings.UserSettings
 	MaxUploadSizeMB int `json:"max_upload_size_mb"`
+	// Image encode caps the SPA applies when re-encoding cropped uploads.
+	ImageMaxEdgePX   int `json:"image_max_edge_px"`
+	ImageJPEGQuality int `json:"image_jpeg_quality"`
 }
 
 func withServerConfig(s settings.UserSettings) settingsResponse {
-	return settingsResponse{UserSettings: s, MaxUploadSizeMB: int(config.C.EffectiveMaxUploadBytes() / (1024 * 1024))}
+	return settingsResponse{
+		UserSettings:     s,
+		MaxUploadSizeMB:  int(config.C.EffectiveMaxUploadBytes() / (1024 * 1024)),
+		ImageMaxEdgePX:   config.C.EffectiveImageMaxEdgePX(),
+		ImageJPEGQuality: config.C.EffectiveImageJPEGQuality(),
+	}
 }
 
 // Get godoc

@@ -99,8 +99,17 @@ func setIndexHeaders(c *echo.Context) {
 	c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	c.Response().Header().Set(
 		"Content-Security-Policy",
-		// unsafe-inline needed for Tailwind's runtime style injection
+		// unsafe-inline needed for Tailwind's runtime style injection.
+		// worker-src blob: is required by the HEIC decoder (heic-to/csp), which
+		// runs libheif in a worker created from a blob URL. Without it the worker
+		// falls back to default-src 'self' and is blocked, so HEIC uploads fail
+		// at runtime with nothing failing at build time. 'wasm-unsafe-eval' is
+		// deliberately NOT granted — the CSP-safe build does not need it.
 		"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "+
-			"img-src 'self' data: blob:; font-src 'self'; connect-src 'self'",
+			"img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; "+
+			// 'self' is listed explicitly: worker-src overrides default-src
+			// entirely, so omitting it would silently forbid any future
+			// same-origin worker.
+			"worker-src 'self' blob:",
 	)
 }

@@ -10,9 +10,9 @@ import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from "#/endpoints/people";
 import { getSettings } from "#/endpoints/settings";
+import { useImageFilePick } from "#/hooks/use-image-file-pick";
+import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
 import { keys } from "#/query-keys";
-
-const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 interface AvatarUploaderProps {
 	personId: number;
@@ -38,6 +38,16 @@ export function AvatarUploader({
 	});
 	const maxBytes = settings.max_upload_size_mb * 1024 * 1024;
 
+	const {
+		prepare,
+		isConverting,
+		error: pickError,
+		setError: setPickError,
+	} = useImageFilePick({
+		maxBytes,
+		maxSizeMB: settings.max_upload_size_mb,
+	});
+
 	const invalidate = () => {
 		qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
 		qc.invalidateQueries({ queryKey: keys.people.avatar(personId) });
@@ -60,26 +70,32 @@ export function AvatarUploader({
 	});
 
 	const previewRef = useRef<string | null>(null);
-	previewRef.current = preview;
+	const cropSrcRef = useRef<string | null>(null);
+
+	useEffect(() => {
+		previewRef.current = preview;
+		cropSrcRef.current = cropSrc;
+	}, [preview, cropSrc]);
+
+	// Unmounting with the crop dialog open (navigating away without cancelling)
+	// would otherwise leak its object URL until a page reload.
 	useEffect(() => {
 		return () => {
 			if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+			if (cropSrcRef.current) URL.revokeObjectURL(cropSrcRef.current);
 		};
 	}, []);
 
-	function handleFile(file: File) {
-		if (cropSrc) return; // crop dialog already open for a previous pick
+	async function handleFile(file: File) {
+		if (cropSrc || isConverting) return; // a pick is already in flight
 		setClientError(null);
-		if (!ALLOWED_MIME.includes(file.type)) {
-			setClientError("Only JPEG, PNG, GIF, or WebP images are allowed.");
-			return;
-		}
-		if (file.size > maxBytes) {
-			setClientError(`File must be under ${settings.max_upload_size_mb} MB.`);
-			return;
-		}
-		setCropFileName(file.name);
-		setCropSrc(URL.createObjectURL(file));
+		setPickError(null);
+
+		const prepared = await prepare(file);
+		if (!prepared) return;
+
+		setCropFileName(prepared.name);
+		setCropSrc(URL.createObjectURL(prepared));
 	}
 
 	function handleCropCancel() {
@@ -103,7 +119,7 @@ export function AvatarUploader({
 
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
-		if (file) handleFile(file);
+		if (file) void handleFile(file);
 		// Reset so the same file can be re-selected
 		e.target.value = "";
 	}
@@ -111,11 +127,12 @@ export function AvatarUploader({
 	function handleDrop(e: React.DragEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		const file = e.dataTransfer.files?.[0];
-		if (file) handleFile(file);
+		if (file) void handleFile(file);
 	}
 
 	const currentSrc = preview ?? (hasAvatar ? getAvatarUrl(personId) : null);
-	const isPending = uploadMutation.isPending || deleteMutation.isPending;
+	const isPending =
+		uploadMutation.isPending || deleteMutation.isPending || isConverting;
 
 	return (
 		<div className="space-y-3">
@@ -129,7 +146,7 @@ export function AvatarUploader({
 				onKeyDown={(e) =>
 					e.key === "Enter" && showControls && inputRef.current?.click()
 				}
-				className={`w-24 h-24 rounded-md border-bw border-dashed border-line overflow-hidden bg-secondary-background flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-main" : "cursor-default"}`}
+				className={`w-24 h-24 rounded-md border-bw border-dashed border-line overflow-hidden bg-chip flex items-center justify-center transition-colors ${showControls ? "cursor-pointer hover:border-accent" : "cursor-default"}`}
 			>
 				{currentSrc ? (
 					<img
@@ -145,8 +162,9 @@ export function AvatarUploader({
 			<input
 				ref={inputRef}
 				type="file"
-				accept={ALLOWED_MIME.join(",")}
+				accept={FILE_INPUT_ACCEPT}
 				className="hidden"
+				disabled={isPending}
 				onChange={handleChange}
 			/>
 
@@ -160,7 +178,11 @@ export function AvatarUploader({
 						onClick={() => inputRef.current?.click()}
 					>
 						<Upload className="size-3" />
-						{hasAvatar || preview ? "Replace" : "Upload"}
+						{isConverting
+							? "Converting…"
+							: hasAvatar || preview
+								? "Replace"
+								: "Upload"}
 					</Button>
 					{(hasAvatar || preview) && (
 						<Button
@@ -176,10 +198,11 @@ export function AvatarUploader({
 				</div>
 			)}
 
-			{(clientError ?? uploadMutation.error) && (
+			{(pickError ?? clientError ?? uploadMutation.error) && (
 				<Alert variant="destructive">
 					<AlertDescription>
-						{clientError ??
+						{pickError ??
+							clientError ??
 							(uploadMutation.error instanceof Error
 								? uploadMutation.error.message
 								: "Upload failed")}
@@ -193,6 +216,8 @@ export function AvatarUploader({
 					imageSrc={cropSrc}
 					fileName={cropFileName}
 					aspect={1}
+					maxEdgePx={settings.image_max_edge_px}
+					quality={settings.image_jpeg_quality}
 					onCancel={handleCropCancel}
 					onCropped={handleCropped}
 				/>

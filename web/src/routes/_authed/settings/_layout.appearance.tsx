@@ -105,7 +105,9 @@ function AppearancePage() {
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
 				search_scope: ["people", "journal", "gifts", "notes"],
-				max_upload_size_mb: 5,
+				max_upload_size_mb: 32,
+				image_max_edge_px: 1600,
+				image_jpeg_quality: 85,
 			};
 		},
 	});

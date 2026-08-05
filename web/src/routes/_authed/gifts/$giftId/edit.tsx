@@ -17,10 +17,9 @@ import {
 } from "#/endpoints/gifts";
 import { getSettings } from "#/endpoints/settings";
 import { GiftForm } from "#/features/gifts/gift-form";
-import {
-	GIFT_IMAGE_ALLOWED_MIME,
-	GIFT_IMAGE_ASPECT,
-} from "#/features/gifts/gift-image-constraints";
+import { GIFT_IMAGE_ASPECT } from "#/features/gifts/gift-image-constraints";
+import { useImageFilePick } from "#/hooks/use-image-file-pick";
+import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
 import { keys } from "#/query-keys";
 import type { GiftRequest } from "#/schemas/gift";
 
@@ -53,6 +52,16 @@ function EditGiftPage() {
 		queryFn: getSettings,
 	});
 	const maxImageBytes = settings.max_upload_size_mb * 1024 * 1024;
+
+	const {
+		prepare: prepareImage,
+		isConverting,
+		error: pickError,
+		setError: setPickError,
+	} = useImageFilePick({
+		maxBytes: maxImageBytes,
+		maxSizeMB: settings.max_upload_size_mb,
+	});
 
 	const mutation = useMutation({
 		mutationFn: (body: GiftRequest) => updateGift(id, body),
@@ -126,25 +135,31 @@ function EditGiftPage() {
 						<Label>Upload new image</Label>
 						<input
 							type="file"
-							accept={GIFT_IMAGE_ALLOWED_MIME.join(",")}
+							accept={FILE_INPUT_ACCEPT}
+							disabled={isConverting}
 							onChange={(e) => {
 								const file = e.target.files?.[0];
 								e.target.value = "";
-								if (!file || cropSrc) return;
+								if (!file || cropSrc || isConverting) return;
 								setImageError(null);
-								if (!GIFT_IMAGE_ALLOWED_MIME.includes(file.type)) {
-									setImageError(
-										"Only JPEG, PNG, GIF, or WebP images are allowed.",
-									);
-									return;
-								}
-								setCropFileName(file.name);
-								setCropSrc(URL.createObjectURL(file));
+								setPickError(null);
+								void prepareImage(file)
+									.then((prepared) => {
+										if (!prepared) return;
+										setCropFileName(prepared.name);
+										setCropSrc(URL.createObjectURL(prepared));
+									})
+									.catch(() => setImageError("Couldn't read this image."));
 							}}
 							className="text-sm"
 						/>
-						{imageError && (
-							<p className="text-xs text-danger-fg">{imageError}</p>
+						{isConverting && (
+							<p className="text-xs text-sub">Converting image…</p>
+						)}
+						{(pickError ?? imageError) && (
+							<p className="text-xs text-danger-fg">
+								{pickError ?? imageError}
+							</p>
 						)}
 						{uploadImageMutation.isPending && (
 							<p className="text-xs text-sub">Uploading…</p>
@@ -162,6 +177,8 @@ function EditGiftPage() {
 					imageSrc={cropSrc}
 					fileName={cropFileName}
 					aspect={GIFT_IMAGE_ASPECT}
+					maxEdgePx={settings.image_max_edge_px}
+					quality={settings.image_jpeg_quality}
 					onCancel={() => {
 						URL.revokeObjectURL(cropSrc);
 						setCropSrc(null);

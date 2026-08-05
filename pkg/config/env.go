@@ -25,6 +25,8 @@ type Config struct {
 	AvatarStoragePath string `koanf:"AVATAR_STORAGE_PATH"`
 	GiftStoragePath   string `koanf:"GIFT_STORAGE_PATH"`
 	MaxUploadSizeMB   int    `koanf:"MAX_UPLOAD_SIZE_MB"`
+	ImageMaxEdgePX    int    `koanf:"IMAGE_MAX_EDGE_PX"`
+	ImageJPEGQuality  int    `koanf:"IMAGE_JPEG_QUALITY"`
 
 	// Auth
 	SessionSecret   string        `koanf:"SESSION_SECRET" copier:"-"`
@@ -33,16 +35,51 @@ type Config struct {
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
 }
 
+// Fallbacks mirroring configDefaults, for callers that construct config
+// directly without going through Load (e.g. tests building handlers).
+const (
+	defaultMaxUploadSizeMB  = 32
+	defaultImageMaxEdgePX   = 1600
+	defaultImageJPEGQuality = 85
+)
+
 // EffectiveMaxUploadBytes returns the configured avatar/gift image upload cap
-// in bytes, falling back to the 5MB default when unset (e.g. in tests that
+// in bytes, falling back to the default when unset (e.g. in tests that
 // construct handlers directly without calling config.Load).
 func (c *Config) EffectiveMaxUploadBytes() int64 {
 	mb := c.MaxUploadSizeMB
 	if mb <= 0 {
-		mb = 5
+		mb = defaultMaxUploadSizeMB
 	}
 
 	return int64(mb) * 1024 * 1024
+}
+
+// EffectiveImageMaxEdgePX returns the longest-edge cap applied to cropped image
+// uploads by the SPA.
+func (c *Config) EffectiveImageMaxEdgePX() int {
+	if c.ImageMaxEdgePX <= 0 {
+		return defaultImageMaxEdgePX
+	}
+
+	return c.ImageMaxEdgePX
+}
+
+// EffectiveImageJPEGQuality returns the JPEG quality (1-100) the SPA encodes
+// cropped uploads with. Out-of-range values are clamped rather than passed
+// through: canvas.toBlob silently ignores an invalid quality argument, which
+// would produce confusingly large uploads with no visible error.
+func (c *Config) EffectiveImageJPEGQuality() int {
+	q := c.ImageJPEGQuality
+	if q <= 0 {
+		return defaultImageJPEGQuality
+	}
+
+	if q > 100 {
+		return 100
+	}
+
+	return q
 }
 
 func (c *Config) Sanitized() Config {
@@ -72,7 +109,9 @@ var configDefaults = map[string]any{
 	// File Storage
 	"AVATAR_STORAGE_PATH": "data/avatars",
 	"GIFT_STORAGE_PATH":   "data/gifts",
-	"MAX_UPLOAD_SIZE_MB":  5,
+	"MAX_UPLOAD_SIZE_MB":  defaultMaxUploadSizeMB,
+	"IMAGE_MAX_EDGE_PX":   defaultImageMaxEdgePX,
+	"IMAGE_JPEG_QUALITY":  defaultImageJPEGQuality,
 
 	// Auth — SESSION_SECRET must be set in production via environment (≥32 bytes)
 	"SESSION_SECRET":    "",

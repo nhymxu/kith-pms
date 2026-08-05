@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/nhymxu/kith-pms/internal/api/handler"
+	"github.com/nhymxu/kith-pms/pkg/config"
 )
 
 // ---- stub FileService -------------------------------------------------------
@@ -174,7 +175,16 @@ func TestAvatarsUpload_UnsupportedMIME_Returns422(t *testing.T) {
 	}
 }
 
-func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
+func TestAvatarsUpload_OverConfiguredLimit_Rejected(t *testing.T) {
+	// Pin the cap instead of relying on the default, so this keeps testing the
+	// limit behaviour if the default ever changes again.
+	const capMB = 5
+
+	prev := config.C.MaxUploadSizeMB
+	config.C.MaxUploadSizeMB = capMB
+
+	t.Cleanup(func() { config.C.MaxUploadSizeMB = prev })
+
 	db := openTestDB(t)
 	personID := insertTestPerson(t, db, "Charlie")
 	h := &handler.AvatarsAPI{
@@ -183,8 +193,7 @@ func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 		AvatarBasePath: t.TempDir(),
 	}
 
-	// Build a JPEG-typed file that exceeds 5 MB.
-	oversize := make([]byte, 5*1024*1024+1)
+	oversize := make([]byte, capMB*1024*1024+1)
 	oversize[0] = 0xff
 	oversize[1] = 0xd8 // JPEG magic
 
@@ -192,7 +201,7 @@ func TestAvatarsUpload_5MBLimit_Rejected(t *testing.T) {
 	e := newTestEcho()
 	rec := execHandler(e, req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.Upload)
 
-	// The handler caps body at 6MB; file.Size check fires at 5MB+1.
+	// Body is capped at cap+1MB; the file.Size check fires first at cap+1 byte.
 	if rec.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("expected 413, got %d", rec.Code)
 	}

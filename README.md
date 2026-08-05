@@ -9,7 +9,7 @@
 - **Labels** — colour-tagged categories; attach multiple labels to each person
 - **Journal** — activity log with full-text search (SQLite FTS5); link entries to one or more people
 - **Important Dates** — track birthdays, anniversaries, and milestones with "on this day" widget
-- **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP; max 5MB) with automatic display and initials fallback
+- **Avatars** — upload profile pictures (JPEG, PNG, GIF, WebP, HEIC) with crop, automatic display, and initials fallback; HEIC from modern phones is converted in-browser
 - **Relationships** — many-to-many person-to-person links with customizable, optionally-paired types; bulk connect-to-person action; network depth filter (direct/indirect contacts)
 - **Relationship Network** — force-directed graph visualization of your entire contact network (global at `/network`; per-person ego view)
 - **Reminders** — scheduled reminders with due dates, person/date associations, and completion tracking; 7 recurrence types including birthday reminders
@@ -73,6 +73,9 @@ All configuration is via environment variables or a `.env` file in the working d
 | `APP_PASSWORD_HASH`   | —                | No       | Pre-hashed Argon2id password for Docker/headless setup    |
 | `AVATAR_STORAGE_PATH` | `data/avatars`   | No       | Directory for storing avatar files                        |
 | `GIFT_STORAGE_PATH`   | `data/gifts`     | No       | Directory for storing gift image files                    |
+| `MAX_UPLOAD_SIZE_MB`  | `32`             | No       | Max size of an uploaded avatar or gift image              |
+| `IMAGE_MAX_EDGE_PX`   | `1600`           | No       | Longest edge of a cropped upload; larger images are scaled |
+| `IMAGE_JPEG_QUALITY`  | `85`             | No       | JPEG quality (1-100) used to encode cropped uploads       |
 | `BEHIND_TLS`          | `false`          | No       | Set `true` when serving behind TLS (marks cookies Secure) |
 | `SESSION_LIFETIME`    | `720h` (30 days) | No       | How long a login session stays valid                      |
 

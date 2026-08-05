@@ -106,6 +106,9 @@ Result unmarshals to global `config.C` (Config struct). Load via `config.Load()`
 | `SENTRY.DSN`          | string   | *(empty)*        | Sentry DSN; omit to disable error reporting             |
 | `AVATAR_STORAGE_PATH` | string   | `data/avatars`   | Directory for storing avatar files                      |
 | `GIFT_STORAGE_PATH`   | string   | `data/gifts`     | Directory for storing gift images                       |
+| `MAX_UPLOAD_SIZE_MB`  | int      | `32`             | Max upload size in MB for avatars and gift images (documents have a separate hardcoded 50MB cap) |
+| `IMAGE_MAX_EDGE_PX`   | int      | `1600`           | Max pixel dimension for image crop output (longest edge scaled to this) |
+| `IMAGE_JPEG_QUALITY`  | int      | `85`             | JPEG quality 0-100 for cropped image output             |
 | `TOKEN_AUTH`          | string   | *(empty)*        | Static bearer token for API clients (optional)          |
 
 ### SQLite concurrency note
@@ -479,8 +482,8 @@ All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith
 The file storage layer handles avatar uploads with security and durability guarantees:
 
 **FileService Interface (Avatars & Documents)**:
-- `SaveAvatar(personID, file, header)` → saves file (multipart), returns relative path (5MB limit, MIME allowlist)
-- `SaveAvatarBytes(personID, data, mimeType)` → saves raw bytes for imports (5MB limit, MIME allowlist)
+- `SaveAvatar(personID, file, header)` → saves file (multipart), returns relative path (32MB limit via `MAX_UPLOAD_SIZE_MB`, MIME allowlist)
+- `SaveAvatarBytes(personID, data, mimeType)` → saves raw bytes for imports (32MB limit, MIME allowlist)
 - `SaveDocument(personID, data, originalName)` → saves document (any MIME type, 50MB limit, no allowlist)
 - `DeleteAvatar(personID, path)` → removes file and cleans up empty directories
 - `GetAvatarPath(personID)` → returns base directory for person's avatars
@@ -496,7 +499,8 @@ The file storage layer handles avatar uploads with security and durability guara
 **Security Controls (Avatars)**:
 - **MIME validation**: Dual-check (HTTP header + magic number via `http.DetectContentType`)
 - **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp` only
-- **Size limit**: 5MB per file (enforced at handler + service layer)
+- **Size limit**: 32MB per file via `MAX_UPLOAD_SIZE_MB` (enforced at handler + service layer; HEIC files converted to JPEG client-side before upload)
+- **Client-side crop output**: JPEG at configurable quality (`IMAGE_JPEG_QUALITY` default 85) with max edge scaled to `IMAGE_MAX_EDGE_PX` (default 1600px)
 - **Filename sanitization**: Alphanumeric + dash/underscore only; max 50 chars
 - **Random prefix**: 8-byte hex prefix prevents filename collisions and guessing
 
@@ -528,14 +532,14 @@ Gift images are stored separately from avatars with similar security patterns:
 - **File naming**: Gift ID as filename (e.g., `123.jpg`); MIME type stored in database
 
 **Image Endpoints**:
-- `POST /v1/gifts/:id/image` — upload image (multipart form, max 5MB)
-- `GET /v1/gifts/:id/image` — retrieve image (served with 24-hour cache header)
+- `POST /v1/gifts/:id/image` — upload image (multipart form, max 32MB via `MAX_UPLOAD_SIZE_MB`; HEIC converted to JPEG client-side)
+- `GET /v1/gifts/:id/image` — retrieve image (served with private, no-cache headers + ETag for 304 revalidation)
 - `DELETE /v1/gifts/:id/image` — remove image and clear metadata
 
 **Security Controls**:
 - **MIME validation**: Magic number detection via `http.DetectContentType`
 - **Allowed types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`
-- **Size limit**: 5MB per file
+- **Size limit**: 32MB per file via `MAX_UPLOAD_SIZE_MB`
 - **Path traversal prevention**: Validates clean path stays within `GIFT_STORAGE_PATH`
 
 **Integration with Gifts Service**:
@@ -545,6 +549,21 @@ Gift images are stored separately from avatars with similar security patterns:
 - On retrieve: serves from disk with cache headers
 
 **MIME Type Detection**: File type is detected from file extension at serve time, not stored in database. This simplifies schema and avoids MIME type spoofing attacks.
+
+### HEIC/HEIF Image Support
+
+**Architecture**: Client-side HEIC→JPEG conversion using `heic-to/csp` (libheif compiled to WebAssembly).
+
+**How It Works**:
+1. **Lazy Loading**: HEIC converter (~2.9MB WASM chunk) loads on-demand only when user selects a HEIC file
+2. **Browser Conversion**: Conversion happens in a blob-URL worker (no server involvement)
+3. **Output**: JPEG encoded at configurable quality (`IMAGE_JPEG_QUALITY`, default 85%)
+4. **Server Receives**: Always JPEG, never HEIC — MIME allowlist unchanged
+5. **Applies To**: All 3 image inputs — person avatar (incl. drag-drop), gift image on create, gift image on edit
+
+**CSP Update**: `Content-Security-Policy` header in `internal/api/spa/spa.go` now includes `worker-src 'self' blob:` to permit libheif WASM worker execution (`'self'` is explicit because `worker-src` overrides `default-src` entirely). `'wasm-unsafe-eval'` is NOT granted (verified unnecessary in Chrome 150).
+
+**Crop Output Change**: Crop utility (`web/src/lib/crop-image.ts`) now outputs JPEG at `IMAGE_JPEG_QUALITY` (default 85) instead of full-res PNG. Longest edge scaled down to `IMAGE_MAX_EDGE_PX` (default 1600px). Alpha channel lost (white fill); size reduction ~8.6x on photographic content.
 
 ## Database Layer & ORM
 

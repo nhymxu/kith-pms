@@ -17,7 +17,7 @@ Single individual user (self-hosted or personal deployment). No multi-tenancy in
 - Self-profile designation: mark one person as "Me" for personal journal filtering
 - Track interaction history via journal entries linked to people
 - Tag relationships with color-coded labels
-- Upload profile avatars (JPEG, PNG, GIF, WebP; max 5MB)
+- Upload profile avatars (JPEG, PNG, GIF, WebP, HEIC/HEIF; max 32MB; HEIC converted to JPEG client-side)
 - Important dates tracking (birthdays, anniversaries, milestones with recurring support)
 - Reminders for follow-up with 7 recurrence types (daily, weekly, monthly, yearly, custom, day-of-week, relative-to-last-contact, birthday with Feb 29 handling)
 - Many-to-many person-to-person relationships with customizable, optionally-paired types

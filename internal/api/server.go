@@ -34,6 +34,21 @@ func New() *echo.Echo {
 		return slices.Contains(skipPaths, path) || strings.HasPrefix(path, "/swagger/")
 	}
 
+	// Stored images are already compressed, so gzipping them burns CPU for
+	// nothing. It also breaks range requests: these endpoints serve via
+	// http.ServeContent, which advertises Accept-Ranges and can answer 206, and
+	// the gzip writer would then compress the partial body while Content-Range
+	// still described the identity bytes.
+	gzipSkipper := func(c *echo.Context) bool {
+		if skipper(c) {
+			return true
+		}
+
+		path := c.Request().URL.Path
+
+		return strings.HasSuffix(path, "/avatar") || strings.HasSuffix(path, "/image")
+	}
+
 	e.Use(
 		middleware.RemoveTrailingSlashWithConfig(middleware.RemoveTrailingSlashConfig{
 			RedirectCode: http.StatusMovedPermanently,
@@ -45,7 +60,7 @@ func New() *echo.Echo {
 		//middleware.CORS(),
 		middleware.GzipWithConfig(middleware.GzipConfig{
 			Level:   config.APIGzipLevel,
-			Skipper: skipper,
+			Skipper: gzipSkipper,
 		}), middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 			Skipper:         skipper,
 			LogURI:          true,

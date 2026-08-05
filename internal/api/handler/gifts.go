@@ -3,9 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
-	"io"
 	"math"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -300,16 +298,9 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	}
 	defer func() { _ = f.Close() }()
 
-	mt := mime.TypeByExtension(filepath.Ext(cleanPath))
-	if mt == "" {
-		mt = "application/octet-stream"
-	}
+	serveImageFile(c, f, cleanPath)
 
-	c.Response().Header().Set("Content-Type", mt)
-	c.Response().Header().Set("Cache-Control", "public, max-age=86400")
-	_, err = io.Copy(c.Response(), f)
-
-	return err
+	return nil
 }
 
 // Update godoc

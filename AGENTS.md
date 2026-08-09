@@ -26,7 +26,7 @@ This file records only what those sources do **not** say: invariants that span f
 
 - Conventional Commits: `<type>(<scope>): <description>`.
 - Title ≤50 chars (max 72), imperative, no period. Summarize the objective — no file, variable, or line-count details.
-- Body: max 3 bullets, <15 words each, explaining *why*. No prose.
+- Body: max 5 bullets, <20 words each, explaining *why*. No prose.
 
 ## Auth contract
 

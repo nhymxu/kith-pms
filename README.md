@@ -52,10 +52,10 @@ make build                    # CGO_ENABLED=0 go build -o bin/kith-pms ./cmd
 
 ./bin/kith-pms migrate up     # create DB schema (data/kith.db by default)
 ./bin/kith-pms set-password   # set the login password interactively
-./bin/kith-pms serve          # start the server on :8000
+./bin/kith-pms serve          # start the server on :8000 (default port)
 ```
 
-Open [http://localhost:8000](http://localhost:8000) and log in with the password you just set.
+Open [http://localhost:8000](http://localhost:8000) and log in with the password you just set. In dev, `air` runs the server on `:8100` instead — see [Local dev](#local-dev-with-hot-reload-recommended).
 
 ## Configuration
 
@@ -161,16 +161,24 @@ make dev
 ```
 
 This runs:
-- **air** — watches Go files, auto-rebuilds and restarts the API on `:8000`
-- **Vite** — frontend dev server on `:3000` with HMR, proxying `/v1/*` to `:8000`
+- **air** — watches Go files, auto-rebuilds and restarts the API on `:8100`
+  (`.air.toml` runs the server with `serve --port 8100`)
+- **Vite** — frontend dev server on `:3100` with HMR, proxying `/v1/*` to `:8100`
+
+Ports and the proxy target are configurable per environment via `web/.env`
+(see `web/.env.example`) — e.g. `VITE_DEV_PORT`, `VITE_API_PROXY_TARGET`. The
+defaults are port `3100` and proxy target `http://localhost:8100`; pass
+`--port` to the dev script to override the port on the fly.
 
 ### Local dev (SPA + API separately)
 
 ```bash
-# Terminal 1 — Go API server on :8000
-CGO_ENABLED=0 go run ./cmd serve
+# Terminal 1 — Go API server on :8100
+air                        # uses .air.toml → serve --port 8100
+# or, without hot-reload:
+CGO_ENABLED=0 go run ./cmd serve --port 8100
 
-# Terminal 2 — Vite dev server on :3000 (proxies /v1 to :8000)
+# Terminal 2 — Vite dev server on :3100 (proxies /v1 to :8100)
 cd web && pnpm dev
 ```
 

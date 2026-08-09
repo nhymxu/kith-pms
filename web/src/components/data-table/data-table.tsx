@@ -1,14 +1,10 @@
 import {
-	type ColumnDef,
 	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
 	type OnChangeFn,
+	type RowData,
 	type RowSelectionState,
 	type SortingState,
-	useReactTable,
+	useTable,
 } from "@tanstack/react-table";
 import { type ReactNode, useEffect, useState } from "react";
 import {
@@ -19,11 +15,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "#/components/ui/table";
+import { features, type TableColumn } from "./column-helpers";
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 
-interface DataTableProps<T> {
-	columns: ColumnDef<T>[];
+interface DataTableProps<T extends RowData> {
+	columns: TableColumn<T>[];
 	data: T[];
 	pageSize?: number;
 	emptyState?: ReactNode;
@@ -42,7 +39,7 @@ interface DataTableProps<T> {
 	pageSizeSelector?: ReactNode;
 }
 
-export function DataTable<T>({
+export function DataTable<T extends RowData>({
 	columns,
 	data,
 	pageSize = 20,
@@ -78,7 +75,7 @@ export function DataTable<T>({
 
 	const resolvedPageIndex = isServerPaginated ? pageIndex : internalPageIndex;
 
-	const checkboxCol: ColumnDef<T> = {
+	const checkboxCol: TableColumn<T> = {
 		id: "select",
 		size: 40,
 		header: ({ table }) => (
@@ -104,7 +101,8 @@ export function DataTable<T>({
 
 	const resolvedCols = enableRowSelection ? [checkboxCol, ...columns] : columns;
 
-	const table = useReactTable({
+	const table = useTable({
+		features,
 		data,
 		columns: resolvedCols,
 		state: {
@@ -133,10 +131,6 @@ export function DataTable<T>({
 			rowCount: totalCount,
 		}),
 		enableRowSelection,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 	});
 
 	const rows = table.getRowModel().rows;
@@ -193,7 +187,7 @@ export function DataTable<T>({
 								data-state={row.getIsSelected() ? "selected" : undefined}
 								className={rowClassName?.(row) ?? ""}
 							>
-								{row.getVisibleCells().map((cell) => (
+								{row.getAllCells().map((cell) => (
 									<TableCell
 										key={cell.id}
 										style={

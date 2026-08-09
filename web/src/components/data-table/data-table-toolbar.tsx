@@ -1,16 +1,17 @@
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import { Search, X } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import type { TableInstance } from "./column-helpers";
 
-interface DataTableToolbarProps<T> {
-	table: Table<T>;
+interface DataTableToolbarProps<T extends RowData> {
+	table: TableInstance<T>;
 	globalFilter: string;
 	onGlobalFilterChange: (value: string) => void;
 	children?: React.ReactNode;
 }
 
-export function DataTableToolbar<T>({
+export function DataTableToolbar<T extends RowData>({
 	table: _table,
 	globalFilter,
 	onGlobalFilterChange,

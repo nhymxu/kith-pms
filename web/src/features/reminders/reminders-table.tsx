@@ -1,10 +1,10 @@
 // Reminders table: columns for title, person, due date, recurrence, status
 
 import { Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import {
 	sortableHeader,
+	type TableColumn,
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
@@ -53,7 +53,7 @@ export function RemindersTable({
 	toolbarActions,
 	onCompleted,
 }: RemindersTableProps) {
-	const columns = useMemo<ColumnDef<ReminderWithPerson>[]>(
+	const columns = useMemo<TableColumn<ReminderWithPerson>[]>(
 		() => [
 			{
 				id: "title",

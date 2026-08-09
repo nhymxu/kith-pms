@@ -1,10 +1,10 @@
 // Journal table: columns for date, people chips, title/summary, actions
 
 import { Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import {
 	sortableHeader,
+	type TableColumn,
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
@@ -18,7 +18,7 @@ interface JournalTableProps {
 }
 
 export function JournalTable({ data, toolbarActions }: JournalTableProps) {
-	const columns = useMemo<ColumnDef<JournalActivity>[]>(
+	const columns = useMemo<TableColumn<JournalActivity>[]>(
 		() => [
 			{
 				id: "occurred_at_date",

@@ -5,9 +5,10 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import type { RowSelectionState } from "@tanstack/react-table";
 import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { TableColumn } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -64,7 +65,7 @@ function buildColumns(
 		typeof useMutation<void, Error, { id: number; favorite: boolean }>
 	>,
 	allowToggle: boolean,
-): ColumnDef<Person>[] {
+): TableColumn<Person>[] {
 	return [
 		{
 			id: "favorite",

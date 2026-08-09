@@ -1,9 +1,9 @@
 // Audit log table: read-only, columns for timestamp, actor, action, target, detail
 
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import {
 	sortableHeader,
+	type TableColumn,
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
@@ -92,7 +92,7 @@ export function AuditTable({
 	pageIndex,
 	onPageChange,
 }: AuditTableProps) {
-	const columns = useMemo<ColumnDef<AuditEntry>[]>(
+	const columns = useMemo<TableColumn<AuditEntry>[]>(
 		() => [
 			{
 				id: "created_at",

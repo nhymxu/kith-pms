@@ -17,7 +17,6 @@ import {
 } from "#/endpoints/gifts";
 import { getSettings } from "#/endpoints/settings";
 import { GiftForm } from "#/features/gifts/gift-form";
-import { GIFT_IMAGE_ASPECT } from "#/features/gifts/gift-image-constraints";
 import { useImageFilePick } from "#/hooks/use-image-file-pick";
 import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
 import { keys } from "#/query-keys";
@@ -176,7 +175,6 @@ function EditGiftPage() {
 					open
 					imageSrc={cropSrc}
 					fileName={cropFileName}
-					aspect={GIFT_IMAGE_ASPECT}
 					maxEdgePx={settings.image_max_edge_px}
 					quality={settings.image_jpeg_quality}
 					onCancel={() => {
@@ -188,7 +186,7 @@ function EditGiftPage() {
 						setCropSrc(null);
 						if (file.size > maxImageBytes) {
 							setImageError(
-								"Cropped image is too large — try a smaller zoom area.",
+								"Cropped image is too large — try a smaller crop area.",
 							);
 							return;
 						}

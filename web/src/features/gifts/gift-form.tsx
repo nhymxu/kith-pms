@@ -13,7 +13,6 @@ import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
 import { getSettings } from "#/endpoints/settings";
-import { GIFT_IMAGE_ASPECT } from "#/features/gifts/gift-image-constraints";
 import { useImageFilePick } from "#/hooks/use-image-file-pick";
 import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
 import { keys } from "#/query-keys";
@@ -359,7 +358,6 @@ function GiftFormInner({
 							open
 							imageSrc={cropSrc}
 							fileName={cropFileName}
-							aspect={GIFT_IMAGE_ASPECT}
 							maxEdgePx={settings.image_max_edge_px}
 							quality={settings.image_jpeg_quality}
 							onCancel={() => {
@@ -371,7 +369,7 @@ function GiftFormInner({
 								setCropSrc(null);
 								if (file.size > maxImageBytes) {
 									setImageError(
-										"Cropped image is too large — try a smaller zoom area.",
+										"Cropped image is too large — try a smaller crop area.",
 									);
 									return;
 								}

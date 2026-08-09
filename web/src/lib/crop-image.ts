@@ -1,12 +1,23 @@
-import type { Area } from "react-easy-crop";
-
-function loadImage(src: string): Promise<HTMLImageElement> {
+export function loadImage(src: string): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 		img.onload = () => resolve(img);
-		img.onerror = reject;
+		img.onerror = () => reject(new Error("Couldn't load image"));
 		img.src = src;
 	});
+}
+
+/** A plain source-pixel rectangle, decoupled from any cropper library. */
+export type CropRect = { x: number; y: number; width: number; height: number };
+
+/** Loads the source image, returning its decoded size alongside the element. */
+export async function loadImageWithSize(src: string): Promise<{
+	image: HTMLImageElement;
+	width: number;
+	height: number;
+}> {
+	const image = await loadImage(src);
+	return { image, width: image.naturalWidth, height: image.naturalHeight };
 }
 
 export type CropEncodeOptions = {
@@ -39,23 +50,42 @@ export function fitWithin(
 }
 
 /**
- * Draws the cropped region of `imageSrc` onto a canvas and returns it as a JPEG
- * blob, scaled so its longest edge is at most `maxEdgePx`.
+ * Decodes `imageSrc` and returns a JPEG blob of its `rect` region, scaled so its
+ * longest edge is at most `maxEdgePx`.
  *
- * JPEG rather than PNG: for photographic content PNG runs ~8.6x larger, which
- * pushed phone-sized crops past the upload cap. An animated GIF source is
- * flattened to its first frame, and transparency is lost — hence the white fill
- * below, since a bare canvas is transparent-black and JPEG would flatten that
- * to black.
+ * `rect` is plain source-pixel geometry {x, y, width, height}, decoupled from
+ * any cropper library so both the advanced-cropper dialog and the uncropped
+ * (skip-crop) path can share it.
  */
 export async function cropImageToBlob(
 	imageSrc: string,
-	cropArea: Area,
+	rect: CropRect,
 	{ maxEdgePx, quality }: CropEncodeOptions,
 ): Promise<Blob> {
-	const image = await loadImage(imageSrc);
+	return encodeCropped(await loadImage(imageSrc), rect, { maxEdgePx, quality });
+}
 
-	const size = fitWithin(cropArea.width, cropArea.height, maxEdgePx);
+/**
+ * Draws the `rect` region of an already-decoded image onto a canvas and returns
+ * it as a JPEG blob, scaled so its longest edge is at most `maxEdgePx`.
+ *
+ * Unlike cropImageToBlob, this takes the decoded image so callers that already
+ * loaded it (e.g. to read its natural size) skip a second decode.
+ */
+export function encodeCropped(
+	image: HTMLImageElement,
+	rect: CropRect,
+	{ maxEdgePx, quality }: CropEncodeOptions,
+): Promise<Blob> {
+	// Clamp the source rect to the decoded bounds — advanced-cropper's
+	// coordinates are floats and can round a whisker past the edge (e.g. the
+	// hand-typed full-image rect), which drawImage would draw off-canvas/flip.
+	const srcX = Math.max(0, Math.round(rect.x));
+	const srcY = Math.max(0, Math.round(rect.y));
+	const srcWidth = Math.min(rect.width, image.naturalWidth - srcX);
+	const srcHeight = Math.min(rect.height, image.naturalHeight - srcY);
+
+	const size = fitWithin(srcWidth, srcHeight, maxEdgePx);
 
 	const canvas = document.createElement("canvas");
 	canvas.width = size.width;
@@ -71,10 +101,10 @@ export async function cropImageToBlob(
 
 	ctx.drawImage(
 		image,
-		cropArea.x,
-		cropArea.y,
-		cropArea.width,
-		cropArea.height,
+		srcX,
+		srcY,
+		srcWidth,
+		srcHeight,
 		0,
 		0,
 		canvas.width,

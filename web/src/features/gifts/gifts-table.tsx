@@ -1,10 +1,10 @@
 // Gifts table: columns for image, title, person, date, amount, debt direction badge
 
 import { Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import {
 	sortableHeader,
+	type TableColumn,
 	valueCell,
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
@@ -45,7 +45,7 @@ export function GiftsTable({
 	pageIndex,
 	onPageChange,
 }: GiftsTableProps) {
-	const columns = useMemo<ColumnDef<GiftWithPerson>[]>(
+	const columns = useMemo<TableColumn<GiftWithPerson>[]>(
 		() => [
 			{
 				id: "image",

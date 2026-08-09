@@ -70,21 +70,15 @@ export function AvatarUploader({
 	});
 
 	const previewRef = useRef<string | null>(null);
-	const cropSrcRef = useRef<string | null>(null);
 
-	useEffect(() => {
-		previewRef.current = preview;
-		cropSrcRef.current = cropSrc;
-	}, [preview, cropSrc]);
-
-	// Unmounting with the crop dialog open (navigating away without cancelling)
-	// would otherwise leak its object URL until a page reload.
+	// Unmounting with a crop dialog open (navigating away without cancelling)
+	// would otherwise leak that object URL until a page reload.
 	useEffect(() => {
 		return () => {
 			if (previewRef.current) URL.revokeObjectURL(previewRef.current);
-			if (cropSrcRef.current) URL.revokeObjectURL(cropSrcRef.current);
+			if (cropSrc) URL.revokeObjectURL(cropSrc);
 		};
-	}, []);
+	}, [cropSrc]);
 
 	async function handleFile(file: File) {
 		if (cropSrc || isConverting) return; // a pick is already in flight
@@ -106,10 +100,6 @@ export function AvatarUploader({
 	function handleCropped(file: File) {
 		if (cropSrc) URL.revokeObjectURL(cropSrc);
 		setCropSrc(null);
-		if (file.size > maxBytes) {
-			setClientError("Cropped image is too large — try a smaller zoom area.");
-			return;
-		}
 		setPreview((prev) => {
 			if (prev) URL.revokeObjectURL(prev);
 			return URL.createObjectURL(file);
@@ -215,7 +205,7 @@ export function AvatarUploader({
 					open
 					imageSrc={cropSrc}
 					fileName={cropFileName}
-					aspect={1}
+					aspectRatio={1}
 					maxEdgePx={settings.image_max_edge_px}
 					quality={settings.image_jpeg_quality}
 					onCancel={handleCropCancel}

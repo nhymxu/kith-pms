@@ -1,4 +1,4 @@
-import type { Table } from "@tanstack/react-table";
+import type { RowData } from "@tanstack/react-table";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -7,13 +7,14 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "#/components/ui/button";
+import type { TableInstance } from "./column-helpers";
 
-interface DataTablePaginationProps<T> {
-	table: Table<T>;
+interface DataTablePaginationProps<T extends RowData> {
+	table: TableInstance<T>;
 	pageSizeSelector?: ReactNode;
 }
 
-export function DataTablePagination<T>({
+export function DataTablePagination<T extends RowData>({
 	table,
 	pageSizeSelector,
 }: DataTablePaginationProps<T>) {
@@ -36,8 +37,7 @@ export function DataTablePagination<T>({
 
 			<div className="flex items-center gap-2">
 				<p className="font-mono text-[12px] text-sub">
-					Page {table.getState().pagination.pageIndex + 1} of{" "}
-					{table.getPageCount()}
+					Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
 				</p>
 				<div className="flex items-center gap-1">
 					<Button

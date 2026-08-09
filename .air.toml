@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 
 [build]
 cmd = "CGO_ENABLED=0 go build -o ./tmp/kith-pms ./cmd"
-full_bin = "./tmp/kith-pms serve"
+full_bin = "./tmp/kith-pms serve --port 8100"
 include_ext = ["go", "tpl", "tmpl", "html"]
 exclude_dir = ["web", "dist", "data", "bin", "tmp", ".git", "node_modules", "internal/api/spa/public", "docs", "plans"]
 exclude_file = []

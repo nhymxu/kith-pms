@@ -100,13 +100,21 @@ func setIndexHeaders(c *echo.Context) {
 	c.Response().Header().Set(
 		"Content-Security-Policy",
 		// unsafe-inline needed for Tailwind's runtime style injection.
-		// worker-src blob: is required by the HEIC decoder (heic-to/csp), which
-		// runs libheif in a worker created from a blob URL. Without it the worker
-		// falls back to default-src 'self' and is blocked, so HEIC uploads fail
-		// at runtime with nothing failing at build time. 'wasm-unsafe-eval' is
-		// deliberately NOT granted — the CSP-safe build does not need it.
+		// blob: URLs are page-generated and same-origin, so they're granted
+		// where the runtime needs them:
+		//   - worker-src blob: required by the HEIC decoder (heic-to/csp), which
+		//     runs libheif in a worker created from a blob URL. Without it the
+		//     worker falls back to default-src 'self' and is blocked, so HEIC
+		//     uploads fail at runtime with nothing failing at build time.
+		//   - connect-src blob: required by react-advanced-cropper, which draws
+		//     the source <img> to a canvas, so it fetches URL.createObjectURL()
+		//     sources. fetch() on a blob: URL is governed by connect-src, so
+		//     without it the "Adjust image" popup renders black in production
+		//     (the dev server sends no CSP, hiding the break).
+		// 'wasm-unsafe-eval' is deliberately NOT granted — the CSP-safe build
+		// does not need it.
 		"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "+
-			"img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; "+
+			"img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob:; "+
 			// 'self' is listed explicitly: worker-src overrides default-src
 			// entirely, so omitting it would silently forbid any future
 			// same-origin worker.

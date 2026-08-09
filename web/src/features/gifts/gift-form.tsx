@@ -4,7 +4,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
-import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -12,9 +11,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
-import { getSettings } from "#/endpoints/settings";
-import { useImageFilePick } from "#/hooks/use-image-file-pick";
-import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
+import { GiftImageUploader } from "#/features/gifts/gift-image-uploader";
 import { keys } from "#/query-keys";
 import {
 	type GiftRequest,
@@ -50,10 +47,7 @@ function GiftFormInner({
 	onImageChange,
 }: GiftFormProps) {
 	const [apiError, setApiError] = useState<string | null>(null);
-	const [imageError, setImageError] = useState<string | null>(null);
 	const [personSearch, setPersonSearch] = useState("");
-	const [cropSrc, setCropSrc] = useState<string | null>(null);
-	const [cropFileName, setCropFileName] = useState("gift-image");
 	const [croppedPreview, setCroppedPreview] = useState<string | null>(null);
 	const croppedPreviewRef = useRef<string | null>(null);
 	croppedPreviewRef.current = croppedPreview;
@@ -73,22 +67,6 @@ function GiftFormInner({
 	const { data: peopleList } = useSuspenseQuery({
 		queryKey: keys.people.list({}),
 		queryFn: () => listPeople({ page_size: 200 }),
-	});
-
-	const { data: settings } = useSuspenseQuery({
-		queryKey: ["settings"],
-		queryFn: getSettings,
-	});
-	const maxImageBytes = settings.max_upload_size_mb * 1024 * 1024;
-
-	const {
-		prepare: prepareImage,
-		isConverting,
-		error: pickError,
-		setError: setPickError,
-	} = useImageFilePick({
-		maxBytes: maxImageBytes,
-		maxSizeMB: settings.max_upload_size_mb,
 	});
 
 	const form = useForm({
@@ -318,69 +296,24 @@ function GiftFormInner({
 			{onImageChange && (
 				<div className="space-y-1.5">
 					<Label>Image</Label>
-					{croppedPreview && (
-						<img
-							src={croppedPreview}
-							alt="Selected gift"
-							className="max-h-32 rounded-base border-bw border-line object-contain"
-						/>
-					)}
-					<input
-						type="file"
-						accept={FILE_INPUT_ACCEPT}
-						disabled={isConverting}
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							e.target.value = "";
-							if (!file || cropSrc || isConverting) return;
-							setImageError(null);
-							setPickError(null);
-							void prepareImage(file)
-								.then((prepared) => {
-									if (!prepared) return;
-									setCropFileName(prepared.name);
-									setCropSrc(URL.createObjectURL(prepared));
-								})
-								.catch(() => setImageError("Couldn't read this image."));
+					<GiftImageUploader
+						imageSrc={croppedPreview}
+						hasImage={Boolean(croppedPreview)}
+						onUpload={(file) => {
+							const nextPreview = URL.createObjectURL(file);
+							setCroppedPreview((prev) => {
+								if (prev) URL.revokeObjectURL(prev);
+								return nextPreview;
+							});
+							onImageChange(file);
 						}}
-						className="text-sm"
+						onRemove={() => {
+							if (croppedPreview) URL.revokeObjectURL(croppedPreview);
+							setCroppedPreview(null);
+							onImageChange(null);
+						}}
+						uploadPending={false}
 					/>
-					{isConverting && (
-						<p className="text-xs text-sub">Converting image…</p>
-					)}
-					{(pickError ?? imageError) && (
-						<p className="text-xs text-destructive">
-							{pickError ?? imageError}
-						</p>
-					)}
-					{cropSrc && (
-						<ImageCropDialog
-							open
-							imageSrc={cropSrc}
-							fileName={cropFileName}
-							maxEdgePx={settings.image_max_edge_px}
-							quality={settings.image_jpeg_quality}
-							onCancel={() => {
-								URL.revokeObjectURL(cropSrc);
-								setCropSrc(null);
-							}}
-							onCropped={(file) => {
-								URL.revokeObjectURL(cropSrc);
-								setCropSrc(null);
-								if (file.size > maxImageBytes) {
-									setImageError(
-										"Cropped image is too large — try a smaller crop area.",
-									);
-									return;
-								}
-								setCroppedPreview((prev) => {
-									if (prev) URL.revokeObjectURL(prev);
-									return URL.createObjectURL(file);
-								});
-								onImageChange(file);
-							}}
-						/>
-					)}
 				</div>
 			)}
 

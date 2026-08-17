@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/setup@v1
+      - uses: pnpm/setup@v2
         with:
           version: 11
           runtime: node@24

@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
-    "@faker-js/faker": "^10.5.0",
+    "@faker-js/faker": "^10.6.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/match-sorter-utils": "latest",
     "@tanstack/react-form": "latest",
@@ -25,12 +25,12 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/react-table": "^9.1.2",
-    "@tanstack/router-plugin": "^1.168.24",
+    "@tanstack/router-plugin": "^1.168.32",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "heic-to": "1.5.2",
-    "lucide-react": "^1.30.0",
+    "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-advanced-cropper": "^0.20.1",
     "react-dom": "^19.2.8",
@@ -42,7 +42,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.7",
+    "@biomejs/biome": "2.5.8",
     "@tailwindcss/typography": "^0.5.20",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",

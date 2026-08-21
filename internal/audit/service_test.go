@@ -3,6 +3,7 @@ package audit_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/uptrace/bun"
 
@@ -254,9 +255,9 @@ func TestService_Purge_DeletesOldEntries(t *testing.T) {
 	db := openTestDB(t)
 	svc := audit.NewService(db)
 
-	// one entry 91 days ago, one entry 1 day ago
-	insertAuditAt(t, db, "2026-02-18T00:00:00Z") // 91 days before 2026-05-20
-	insertAuditAt(t, db, "2026-05-19T00:00:00Z") // 1 day ago
+	now := time.Now().UTC()
+	insertAuditAt(t, db, now.AddDate(0, 0, -91).Format(time.RFC3339))
+	insertAuditAt(t, db, now.AddDate(0, 0, -1).Format(time.RFC3339))
 
 	n, err := svc.Purge(context.Background(), 90)
 	if err != nil {
@@ -281,7 +282,7 @@ func TestService_Purge_NothingToDelete(t *testing.T) {
 	db := openTestDB(t)
 	svc := audit.NewService(db)
 
-	insertAuditAt(t, db, "2026-05-19T00:00:00Z") // 1 day ago
+	insertAuditAt(t, db, time.Now().UTC().AddDate(0, 0, -1).Format(time.RFC3339))
 
 	n, err := svc.Purge(context.Background(), 90)
 	if err != nil {

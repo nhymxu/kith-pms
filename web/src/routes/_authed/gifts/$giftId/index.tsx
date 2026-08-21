@@ -17,6 +17,7 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { deleteGift, getGift } from "#/endpoints/gifts";
+import { formatCurrency } from "#/lib/format-currency";
 import { formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 
@@ -57,10 +58,7 @@ function GiftDetailPage() {
 				? "They owe"
 				: "—";
 
-	const amountLabel =
-		data.amount_cents != null
-			? `${data.currency || "USD"} ${(data.amount_cents / 100).toFixed(2)}`
-			: "—";
+	const amountLabel = formatCurrency(data.amount_cents, data.currency);
 
 	return (
 		<div className="max-w-lg space-y-4">

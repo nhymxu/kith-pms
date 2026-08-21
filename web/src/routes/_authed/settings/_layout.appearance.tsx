@@ -104,6 +104,7 @@ function AppearancePage() {
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
+				number_format: p.numberFormat,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,

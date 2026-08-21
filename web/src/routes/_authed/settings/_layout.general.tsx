@@ -22,6 +22,7 @@ import {
 	getUserPrefs,
 	type NetworkColorBy,
 	type NetworkOnlyMineDepth,
+	type NumberFormat,
 	saveUserPrefs,
 	type TimeFormat,
 } from "#/lib/format-datetime";
@@ -49,6 +50,19 @@ const TIME_FORMAT_OPTIONS: {
 }[] = [
 	{ value: "24h", label: "24-hour (default)", example: "14:30" },
 	{ value: "12h", label: "12-hour", example: "2:30 PM" },
+];
+
+const NUMBER_FORMAT_OPTIONS: {
+	value: NumberFormat;
+	label: string;
+	example: string;
+}[] = [
+	{
+		value: "1,234.56",
+		label: "Comma thousands (default)",
+		example: "1,234.56",
+	},
+	{ value: "1.234,56", label: "Dot thousands", example: "1.234,56" },
 ];
 
 const COMMON_TIMEZONES = [
@@ -101,6 +115,7 @@ function GeneralSettingsPage() {
 				dashboard_favorites_count: 5,
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
+				number_format: p.numberFormat,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
@@ -113,12 +128,14 @@ function GeneralSettingsPage() {
 		dateFormat: DateFormat;
 		timeFormat: TimeFormat;
 		timezone: string;
+		numberFormat: NumberFormat;
 	}>(() => {
 		if (apiSettings) {
 			return {
 				dateFormat: apiSettings.date_format as DateFormat,
 				timeFormat: apiSettings.time_format as TimeFormat,
 				timezone: apiSettings.timezone,
+				numberFormat: apiSettings.number_format as NumberFormat,
 			};
 		}
 		return getUserPrefs();
@@ -152,6 +169,7 @@ function GeneralSettingsPage() {
 			dateFormat: apiSettings.date_format as DateFormat,
 			timeFormat: apiSettings.time_format as TimeFormat,
 			timezone: apiSettings.timezone,
+			numberFormat: apiSettings.number_format as NumberFormat,
 		});
 		setRetentionDays(apiSettings.audit_log_retention_days ?? 0);
 		setNetworkDefaults({
@@ -171,6 +189,7 @@ function GeneralSettingsPage() {
 		date_format: prefs.dateFormat,
 		time_format: prefs.timeFormat,
 		timezone: prefs.timezone,
+		number_format: prefs.numberFormat,
 		theme: apiSettings?.theme ?? getTheme(),
 		audit_log_retention_days:
 			apiSettings?.audit_log_retention_days ?? retentionDays,
@@ -204,6 +223,7 @@ function GeneralSettingsPage() {
 				dateFormat: updated.date_format as DateFormat,
 				timeFormat: updated.time_format as TimeFormat,
 				timezone: updated.timezone,
+				numberFormat: updated.number_format as NumberFormat,
 			});
 			setRetentionDays(updated.audit_log_retention_days ?? 0);
 			queryClient.setQueryData(["settings"], updated);
@@ -256,11 +276,11 @@ function GeneralSettingsPage() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-[14px] font-medium">
-						Date &amp; Time
+						Date, Time &amp; Numbers
 					</CardTitle>
 					<CardDescription className="text-[12px]">
-						Controls how dates and times are displayed throughout the app. The
-						backend always stores UTC.
+						Controls how dates, times, and numeric amounts are displayed
+						throughout the app. The backend always stores UTC.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-5">
@@ -308,6 +328,34 @@ function GeneralSettingsPage() {
 										checked={prefs.timeFormat === opt.value}
 										onChange={() =>
 											setPrefs((p) => ({ ...p, timeFormat: opt.value }))
+										}
+										className="accent-accent"
+									/>
+									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="font-mono text-[11px] text-sub">
+										{opt.example}
+									</span>
+								</label>
+							))}
+						</div>
+					</div>
+
+					{/* Number format */}
+					<div className="space-y-2">
+						<Label className="text-[13px]">Number format</Label>
+						<div className="space-y-1.5">
+							{NUMBER_FORMAT_OPTIONS.map((opt) => (
+								<label
+									key={opt.value}
+									className="flex items-center gap-3 cursor-pointer"
+								>
+									<input
+										type="radio"
+										name="numberFormat"
+										value={opt.value}
+										checked={prefs.numberFormat === opt.value}
+										onChange={() =>
+											setPrefs((p) => ({ ...p, numberFormat: opt.value }))
 										}
 										className="accent-accent"
 									/>

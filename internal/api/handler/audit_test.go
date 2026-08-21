@@ -71,6 +71,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		DashboardLastContactCount: 5,
 		Theme:                     "quiet-ink",
 		NavLayout:                 "top",
+		NumberFormat:              "1,234.56",
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)

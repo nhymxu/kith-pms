@@ -45,6 +45,15 @@ var (
 	ErrInvalidSearchScope = errors.New(
 		"settings: search_scope must contain at least one of people, journal, gifts, notes",
 	)
+	// ErrInvalidNumberFormat is returned when number_format is not a recognized
+	// separator style. Keep the valid set in sync with the zod enum in
+	// web/src/schemas/settings.ts, the NumberFormat union + DEFAULTS in
+	// web/src/lib/format-datetime.ts, NUMBER_FORMAT_OPTIONS in
+	// web/src/routes/_authed/settings/_layout.general.tsx, and the separator
+	// branch in web/src/lib/format-currency.ts (formatNumber).
+	ErrInvalidNumberFormat = errors.New(
+		"settings: number_format must be one of 1,234.56, 1.234,56",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -94,6 +103,11 @@ var validSearchScope = map[string]bool{
 	"journal": true,
 	"gifts":   true,
 	"notes":   true,
+}
+
+var validNumberFormats = map[string]bool{
+	"1,234.56": true,
+	"1.234,56": true,
 }
 
 type Service struct {
@@ -189,6 +203,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.NavLayout = v
 	}
 
+	if v, ok := rows[KeyNumberFormat]; ok {
+		result.NumberFormat = v
+	}
+
 	if v, ok := rows[KeySearchScope]; ok {
 		scope := make([]string, 0, len(Defaults.SearchScope))
 
@@ -256,6 +274,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidNavLayout
 	}
 
+	if !validNumberFormats[in.NumberFormat] {
+		return UserSettings{}, ErrInvalidNumberFormat
+	}
+
 	if len(in.SearchScope) == 0 {
 		return UserSettings{}, ErrInvalidSearchScope
 	}
@@ -296,6 +318,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyDashboardLastContactCount: strconv.Itoa(in.DashboardLastContactCount),
 		KeyTheme:                     in.Theme,
 		KeyNavLayout:                 in.NavLayout,
+		KeyNumberFormat:              in.NumberFormat,
 		KeySearchScope:               strings.Join(in.SearchScope, ","),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {

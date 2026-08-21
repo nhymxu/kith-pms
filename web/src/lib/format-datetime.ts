@@ -8,6 +8,7 @@ export type TimeFormat = "12h" | "24h";
 export type NetworkColorBy = "labels" | "type";
 export type NetworkOnlyMineDepth = "direct" | "alter";
 export type NavLayout = "top" | "side";
+export type NumberFormat = "1,234.56" | "1.234,56";
 
 export interface UserPrefs {
 	dateFormat: DateFormat;
@@ -20,6 +21,7 @@ export interface UserPrefs {
 	networkShowUnconnected: boolean;
 	networkOnlyMineDepth: NetworkOnlyMineDepth;
 	navLayout: NavLayout;
+	numberFormat: NumberFormat;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -35,6 +37,7 @@ const DEFAULTS: UserPrefs = {
 	networkShowUnconnected: true,
 	networkOnlyMineDepth: "direct",
 	navLayout: "top",
+	numberFormat: "1,234.56",
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -91,6 +94,7 @@ export async function syncSettingsFromApi(): Promise<void> {
 			networkShowUnconnected: s.network_show_unconnected,
 			networkOnlyMineDepth: s.network_only_mine_depth as NetworkOnlyMineDepth,
 			navLayout: s.nav_layout as NavLayout,
+			numberFormat: s.number_format as NumberFormat,
 		});
 		// Reflect a cross-device theme change immediately on load.
 		applyTheme(getTheme());

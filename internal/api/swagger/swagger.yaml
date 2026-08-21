@@ -65,6 +65,11 @@ definitions:
         type: boolean
       network_show_unconnected:
         type: boolean
+      number_format:
+        description: |-
+          NumberFormat controls the grouping/decimal separators for displayed
+          numbers, e.g. "1,234.56" or "1.234,56".
+        type: string
       search_scope:
         items:
           type: string

@@ -48,6 +48,7 @@ func validBase() settings.UserSettings {
 		DashboardLastContactCount: 5,
 		Theme:                     "quiet-ink",
 		NavLayout:                 "top",
+		NumberFormat:              "1,234.56",
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}
 }
@@ -366,6 +367,57 @@ func TestSettings_Update_InvalidNavLayout_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidNavLayout) {
 		t.Errorf("want ErrInvalidNavLayout, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_NumberFormat(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.NumberFormat != "1,234.56" {
+		t.Errorf("default number_format: want \"1,234.56\", got %q", got.NumberFormat)
+	}
+}
+
+func TestSettings_Update_NumberFormat_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	in := validBase()
+	in.NumberFormat = "1.234,56"
+
+	out, err := svc.Update(ctx, in)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if out.NumberFormat != "1.234,56" {
+		t.Errorf("out.NumberFormat: want \"1.234,56\", got %q", out.NumberFormat)
+	}
+
+	got, err := svc.Get(ctx)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.NumberFormat != "1.234,56" {
+		t.Errorf("persisted number_format: want \"1.234,56\", got %q", got.NumberFormat)
+	}
+}
+
+func TestSettings_Update_InvalidNumberFormat_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.NumberFormat = "bogus"
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidNumberFormat) {
+		t.Errorf("want ErrInvalidNumberFormat, got %v", err)
 	}
 }
 

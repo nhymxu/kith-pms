@@ -9,6 +9,7 @@ import {
 } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
 import { Pill } from "#/components/ui/pill";
+import { formatCurrency } from "#/lib/format-currency";
 import { formatDate } from "#/lib/format-datetime";
 import type { GiftWithPerson } from "#/schemas/gift";
 
@@ -123,7 +124,7 @@ export function GiftsTable({
 				cell: valueCell<GiftWithPerson, number | null>((val, row) =>
 					val != null ? (
 						<span className="font-mono text-[12px] text-ink">
-							{row.currency || "USD"} {(val / 100).toFixed(2)}
+							{formatCurrency(val, row.currency)}
 						</span>
 					) : (
 						<span className="text-sub/60">—</span>

@@ -3830,6 +3830,10 @@ const docTemplate = `{
                 "network_show_unconnected": {
                     "type": "boolean"
                 },
+                "number_format": {
+                    "description": "NumberFormat controls the grouping/decimal separators for displayed\nnumbers, e.g. \"1,234.56\" or \"1.234,56\".",
+                    "type": "string"
+                },
                 "search_scope": {
                     "type": "array",
                     "items": {

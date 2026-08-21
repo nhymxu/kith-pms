@@ -24,6 +24,10 @@ type UserSettings struct {
 
 	NavLayout string `json:"nav_layout"`
 
+	// NumberFormat controls the grouping/decimal separators for displayed
+	// numbers, e.g. "1,234.56" or "1.234,56".
+	NumberFormat string `json:"number_format"`
+
 	SearchScope []string `json:"search_scope"`
 }
 
@@ -50,6 +54,8 @@ var Defaults = UserSettings{
 
 	NavLayout: "top",
 
+	NumberFormat: "1,234.56",
+
 	SearchScope: []string{"people", "journal", "gifts", "notes"},
 }
 
@@ -75,6 +81,8 @@ const (
 	KeyTheme = "theme"
 
 	KeyNavLayout = "nav_layout"
+
+	KeyNumberFormat = "number_format"
 
 	KeySearchScope = "search_scope"
 )

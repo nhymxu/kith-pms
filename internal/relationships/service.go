@@ -64,12 +64,21 @@ func (s *Service) CreateType(ctx context.Context, name, reverseName string) (Rel
 	// Auto-create the inverse type when a reverse name is given and differs from the forward name.
 	if reverseName != "" && reverseName != name {
 		inverseID, err := s.Types.Create(ctx, reverseName, name)
+		if err != nil && isUniqueErr(err) {
+			// A type named reverseName already exists (e.g. "Child" was created standalone
+			// before "Parent"). Link to it instead of leaving this type unpaired, unless it's
+			// already paired with something else — that conflict needs manual resolution.
+			existing, getErr := s.Types.GetByName(ctx, reverseName)
+			if getErr == nil && existing != nil && existing.InverseTypeID == nil {
+				inverseID, err = existing.ID, nil
+			}
+		}
+
 		if err == nil {
 			// Link both types to each other.
 			_ = s.Types.SetInverseTypeID(ctx, id, &inverseID)
 			_ = s.Types.SetInverseTypeID(ctx, inverseID, &id)
 		}
-		// If the inverse name already exists we simply skip linking — not a fatal error.
 	}
 
 	if s.Audit != nil {

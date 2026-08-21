@@ -18,6 +18,7 @@ type RelationshipTypeRepo interface {
 	SetInverseTypeID(ctx context.Context, id int64, inverseID *int64) error
 	Delete(ctx context.Context, id int64) error
 	Get(ctx context.Context, id int64) (*RelationshipType, error)
+	GetByName(ctx context.Context, name string) (*RelationshipType, error)
 	List(ctx context.Context) ([]RelationshipType, error)
 	ListWithCounts(ctx context.Context) ([]RelationshipType, error)
 }
@@ -83,6 +84,21 @@ func (r *sqlRelationshipTypeRepo) Get(ctx context.Context, id int64) (*Relations
 		}
 
 		return nil, fmt.Errorf("relationships: get type: %w", err)
+	}
+
+	return &rt, nil
+}
+
+func (r *sqlRelationshipTypeRepo) GetByName(ctx context.Context, name string) (*RelationshipType, error) {
+	var rt RelationshipType
+
+	err := r.db.NewSelect().Model(&rt).Where("name = ?", name).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("relationships: get type by name: %w", err)
 	}
 
 	return &rt, nil

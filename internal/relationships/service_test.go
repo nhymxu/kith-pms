@@ -127,6 +127,43 @@ func TestCreateType_SelfReverse_SingleRow(t *testing.T) {
 	}
 }
 
+func TestCreateType_ReverseNameAlreadyExists_LinksToIt(t *testing.T) {
+	svc, db := newSvc(t)
+	ctx := context.Background()
+
+	// "Child" is created standalone first, with no reverse name.
+	child, err := svc.CreateType(ctx, "Child", "")
+	if err != nil {
+		t.Fatalf("CreateType(Child): %v", err)
+	}
+
+	// "Parent" is created afterward, naming "Child" as its reverse.
+	parent, err := svc.CreateType(ctx, "Parent", "Child")
+	if err != nil {
+		t.Fatalf("CreateType(Parent): %v", err)
+	}
+
+	if parent.InverseTypeID == nil || *parent.InverseTypeID != child.ID {
+		t.Fatalf("expected Parent.InverseTypeID = %d, got %v", child.ID, parent.InverseTypeID)
+	}
+
+	got, err := svc.GetType(ctx, child.ID)
+	if err != nil || got == nil {
+		t.Fatalf("get child type: %v", err)
+	}
+
+	if got.InverseTypeID == nil || *got.InverseTypeID != parent.ID {
+		t.Errorf("expected Child.InverseTypeID = %d, got %v", parent.ID, got.InverseTypeID)
+	}
+
+	var count int
+	db.QueryRowContext(ctx, `SELECT COUNT(*) FROM relationship_type`).Scan(&count)
+
+	if count != 2 {
+		t.Errorf("expected 2 rows (no duplicate Child), got %d", count)
+	}
+}
+
 func TestAttachRelationship_Paired(t *testing.T) {
 	svc, db := newSvc(t)
 	ctx := context.Background()

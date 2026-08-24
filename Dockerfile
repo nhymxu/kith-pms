@@ -15,7 +15,7 @@ COPY web/ ./
 RUN pnpm build
 
 # Stage 2: Build the Go binary
-FROM golang:1.26.6-alpine AS go-builder
+FROM golang:1.27.0-alpine AS go-builder
 
 WORKDIR /app
 

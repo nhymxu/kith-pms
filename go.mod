@@ -18,7 +18,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/uptrace/bun/driver/sqliteshim v1.2.18
 	github.com/uptrace/bun/extra/bundebug v1.2.18
-	github.com/urfave/cli/v3 v3.10.1
+	github.com/urfave/cli/v3 v3.11.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.55.0
 	golang.org/x/term v0.45.0

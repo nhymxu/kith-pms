@@ -228,3 +228,12 @@ manage AI skills via [skill.fish](https://github.com/knoxgraeme/skillfish) and s
 mkdir -p .claude
 npx skillfish install
 ```
+
+### AI plugin support
+
+```shell
+claude plugin install gopls-lsp@claude-plugins-official --scope project
+
+claude plugin marketplace add JetBrains/go-modern-guidelines --scope project
+claude plugin install modern-go-guidelines@goland-claude-marketplace --scope project
+```

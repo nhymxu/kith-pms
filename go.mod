@@ -3,8 +3,8 @@ module github.com/nhymxu/kith-pms
 go 1.26.5
 
 require (
-	github.com/getsentry/sentry-go v0.48.0
-	github.com/getsentry/sentry-go/echo v0.48.0
+	github.com/getsentry/sentry-go v0.49.0
+	github.com/getsentry/sentry-go/echo v0.49.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/labstack/echo/v5 v5.3.1
 	github.com/lmittmann/tint v1.2.0
@@ -18,7 +18,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/uptrace/bun/driver/sqliteshim v1.2.18
 	github.com/uptrace/bun/extra/bundebug v1.2.18
-	github.com/urfave/cli/v3 v3.10.1
+	github.com/urfave/cli/v3 v3.11.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.55.0
 	golang.org/x/term v0.45.0

@@ -20,6 +20,7 @@ type PersonRepo interface {
 		favoriteOnly bool,
 		favoriteFirst bool,
 		pendingDeleteOnly bool,
+		archivedOnly bool,
 		limit, offset int,
 		sort string,
 	) ([]Person, error)
@@ -30,6 +31,7 @@ type PersonRepo interface {
 		hasJournal bool,
 		favoriteOnly bool,
 		pendingDeleteOnly bool,
+		archivedOnly bool,
 	) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
@@ -38,6 +40,8 @@ type PersonRepo interface {
 	Delete(ctx context.Context, id int64) error
 	MarkDeleted(ctx context.Context, id int64) error
 	Restore(ctx context.Context, id int64) error
+	Archive(ctx context.Context, id int64) error
+	Unarchive(ctx context.Context, id int64) error
 	PurgeExpired(ctx context.Context, retentionDays int) (int64, error)
 	SetSelf(ctx context.Context, db bun.IDB, personID int64) error
 	ClearSelf(ctx context.Context, db bun.IDB) error
@@ -73,6 +77,7 @@ func (r *sqlPersonRepo) List(
 	favoriteOnly bool,
 	favoriteFirst bool,
 	pendingDeleteOnly bool,
+	archivedOnly bool,
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
@@ -84,6 +89,12 @@ func (r *sqlPersonRepo) List(
 		sq = sq.Where(`"p"."deleted_at" IS NOT NULL`)
 	} else {
 		sq = sq.Where(`"p"."deleted_at" IS NULL`)
+	}
+
+	if archivedOnly {
+		sq = sq.Where(`"p"."archived_at" IS NOT NULL`)
+	} else if !pendingDeleteOnly {
+		sq = sq.Where(`"p"."archived_at" IS NULL`)
 	}
 
 	if q != "" {
@@ -138,6 +149,7 @@ func (r *sqlPersonRepo) Count(
 	hasJournal bool,
 	favoriteOnly bool,
 	pendingDeleteOnly bool,
+	archivedOnly bool,
 ) (int, error) {
 	sq := r.db.NewSelect().Model((*Person)(nil))
 
@@ -145,6 +157,12 @@ func (r *sqlPersonRepo) Count(
 		sq = sq.Where(`"p"."deleted_at" IS NOT NULL`)
 	} else {
 		sq = sq.Where(`"p"."deleted_at" IS NULL`)
+	}
+
+	if archivedOnly {
+		sq = sq.Where(`"p"."archived_at" IS NOT NULL`)
+	} else if !pendingDeleteOnly {
+		sq = sq.Where(`"p"."archived_at" IS NULL`)
 	}
 
 	if q != "" {
@@ -311,6 +329,40 @@ func (r *sqlPersonRepo) Restore(ctx context.Context, id int64) error {
 
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotDeleted
+	}
+
+	return nil
+}
+
+func (r *sqlPersonRepo) Archive(ctx context.Context, id int64) error {
+	res, err := r.db.NewUpdate().Model((*Person)(nil)).
+		Set("archived_at = ?, updated_at = ?", time.Now().UTC(), time.Now().UTC()).
+		Where("id = ?", id).
+		Where("archived_at IS NULL").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: archive: %w", err)
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrAlreadyArchived
+	}
+
+	return nil
+}
+
+func (r *sqlPersonRepo) Unarchive(ctx context.Context, id int64) error {
+	res, err := r.db.NewUpdate().Model((*Person)(nil)).
+		Set("archived_at = NULL, updated_at = ?", time.Now().UTC()).
+		Where("id = ?", id).
+		Where("archived_at IS NOT NULL").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: unarchive: %w", err)
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotArchived
 	}
 
 	return nil

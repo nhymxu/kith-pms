@@ -28,6 +28,8 @@ const ACTION_VARIANTS: Record<string, PillVariant> = {
 	pending_delete: "warning",
 	restore: "success",
 	purge: "danger",
+	archive: "warning",
+	unarchive: "success",
 	login: "plain",
 	logout: "plain",
 };

@@ -21,6 +21,8 @@ export const auditActionSchema = z.enum([
 	"pending_delete",
 	"restore",
 	"purge",
+	"archive",
+	"unarchive",
 ]);
 
 export const auditChangeSchema = z.object({

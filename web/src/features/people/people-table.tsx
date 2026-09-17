@@ -52,6 +52,7 @@ interface PeopleTableProps {
 	favoriteOnly?: boolean;
 	favoriteFirst?: boolean;
 	pendingDeleteOnly?: boolean;
+	archivedOnly?: boolean;
 	allowToggle?: boolean;
 	pageSizeSelector?: React.ReactNode;
 	onSearchChange: (q: string) => void;
@@ -61,6 +62,7 @@ interface PeopleTableProps {
 	onFavoriteOnlyChange: (v: boolean) => void;
 	onFavoriteFirstChange: (v: boolean) => void;
 	onPendingDeleteOnlyChange: (v: boolean) => void;
+	onArchivedOnlyChange: (v: boolean) => void;
 }
 
 function buildColumns(
@@ -129,7 +131,10 @@ function buildColumns(
 							)}
 						</div>
 						<div>
-							<p className="text-[13px] text-ink">{p.name}</p>
+							<p className="text-[13px] text-ink flex items-center gap-1.5">
+								{p.name}
+								{p.archived_at && <Badge variant="neutral">Archived</Badge>}
+							</p>
 							{p.nickname && (
 								<p className="text-[11px] text-sub">"{p.nickname}"</p>
 							)}
@@ -215,6 +220,7 @@ export function PeopleTable({
 	favoriteOnly = false,
 	favoriteFirst = false,
 	pendingDeleteOnly = false,
+	archivedOnly = false,
 	allowToggle = true,
 	pageSizeSelector,
 	onSearchChange,
@@ -224,6 +230,7 @@ export function PeopleTable({
 	onFavoriteOnlyChange,
 	onFavoriteFirstChange,
 	onPendingDeleteOnlyChange,
+	onArchivedOnlyChange,
 }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
@@ -266,6 +273,7 @@ export function PeopleTable({
 			favorite_only: favoriteOnly || undefined,
 			favorite_first: favoriteFirst || undefined,
 			pending_delete: pendingDeleteOnly || undefined,
+			archived_only: archivedOnly || undefined,
 		}),
 		queryFn: () =>
 			listPeople({
@@ -277,6 +285,7 @@ export function PeopleTable({
 				favorite_only: favoriteOnly || undefined,
 				favorite_first: favoriteFirst || undefined,
 				pending_delete: pendingDeleteOnly || undefined,
+				archived_only: archivedOnly || undefined,
 			}),
 		placeholderData: keepPreviousData,
 	});
@@ -339,6 +348,13 @@ export function PeopleTable({
 					className={`h-9 text-xs border rounded-md px-3 transition-colors ${pendingDeleteOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
 				>
 					Pending Delete
+				</button>
+				<button
+					type="button"
+					onClick={() => onArchivedOnlyChange(!archivedOnly)}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors ${archivedOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
+				>
+					Archived
 				</button>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (

@@ -23,10 +23,12 @@ import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import {
+	archivePerson,
 	deletePerson,
 	getPerson,
 	restorePerson,
 	setFavorite,
+	unarchivePerson,
 	unsetFavorite,
 	updatePerson,
 } from "#/endpoints/people";
@@ -371,6 +373,38 @@ function PersonDetailSectionsInner({
 			setDeleteError(e instanceof Error ? e.message : "Failed to delete"),
 	});
 
+	const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+	const [archiveError, setArchiveError] = useState<string | null>(null);
+
+	const archiveMutation = useMutation({
+		mutationFn: () => archivePerson(personId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			qc.invalidateQueries({ queryKey: keys.people.all });
+			qc.invalidateQueries({ queryKey: keys.search.all });
+			qc.invalidateQueries({ queryKey: keys.reminders.all });
+			setConfirmArchiveOpen(false);
+		},
+		onError: (e) =>
+			setArchiveError(e instanceof Error ? e.message : "Failed to archive"),
+	});
+
+	const [confirmUnarchiveOpen, setConfirmUnarchiveOpen] = useState(false);
+	const [unarchiveError, setUnarchiveError] = useState<string | null>(null);
+
+	const unarchiveMutation = useMutation({
+		mutationFn: () => unarchivePerson(personId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			qc.invalidateQueries({ queryKey: keys.people.all });
+			qc.invalidateQueries({ queryKey: keys.search.all });
+			qc.invalidateQueries({ queryKey: keys.reminders.all });
+			setConfirmUnarchiveOpen(false);
+		},
+		onError: (e) =>
+			setUnarchiveError(e instanceof Error ? e.message : "Failed to unarchive"),
+	});
+
 	const { data: settingsData } = useQuery({
 		queryKey: ["settings"],
 		queryFn: getSettings,
@@ -401,6 +435,25 @@ function PersonDetailSectionsInner({
 					</AlertDescription>
 				</Alert>
 			)}
+			{person.archived_at && (
+				<Alert variant="warning">
+					<AlertDescription className="flex flex-wrap items-center justify-between gap-2 w-full">
+						<span>Archived — hidden from lists, search, and pickers.</span>
+						{unarchiveError && (
+							<span className="text-danger-fg">{unarchiveError}</span>
+						)}
+						<Button
+							size="sm"
+							onClick={() => {
+								setUnarchiveError(null);
+								setConfirmUnarchiveOpen(true);
+							}}
+						>
+							Unarchive
+						</Button>
+					</AlertDescription>
+				</Alert>
+			)}
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
@@ -420,6 +473,18 @@ function PersonDetailSectionsInner({
 					{!editing && <QuickActions personId={person.id} />}
 				</div>
 				<div className="flex items-center gap-2">
+					{!person.deleted_at && !person.is_self && !person.archived_at && (
+						<Button
+							variant="neutral"
+							size="sm"
+							onClick={() => {
+								setArchiveError(null);
+								setConfirmArchiveOpen(true);
+							}}
+						>
+							Archive
+						</Button>
+					)}
 					{!person.deleted_at && !person.is_self && (
 						<Button
 							variant="neutral"
@@ -524,6 +589,76 @@ function PersonDetailSectionsInner({
 							onClick={() => deleteMutation.mutate()}
 						>
 							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={confirmArchiveOpen}
+				onOpenChange={(v) => !v && setConfirmArchiveOpen(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Archive {person.name}?</DialogTitle>
+					</DialogHeader>
+					{archiveError && (
+						<Alert variant="destructive">
+							<AlertDescription>{archiveError}</AlertDescription>
+						</Alert>
+					)}
+					<p className="text-[13px] text-sub">
+						{person.name} will be hidden from the People list, Cmd-K search, and
+						every attach-person picker, but their journal, gift, and
+						relationship history stays untouched. Unarchive anytime from this
+						page.
+					</p>
+					<DialogFooter>
+						<Button
+							variant="neutral"
+							onClick={() => setConfirmArchiveOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							disabled={archiveMutation.isPending}
+							onClick={() => archiveMutation.mutate()}
+						>
+							{archiveMutation.isPending ? "Archiving…" : "Archive"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={confirmUnarchiveOpen}
+				onOpenChange={(v) => !v && setConfirmUnarchiveOpen(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Unarchive {person.name}?</DialogTitle>
+					</DialogHeader>
+					{unarchiveError && (
+						<Alert variant="destructive">
+							<AlertDescription>{unarchiveError}</AlertDescription>
+						</Alert>
+					)}
+					<p className="text-[13px] text-sub">
+						{person.name} will reappear in the People list, Cmd-K search, and
+						every attach-person picker, and their pending reminders will resume.
+					</p>
+					<DialogFooter>
+						<Button
+							variant="neutral"
+							onClick={() => setConfirmUnarchiveOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							disabled={unarchiveMutation.isPending}
+							onClick={() => unarchiveMutation.mutate()}
+						>
+							{unarchiveMutation.isPending ? "Unarchiving…" : "Unarchive"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

@@ -7,6 +7,7 @@ import type { ReminderWithPerson } from "#/schemas/reminder";
 
 export type DashboardSource = {
 	people?: PersonList;
+	archivedPeopleCount?: number;
 	favoritePeople?: PersonList;
 	lastContactedPeople?: PersonList;
 	journal?: { items: JournalActivity[]; total: number };
@@ -107,6 +108,12 @@ export function buildDashboardViewModel(
 		(p) => p.last_contact_at,
 	);
 
+	// Archived people are hidden from every other people query, so the
+	// dashboard total is the active count plus a dedicated archived_only=true,
+	// page_size=1 count rather than a new backend include_archived param.
+	const totalPeopleCount =
+		(source.people?.total ?? people.length) + (source.archivedPeopleCount ?? 0);
+
 	return {
 		meName: source.me?.name ?? "Your network",
 		lastUpdatedAt: now.toISOString(),
@@ -114,7 +121,7 @@ export function buildDashboardViewModel(
 			{
 				id: "people",
 				label: "People",
-				value: source.people?.total ?? people.length,
+				value: totalPeopleCount,
 				detail: `${peopleWithRecentContact(people, now)} contacted in 30 days`,
 				trend: people.length ? "Network ready" : "Add first person",
 			},
@@ -171,7 +178,7 @@ export function buildDashboardViewModel(
 		favorites: favoritePeople,
 		lastContacted: lastContactedPeople,
 		empty: {
-			people: (source.people?.total ?? people.length) === 0,
+			people: totalPeopleCount === 0,
 			activity: journalItems.length === 0,
 			actions: openReminders.length === 0 && plannedGifts.length === 0,
 			moments: dates.length === 0,

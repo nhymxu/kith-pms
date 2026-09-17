@@ -30,6 +30,8 @@ const (
 	ActionPendingDelete Action = "pending_delete"
 	ActionRestore       Action = "restore"
 	ActionPurge         Action = "purge"
+	ActionArchive       Action = "archive"
+	ActionUnarchive     Action = "unarchive"
 )
 
 // Metadata holds optional structured context for an audit event.

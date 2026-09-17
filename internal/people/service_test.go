@@ -374,6 +374,139 @@ func TestValidatePeopleExist_ExcludesSoftDeleted(t *testing.T) {
 	}
 }
 
+func TestArchive_SetsArchivedAt(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Frank", nil, nil)
+
+	if err := svc.Archive(ctx, id); err != nil {
+		t.Fatalf("Archive: %v", err)
+	}
+
+	got, err := svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get after archive: %v", err)
+	}
+
+	if got == nil || got.ArchivedAt == nil {
+		t.Fatalf("Archive: expected ArchivedAt to be set, got %#v", got)
+	}
+
+	if err := svc.Unarchive(ctx, id); err != nil {
+		t.Fatalf("Unarchive: %v", err)
+	}
+
+	got, err = svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get after unarchive: %v", err)
+	}
+
+	if got == nil || got.ArchivedAt != nil {
+		t.Errorf("Unarchive: expected ArchivedAt nil, got %#v", got)
+	}
+}
+
+func TestArchive_AlreadyArchived(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Grace", nil, nil)
+
+	if err := svc.Archive(ctx, id); err != nil {
+		t.Fatalf("first Archive: %v", err)
+	}
+
+	if err := svc.Archive(ctx, id); !errors.Is(err, people.ErrAlreadyArchived) {
+		t.Fatalf("second Archive: got %v, want ErrAlreadyArchived", err)
+	}
+}
+
+func TestArchive_CannotArchiveSelf(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Self", nil, nil)
+
+	if err := svc.SetSelf(ctx, id); err != nil {
+		t.Fatalf("SetSelf: %v", err)
+	}
+
+	if err := svc.Archive(ctx, id); !errors.Is(err, people.ErrCannotArchiveSelf) {
+		t.Fatalf("Archive self: got %v, want ErrCannotArchiveSelf", err)
+	}
+
+	got, err := svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if got == nil || got.ArchivedAt != nil {
+		t.Errorf("Archive self: expected ArchivedAt to remain nil, got %#v", got)
+	}
+}
+
+func TestUnarchive_NotArchived(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Heidi", nil, nil)
+
+	if err := svc.Unarchive(ctx, id); !errors.Is(err, people.ErrNotArchived) {
+		t.Fatalf("Unarchive on active person: got %v, want ErrNotArchived", err)
+	}
+}
+
+func TestList_ArchivedOnly(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+	mustCreate(t, svc, "Bob", nil, nil)
+
+	if err := svc.Archive(ctx, aliceID); err != nil {
+		t.Fatalf("Archive: %v", err)
+	}
+
+	archived, err := svc.List(ctx, people.ListParams{ArchivedOnly: true, PageSize: 50})
+	if err != nil {
+		t.Fatalf("List archived_only: %v", err)
+	}
+
+	if len(archived.Items) != 1 || archived.Items[0].ID != aliceID {
+		t.Fatalf("List archived_only: got %+v, want only Alice (id %d)", archived.Items, aliceID)
+	}
+
+	active, err := svc.List(ctx, people.ListParams{PageSize: 50})
+	if err != nil {
+		t.Fatalf("List default: %v", err)
+	}
+
+	if len(active.Items) != 1 || active.Items[0].Name != "Bob" {
+		t.Fatalf("List default: got %+v, want only Bob", active.Items)
+	}
+}
+
+func TestValidatePeopleExist_ExcludesArchived(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+
+	if err := svc.Archive(ctx, aliceID); err != nil {
+		t.Fatalf("Archive: %v", err)
+	}
+
+	missing, err := svc.ValidatePeopleExist(ctx, []int64{aliceID})
+	if err != nil {
+		t.Fatalf("ValidatePeopleExist: %v", err)
+	}
+
+	if len(missing) != 1 || missing[0] != aliceID {
+		t.Fatalf("ValidatePeopleExist: got %v, want archived id %d reported missing", missing, aliceID)
+	}
+}
+
 // backdateDeletedAt shifts an already-set deleted_at back in time using SQLite's
 // own datetime() function, so the stored text format matches exactly what
 // MarkDeleted itself writes (bun's own time.Time encoding) rather than a

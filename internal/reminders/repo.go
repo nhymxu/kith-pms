@@ -136,7 +136,8 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 	q := r.db.NewSelect().
 		TableExpr("reminder r").
 		ColumnExpr("r.*, r.recurrence_rule AS recurrence_rule, COALESCE(p.name, '') AS person_name").
-		Join("LEFT JOIN person p ON r.person_id = p.id")
+		Join("LEFT JOIN person p ON r.person_id = p.id").
+		Where("r.person_id IS NULL OR p.archived_at IS NULL")
 
 	switch params.Status {
 	case "pending":
@@ -191,6 +192,7 @@ func (r *Repo) ListUpcoming(ctx context.Context, days int) ([]ReminderWithPerson
 		TableExpr("reminder r").
 		ColumnExpr("r.*, r.recurrence_rule AS recurrence_rule, COALESCE(p.name, '') AS person_name").
 		Join("LEFT JOIN person p ON r.person_id = p.id").
+		Where("r.person_id IS NULL OR p.archived_at IS NULL").
 		Where("r.completed = ? AND r.due_date >= ? AND r.due_date <= ?", false, now, future).
 		OrderExpr("r.due_date ASC").
 		Scan(ctx, &rows)
@@ -219,6 +221,7 @@ func (r *Repo) ListOverdue(ctx context.Context) ([]ReminderWithPerson, error) {
 		TableExpr("reminder r").
 		ColumnExpr("r.*, r.recurrence_rule AS recurrence_rule, COALESCE(p.name, '') AS person_name").
 		Join("LEFT JOIN person p ON r.person_id = p.id").
+		Where("r.person_id IS NULL OR p.archived_at IS NULL").
 		Where("r.completed = ? AND r.due_date < ?", false, time.Now().UTC()).
 		OrderExpr("r.due_date ASC").
 		Scan(ctx, &rows)
@@ -305,15 +308,17 @@ func (r *Repo) HasBirthdayReminderForPerson(ctx context.Context, personID int64)
 }
 
 func (r *Repo) CountByStatus(ctx context.Context, status string) (int, error) {
-	q := r.db.NewSelect().TableExpr("reminder").ColumnExpr("COUNT(*)")
+	q := r.db.NewSelect().TableExpr("reminder r").ColumnExpr("COUNT(*)").
+		Join("LEFT JOIN person p ON r.person_id = p.id").
+		Where("r.person_id IS NULL OR p.archived_at IS NULL")
 
 	switch status {
 	case "pending":
-		q = q.Where("completed = ?", false)
+		q = q.Where("r.completed = ?", false)
 	case "completed":
-		q = q.Where("completed = ?", true)
+		q = q.Where("r.completed = ?", true)
 	case "overdue":
-		q = q.Where("completed = ? AND due_date < ?", false, time.Now().UTC())
+		q = q.Where("r.completed = ? AND r.due_date < ?", false, time.Now().UTC())
 	}
 
 	var count int

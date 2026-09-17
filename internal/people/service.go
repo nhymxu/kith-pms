@@ -2,6 +2,7 @@ package people
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"time"
@@ -13,15 +14,22 @@ import (
 
 const defaultPageSize = 50
 
+var (
+	ErrAlreadyDeleted   = errors.New("people: person is already deleted")
+	ErrNotDeleted       = errors.New("people: person is not deleted")
+	ErrCannotDeleteSelf = errors.New("people: cannot delete the self profile")
+)
+
 type ListParams struct {
-	Query         string
-	Page          int
-	PageSize      int
-	LabelIDs      []int64 // AND-semantics: person must have ALL listed labels
-	Sort          string  // sort parameter: name, -name, last_contact, -last_contact
-	HasJournal    bool    // when true, only return people linked to at least one journal entry
-	FavoriteOnly  bool    // when true, only return favorited people
-	FavoriteFirst bool    // when true, favorites are moved to the top regardless of Sort
+	Query             string
+	Page              int
+	PageSize          int
+	LabelIDs          []int64 // AND-semantics: person must have ALL listed labels
+	Sort              string  // sort parameter: name, -name, last_contact, -last_contact
+	HasJournal        bool    // when true, only return people linked to at least one journal entry
+	FavoriteOnly      bool    // when true, only return favorited people
+	FavoriteFirst     bool    // when true, favorites are moved to the top regardless of Sort
+	PendingDeleteOnly bool    // when true, only return soft-deleted (pending purge) people
 }
 
 type Service struct {
@@ -200,14 +208,16 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 
 	offset := (page - 1) * pageSize
 
-	total, err := s.People.Count(ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly)
+	total, err := s.People.Count(
+		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly, params.PendingDeleteOnly,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	items, err := s.People.List(
 		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly,
-		params.FavoriteFirst, pageSize, offset, params.Sort,
+		params.FavoriteFirst, params.PendingDeleteOnly, pageSize, offset, params.Sort,
 	)
 	if err != nil {
 		return nil, err
@@ -244,7 +254,37 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 	}, nil
 }
 
+// Delete soft-deletes a person: the row stays until PurgeExpired removes it
+// after the retention window, so existing journal/gift/relationship references
+// keep rendering during the grace period.
 func (s *Service) Delete(ctx context.Context, id int64) error {
+	p, err := s.People.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if p != nil && p.IsSelf {
+		return ErrCannotDeleteSelf
+	}
+
+	var name string
+	if p != nil {
+		name = p.Name
+	}
+
+	if err := s.People.MarkDeleted(ctx, id); err != nil {
+		return err
+	}
+
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionPendingDelete)
+	}
+
+	return nil
+}
+
+// Restore un-marks a soft-deleted person, returning it to normal visibility.
+func (s *Service) Restore(ctx context.Context, id int64) error {
 	var name string
 
 	if s.Audit != nil {
@@ -253,15 +293,35 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 		}
 	}
 
-	if err := s.People.Delete(ctx, id); err != nil {
+	if err := s.People.Restore(ctx, id); err != nil {
 		return err
 	}
 
 	if s.Audit != nil {
-		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionDelete)
+		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionRestore)
 	}
 
 	return nil
+}
+
+// PurgeExpired hard-deletes people past the soft-delete retention window.
+// retentionDays<=0 disables purging (mirrors audit.Service.Purge).
+func (s *Service) PurgeExpired(ctx context.Context, retentionDays int) (int64, error) {
+	if retentionDays <= 0 {
+		return 0, nil
+	}
+
+	n, err := s.People.PurgeExpired(ctx, retentionDays)
+	if err != nil {
+		return 0, err
+	}
+
+	if s.Audit != nil && n > 0 {
+		s.Audit.Log(ctx, audit.EntityPerson, 0, "", audit.ActionPurge,
+			audit.Metadata{DetailAction: "purge", Label: fmt.Sprintf("%d people purged", n)})
+	}
+
+	return n, nil
 }
 
 func (s *Service) GetSelf(ctx context.Context) (*Person, error) {
@@ -454,6 +514,7 @@ func (s *Service) ValidatePeopleExist(ctx context.Context, ids []int64) ([]int64
 		TableExpr("person").
 		ColumnExpr("id").
 		Where("id IN (?)", bun.List(ids)).
+		Where("deleted_at IS NULL").
 		Scan(ctx, &found)
 	if err != nil {
 		return nil, fmt.Errorf("people: validate exist: %w", err)

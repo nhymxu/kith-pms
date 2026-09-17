@@ -23,14 +23,18 @@ type settingsResponse struct {
 	// Image encode caps the SPA applies when re-encoding cropped uploads.
 	ImageMaxEdgePX   int `json:"image_max_edge_px"`
 	ImageJPEGQuality int `json:"image_jpeg_quality"`
+	// PeopleDeleteRetentionDays lets the SPA compute "days remaining" for a
+	// soft-deleted person without a separate config endpoint.
+	PeopleDeleteRetentionDays int `json:"people_delete_retention_days"`
 }
 
 func withServerConfig(s settings.UserSettings) settingsResponse {
 	return settingsResponse{
-		UserSettings:     s,
-		MaxUploadSizeMB:  int(config.C.EffectiveMaxUploadBytes() / (1024 * 1024)),
-		ImageMaxEdgePX:   config.C.EffectiveImageMaxEdgePX(),
-		ImageJPEGQuality: config.C.EffectiveImageJPEGQuality(),
+		UserSettings:              s,
+		MaxUploadSizeMB:           int(config.C.EffectiveMaxUploadBytes() / (1024 * 1024)),
+		ImageMaxEdgePX:            config.C.EffectiveImageMaxEdgePX(),
+		ImageJPEGQuality:          config.C.EffectiveImageJPEGQuality(),
+		PeopleDeleteRetentionDays: config.C.PeopleDeleteRetentionDays,
 	}
 }
 

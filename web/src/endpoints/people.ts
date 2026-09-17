@@ -24,6 +24,7 @@ export interface PeopleListParams {
 	has_journal?: boolean;
 	favorite_only?: boolean;
 	favorite_first?: boolean;
+	pending_delete?: boolean;
 	sort?: string;
 }
 
@@ -38,6 +39,7 @@ export async function listPeople(
 	if (params.has_journal) qs.set("has_journal", "true");
 	if (params.favorite_only) qs.set("favorite_only", "true");
 	if (params.favorite_first) qs.set("favorite_first", "true");
+	if (params.pending_delete) qs.set("pending_delete", "true");
 	if (params.sort) qs.set("sort", params.sort);
 
 	const query = qs.toString();
@@ -72,6 +74,10 @@ export async function updatePerson(
 
 export async function deletePerson(id: number): Promise<void> {
 	await apiFetch(`/v1/people/${id}`, { method: "DELETE" });
+}
+
+export async function restorePerson(id: number): Promise<void> {
+	await apiFetch(`/v1/people/${id}/restore`, { method: "POST" });
 }
 
 // Avatar endpoints

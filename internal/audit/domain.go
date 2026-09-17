@@ -24,9 +24,12 @@ const (
 	EntityPersonRelationship EntityType = "person_relationship"
 	EntityNote               EntityType = "note"
 
-	ActionCreate Action = "create"
-	ActionUpdate Action = "update"
-	ActionDelete Action = "delete"
+	ActionCreate        Action = "create"
+	ActionUpdate        Action = "update"
+	ActionDelete        Action = "delete"
+	ActionPendingDelete Action = "pending_delete"
+	ActionRestore       Action = "restore"
+	ActionPurge         Action = "purge"
 )
 
 // Metadata holds optional structured context for an audit event.

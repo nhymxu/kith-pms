@@ -2,6 +2,7 @@ package people_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -190,7 +191,7 @@ func TestUpdate_ReplaceAll(t *testing.T) {
 	}
 }
 
-func TestDelete_Cascade(t *testing.T) {
+func TestDelete_SoftDeletesAndKeepsReferences(t *testing.T) {
 	db := openTestDB(t)
 	// Enable foreign keys on this connection explicitly.
 	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
@@ -213,25 +214,29 @@ func TestDelete_Cascade(t *testing.T) {
 		t.Fatalf("Delete: %v", err)
 	}
 
-	// Person should be gone.
+	// Get must still find the person (soft delete, not hard delete).
 	got, err := svc.Get(ctx, id)
 	if err != nil {
 		t.Fatalf("Get after delete: %v", err)
 	}
 
-	if got != nil {
-		t.Error("expected nil person after delete, got non-nil")
+	if got == nil {
+		t.Fatal("expected non-nil person after soft delete, got nil")
 	}
 
-	// Contacts and locations should cascade-delete.
+	if got.DeletedAt == nil {
+		t.Error("expected DeletedAt to be set after soft delete")
+	}
+
+	// Contacts and locations must survive the grace window.
 	var contactCount int
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM contact_info WHERE person_id = ?`, id).
 		Scan(&contactCount); err != nil {
 		t.Fatalf("count contacts: %v", err)
 	}
 
-	if contactCount != 0 {
-		t.Errorf("contact_info not cascaded: got %d rows", contactCount)
+	if contactCount != 1 {
+		t.Errorf("contact_info removed on soft delete: got %d rows, want 1", contactCount)
 	}
 
 	var locationCount int
@@ -240,8 +245,222 @@ func TestDelete_Cascade(t *testing.T) {
 		t.Fatalf("count locations: %v", err)
 	}
 
-	if locationCount != 0 {
-		t.Errorf("location not cascaded: got %d rows", locationCount)
+	if locationCount != 1 {
+		t.Errorf("location removed on soft delete: got %d rows, want 1", locationCount)
+	}
+
+	// Soft-deleted person must not appear in the default list.
+	list, err := svc.List(ctx, people.ListParams{PageSize: 50})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	if len(list.Items) != 0 {
+		t.Errorf("List default: got %d items, want 0 (soft-deleted person hidden)", len(list.Items))
+	}
+
+	// Restore should bring it back.
+	if err := svc.Restore(ctx, id); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	got, err = svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get after restore: %v", err)
+	}
+
+	if got == nil || got.DeletedAt != nil {
+		t.Errorf("Restore: expected DeletedAt nil, got %#v", got)
+	}
+}
+
+func TestDelete_AlreadyDeleted(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Dana", nil, nil)
+
+	if err := svc.Delete(ctx, id); err != nil {
+		t.Fatalf("first Delete: %v", err)
+	}
+
+	if err := svc.Delete(ctx, id); !errors.Is(err, people.ErrAlreadyDeleted) {
+		t.Fatalf("second Delete: got %v, want ErrAlreadyDeleted", err)
+	}
+}
+
+func TestDelete_CannotDeleteSelf(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Self", nil, nil)
+
+	if err := svc.SetSelf(ctx, id); err != nil {
+		t.Fatalf("SetSelf: %v", err)
+	}
+
+	if err := svc.Delete(ctx, id); !errors.Is(err, people.ErrCannotDeleteSelf) {
+		t.Fatalf("Delete self: got %v, want ErrCannotDeleteSelf", err)
+	}
+
+	got, err := svc.Get(ctx, id)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	if got == nil || got.DeletedAt != nil {
+		t.Errorf("Delete self: expected DeletedAt to remain nil, got %#v", got)
+	}
+}
+
+func TestRestore_NotDeleted(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Erin", nil, nil)
+
+	if err := svc.Restore(ctx, id); !errors.Is(err, people.ErrNotDeleted) {
+		t.Fatalf("Restore on active person: got %v, want ErrNotDeleted", err)
+	}
+}
+
+func TestList_PendingDeleteOnly(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+	mustCreate(t, svc, "Bob", nil, nil)
+
+	if err := svc.Delete(ctx, aliceID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	pending, err := svc.List(ctx, people.ListParams{PendingDeleteOnly: true, PageSize: 50})
+	if err != nil {
+		t.Fatalf("List pending_delete: %v", err)
+	}
+
+	if len(pending.Items) != 1 || pending.Items[0].ID != aliceID {
+		t.Fatalf("List pending_delete: got %+v, want only Alice (id %d)", pending.Items, aliceID)
+	}
+
+	active, err := svc.List(ctx, people.ListParams{PageSize: 50})
+	if err != nil {
+		t.Fatalf("List default: %v", err)
+	}
+
+	if len(active.Items) != 1 || active.Items[0].Name != "Bob" {
+		t.Fatalf("List default: got %+v, want only Bob", active.Items)
+	}
+}
+
+func TestValidatePeopleExist_ExcludesSoftDeleted(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	aliceID := mustCreate(t, svc, "Alice", nil, nil)
+
+	if err := svc.Delete(ctx, aliceID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	missing, err := svc.ValidatePeopleExist(ctx, []int64{aliceID})
+	if err != nil {
+		t.Fatalf("ValidatePeopleExist: %v", err)
+	}
+
+	if len(missing) != 1 || missing[0] != aliceID {
+		t.Fatalf("ValidatePeopleExist: got %v, want soft-deleted id %d reported missing", missing, aliceID)
+	}
+}
+
+// backdateDeletedAt shifts an already-set deleted_at back in time using SQLite's
+// own datetime() function, so the stored text format matches exactly what
+// MarkDeleted itself writes (bun's own time.Time encoding) rather than a
+// hand-formatted string that could silently diverge from production and mask
+// a purge-query bug.
+func backdateDeletedAt(t *testing.T, db *bun.DB, id int64, offset string) {
+	t.Helper()
+
+	_, err := db.ExecContext(context.Background(),
+		`UPDATE person SET deleted_at = datetime(deleted_at, ?) WHERE id = ?`, offset, id)
+	if err != nil {
+		t.Fatalf("backdateDeletedAt: %v", err)
+	}
+}
+
+func TestPurgeExpired_Disabled(t *testing.T) {
+	svc := newSvc(t)
+	ctx := context.Background()
+
+	id := mustCreate(t, svc, "Old", nil, nil)
+	if err := svc.Delete(ctx, id); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	n, err := svc.PurgeExpired(ctx, 0)
+	if err != nil {
+		t.Fatalf("PurgeExpired: %v", err)
+	}
+
+	if n != 0 {
+		t.Errorf("PurgeExpired(0): want 0 deleted, got %d", n)
+	}
+}
+
+func TestPurgeExpired_DeletesOldSoftDeletedAndCascades(t *testing.T) {
+	db := openTestDB(t)
+	if _, err := db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		t.Fatalf("pragma: %v", err)
+	}
+
+	svc := people.NewService(db)
+	ctx := context.Background()
+
+	oldID, err := svc.Create(ctx, people.Person{Name: "Old"},
+		[]people.ContactInfo{{Type: "email", Value: "old@test.com"}}, nil)
+	if err != nil {
+		t.Fatalf("Create old: %v", err)
+	}
+
+	recentID := mustCreate(t, svc, "Recent", nil, nil)
+
+	if err := svc.Delete(ctx, oldID); err != nil {
+		t.Fatalf("Delete old: %v", err)
+	}
+
+	if err := svc.Delete(ctx, recentID); err != nil {
+		t.Fatalf("Delete recent: %v", err)
+	}
+
+	backdateDeletedAt(t, db, oldID, "-31 days")
+	backdateDeletedAt(t, db, recentID, "-1 days")
+
+	n, err := svc.PurgeExpired(ctx, 30)
+	if err != nil {
+		t.Fatalf("PurgeExpired: %v", err)
+	}
+
+	if n != 1 {
+		t.Fatalf("PurgeExpired(30): want 1 deleted, got %d", n)
+	}
+
+	if got, err := svc.Get(ctx, oldID); err != nil || got != nil {
+		t.Errorf("Get(oldID) after purge: got %#v, err %v, want nil", got, err)
+	}
+
+	if got, err := svc.Get(ctx, recentID); err != nil || got == nil {
+		t.Errorf("Get(recentID) after purge: got %#v, err %v, want non-nil", got, err)
+	}
+
+	var contactCount int
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM contact_info WHERE person_id = ?`, oldID).
+		Scan(&contactCount); err != nil {
+		t.Fatalf("count contacts: %v", err)
+	}
+
+	if contactCount != 0 {
+		t.Errorf("contact_info not cascaded on purge: got %d rows", contactCount)
 	}
 }
 

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -82,6 +83,7 @@ type locationRequest struct {
 // @Param        has_journal query     bool    false  "Only return people linked to at least one journal entry"
 // @Param        favorite_only query  bool    false  "Only return favorited people"
 // @Param        favorite_first query bool    false  "Move favorites to the top regardless of primary sort"
+// @Param        pending_delete query bool    false  "Only return soft-deleted people pending purge"
 // @Success      200  {object}  envelope
 // @Failure      500  {object}  envelope
 // @Security     CookieAuth
@@ -123,18 +125,20 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	hasJournal := c.QueryParam("has_journal") == "true"
 	favoriteOnly := c.QueryParam("favorite_only") == "true"
 	favoriteFirst := c.QueryParam("favorite_first") == "true"
+	pendingDeleteOnly := c.QueryParam("pending_delete") == "true"
 
 	sort := c.QueryParam("sort")
 
 	list, err := h.Svc.List(c.Request().Context(), people.ListParams{
-		Query:         q,
-		Page:          page,
-		PageSize:      pageSize,
-		LabelIDs:      labelIDs,
-		HasJournal:    hasJournal,
-		FavoriteOnly:  favoriteOnly,
-		FavoriteFirst: favoriteFirst,
-		Sort:          sort,
+		Query:             q,
+		Page:              page,
+		PageSize:          pageSize,
+		LabelIDs:          labelIDs,
+		HasJournal:        hasJournal,
+		FavoriteOnly:      favoriteOnly,
+		FavoriteFirst:     favoriteFirst,
+		PendingDeleteOnly: pendingDeleteOnly,
+		Sort:              sort,
 	})
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
@@ -285,7 +289,7 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 
 // Delete godoc
 //
-// @Summary      Delete person
+// @Summary      Soft-delete person
 // @Tags         people
 // @Produce      json
 // @Param        id   path  int  true  "Person ID"
@@ -311,6 +315,51 @@ func (h *PeopleAPI) Delete(c *echo.Context) error {
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
+		switch {
+		case errors.Is(err, people.ErrAlreadyDeleted):
+			return apiErr(c, http.StatusConflict, "person already deleted")
+		case errors.Is(err, people.ErrCannotDeleteSelf):
+			return apiErr(c, http.StatusConflict, "cannot delete the self profile")
+		default:
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+	}
+
+	return noContent(c)
+}
+
+// Restore godoc
+//
+// @Summary      Restore a soft-deleted person
+// @Tags         people
+// @Produce      json
+// @Param        id   path  int  true  "Person ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/restore [post]
+func (h *PeopleAPI) Restore(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), id)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if p == nil {
+		return apiErr(c, http.StatusNotFound, "not found")
+	}
+
+	if err := h.Svc.Restore(c.Request().Context(), id); err != nil {
+		if errors.Is(err, people.ErrNotDeleted) {
+			return apiErr(c, http.StatusConflict, "person is not deleted")
+		}
+
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}
 

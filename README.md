@@ -61,23 +61,24 @@ Open [http://localhost:8000](http://localhost:8000) and log in with the password
 
 All configuration is via environment variables or a `.env` file in the working directory.
 
-| Variable              | Default          | Required | Description                                               |
-|-----------------------|------------------|----------|-----------------------------------------------------------|
-| `SESSION_SECRET`      | —                | **Yes**  | Cookie signing secret, min 32 bytes                       |
-| `DEBUG`               | `false`          | No       | `true` → text logs + debug level                          |
-| `SENTRY.DSN`          | —                | No       | Sentry DSN; omit to disable error reporting               |
-| `DB_PATH`             | `data/kith.db`   | No       | Path to the SQLite database file                          |
-| `DB_AUTO_MIGRATE`     | `true`           | No       | Run migrations automatically on startup                   |
-| `DB_MAX_OPEN_CONNS`   | `1`              | No       | SQLite connection pool size; default serializes writes    |
-| `TOKEN_AUTH`          | —                | No       | Bearer token for any future JSON API endpoints            |
-| `APP_PASSWORD_HASH`   | —                | No       | Pre-hashed Argon2id password for Docker/headless setup    |
-| `AVATAR_STORAGE_PATH` | `data/avatars`   | No       | Directory for storing avatar files                        |
-| `GIFT_STORAGE_PATH`   | `data/gifts`     | No       | Directory for storing gift image files                    |
-| `MAX_UPLOAD_SIZE_MB`  | `32`             | No       | Max size of an uploaded avatar or gift image              |
-| `IMAGE_MAX_EDGE_PX`   | `1600`           | No       | Longest edge of a cropped upload; larger images are scaled |
-| `IMAGE_JPEG_QUALITY`  | `85`             | No       | JPEG quality (1-100) used to encode cropped uploads       |
-| `BEHIND_TLS`          | `false`          | No       | Set `true` when serving behind TLS (marks cookies Secure) |
-| `SESSION_LIFETIME`    | `720h` (30 days) | No       | How long a login session stays valid                      |
+| Variable                       | Default          | Required | Description                                                        |
+|--------------------------------|------------------|----------|---------------------------------------------------------------------|
+| `SESSION_SECRET`               | —                | **Yes**  | Cookie signing secret, min 32 bytes                                |
+| `DEBUG`                        | `false`          | No       | `true` → text logs + debug level                                   |
+| `SENTRY.DSN`                   | —                | No       | Sentry DSN; omit to disable error reporting                        |
+| `DB_PATH`                      | `data/kith.db`   | No       | Path to the SQLite database file                                   |
+| `DB_AUTO_MIGRATE`              | `true`           | No       | Run migrations automatically on startup                            |
+| `DB_MAX_OPEN_CONNS`            | `1`              | No       | SQLite connection pool size; default serializes writes             |
+| `TOKEN_AUTH`                   | —                | No       | Bearer token for any future JSON API endpoints                     |
+| `APP_PASSWORD_HASH`            | —                | No       | Pre-hashed Argon2id password for Docker/headless setup             |
+| `AVATAR_STORAGE_PATH`          | `data/avatars`   | No       | Directory for storing avatar files                                 |
+| `GIFT_STORAGE_PATH`            | `data/gifts`     | No       | Directory for storing gift image files                             |
+| `MAX_UPLOAD_SIZE_MB`           | `32`             | No       | Max size of an uploaded avatar or gift image                       |
+| `IMAGE_MAX_EDGE_PX`            | `1600`           | No       | Longest edge of a cropped upload; larger images are scaled         |
+| `IMAGE_JPEG_QUALITY`           | `85`             | No       | JPEG quality (1-100) used to encode cropped uploads                |
+| `BEHIND_TLS`                   | `false`          | No       | Set `true` when serving behind TLS (marks cookies Secure)          |
+| `SESSION_LIFETIME`             | `720h` (30 days) | No       | How long a login session stays valid                               |
+| `PEOPLE_DELETE_RETENTION_DAYS` | `30`             | No       | Days before a soft-deleted person is purged; `0` disables purging  |
 
 Environment variables take precedence over `.env` file values.
 

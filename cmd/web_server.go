@@ -195,6 +195,7 @@ Can scale later.`,
 			defer stop()
 
 			go api.RunSessionGC(ctx, authSvc.Sessions)
+			go api.RunPeoplePurgeGC(ctx, peopleSvc, config.C.PeopleDeleteRetentionDays)
 
 			sc := echo.StartConfig{
 				Address:         fmt.Sprintf("%s:%d", host, port),

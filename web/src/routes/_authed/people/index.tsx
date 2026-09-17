@@ -26,6 +26,7 @@ const searchSchema = z.object({
 	sort: z.enum(VALID_SORTS).optional().default("name"),
 	favorite_only: z.coerce.boolean().optional(),
 	favorite_first: z.coerce.boolean().optional(),
+	pending_delete: z.coerce.boolean().optional(),
 });
 
 export const Route = createFileRoute("/_authed/people/")({
@@ -43,6 +44,7 @@ function PeoplePage() {
 		sort: searchSort,
 		favorite_only: searchFavoriteOnly,
 		favorite_first: searchFavoriteFirst,
+		pending_delete: searchPendingDelete,
 	} = search;
 
 	const { data: settingsData } = useQuery({
@@ -96,6 +98,7 @@ function PeoplePage() {
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -105,6 +108,7 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteOnly,
 			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -121,6 +125,7 @@ function PeoplePage() {
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -130,6 +135,7 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteOnly,
 			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -146,6 +152,7 @@ function PeoplePage() {
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -156,6 +163,7 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteOnly,
 			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -172,6 +180,7 @@ function PeoplePage() {
 					sort,
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -181,6 +190,7 @@ function PeoplePage() {
 			searchPageSize,
 			searchFavoriteOnly,
 			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -197,6 +207,7 @@ function PeoplePage() {
 					sort: searchSort,
 					favorite_only: favoriteOnly || undefined,
 					favorite_first: searchFavoriteFirst,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -206,6 +217,7 @@ function PeoplePage() {
 			searchPageSize,
 			searchSort,
 			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -222,6 +234,7 @@ function PeoplePage() {
 					sort: searchSort,
 					favorite_only: searchFavoriteOnly,
 					favorite_first: favoriteFirst || undefined,
+					pending_delete: searchPendingDelete,
 				},
 			});
 		},
@@ -231,6 +244,34 @@ function PeoplePage() {
 			searchPageSize,
 			searchSort,
 			searchFavoriteOnly,
+			searchPendingDelete,
+			navigate,
+		],
+	);
+
+	const handlePendingDeleteOnlyChange = useCallback(
+		(pendingDelete: boolean) => {
+			void navigate({
+				to: "/people",
+				search: {
+					q: searchQ || undefined,
+					page: 1,
+					page_size: searchPageSize,
+					labels: searchLabels,
+					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
+					pending_delete: pendingDelete || undefined,
+				},
+			});
+		},
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			searchFavoriteFirst,
 			navigate,
 		],
 	);
@@ -253,6 +294,7 @@ function PeoplePage() {
 				sort={search.sort}
 				favoriteOnly={search.favorite_only}
 				favoriteFirst={search.favorite_first}
+				pendingDeleteOnly={search.pending_delete}
 				allowToggle={settingsData?.allow_favorite_toggle_on_list ?? true}
 				pageSizeSelector={
 					<PageSizeSelector
@@ -280,6 +322,7 @@ function PeoplePage() {
 				onSortChange={handleSortChange}
 				onFavoriteOnlyChange={handleFavoriteOnlyChange}
 				onFavoriteFirstChange={handleFavoriteFirstChange}
+				onPendingDeleteOnlyChange={handlePendingDeleteOnlyChange}
 			/>
 		</div>
 	);

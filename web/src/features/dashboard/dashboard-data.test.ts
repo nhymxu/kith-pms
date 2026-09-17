@@ -240,4 +240,34 @@ describe("buildDashboardViewModel", () => {
 		]);
 		expect(viewModel.empty.lastContacted).toBe(false);
 	});
+
+	it("adds archivedPeopleCount to the People summary card total", () => {
+		const source: DashboardSource = {
+			people: { items: [], total: 5, page: 1, page_size: 25 },
+			archivedPeopleCount: 3,
+		};
+
+		const viewModel = buildDashboardViewModel(source, now);
+
+		const peopleCard = viewModel.summaryCards.find(
+			(card) => card.id === "people",
+		);
+		expect(peopleCard?.value).toBe(8);
+		expect(viewModel.empty.people).toBe(false);
+	});
+
+	it("does not report People as empty when only archived people exist", () => {
+		const source: DashboardSource = {
+			people: { items: [], total: 0, page: 1, page_size: 25 },
+			archivedPeopleCount: 2,
+		};
+
+		const viewModel = buildDashboardViewModel(source, now);
+
+		const peopleCard = viewModel.summaryCards.find(
+			(card) => card.id === "people",
+		);
+		expect(peopleCard?.value).toBe(2);
+		expect(viewModel.empty.people).toBe(false);
+	});
 });

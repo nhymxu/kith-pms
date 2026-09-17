@@ -46,6 +46,10 @@ function DashboardPage() {
 		queryKey: keys.people.list({ page_size: 25 }),
 		queryFn: () => listPeople({ page_size: 25 }),
 	});
+	const archivedPeople = useQuery({
+		queryKey: keys.people.list({ archived_only: true, page_size: 1 }),
+		queryFn: () => listPeople({ archived_only: true, page_size: 1 }),
+	});
 	const lastContactedPeople = useQuery({
 		queryKey: keys.people.list({
 			page_size: lastContactCount,
@@ -91,6 +95,7 @@ function DashboardPage() {
 		() =>
 			buildDashboardViewModel({
 				people: people.data,
+				archivedPeopleCount: archivedPeople.data?.total,
 				favoritePeople: favoritePeople.data,
 				lastContactedPeople: lastContactedPeople.data,
 				journal: journal.data,
@@ -102,6 +107,7 @@ function DashboardPage() {
 			}),
 		[
 			people.data,
+			archivedPeople.data,
 			favoritePeople.data,
 			lastContactedPeople.data,
 			journal.data,
@@ -117,6 +123,7 @@ function DashboardPage() {
 	);
 	const dashboardQueries = [
 		people,
+		archivedPeople,
 		favoritePeople,
 		lastContactedPeople,
 		journal,

@@ -84,6 +84,7 @@ type locationRequest struct {
 // @Param        favorite_only query  bool    false  "Only return favorited people"
 // @Param        favorite_first query bool    false  "Move favorites to the top regardless of primary sort"
 // @Param        pending_delete query bool    false  "Only return soft-deleted people pending purge"
+// @Param        archived_only query  bool    false  "Only return archived (non-deleted) people"
 // @Success      200  {object}  envelope
 // @Failure      500  {object}  envelope
 // @Security     CookieAuth
@@ -126,6 +127,7 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 	favoriteOnly := c.QueryParam("favorite_only") == "true"
 	favoriteFirst := c.QueryParam("favorite_first") == "true"
 	pendingDeleteOnly := c.QueryParam("pending_delete") == "true"
+	archivedOnly := c.QueryParam("archived_only") == "true"
 
 	sort := c.QueryParam("sort")
 
@@ -138,6 +140,7 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 		FavoriteOnly:      favoriteOnly,
 		FavoriteFirst:     favoriteFirst,
 		PendingDeleteOnly: pendingDeleteOnly,
+		ArchivedOnly:      archivedOnly,
 		Sort:              sort,
 	})
 	if err != nil {
@@ -358,6 +361,87 @@ func (h *PeopleAPI) Restore(c *echo.Context) error {
 	if err := h.Svc.Restore(c.Request().Context(), id); err != nil {
 		if errors.Is(err, people.ErrNotDeleted) {
 			return apiErr(c, http.StatusConflict, "person is not deleted")
+		}
+
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return noContent(c)
+}
+
+// Archive godoc
+//
+// @Summary      Archive a person
+// @Tags         people
+// @Produce      json
+// @Param        id   path  int  true  "Person ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Failure      409  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/archive [post]
+func (h *PeopleAPI) Archive(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), id)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if p == nil {
+		return apiErr(c, http.StatusNotFound, "not found")
+	}
+
+	if err := h.Svc.Archive(c.Request().Context(), id); err != nil {
+		switch {
+		case errors.Is(err, people.ErrAlreadyArchived):
+			return apiErr(c, http.StatusConflict, "person already archived")
+		case errors.Is(err, people.ErrCannotArchiveSelf):
+			return apiErr(c, http.StatusConflict, "cannot archive the self profile")
+		default:
+			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		}
+	}
+
+	return noContent(c)
+}
+
+// Unarchive godoc
+//
+// @Summary      Unarchive a person
+// @Tags         people
+// @Produce      json
+// @Param        id   path  int  true  "Person ID"
+// @Success      204
+// @Failure      400  {object}  envelope
+// @Failure      404  {object}  envelope
+// @Failure      409  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /people/{id}/archive [delete]
+func (h *PeopleAPI) Unarchive(c *echo.Context) error {
+	id, err := parseID(c)
+	if err != nil {
+		return apiErr(c, http.StatusBadRequest, "invalid id")
+	}
+
+	p, err := h.Svc.Get(c.Request().Context(), id)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	if p == nil {
+		return apiErr(c, http.StatusNotFound, "not found")
+	}
+
+	if err := h.Svc.Unarchive(c.Request().Context(), id); err != nil {
+		if errors.Is(err, people.ErrNotArchived) {
+			return apiErr(c, http.StatusConflict, "person is not archived")
 		}
 
 		return apiErr(c, http.StatusInternalServerError, "internal server error")

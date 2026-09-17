@@ -15,9 +15,12 @@ import (
 const defaultPageSize = 50
 
 var (
-	ErrAlreadyDeleted   = errors.New("people: person is already deleted")
-	ErrNotDeleted       = errors.New("people: person is not deleted")
-	ErrCannotDeleteSelf = errors.New("people: cannot delete the self profile")
+	ErrAlreadyDeleted    = errors.New("people: person is already deleted")
+	ErrNotDeleted        = errors.New("people: person is not deleted")
+	ErrCannotDeleteSelf  = errors.New("people: cannot delete the self profile")
+	ErrAlreadyArchived   = errors.New("people: person is already archived")
+	ErrNotArchived       = errors.New("people: person is not archived")
+	ErrCannotArchiveSelf = errors.New("people: cannot archive the self profile")
 )
 
 type ListParams struct {
@@ -30,6 +33,7 @@ type ListParams struct {
 	FavoriteOnly      bool    // when true, only return favorited people
 	FavoriteFirst     bool    // when true, favorites are moved to the top regardless of Sort
 	PendingDeleteOnly bool    // when true, only return soft-deleted (pending purge) people
+	ArchivedOnly      bool    // when true, only return archived (non-deleted) people
 }
 
 type Service struct {
@@ -209,7 +213,8 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 	offset := (page - 1) * pageSize
 
 	total, err := s.People.Count(
-		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly, params.PendingDeleteOnly,
+		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly,
+		params.PendingDeleteOnly, params.ArchivedOnly,
 	)
 	if err != nil {
 		return nil, err
@@ -217,7 +222,7 @@ func (s *Service) List(ctx context.Context, params ListParams) (*PersonList, err
 
 	items, err := s.People.List(
 		ctx, params.Query, params.LabelIDs, params.HasJournal, params.FavoriteOnly,
-		params.FavoriteFirst, params.PendingDeleteOnly, pageSize, offset, params.Sort,
+		params.FavoriteFirst, params.PendingDeleteOnly, params.ArchivedOnly, pageSize, offset, params.Sort,
 	)
 	if err != nil {
 		return nil, err
@@ -299,6 +304,55 @@ func (s *Service) Restore(ctx context.Context, id int64) error {
 
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionRestore)
+	}
+
+	return nil
+}
+
+// Archive marks a person as archived: hidden from default lists, search, and
+// attach-person pickers, but the row and all its history remain untouched.
+func (s *Service) Archive(ctx context.Context, id int64) error {
+	p, err := s.People.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if p != nil && p.IsSelf {
+		return ErrCannotArchiveSelf
+	}
+
+	var name string
+	if p != nil {
+		name = p.Name
+	}
+
+	if err := s.People.Archive(ctx, id); err != nil {
+		return err
+	}
+
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionArchive)
+	}
+
+	return nil
+}
+
+// Unarchive un-marks an archived person, returning it to normal visibility.
+func (s *Service) Unarchive(ctx context.Context, id int64) error {
+	var name string
+
+	if s.Audit != nil {
+		if p, err := s.People.Get(ctx, id); err == nil && p != nil {
+			name = p.Name
+		}
+	}
+
+	if err := s.People.Unarchive(ctx, id); err != nil {
+		return err
+	}
+
+	if s.Audit != nil {
+		s.Audit.Log(ctx, audit.EntityPerson, id, name, audit.ActionUnarchive)
 	}
 
 	return nil
@@ -515,6 +569,7 @@ func (s *Service) ValidatePeopleExist(ctx context.Context, ids []int64) ([]int64
 		ColumnExpr("id").
 		Where("id IN (?)", bun.List(ids)).
 		Where("deleted_at IS NULL").
+		Where("archived_at IS NULL").
 		Scan(ctx, &found)
 	if err != nil {
 		return nil, fmt.Errorf("people: validate exist: %w", err)

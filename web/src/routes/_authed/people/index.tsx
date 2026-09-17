@@ -27,6 +27,7 @@ const searchSchema = z.object({
 	favorite_only: z.coerce.boolean().optional(),
 	favorite_first: z.coerce.boolean().optional(),
 	pending_delete: z.coerce.boolean().optional(),
+	archived_only: z.coerce.boolean().optional(),
 });
 
 export const Route = createFileRoute("/_authed/people/")({
@@ -45,6 +46,7 @@ function PeoplePage() {
 		favorite_only: searchFavoriteOnly,
 		favorite_first: searchFavoriteFirst,
 		pending_delete: searchPendingDelete,
+		archived_only: searchArchivedOnly,
 	} = search;
 
 	const { data: settingsData } = useQuery({
@@ -99,6 +101,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -109,6 +112,7 @@ function PeoplePage() {
 			searchFavoriteOnly,
 			searchFavoriteFirst,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -126,6 +130,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -136,6 +141,7 @@ function PeoplePage() {
 			searchFavoriteOnly,
 			searchFavoriteFirst,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -153,6 +159,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -164,6 +171,7 @@ function PeoplePage() {
 			searchFavoriteOnly,
 			searchFavoriteFirst,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -181,6 +189,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -191,6 +200,7 @@ function PeoplePage() {
 			searchFavoriteOnly,
 			searchFavoriteFirst,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -208,6 +218,7 @@ function PeoplePage() {
 					favorite_only: favoriteOnly || undefined,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -218,6 +229,7 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteFirst,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -235,6 +247,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: favoriteFirst || undefined,
 					pending_delete: searchPendingDelete,
+					archived_only: searchArchivedOnly,
 				},
 			});
 		},
@@ -245,6 +258,7 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteOnly,
 			searchPendingDelete,
+			searchArchivedOnly,
 			navigate,
 		],
 	);
@@ -262,6 +276,7 @@ function PeoplePage() {
 					favorite_only: searchFavoriteOnly,
 					favorite_first: searchFavoriteFirst,
 					pending_delete: pendingDelete || undefined,
+					archived_only: pendingDelete ? undefined : searchArchivedOnly,
 				},
 			});
 		},
@@ -272,6 +287,36 @@ function PeoplePage() {
 			searchSort,
 			searchFavoriteOnly,
 			searchFavoriteFirst,
+			searchArchivedOnly,
+			navigate,
+		],
+	);
+
+	const handleArchivedOnlyChange = useCallback(
+		(archivedOnly: boolean) => {
+			void navigate({
+				to: "/people",
+				search: {
+					q: searchQ || undefined,
+					page: 1,
+					page_size: searchPageSize,
+					labels: searchLabels,
+					sort: searchSort,
+					favorite_only: searchFavoriteOnly,
+					favorite_first: searchFavoriteFirst,
+					pending_delete: archivedOnly ? undefined : searchPendingDelete,
+					archived_only: archivedOnly || undefined,
+				},
+			});
+		},
+		[
+			searchQ,
+			searchLabels,
+			searchPageSize,
+			searchSort,
+			searchFavoriteOnly,
+			searchFavoriteFirst,
+			searchPendingDelete,
 			navigate,
 		],
 	);
@@ -295,6 +340,7 @@ function PeoplePage() {
 				favoriteOnly={search.favorite_only}
 				favoriteFirst={search.favorite_first}
 				pendingDeleteOnly={search.pending_delete}
+				archivedOnly={search.archived_only}
 				allowToggle={settingsData?.allow_favorite_toggle_on_list ?? true}
 				pageSizeSelector={
 					<PageSizeSelector
@@ -323,6 +369,7 @@ function PeoplePage() {
 				onFavoriteOnlyChange={handleFavoriteOnlyChange}
 				onFavoriteFirstChange={handleFavoriteFirstChange}
 				onPendingDeleteOnlyChange={handlePendingDeleteOnlyChange}
+				onArchivedOnlyChange={handleArchivedOnlyChange}
 			/>
 		</div>
 	);

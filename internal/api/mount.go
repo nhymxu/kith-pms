@@ -110,6 +110,8 @@ func mountPeople(g *echo.Group, deps Deps) {
 	g.PUT("/people/:id", h.Update)
 	g.DELETE("/people/:id", h.Delete)
 	g.POST("/people/:id/restore", h.Restore)
+	g.POST("/people/:id/archive", h.Archive)
+	g.DELETE("/people/:id/archive", h.Unarchive)
 }
 
 func mountPeopleLabelsCRUD(g *echo.Group, deps Deps) {

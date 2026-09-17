@@ -10,6 +10,7 @@ export type PeopleFilters = {
 	favorite_only?: boolean;
 	favorite_first?: boolean;
 	pending_delete?: boolean;
+	archived_only?: boolean;
 	sort?: string;
 };
 

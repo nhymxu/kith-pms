@@ -34,6 +34,7 @@ type Person struct {
 	IsSelf           bool       `bun:"is_self"              json:"is_self"`
 	IsFavorite       bool       `bun:"is_favorite"          json:"is_favorite"`
 	DeletedAt        *time.Time `bun:"deleted_at"           json:"deleted_at"`
+	ArchivedAt       *time.Time `bun:"archived_at"          json:"archived_at"`
 	CreatedAt        time.Time  `bun:"created_at"           json:"created_at"`
 	UpdatedAt        time.Time  `bun:"updated_at"           json:"updated_at"`
 

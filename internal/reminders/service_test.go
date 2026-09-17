@@ -30,7 +30,8 @@ func setupTestDB(t *testing.T) *bun.DB {
 		CREATE TABLE person (
 			id INTEGER PRIMARY KEY,
 			name TEXT NOT NULL,
-			date_of_birth TEXT
+			date_of_birth TEXT,
+			archived_at TEXT
 		)
 	`)
 	if err != nil {
@@ -353,6 +354,96 @@ func TestService_ListWithPersonFilter(t *testing.T) {
 	if len(filtered) > 0 && filtered[0].Title != "Alice reminder" {
 		t.Errorf("Title = %q, want %q", filtered[0].Title, "Alice reminder")
 	}
+}
+
+func TestService_ArchivedPersonReminderAutoPause(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	ctx := context.Background()
+	svc := NewService(db)
+
+	res, err := db.ExecContext(ctx, "INSERT INTO person (name) VALUES (?)", "Alice")
+	if err != nil {
+		t.Fatalf("insert person: %v", err)
+	}
+
+	personID, _ := res.LastInsertId()
+
+	now := time.Now()
+
+	_, err = svc.Create(ctx, &Reminder{
+		Title: "Alice pending", DueDate: now.AddDate(0, 0, 1), PersonID: &personID,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	_, err = svc.Create(ctx, &Reminder{
+		Title: "Alice overdue", DueDate: now.AddDate(0, 0, -1), PersonID: &personID,
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	assertVisible := func(t *testing.T, want int) {
+		t.Helper()
+
+		list, err := svc.List(ctx, ListParams{PageSize: 100, Page: 1})
+		if err != nil {
+			t.Fatalf("List: %v", err)
+		}
+
+		if len(list) != want {
+			t.Errorf("List: got %d, want %d", len(list), want)
+		}
+
+		upcoming, err := svc.GetUpcoming(ctx, 7)
+		if err != nil {
+			t.Fatalf("GetUpcoming: %v", err)
+		}
+
+		wantUpcoming := 0
+		if want > 0 {
+			wantUpcoming = 1
+		}
+
+		if len(upcoming) != wantUpcoming {
+			t.Errorf("GetUpcoming: got %d, want %d", len(upcoming), wantUpcoming)
+		}
+
+		overdue, err := svc.GetOverdue(ctx)
+		if err != nil {
+			t.Fatalf("GetOverdue: %v", err)
+		}
+
+		if len(overdue) != wantUpcoming {
+			t.Errorf("GetOverdue: got %d, want %d", len(overdue), wantUpcoming)
+		}
+
+		count, err := svc.CountByStatus(ctx, "pending")
+		if err != nil {
+			t.Fatalf("CountByStatus: %v", err)
+		}
+
+		if count != want {
+			t.Errorf("CountByStatus(pending): got %d, want %d", count, want)
+		}
+	}
+
+	assertVisible(t, 2)
+
+	if _, err := db.ExecContext(ctx, "UPDATE person SET archived_at = ? WHERE id = ?", now, personID); err != nil {
+		t.Fatalf("archive person: %v", err)
+	}
+
+	assertVisible(t, 0)
+
+	if _, err := db.ExecContext(ctx, "UPDATE person SET archived_at = NULL WHERE id = ?", personID); err != nil {
+		t.Fatalf("unarchive person: %v", err)
+	}
+
+	assertVisible(t, 2)
 }
 
 func TestService_ListByStatus(t *testing.T) {

@@ -9,6 +9,7 @@ export type PeopleFilters = {
 	has_journal?: boolean;
 	favorite_only?: boolean;
 	favorite_first?: boolean;
+	pending_delete?: boolean;
 	sort?: string;
 };
 

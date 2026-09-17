@@ -27,8 +27,9 @@ import {
 	unsetFavorite,
 } from "#/endpoints/people";
 import { listPeopleLabels } from "#/endpoints/people-labels";
+import { getSettings } from "#/endpoints/settings";
 import { useDebounce } from "#/hooks/use-debounce";
-import { formatDate } from "#/lib/format-datetime";
+import { daysRemaining, formatDate } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
 import { BulkActionBar } from "./bulk-action-bar";
@@ -50,6 +51,7 @@ interface PeopleTableProps {
 	sort?: string;
 	favoriteOnly?: boolean;
 	favoriteFirst?: boolean;
+	pendingDeleteOnly?: boolean;
 	allowToggle?: boolean;
 	pageSizeSelector?: React.ReactNode;
 	onSearchChange: (q: string) => void;
@@ -58,6 +60,7 @@ interface PeopleTableProps {
 	onSortChange: (sort: SortValue) => void;
 	onFavoriteOnlyChange: (v: boolean) => void;
 	onFavoriteFirstChange: (v: boolean) => void;
+	onPendingDeleteOnlyChange: (v: boolean) => void;
 }
 
 function buildColumns(
@@ -65,6 +68,7 @@ function buildColumns(
 		typeof useMutation<void, Error, { id: number; favorite: boolean }>
 	>,
 	allowToggle: boolean,
+	retentionDays: number,
 ): TableColumn<Person>[] {
 	return [
 		{
@@ -175,17 +179,29 @@ function buildColumns(
 		{
 			id: "actions",
 			header: "",
-			size: 80,
-			cell: ({ row }) => (
-				<Button variant="ghost" size="sm" asChild>
-					<Link
-						to="/people/$personId/edit"
-						params={{ personId: String(row.original.id) }}
-					>
-						Edit
-					</Link>
-				</Button>
-			),
+			size: 160,
+			cell: ({ row }) => {
+				const p = row.original;
+				if (p.deleted_at) {
+					return (
+						<span className="text-[11px] text-sub">
+							{retentionDays > 0
+								? `${daysRemaining(p.deleted_at, retentionDays)}d left, restore from profile`
+								: "kept indefinitely, restore from profile"}
+						</span>
+					);
+				}
+				return (
+					<Button variant="ghost" size="sm" asChild>
+						<Link
+							to="/people/$personId/edit"
+							params={{ personId: String(p.id) }}
+						>
+							Edit
+						</Link>
+					</Button>
+				);
+			},
 		},
 	];
 }
@@ -198,6 +214,7 @@ export function PeopleTable({
 	sort = "name",
 	favoriteOnly = false,
 	favoriteFirst = false,
+	pendingDeleteOnly = false,
 	allowToggle = true,
 	pageSizeSelector,
 	onSearchChange,
@@ -206,6 +223,7 @@ export function PeopleTable({
 	onSortChange,
 	onFavoriteOnlyChange,
 	onFavoriteFirstChange,
+	onPendingDeleteOnlyChange,
 }: PeopleTableProps) {
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
@@ -219,7 +237,12 @@ export function PeopleTable({
 			qc.invalidateQueries({ queryKey: keys.people.all });
 		},
 	});
-	const columns = buildColumns(favoriteMutation, allowToggle);
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const retentionDays = settingsData?.people_delete_retention_days ?? 30;
+	const columns = buildColumns(favoriteMutation, allowToggle, retentionDays);
 
 	useEffect(() => {
 		if (isFirst.current) {
@@ -242,6 +265,7 @@ export function PeopleTable({
 			sort,
 			favorite_only: favoriteOnly || undefined,
 			favorite_first: favoriteFirst || undefined,
+			pending_delete: pendingDeleteOnly || undefined,
 		}),
 		queryFn: () =>
 			listPeople({
@@ -252,6 +276,7 @@ export function PeopleTable({
 				sort,
 				favorite_only: favoriteOnly || undefined,
 				favorite_first: favoriteFirst || undefined,
+				pending_delete: pendingDeleteOnly || undefined,
 			}),
 		placeholderData: keepPreviousData,
 	});
@@ -291,7 +316,7 @@ export function PeopleTable({
 				<button
 					type="button"
 					onClick={() => onFavoriteOnlyChange(!favoriteOnly)}
-					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
 				>
 					<Star
 						className={`size-3 ${favoriteOnly ? "fill-warning-fg text-warning-fg" : ""}`}
@@ -301,12 +326,19 @@ export function PeopleTable({
 				<button
 					type="button"
 					onClick={() => onFavoriteFirstChange(!favoriteFirst)}
-					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteFirst ? "border-main bg-main/10" : "border-line hover:border-sub"}`}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors flex items-center gap-1 ${favoriteFirst ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
 				>
 					<Star
 						className={`size-3 ${favoriteFirst ? "fill-warning-fg text-warning-fg" : ""}`}
 					/>
 					Favorites first
+				</button>
+				<button
+					type="button"
+					onClick={() => onPendingDeleteOnlyChange(!pendingDeleteOnly)}
+					className={`h-9 text-xs border rounded-md px-3 transition-colors ${pendingDeleteOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
+				>
+					Pending Delete
 				</button>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
@@ -369,7 +401,7 @@ export function PeopleTable({
 					)
 				}
 			/>
-			{selectedIDs.length > 0 && (
+			{selectedIDs.length > 0 && !pendingDeleteOnly && (
 				<BulkActionBar
 					selectedCount={selectedIDs.length}
 					personIds={selectedIDs}

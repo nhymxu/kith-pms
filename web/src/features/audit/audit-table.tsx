@@ -25,6 +25,9 @@ const ACTION_VARIANTS: Record<string, PillVariant> = {
 	create: "success",
 	update: "accent",
 	delete: "danger",
+	pending_delete: "warning",
+	restore: "success",
+	purge: "danger",
 	login: "plain",
 	logout: "plain",
 };

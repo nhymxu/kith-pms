@@ -1,26 +1,39 @@
 import {
 	useMutation,
+	useQuery,
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Pencil, Star, X } from "lucide-react";
 import { useState } from "react";
 import { QueryBoundary } from "#/components/query-boundary";
+import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import {
+	deletePerson,
 	getPerson,
+	restorePerson,
 	setFavorite,
 	unsetFavorite,
 	updatePerson,
 } from "#/endpoints/people";
+import { getSettings } from "#/endpoints/settings";
 import {
 	datetimeLocalToUtc,
+	daysRemaining,
 	formatDate,
 	utcToDatetimeLocal,
 } from "#/lib/format-datetime";
@@ -330,8 +343,64 @@ function PersonDetailSectionsInner({
 		},
 	});
 
+	const [restoreError, setRestoreError] = useState<string | null>(null);
+
+	const restoreMutation = useMutation({
+		mutationFn: () => restorePerson(personId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			qc.invalidateQueries({ queryKey: keys.people.all });
+			qc.invalidateQueries({ queryKey: keys.search.all });
+		},
+		onError: (e) =>
+			setRestoreError(e instanceof Error ? e.message : "Failed to restore"),
+	});
+
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+
+	const deleteMutation = useMutation({
+		mutationFn: () => deletePerson(personId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: keys.people.detail(personId) });
+			qc.invalidateQueries({ queryKey: keys.people.all });
+			qc.invalidateQueries({ queryKey: keys.search.all });
+			setConfirmDeleteOpen(false);
+		},
+		onError: (e) =>
+			setDeleteError(e instanceof Error ? e.message : "Failed to delete"),
+	});
+
+	const { data: settingsData } = useQuery({
+		queryKey: ["settings"],
+		queryFn: getSettings,
+	});
+	const retentionDays = settingsData?.people_delete_retention_days ?? 30;
+
 	return (
 		<div className="space-y-3">
+			{person.deleted_at && (
+				<Alert variant="warning">
+					<AlertDescription className="flex flex-wrap items-center justify-between gap-2 w-full">
+						<span>
+							Pending deletion —{" "}
+							{retentionDays > 0
+								? `${daysRemaining(person.deleted_at, retentionDays)} days left before it's permanently removed.`
+								: "permanent purge is disabled."}
+						</span>
+						{restoreError && (
+							<span className="text-danger-fg">{restoreError}</span>
+						)}
+						<Button
+							size="sm"
+							disabled={restoreMutation.isPending}
+							onClick={() => restoreMutation.mutate()}
+						>
+							{restoreMutation.isPending ? "Restoring…" : "Restore"}
+						</Button>
+					</AlertDescription>
+				</Alert>
+			)}
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
@@ -350,11 +419,25 @@ function PersonDetailSectionsInner({
 					</button>
 					{!editing && <QuickActions personId={person.id} />}
 				</div>
-				{onClose && (
-					<Button variant="neutral" size="sm" onClick={onClose}>
-						<X className="size-4" />
-					</Button>
-				)}
+				<div className="flex items-center gap-2">
+					{!person.deleted_at && !person.is_self && (
+						<Button
+							variant="neutral"
+							size="sm"
+							onClick={() => {
+								setDeleteError(null);
+								setConfirmDeleteOpen(true);
+							}}
+						>
+							Delete
+						</Button>
+					)}
+					{onClose && (
+						<Button variant="neutral" size="sm" onClick={onClose}>
+							<X className="size-4" />
+						</Button>
+					)}
+				</div>
 			</div>
 
 			<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -406,6 +489,45 @@ function PersonDetailSectionsInner({
 					</SectionCard>
 				</div>
 			</div>
+
+			<Dialog
+				open={confirmDeleteOpen}
+				onOpenChange={(v) => !v && setConfirmDeleteOpen(false)}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete {person.name}?</DialogTitle>
+					</DialogHeader>
+					{deleteError && (
+						<Alert variant="destructive">
+							<AlertDescription>{deleteError}</AlertDescription>
+						</Alert>
+					)}
+					<p className="text-[13px] text-sub">
+						{person.name} will be hidden{" "}
+						{retentionDays > 0
+							? `and permanently deleted after ${retentionDays} days`
+							: "until you restore it (permanent purge is disabled)"}
+						. You can restore them from this page or the Pending Delete tab
+						before then.
+					</p>
+					<DialogFooter>
+						<Button
+							variant="neutral"
+							onClick={() => setConfirmDeleteOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							disabled={deleteMutation.isPending}
+							onClick={() => deleteMutation.mutate()}
+						>
+							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

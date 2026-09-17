@@ -19,15 +19,26 @@ type PersonRepo interface {
 		hasJournal bool,
 		favoriteOnly bool,
 		favoriteFirst bool,
+		pendingDeleteOnly bool,
 		limit, offset int,
 		sort string,
 	) ([]Person, error)
-	Count(ctx context.Context, q string, labelIDs []int64, hasJournal bool, favoriteOnly bool) (int, error)
+	Count(
+		ctx context.Context,
+		q string,
+		labelIDs []int64,
+		hasJournal bool,
+		favoriteOnly bool,
+		pendingDeleteOnly bool,
+	) (int, error)
 	Get(ctx context.Context, id int64) (*Person, error)
 	GetSelf(ctx context.Context) (*Person, error)
 	Create(ctx context.Context, db bun.IDB, p Person) (int64, error)
 	Update(ctx context.Context, db bun.IDB, p Person) error
 	Delete(ctx context.Context, id int64) error
+	MarkDeleted(ctx context.Context, id int64) error
+	Restore(ctx context.Context, id int64) error
+	PurgeExpired(ctx context.Context, retentionDays int) (int64, error)
 	SetSelf(ctx context.Context, db bun.IDB, personID int64) error
 	ClearSelf(ctx context.Context, db bun.IDB) error
 	UpdateAvatar(ctx context.Context, db bun.IDB, personID int64, path string, size int64) error
@@ -61,12 +72,19 @@ func (r *sqlPersonRepo) List(
 	hasJournal bool,
 	favoriteOnly bool,
 	favoriteFirst bool,
+	pendingDeleteOnly bool,
 	limit, offset int,
 	sort string,
 ) ([]Person, error) {
 	var people []Person
 
 	sq := r.db.NewSelect().Model(&people)
+
+	if pendingDeleteOnly {
+		sq = sq.Where(`"p"."deleted_at" IS NOT NULL`)
+	} else {
+		sq = sq.Where(`"p"."deleted_at" IS NULL`)
+	}
 
 	if q != "" {
 		ql := "%" + escapeLikeQuery(strings.ToLower(q)) + "%"
@@ -119,8 +137,15 @@ func (r *sqlPersonRepo) Count(
 	labelIDs []int64,
 	hasJournal bool,
 	favoriteOnly bool,
+	pendingDeleteOnly bool,
 ) (int, error) {
 	sq := r.db.NewSelect().Model((*Person)(nil))
+
+	if pendingDeleteOnly {
+		sq = sq.Where(`"p"."deleted_at" IS NOT NULL`)
+	} else {
+		sq = sq.Where(`"p"."deleted_at" IS NULL`)
+	}
 
 	if q != "" {
 		ql := "%" + escapeLikeQuery(strings.ToLower(q)) + "%"
@@ -255,6 +280,54 @@ func (r *sqlPersonRepo) Delete(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+func (r *sqlPersonRepo) MarkDeleted(ctx context.Context, id int64) error {
+	res, err := r.db.NewUpdate().Model((*Person)(nil)).
+		Set("deleted_at = ?, updated_at = ?", time.Now().UTC(), time.Now().UTC()).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: mark deleted: %w", err)
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrAlreadyDeleted
+	}
+
+	return nil
+}
+
+func (r *sqlPersonRepo) Restore(ctx context.Context, id int64) error {
+	res, err := r.db.NewUpdate().Model((*Person)(nil)).
+		Set("deleted_at = NULL, updated_at = ?", time.Now().UTC()).
+		Where("id = ?", id).
+		Where("deleted_at IS NOT NULL").
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("people: restore: %w", err)
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotDeleted
+	}
+
+	return nil
+}
+
+// PurgeExpired hard-deletes people whose deleted_at is older than retentionDays. Returns count deleted.
+func (r *sqlPersonRepo) PurgeExpired(ctx context.Context, retentionDays int) (int64, error) {
+	res, err := r.db.NewDelete().
+		Model((*Person)(nil)).
+		Where("deleted_at IS NOT NULL").
+		Where("deleted_at < datetime('now', ?)", fmt.Sprintf("-%d days", retentionDays)).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("people: purge expired: %w", err)
+	}
+
+	return res.RowsAffected()
 }
 
 func (r *sqlPersonRepo) SetSelf(ctx context.Context, db bun.IDB, personID int64) error {

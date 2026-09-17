@@ -49,6 +49,7 @@ export const personSchema = z.object({
 	avatar_size: z.number().optional().default(0),
 	avatar_uploaded_at: z.string().nullable().optional(),
 	last_contact_at: z.string().nullable().optional(),
+	deleted_at: z.string().nullable().optional(),
 	created_at: z.string(),
 	updated_at: z.string(),
 	contacts: z

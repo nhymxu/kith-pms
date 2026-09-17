@@ -120,6 +120,7 @@ function GeneralSettingsPage() {
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
 				image_jpeg_quality: 85,
+				people_delete_retention_days: 30,
 			};
 		},
 	});

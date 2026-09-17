@@ -33,6 +33,9 @@ type Config struct {
 	AppPasswordHash string        `koanf:"APP_PASSWORD_HASH" copier:"-"`
 	BehindTLS       bool          `koanf:"BEHIND_TLS"`
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
+
+	// People soft-delete retention (days); <=0 disables the purge job.
+	PeopleDeleteRetentionDays int `koanf:"PEOPLE_DELETE_RETENTION_DAYS"`
 }
 
 // Fallbacks mirroring configDefaults, for callers that construct config
@@ -118,6 +121,8 @@ var configDefaults = map[string]any{
 	"APP_PASSWORD_HASH": "",
 	"BEHIND_TLS":        false,
 	"SESSION_LIFETIME":  30 * 24 * time.Hour,
+
+	"PEOPLE_DELETE_RETENTION_DAYS": 30,
 }
 
 // C is the global config instance.

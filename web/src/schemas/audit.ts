@@ -14,7 +14,14 @@ export const auditEntityTypeSchema = z.enum([
 	"note",
 ]);
 
-export const auditActionSchema = z.enum(["create", "update", "delete"]);
+export const auditActionSchema = z.enum([
+	"create",
+	"update",
+	"delete",
+	"pending_delete",
+	"restore",
+	"purge",
+]);
 
 export const auditChangeSchema = z.object({
 	field: z.string(),

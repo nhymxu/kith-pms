@@ -103,6 +103,16 @@ export async function syncSettingsFromApi(): Promise<void> {
 	}
 }
 
+// Days left before a soft-deleted record (deletedAt) is purged, given the
+// server's retention window. Clamped to 0 once the window has passed.
+export function daysRemaining(
+	deletedAt: string,
+	retentionDays: number,
+): number {
+	const elapsedDays = (Date.now() - new Date(deletedAt).getTime()) / 86_400_000;
+	return Math.max(0, Math.ceil(retentionDays - elapsedDays));
+}
+
 // Format a date string (YYYY-MM-DD or ISO) according to user prefs.
 export function formatDate(dateStr: string | null | undefined): string {
 	if (!dateStr) return "—";

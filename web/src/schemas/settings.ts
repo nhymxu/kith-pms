@@ -45,6 +45,7 @@ export const settingsResponseSchema = userSettingsSchema.extend({
 	max_upload_size_mb: z.number().int().positive(),
 	image_max_edge_px: z.number().int().positive(),
 	image_jpeg_quality: z.number().int().min(1).max(100),
+	people_delete_retention_days: z.number().int(),
 });
 
 export type SettingsResponse = z.infer<typeof settingsResponseSchema>;

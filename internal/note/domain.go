@@ -30,3 +30,29 @@ type WithPerson struct {
 	Note
 	PersonName string `json:"person_name"`
 }
+
+// WithPersonCard is a note plus the owner fields needed to render an avatar
+// and profile link in the cross-person notes feed.
+type WithPersonCard struct {
+	Note
+	PersonName      string `json:"person_name"`
+	PersonNickname  string `json:"person_nickname"`
+	PersonHasAvatar bool   `json:"person_has_avatar"`
+}
+
+type AllList struct {
+	Items    []WithPersonCard `json:"items"`
+	Total    int              `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
+}
+
+// ListAllParams filters the cross-person feed. Dates are YYYY-MM-DD, inclusive,
+// compared against the UTC date of created_at.
+type ListAllParams struct {
+	Page      int
+	PageSize  int
+	PersonIDs []int64
+	FromDate  string
+	ToDate    string
+}

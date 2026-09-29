@@ -30,7 +30,11 @@ export type GiftFilters = {
 };
 
 export type NoteFilters = {
-	person_id: number;
+	person_id?: number;
+	scope?: "all";
+	person_ids?: number[];
+	from_date?: string;
+	to_date?: string;
 	page?: number;
 	page_size?: number;
 };
@@ -73,7 +77,7 @@ export const keys = {
 	},
 	notes: {
 		all: ["notes"] as const,
-		list: (filters: NoteFilters) => ["notes", "list", filters] as const,
+		list: (filters: NoteFilters = {}) => ["notes", "list", filters] as const,
 	},
 	reminders: {
 		all: ["reminders"] as const,

@@ -1,7 +1,8 @@
 import {
+	keepPreviousData,
 	useMutation,
+	useQuery,
 	useQueryClient,
-	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -22,6 +23,8 @@ import {
 	listNotesByPerson,
 	updateNote,
 } from "#/endpoints/notes";
+import { JournalPagination } from "#/features/journal/journal-pagination";
+import { NotesDateRange } from "#/features/notes/notes-date-range";
 import { keys } from "#/query-keys";
 import type { Note, NoteRequest } from "#/schemas/note";
 
@@ -67,25 +70,39 @@ function NoteForm({ note, onSave, onCancel, saving }: NoteFormProps) {
 	);
 }
 
+const PAGE_SIZE = 20;
+
 interface NotesListInnerProps {
 	personId: number;
+	paged: boolean;
 }
 
-function NotesListInner({ personId }: NotesListInnerProps) {
+function NotesListInner({ personId, paged }: NotesListInnerProps) {
+	const [page, setPage] = useState(1);
+	const [fromDate, setFromDate] = useState("");
+	const [toDate, setToDate] = useState("");
 	const qc = useQueryClient();
 	const [creating, setCreating] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-	const { data } = useSuspenseQuery({
-		queryKey: keys.notes.list({ person_id: personId }),
-		queryFn: () => listNotesByPerson(personId, { page_size: 200 }),
+	const params = paged
+		? {
+				page,
+				page_size: PAGE_SIZE,
+				from_date: fromDate || undefined,
+				to_date: toDate || undefined,
+			}
+		: { page_size: 200 };
+
+	const { data } = useQuery({
+		queryKey: keys.notes.list({ person_id: personId, ...params }),
+		queryFn: () => listNotesByPerson(personId, params),
+		placeholderData: keepPreviousData,
 	});
 
 	function invalidate() {
-		qc.invalidateQueries({
-			queryKey: keys.notes.list({ person_id: personId }),
-		});
+		qc.invalidateQueries({ queryKey: keys.notes.all });
 	}
 
 	const createMutation = useMutation({
@@ -113,12 +130,26 @@ function NotesListInner({ personId }: NotesListInnerProps) {
 		},
 	});
 
-	const items = data.items;
+	const items = data?.items ?? [];
 	const deleteTarget = items.find((n) => n.id === confirmDeleteId);
 
 	return (
 		<div>
-			<div className="flex items-center justify-end mb-2">
+			<div className="flex items-end justify-between gap-3 mb-2">
+				{paged ? (
+					<NotesDateRange
+						idPrefix="my-notes"
+						from={fromDate}
+						to={toDate}
+						onChange={(f, t) => {
+							setFromDate(f);
+							setToDate(t);
+							setPage(1);
+						}}
+					/>
+				) : (
+					<span />
+				)}
 				<Button variant="neutral" size="sm" onClick={() => setCreating(true)}>
 					<Plus className="size-3" /> Add note
 				</Button>
@@ -176,10 +207,21 @@ function NotesListInner({ personId }: NotesListInnerProps) {
 					),
 				)}
 
-				{items.length === 0 && !creating && (
-					<p className="text-sm text-sub">No notes yet.</p>
+				{data && items.length === 0 && !creating && (
+					<p className="text-sm text-sub">No notes found.</p>
 				)}
 			</div>
+
+			{paged && data && data.total > PAGE_SIZE && (
+				<div className="mt-4">
+					<JournalPagination
+						page={data.page}
+						pageSize={PAGE_SIZE}
+						total={data.total}
+						onPageChange={setPage}
+					/>
+				</div>
+			)}
 
 			<Dialog
 				open={confirmDeleteId !== null}
@@ -217,14 +259,16 @@ function NotesListInner({ personId }: NotesListInnerProps) {
 
 interface NotesListProps {
 	personId: number;
+	// Adds date range filter + pagination; without it the list loads up to 200 notes.
+	paged?: boolean;
 }
 
 // Shared list+editor UI mounted from both the self Notes page and the person
 // detail Notes section — same owner-scoped query, different person_id.
-export function NotesList({ personId }: NotesListProps) {
+export function NotesList({ personId, paged = false }: NotesListProps) {
 	return (
 		<QueryBoundary>
-			<NotesListInner personId={personId} />
+			<NotesListInner personId={personId} paged={paged} />
 		</QueryBoundary>
 	);
 }

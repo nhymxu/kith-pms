@@ -99,7 +99,7 @@ func TestListByPersonOrderingAndPagination(t *testing.T) {
 		t.Fatalf("Create other: %v", err)
 	}
 
-	all, err := svc.ListByPerson(ctx, personID, 1, 50)
+	all, err := svc.ListByPerson(ctx, personID, 1, 50, "", "")
 	if err != nil {
 		t.Fatalf("ListByPerson: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestListByPersonOrderingAndPagination(t *testing.T) {
 			all.Items[0].Title, all.Items[1].Title, all.Items[2].Title)
 	}
 
-	page1, err := svc.ListByPerson(ctx, personID, 1, 2)
+	page1, err := svc.ListByPerson(ctx, personID, 1, 2, "", "")
 	if err != nil {
 		t.Fatalf("ListByPerson page1: %v", err)
 	}
@@ -122,7 +122,7 @@ func TestListByPersonOrderingAndPagination(t *testing.T) {
 		t.Fatalf("page1 items = %d, want 2", len(page1.Items))
 	}
 
-	page2, err := svc.ListByPerson(ctx, personID, 2, 2)
+	page2, err := svc.ListByPerson(ctx, personID, 2, 2, "", "")
 	if err != nil {
 		t.Fatalf("ListByPerson page2: %v", err)
 	}
@@ -281,5 +281,117 @@ func TestNoteFTS(t *testing.T) {
 
 	if ftsCountAfterDelete != 0 {
 		t.Errorf("note_fts rows after delete = %d, want 0", ftsCountAfterDelete)
+	}
+}
+
+func TestListAll(t *testing.T) {
+	db := testutil.NewDB(t)
+
+	ctx := context.Background()
+	svc := NewService(db)
+	a := insertPerson(t, db, "Alice")
+	b := insertPerson(t, db, "Bob")
+
+	if _, err := db.ExecContext(
+		ctx,
+		"UPDATE person SET nickname = 'Al', avatar_path = 'x.png' WHERE id = ?",
+		a,
+	); err != nil {
+		t.Fatalf("update person: %v", err)
+	}
+
+	for _, pid := range []int64{a, b} {
+		if _, err := svc.Create(ctx, &Note{PersonID: pid, Content: "hi"}); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+	}
+
+	list, err := svc.ListAll(ctx, ListAllParams{Page: 1, PageSize: 50})
+	if err != nil {
+		t.Fatalf("ListAll: %v", err)
+	}
+
+	if list.Total != 2 || len(list.Items) != 2 {
+		t.Fatalf("got total=%d items=%d, want 2/2", list.Total, len(list.Items))
+	}
+
+	// newest first: Bob's note was created last
+	if list.Items[0].PersonName != "Bob" || list.Items[0].PersonHasAvatar {
+		t.Errorf("first = %+v, want Bob without avatar", list.Items[0])
+	}
+
+	if got := list.Items[1]; got.PersonNickname != "Al" || !got.PersonHasAvatar {
+		t.Errorf("second = %+v, want nickname Al with avatar", got)
+	}
+}
+
+func TestListAllFilters(t *testing.T) {
+	db := testutil.NewDB(t)
+
+	ctx := context.Background()
+	svc := NewService(db)
+	a := insertPerson(t, db, "Alice")
+	b := insertPerson(t, db, "Bob")
+
+	for _, row := range []struct {
+		pid  int64
+		date string
+	}{{a, "2026-01-10"}, {a, "2026-02-10"}, {b, "2026-02-20"}} {
+		_, err := db.ExecContext(ctx,
+			"INSERT INTO note (person_id, content, created_at) VALUES (?, 'x', ?)",
+			row.pid, row.date+"T12:00:00Z")
+		if err != nil {
+			t.Fatalf("insert note: %v", err)
+		}
+	}
+
+	cases := []struct {
+		name string
+		p    ListAllParams
+		want int
+	}{
+		{"person", ListAllParams{PersonIDs: []int64{b}}, 1},
+		{"multiple people", ListAllParams{PersonIDs: []int64{a, b}}, 3},
+		{"from", ListAllParams{FromDate: "2026-02-10"}, 2},
+		{"to", ListAllParams{ToDate: "2026-02-10"}, 2},
+		{"range and person", ListAllParams{PersonIDs: []int64{a}, FromDate: "2026-02-01", ToDate: "2026-02-28"}, 1},
+	}
+
+	for _, tc := range cases {
+		tc.p.Page, tc.p.PageSize = 1, 50
+
+		got, err := svc.ListAll(ctx, tc.p)
+		if err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
+		}
+
+		if got.Total != tc.want || len(got.Items) != tc.want {
+			t.Errorf("%s: total=%d items=%d, want %d", tc.name, got.Total, len(got.Items), tc.want)
+		}
+	}
+}
+
+func TestListByPersonDateRange(t *testing.T) {
+	db := testutil.NewDB(t)
+
+	ctx := context.Background()
+	svc := NewService(db)
+	pid := insertPerson(t, db, "Alice")
+
+	for _, d := range []string{"2026-01-10", "2026-02-10", "2026-03-10"} {
+		_, err := db.ExecContext(ctx,
+			"INSERT INTO note (person_id, content, created_at) VALUES (?, 'x', ?)", pid, d+"T12:00:00Z")
+		if err != nil {
+			t.Fatalf("insert note: %v", err)
+		}
+	}
+
+	got, err := svc.ListByPerson(ctx, pid, 1, 50, "2026-02-01", "2026-02-28")
+	if err != nil {
+		t.Fatalf("ListByPerson: %v", err)
+	}
+
+	if got.Total != 1 || len(got.Items) != 1 {
+		t.Errorf("total=%d items=%d, want 1/1", got.Total, len(got.Items))
 	}
 }

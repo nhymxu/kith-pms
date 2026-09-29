@@ -76,12 +76,22 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*Note, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *Service) ListByPerson(ctx context.Context, personID int64, page, pageSize int) (*List, error) {
+func (s *Service) ListByPerson(
+	ctx context.Context, personID int64, page, pageSize int, fromDate, toDate string,
+) (*List, error) {
 	if page < 1 {
 		page = 1
 	}
 
-	return s.repo.ListByPerson(ctx, personID, page, pageSize)
+	return s.repo.ListByPerson(ctx, personID, page, pageSize, fromDate, toDate)
+}
+
+func (s *Service) ListAll(ctx context.Context, p ListAllParams) (*AllList, error) {
+	if p.Page < 1 {
+		p.Page = 1
+	}
+
+	return s.repo.ListAll(ctx, p)
 }
 
 func (s *Service) Search(ctx context.Context, query string, limit int) ([]WithPerson, error) {

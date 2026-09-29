@@ -124,6 +124,7 @@ CLAUDE.local.md
 .agents/
 .playwright-mcp/
 repomix-output.xml
+.dz-workspace/
 
 # Air live-reload build cache
 tmp/

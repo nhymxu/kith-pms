@@ -16,6 +16,18 @@ export const noteListSchema = z.object({
 	page_size: z.number(),
 });
 
+export const noteWithPersonSchema = noteSchema.extend({
+	person_name: z.string(),
+	person_nickname: z.string().optional().default(""),
+	person_has_avatar: z.boolean(),
+});
+
+export const noteAllListSchema = noteListSchema.extend({
+	items: z.array(noteWithPersonSchema),
+});
+
+export type NoteWithPerson = z.infer<typeof noteWithPersonSchema>;
+export type NoteAllList = z.infer<typeof noteAllListSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type NoteList = z.infer<typeof noteListSchema>;
 

@@ -1,19 +1,31 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { getMe } from "#/endpoints/me";
+import { AllNotesList } from "#/features/notes/all-notes-list";
 import { NotesList } from "#/features/notes/notes-list";
 import { keys } from "#/query-keys";
 
-// 404 from getMe means Me is not set up yet — a valid state, not a load failure,
-// so the scoped errorComponent reproduces the "set up" CTA rather than a generic error.
-function NotesNotSetUp() {
-	return (
-		<div className="space-y-4 max-w-2xl">
-			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				Notes
-			</h1>
+export const Route = createFileRoute("/_authed/notes/")({
+	component: NotesPage,
+});
+
+// 404 from getMe means Me is not set up yet: a valid state, so only the
+// "My notes" tab shows the setup CTA and "All notes" stays usable.
+function MyNotes() {
+	const { data: self, isPending } = useQuery({
+		queryKey: keys.me.profile(),
+		queryFn: getMe,
+		retry: false,
+	});
+
+	if (isPending) return <p className="text-[13px] text-sub">Loading…</p>;
+
+	if (!self) {
+		return (
 			<Card>
 				<CardContent className="pt-6 space-y-3">
 					<p className="text-sm font-base">
@@ -25,29 +37,32 @@ function NotesNotSetUp() {
 					</Button>
 				</CardContent>
 			</Card>
-		</div>
-	);
+		);
+	}
+
+	return <NotesList personId={self.id} paged />;
 }
 
-export const Route = createFileRoute("/_authed/notes/")({
-	component: NotesPage,
-	pendingComponent: () => <p className="text-[13px] text-sub">Loading…</p>,
-	errorComponent: NotesNotSetUp,
-});
-
 function NotesPage() {
-	const { data: self } = useSuspenseQuery({
-		queryKey: keys.me.profile(),
-		queryFn: getMe,
-		retry: false,
-	});
+	const [tab, setTab] = useState("mine");
 
 	return (
 		<div className="space-y-4 max-w-2xl">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
 				Notes
 			</h1>
-			<NotesList personId={self.id} />
+			<Tabs value={tab} onValueChange={setTab}>
+				<TabsList>
+					<TabsTrigger value="mine">My notes</TabsTrigger>
+					<TabsTrigger value="all">All notes</TabsTrigger>
+				</TabsList>
+				<TabsContent value="mine">
+					<MyNotes />
+				</TabsContent>
+				<TabsContent value="all">
+					<AllNotesList />
+				</TabsContent>
+			</Tabs>
 		</div>
 	);
 }

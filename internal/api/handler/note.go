@@ -28,6 +28,8 @@ type noteRequest struct {
 // @Param        id         path   int     true   "Person ID"
 // @Param        page       query  int     false  "Page number"  default(1)
 // @Param        page_size  query  int     false  "Page size"    default(50)
+// @Param        from_date  query  string  false  "From date YYYY-MM-DD"
+// @Param        to_date    query  string  false  "To date YYYY-MM-DD"
 // @Success      200  {object}  envelope
 // @Failure      400  {object}  envelope
 // @Security     CookieAuth
@@ -53,7 +55,57 @@ func (h *NoteAPI) ListByPerson(c *echo.Context) error {
 		pageSize = 200
 	}
 
-	list, err := h.Svc.ListByPerson(c.Request().Context(), personID, page, pageSize)
+	list, err := h.Svc.ListByPerson(
+		c.Request().Context(), personID, page, pageSize,
+		c.QueryParam("from_date"), c.QueryParam("to_date"),
+	)
+	if err != nil {
+		return apiErr(c, http.StatusInternalServerError, "internal server error")
+	}
+
+	return ok(c, list)
+}
+
+// ListAll handles GET /v1/notes
+//
+// @Summary      List notes across all people
+// @Tags         notes
+// @Produce      json
+// @Param        page       query  int     false  "Page number"  default(1)
+// @Param        page_size  query  int     false  "Page size"    default(50)
+// @Param        person_ids query  string  false  "Comma-separated person IDs"
+// @Param        from_date  query  string  false  "From date YYYY-MM-DD"
+// @Param        to_date    query  string  false  "To date YYYY-MM-DD"
+// @Success      200  {object}  envelope
+// @Security     CookieAuth
+// @Security     CSRFHeader
+// @Router       /notes [get]
+func (h *NoteAPI) ListAll(c *echo.Context) error {
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	pageSize, _ := strconv.Atoi(c.QueryParam("page_size"))
+
+	if pageSize < 1 {
+		pageSize = 50
+	}
+
+	if pageSize > 200 {
+		pageSize = 200
+	}
+
+	params := note.ListAllParams{
+		Page:     page,
+		PageSize: pageSize,
+		FromDate: c.QueryParam("from_date"),
+		ToDate:   c.QueryParam("to_date"),
+	}
+
+	for _, raw := range strings.Split(c.QueryParam("person_ids"), ",") {
+		if id, err := strconv.ParseInt(strings.TrimSpace(raw), 10, 64); err == nil && id > 0 {
+			params.PersonIDs = append(params.PersonIDs, id)
+		}
+	}
+
+	list, err := h.Svc.ListAll(c.Request().Context(), params)
 	if err != nil {
 		return apiErr(c, http.StatusInternalServerError, "internal server error")
 	}

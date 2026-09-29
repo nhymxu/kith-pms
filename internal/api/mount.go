@@ -192,6 +192,7 @@ func mountNote(g *echo.Group, deps Deps) {
 	h := &handler.NoteAPI{Svc: deps.NoteService}
 	g.GET("/people/:id/notes", h.ListByPerson)
 	g.POST("/people/:id/notes", h.Create)
+	g.GET("/notes", h.ListAll)
 	g.GET("/notes/:id", h.Get)
 	g.PUT("/notes/:id", h.Update)
 	g.DELETE("/notes/:id", h.Delete)

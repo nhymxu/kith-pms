@@ -78,11 +78,28 @@ func (r *Repo) Delete(ctx context.Context, tx bun.Tx, id int64) error {
 	return nil
 }
 
-func (r *Repo) ListByPerson(ctx context.Context, personID int64, page, pageSize int) (*List, error) {
+func (r *Repo) ListByPerson(
+	ctx context.Context,
+	personID int64,
+	page, pageSize int,
+	fromDate, toDate string,
+) (*List, error) {
+	filtered := func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where("person_id = ?", personID)
+		if fromDate != "" {
+			q = q.Where("date(created_at) >= ?", fromDate)
+		}
+
+		if toDate != "" {
+			q = q.Where("date(created_at) <= ?", toDate)
+		}
+
+		return q
+	}
+
 	var total int
 
-	err := r.db.NewSelect().Model((*Note)(nil)).
-		Where("person_id = ?", personID).
+	err := filtered(r.db.NewSelect().Model((*Note)(nil))).
 		ColumnExpr("COUNT(*)").
 		Scan(ctx, &total)
 	if err != nil {
@@ -91,8 +108,7 @@ func (r *Repo) ListByPerson(ctx context.Context, personID int64, page, pageSize 
 
 	var items []Note
 
-	q := r.db.NewSelect().Model(&items).
-		Where("person_id = ?", personID).
+	q := filtered(r.db.NewSelect().Model(&items)).
 		OrderExpr("created_at DESC, id DESC")
 
 	if pageSize > 0 {
@@ -113,6 +129,63 @@ func (r *Repo) ListByPerson(ctx context.Context, personID int64, page, pageSize 
 		Page:     page,
 		PageSize: pageSize,
 	}, nil
+}
+
+// ListAll returns notes across every person, newest first, each with the
+// owner's display fields.
+func (r *Repo) ListAll(ctx context.Context, p ListAllParams) (*AllList, error) {
+	filtered := func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.TableExpr("note n").Join("JOIN person p ON p.id = n.person_id")
+		if len(p.PersonIDs) > 0 {
+			q = q.Where("n.person_id IN (?)", bun.List(p.PersonIDs))
+		}
+
+		if p.FromDate != "" {
+			q = q.Where("date(n.created_at) >= ?", p.FromDate)
+		}
+
+		if p.ToDate != "" {
+			q = q.Where("date(n.created_at) <= ?", p.ToDate)
+		}
+
+		return q
+	}
+
+	var total int
+
+	if err := filtered(r.db.NewSelect()).ColumnExpr("COUNT(*)").Scan(ctx, &total); err != nil {
+		return nil, fmt.Errorf("count notes: %w", err)
+	}
+
+	var rows []struct {
+		Note
+		PersonName      string `bun:"person_name"`
+		PersonNickname  string `bun:"person_nickname"`
+		PersonHasAvatar bool   `bun:"person_has_avatar"`
+	}
+
+	err := filtered(r.db.NewSelect()).
+		ColumnExpr("n.*, p.name AS person_name, p.nickname AS person_nickname").
+		ColumnExpr("p.avatar_path != '' AS person_has_avatar").
+		OrderExpr("n.created_at DESC, n.id DESC").
+		Limit(p.PageSize).
+		Offset((p.Page-1)*p.PageSize).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("list all notes: %w", err)
+	}
+
+	items := make([]WithPersonCard, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, WithPersonCard{
+			Note:            row.Note,
+			PersonName:      row.PersonName,
+			PersonNickname:  row.PersonNickname,
+			PersonHasAvatar: row.PersonHasAvatar,
+		})
+	}
+
+	return &AllList{Items: items, Total: total, Page: p.Page, PageSize: p.PageSize}, nil
 }
 
 // Search finds notes matching query via note_fts, ranked by relevance (bm25),

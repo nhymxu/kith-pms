@@ -6,7 +6,7 @@ require (
 	github.com/getsentry/sentry-go v0.49.0
 	github.com/getsentry/sentry-go/echo v0.49.0
 	github.com/jinzhu/copier v0.4.0
-	github.com/labstack/echo/v5 v5.3.1
+	github.com/labstack/echo/v5 v5.4.0
 	github.com/lmittmann/tint v1.2.0
 	github.com/nhymxu/gommon v0.0.0-20260806031531-7b6430bdec4a
 	github.com/prometheus/client_golang v1.24.1
@@ -14,11 +14,11 @@ require (
 	github.com/samber/slog-sentry/v2 v2.11.0
 	github.com/swaggo/files/v2 v2.0.2
 	github.com/swaggo/swag v1.16.6
-	github.com/uptrace/bun v1.2.18
-	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
-	github.com/uptrace/bun/driver/sqliteshim v1.2.18
-	github.com/uptrace/bun/extra/bundebug v1.2.18
-	github.com/urfave/cli/v3 v3.13.0
+	github.com/uptrace/bun v1.3.0
+	github.com/uptrace/bun/dialect/sqlitedialect v1.3.0
+	github.com/uptrace/bun/driver/sqliteshim v1.3.0
+	github.com/uptrace/bun/extra/bundebug v1.3.0
+	github.com/urfave/cli/v3 v3.14.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/term v0.46.0

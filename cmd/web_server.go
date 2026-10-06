@@ -77,7 +77,7 @@ Can scale later.`,
 			defer func() { _ = db.Close() }()
 
 			if config.C.Debug {
-				db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+				db = db.WithQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 			}
 
 			if config.C.DBAutoMigrate {

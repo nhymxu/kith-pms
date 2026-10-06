@@ -132,7 +132,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]GiftWithPerson, e
 			offset = 0
 		}
 
-		q = q.Limit(params.PageSize).Offset(offset)
+		q = q.Limit(int64(params.PageSize)).Offset(int64(offset))
 	}
 
 	err := q.Scan(ctx, &rows)

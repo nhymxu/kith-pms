@@ -57,7 +57,11 @@ func (r *Repo) List(ctx context.Context, db *bun.DB, p ListParams) ([]Entry, err
 
 	var entries []Entry
 
-	q := db.NewSelect().Model(&entries).OrderExpr("created_at DESC, id DESC").Limit(pageSize).Offset(offset)
+	q := db.NewSelect().
+		Model(&entries).
+		OrderExpr("created_at DESC, id DESC").
+		Limit(int64(pageSize)).
+		Offset(int64(offset))
 	q = applyFilters(q, p)
 
 	if err := q.Scan(ctx); err != nil {
@@ -77,7 +81,7 @@ func (r *Repo) Count(ctx context.Context, db *bun.DB, p ListParams) (int, error)
 		return 0, fmt.Errorf("audit: count: %w", err)
 	}
 
-	return count, nil
+	return int(count), nil
 }
 
 // Purge deletes audit entries older than `days` days. Returns count deleted.

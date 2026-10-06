@@ -144,5 +144,5 @@ func (r *sqlSessionRepo) CountActiveSessions(ctx context.Context) (int64, error)
 		return 0, fmt.Errorf("auth: count active sessions: %w", err)
 	}
 
-	return int64(n), nil
+	return n, nil
 }

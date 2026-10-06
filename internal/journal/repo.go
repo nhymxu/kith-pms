@@ -128,7 +128,7 @@ func (r *sqlActivityRepo) Count(ctx context.Context, params ListParams) (int, er
 		return 0, fmt.Errorf("journal: count activities: %w", err)
 	}
 
-	return count, nil
+	return int(count), nil
 }
 
 // List builds a dynamic query based on non-zero filter fields in params.
@@ -156,7 +156,7 @@ func (r *sqlActivityRepo) List(ctx context.Context, params ListParams) ([]Activi
 
 	var list []Activity
 
-	err := q.Limit(pageSize).Offset((page-1)*pageSize).Scan(ctx, &list)
+	err := q.Limit(int64(pageSize)).Offset(int64((page-1)*pageSize)).Scan(ctx, &list)
 	if err != nil {
 		return nil, fmt.Errorf("journal: list activities: %w", err)
 	}

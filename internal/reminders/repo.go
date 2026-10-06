@@ -156,7 +156,7 @@ func (r *Repo) List(ctx context.Context, params ListParams) ([]ReminderWithPerso
 
 	if params.PageSize > 0 {
 		offset := (params.Page - 1) * params.PageSize
-		q = q.Limit(params.PageSize).Offset(offset)
+		q = q.Limit(int64(params.PageSize)).Offset(int64(offset))
 	}
 
 	var rows []struct {

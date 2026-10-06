@@ -112,7 +112,7 @@ func (r *Repo) ListByPerson(
 		OrderExpr("created_at DESC, id DESC")
 
 	if pageSize > 0 {
-		q = q.Limit(pageSize).Offset((page - 1) * pageSize)
+		q = q.Limit(int64(pageSize)).Offset(int64((page - 1) * pageSize))
 	}
 
 	if err := q.Scan(ctx); err != nil {
@@ -168,8 +168,8 @@ func (r *Repo) ListAll(ctx context.Context, p ListAllParams) (*AllList, error) {
 		ColumnExpr("n.*, p.name AS person_name, p.nickname AS person_nickname").
 		ColumnExpr("p.avatar_path != '' AS person_has_avatar").
 		OrderExpr("n.created_at DESC, n.id DESC").
-		Limit(p.PageSize).
-		Offset((p.Page-1)*p.PageSize).
+		Limit(int64(p.PageSize)).
+		Offset(int64((p.Page-1)*p.PageSize)).
 		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("list all notes: %w", err)
@@ -203,7 +203,7 @@ func (r *Repo) Search(ctx context.Context, query string, limit int) ([]WithPerso
 		Join("JOIN person p ON p.id = n.person_id").
 		Where("note_fts MATCH ?", sanitizeFTSQuery(query)).
 		OrderExpr("bm25(note_fts)").
-		Limit(limit).
+		Limit(int64(limit)).
 		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("search notes: %w", err)

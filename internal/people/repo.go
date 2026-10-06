@@ -123,7 +123,7 @@ func (r *sqlPersonRepo) List(
 		sq = sq.Where(`"p"."is_favorite" = ?`, true)
 	}
 
-	sq = sq.OrderExpr(buildOrderBy(sort, favoriteFirst)).Limit(limit).Offset(offset)
+	sq = sq.OrderExpr(buildOrderBy(sort, favoriteFirst)).Limit(int64(limit)).Offset(int64(offset))
 
 	if err := sq.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("people: list query: %w", err)
@@ -194,7 +194,7 @@ func (r *sqlPersonRepo) Count(
 		return 0, fmt.Errorf("people: count query: %w", err)
 	}
 
-	return total, nil
+	return int(total), nil
 }
 
 // buildOrderBy returns the ORDER BY expression based on sort parameter.

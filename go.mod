@@ -3,13 +3,13 @@ module github.com/nhymxu/kith-pms
 go 1.27.1
 
 require (
-	github.com/getsentry/sentry-go v0.49.0
-	github.com/getsentry/sentry-go/echo v0.49.0
+	github.com/getsentry/sentry-go v0.50.0
+	github.com/getsentry/sentry-go/echo v0.50.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/labstack/echo/v5 v5.4.0
 	github.com/lmittmann/tint v1.2.1
 	github.com/nhymxu/gommon v0.0.0-20260806031531-7b6430bdec4a
-	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_golang v1.25.0
 	github.com/samber/slog-multi v1.8.0
 	github.com/samber/slog-sentry/v2 v2.11.0
 	github.com/swaggo/files/v2 v2.0.2
@@ -20,8 +20,8 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.3.0
 	github.com/urfave/cli/v3 v3.14.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/crypto v0.57.0
-	golang.org/x/term v0.46.0
+	golang.org/x/crypto v0.58.0
+	golang.org/x/term v0.47.0
 	golang.org/x/time v0.16.0
 )
 
@@ -60,7 +60,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.71.0 // indirect
+	github.com/prometheus/common v0.72.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -71,11 +71,11 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260908163034-4bcc4b2ee518 // indirect
-	golang.org/x/text v0.42.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
+	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	modernc.org/libc v1.76.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

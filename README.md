@@ -1,5 +1,7 @@
 # kith
 
+[![codecov](https://codecov.io/gh/nhymxu/kith-pms/graph/badge.svg)](https://codecov.io/gh/nhymxu/kith-pms)
+
 **kith** (kith and kin) is a self-hosted personal relationship manager. Track people, tag them with labels, and keep a journal of interactions — all in a single binary backed by SQLite.
 
 ## Features
@@ -139,20 +141,22 @@ docker compose -f compose.dev.yml up -d
 ## Development
 
 ```bash
-make deps          # download and tidy Go modules
-make web           # pnpm build + copy SPA into internal/web/spa/public
-make build         # make web + CGO_ENABLED=0 go build (full build)
-make assets        # alias for make web + sqlc codegen
-make swagger       # generate OpenAPI docs from swaggo annotations
-make fmt           # gofmt all Go files
-make lint          # run golangci-lint
-make tests         # run all tests with race detector
-make test-coverage # generate coverage profile (HTML report)
-make tidy          # fmt + go mod tidy
-make clean         # remove web/dist and internal/web/spa/public
-make vuln-check    # scan for known vulnerabilities
-make dev           # Go live-reload (air) + Vite HMR
-make gosec         # security static analysis
+make deps             # download and tidy Go modules
+make web              # pnpm build + copy SPA into internal/web/spa/public
+make build            # make web + CGO_ENABLED=0 go build (full build)
+make assets           # alias for make web + sqlc codegen
+make swagger          # generate OpenAPI docs from swaggo annotations
+make fmt              # gofmt all Go files
+make lint             # run golangci-lint
+make tests            # run all tests with race detector
+make test-coverage    # Go coverage profile -> cover.out (also uploaded to Codecov in CI)
+make cover            # open the Go HTML coverage report in a browser
+make test-coverage-web # web coverage -> web/coverage/lcov.info
+make tidy             # fmt + go mod tidy
+make clean            # remove web/dist and internal/web/spa/public
+make vuln-check       # scan for known vulnerabilities
+make dev               # Go live-reload (air) + Vite HMR
+make gosec             # security static analysis
 ```
 
 ### Local dev with hot-reload (recommended)

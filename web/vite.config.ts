@@ -41,6 +41,20 @@ export default mergeConfig(
 		test: {
 			environment: "jsdom",
 			globals: true,
+			coverage: {
+				provider: "v8",
+				// `lcov` is what Codecov consumes; `text` keeps the local signal visible.
+				reporter: ["text", "lcov"],
+				reportsDirectory: "./coverage",
+				include: ["src/**/*.{ts,tsx}"],
+				exclude: [
+					"src/**/*.test.{ts,tsx}",
+					"src/**/__tests__/**",
+					"src/**/*.d.ts",
+					// Regenerated on every build by @tanstack/router-plugin.
+					"src/routeTree.gen.ts",
+				],
+			},
 		},
 	}),
 );

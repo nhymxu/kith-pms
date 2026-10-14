@@ -65,11 +65,15 @@ tests: ## Run all tests
 	go test -race -v -tags integration $(GO_TEST_FLAGS) ./...
 
 .PHONY: test-coverage
-test-coverage:
-	go test -coverprofile=cover.out -shuffle on ./...
+test-coverage: ## Run Go tests with coverage into cover.out (uploaded to Codecov in CI)
+	go test -covermode=atomic -coverprofile=cover.out -shuffle on -tags integration $(GO_TEST_FLAGS) ./...
+
+.PHONY: test-coverage-web
+test-coverage-web: ## Run web tests with coverage into web/coverage/lcov.info
+	cd web && pnpm test:coverage
 
 .PHONY: cover
-cover:
+cover: ## Open the Go HTML coverage report
 	go tool cover -html=cover.out
 
 .PHONY: benchmark

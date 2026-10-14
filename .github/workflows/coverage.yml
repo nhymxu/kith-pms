@@ -1,0 +1,99 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main, dev]
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+  pull_request:
+  # Nightly drift tracking: catches coverage lost to commits that merged without
+  # a coverage run (merge commits, direct pushes, force-push rebases).
+  schedule:
+    - cron: '37 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-coverage:
+    name: Go coverage
+    # Skip push triggered by a PR merge — the pull_request event already ran this
+    if: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Merge pull request')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Codecov authenticates via GitHub OIDC — no CODECOV_TOKEN secret needed
+      # for this public repo. Fork PRs fall back to tokenless automatically.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.x"
+          cache: true
+          check-latest: true
+
+      - name: Test with coverage
+        run: make test-coverage
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: ./cover.out
+          flags: backend
+          name: go-coverage
+          disable_search: true
+          use_oidc: true
+          fail_ci_if_error: true
+          verbose: true
+
+  web-coverage:
+    name: Web coverage
+    # Skip push triggered by a PR merge — the pull_request event already ran this
+    if: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Merge pull request')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./web
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/setup@v3
+        with:
+          version: 11
+          runtime: node@24
+          cache: true
+          cache-dependency-path: web/pnpm-lock.yaml
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: ./web/coverage/lcov.info
+          # vitest writes lcov paths relative to web/, so the codecov CLI has to
+          # be told to resolve them from there instead of the repo root.
+          root_dir: ./web
+          flags: frontend
+          name: web-coverage
+          disable_search: true
+          use_oidc: true
+          fail_ci_if_error: true
+          verbose: true

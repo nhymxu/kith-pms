@@ -13,7 +13,9 @@
 
 # Code coverage profiles and other test artifacts
 *.out
-coverage.*
+# Anchored: unanchored `coverage.*` matches by basename and would swallow
+# real source files such as .github/workflows/coverage.yml.
+/coverage.*
 *.coverprofile
 profile.cov
 /web/coverage/

@@ -2,7 +2,6 @@
 	"server": {
 		"all_fields_required": "Vui lòng điền đầy đủ các trường.",
 		"avatar_file_not_found": "Không tìm thấy tệp ảnh đại diện.",
-		"avatar_upload_failed": "Không lưu được ảnh đại diện.",
 		"birthday_person_required": "Hãy chọn một người cho lời nhắc sinh nhật.",
 		"company_required": "Mỗi mục cần có tên công ty.",
 		"content_required": "Nội dung là bắt buộc.",

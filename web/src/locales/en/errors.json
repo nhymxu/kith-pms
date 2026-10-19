@@ -2,7 +2,6 @@
 	"server": {
 		"all_fields_required": "All fields are required.",
 		"avatar_file_not_found": "Avatar file not found.",
-		"avatar_upload_failed": "Couldn't save the avatar.",
 		"birthday_person_required": "Choose a person for a birthday reminder.",
 		"company_required": "Company is required for each entry.",
 		"content_required": "Content is required.",

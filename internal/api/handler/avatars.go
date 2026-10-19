@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -130,7 +131,11 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusBadRequest, "avatar_upload_failed", err.Error())
+		// The handler already validated size and content type, so what is left
+		// are server faults whose text (paths, SQL) must not reach the client.
+		slog.ErrorContext(c.Request().Context(), "avatar upload failed", "person_id", personID, "error", err)
+
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"uploaded": true})

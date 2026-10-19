@@ -37,5 +37,7 @@ type RelationshipView struct {
 	OtherPersonNickname string `json:"other_person_nickname"`
 	OtherPersonAvatar   string `json:"other_person_avatar"`
 	TypeName            string `json:"type_name"`
-	Notes               string `json:"notes"`
+	// InverseTypeName is how the profile owner reads from the other person's side.
+	InverseTypeName string `json:"inverse_type_name"`
+	Notes           string `json:"notes"`
 }

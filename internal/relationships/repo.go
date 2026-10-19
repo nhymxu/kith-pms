@@ -232,12 +232,14 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 		OtherPersonNickname string `bun:"other_person_nickname"`
 		OtherPersonAvatar   string `bun:"other_person_avatar"`
 		TypeName            string `bun:"type_name"`
+		InverseTypeName     string `bun:"inverse_type_name"`
 		Notes               string `bun:"notes"`
 	}
 
 	const colExpr = "pr.id, pr.to_person_id AS other_person_id," +
 		" p.name AS other_person_name, COALESCE(p.nickname,'') AS other_person_nickname," +
-		" COALESCE(p.avatar_path,'') AS other_person_avatar, t.name AS type_name, pr.notes"
+		" COALESCE(p.avatar_path,'') AS other_person_avatar, t.name AS type_name," +
+		" COALESCE(NULLIF(t.reverse_name,''), t.name) AS inverse_type_name, pr.notes"
 
 	err := r.db.NewSelect().
 		TableExpr("person_relationship pr").
@@ -260,6 +262,7 @@ func (r *sqlPersonRelationshipRepo) ListByPersonID(ctx context.Context, personID
 			OtherPersonNickname: row.OtherPersonNickname,
 			OtherPersonAvatar:   row.OtherPersonAvatar,
 			TypeName:            row.TypeName,
+			InverseTypeName:     row.InverseTypeName,
 			Notes:               row.Notes,
 		})
 	}

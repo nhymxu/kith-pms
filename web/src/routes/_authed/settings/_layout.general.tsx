@@ -15,6 +15,7 @@ import { getSettings, updateSettings } from "#/endpoints/settings";
 import { DashboardWidgetsSettingsCard } from "#/features/settings/dashboard-widgets-settings-card";
 import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
 import { PageSizeSettingsCard } from "#/features/settings/page-size-settings-card";
+import { RelationshipDisplaySettingsCard } from "#/features/settings/relationship-display-settings-card";
 import { SearchScopeSettingsCard } from "#/features/settings/search-scope-settings-card";
 import {
 	type DateFormat,
@@ -116,6 +117,7 @@ function GeneralSettingsPage() {
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
 				number_format: p.numberFormat,
+				relationship_display: p.relationshipDisplay,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
@@ -208,6 +210,8 @@ function GeneralSettingsPage() {
 		dashboard_last_contact_count:
 			apiSettings?.dashboard_last_contact_count ?? 5,
 		nav_layout: apiSettings?.nav_layout ?? getUserPrefs().navLayout,
+		relationship_display:
+			apiSettings?.relationship_display ?? getUserPrefs().relationshipDisplay,
 		search_scope: apiSettings?.search_scope ?? [
 			"people",
 			"journal",
@@ -603,6 +607,13 @@ function GeneralSettingsPage() {
 			/>
 
 			<PageSizeSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
+
+			<RelationshipDisplaySettingsCard
 				apiSettings={apiSettings}
 				isPlaceholderData={isPlaceholderData}
 				buildPayload={buildPayload}

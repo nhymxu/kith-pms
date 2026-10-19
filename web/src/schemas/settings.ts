@@ -30,6 +30,7 @@ export const userSettingsSchema = z.object({
 	dashboard_last_contact_count: z.number().int().min(1).max(20).default(5),
 	nav_layout: z.enum(["top", "side"]).default("top"),
 	number_format: z.enum(["1,234.56", "1.234,56"]).default("1,234.56"),
+	relationship_display: z.enum(["plain", "sentence", "badge"]).default("plain"),
 	search_scope: z
 		.array(z.enum(["people", "journal", "gifts", "notes"]))
 		.min(1)

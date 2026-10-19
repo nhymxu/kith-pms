@@ -28,6 +28,10 @@ type UserSettings struct {
 	// numbers, e.g. "1,234.56" or "1.234,56".
 	NumberFormat string `json:"number_format"`
 
+	// RelationshipDisplay picks how a person's relationship rows read:
+	// "plain", "sentence" or "badge".
+	RelationshipDisplay string `json:"relationship_display"`
+
 	SearchScope []string `json:"search_scope"`
 }
 
@@ -56,6 +60,8 @@ var Defaults = UserSettings{
 
 	NumberFormat: "1,234.56",
 
+	RelationshipDisplay: "plain",
+
 	SearchScope: []string{"people", "journal", "gifts", "notes"},
 }
 
@@ -83,6 +89,8 @@ const (
 	KeyNavLayout = "nav_layout"
 
 	KeyNumberFormat = "number_format"
+
+	KeyRelationshipDisplay = "relationship_display"
 
 	KeySearchScope = "search_scope"
 )

@@ -18,6 +18,7 @@ export const relationshipViewSchema = z.object({
 	other_person_nickname: z.string().optional().default(""),
 	other_person_avatar: z.string().optional().default(""),
 	type_name: z.string(),
+	inverse_type_name: z.string().optional().default(""),
 	notes: z.string().optional().default(""),
 });
 

@@ -54,6 +54,15 @@ var (
 	ErrInvalidNumberFormat = errors.New(
 		"settings: number_format must be one of 1,234.56, 1.234,56",
 	)
+	// ErrInvalidRelationshipDisplay is returned when relationship_display is not a
+	// recognized style. Keep the valid set in sync with the zod enum in
+	// web/src/schemas/settings.ts, the RelationshipDisplay union + DEFAULTS in
+	// web/src/lib/format-datetime.ts, RELATIONSHIP_DISPLAY_OPTIONS in
+	// web/src/features/settings/relationship-display-settings-card.tsx, and the
+	// renderer in web/src/features/people/relationship-label.tsx.
+	ErrInvalidRelationshipDisplay = errors.New(
+		"settings: relationship_display must be one of plain, sentence, badge",
+	)
 )
 
 var validDateFormats = map[string]bool{
@@ -108,6 +117,12 @@ var validSearchScope = map[string]bool{
 var validNumberFormats = map[string]bool{
 	"1,234.56": true,
 	"1.234,56": true,
+}
+
+var validRelationshipDisplay = map[string]bool{
+	"plain":    true,
+	"sentence": true,
+	"badge":    true,
 }
 
 type Service struct {
@@ -207,6 +222,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.NumberFormat = v
 	}
 
+	if v, ok := rows[KeyRelationshipDisplay]; ok && validRelationshipDisplay[v] {
+		result.RelationshipDisplay = v
+	}
+
 	if v, ok := rows[KeySearchScope]; ok {
 		scope := make([]string, 0, len(Defaults.SearchScope))
 
@@ -278,6 +297,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidNumberFormat
 	}
 
+	if !validRelationshipDisplay[in.RelationshipDisplay] {
+		return UserSettings{}, ErrInvalidRelationshipDisplay
+	}
+
 	if len(in.SearchScope) == 0 {
 		return UserSettings{}, ErrInvalidSearchScope
 	}
@@ -319,6 +342,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyTheme:                     in.Theme,
 		KeyNavLayout:                 in.NavLayout,
 		KeyNumberFormat:              in.NumberFormat,
+		KeyRelationshipDisplay:       in.RelationshipDisplay,
 		KeySearchScope:               strings.Join(in.SearchScope, ","),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {

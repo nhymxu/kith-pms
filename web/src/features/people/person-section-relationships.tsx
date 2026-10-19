@@ -9,7 +9,6 @@ import { Link2, ListPlus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -31,6 +30,10 @@ import { listRelationshipTypes } from "#/endpoints/relationship-types";
 import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
 import { BulkRelationshipModal } from "./bulk-relationship-modal";
+import {
+	RelationshipLabel,
+	useRelationshipDisplay,
+} from "./relationship-label";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
 	return (
@@ -42,18 +45,26 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 interface RelationshipsSectionProps {
 	personId: number;
+	personName: string;
 }
 
-export function RelationshipsSection({ personId }: RelationshipsSectionProps) {
+export function RelationshipsSection({
+	personId,
+	personName,
+}: RelationshipsSectionProps) {
 	return (
 		<QueryBoundary>
-			<RelationshipsSectionInner personId={personId} />
+			<RelationshipsSectionInner personId={personId} personName={personName} />
 		</QueryBoundary>
 	);
 }
 
-function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
+function RelationshipsSectionInner({
+	personId,
+	personName,
+}: RelationshipsSectionProps) {
 	const qc = useQueryClient();
+	const display = useRelationshipDisplay();
 	const [addOpen, setAddOpen] = useState(false);
 	const [bulkOpen, setBulkOpen] = useState(false);
 	const [typeId, setTypeId] = useState<number | "">("");
@@ -137,14 +148,28 @@ function RelationshipsSectionInner({ personId }: RelationshipsSectionProps) {
 							key={r.id}
 							className="flex items-center gap-3 border-bw border-line rounded-md p-2 text-sm"
 						>
-							<Badge variant="neutral">{r.type_name}</Badge>
-							<Link
-								to="/people/$personId"
-								params={{ personId: String(r.other_person_id) }}
-								className="font-medium hover:underline flex-1"
-							>
-								{formatPersonName(r.other_person_name, r.other_person_nickname)}
-							</Link>
+							<RelationshipLabel
+								display={display}
+								typeName={r.type_name}
+								inverseTypeName={r.inverse_type_name}
+								selfName={personName}
+								otherName={formatPersonName(
+									r.other_person_name,
+									r.other_person_nickname,
+								)}
+								other={
+									<Link
+										to="/people/$personId"
+										params={{ personId: String(r.other_person_id) }}
+										className="font-medium hover:underline"
+									>
+										{formatPersonName(
+											r.other_person_name,
+											r.other_person_nickname,
+										)}
+									</Link>
+								}
+							/>
 							{r.notes && (
 								<span className="text-sub text-xs truncate max-w-[140px]">
 									{r.notes}

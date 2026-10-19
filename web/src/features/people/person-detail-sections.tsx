@@ -39,6 +39,7 @@ import {
 	formatDate,
 	utcToDatetimeLocal,
 } from "#/lib/format-datetime";
+import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
 import type { Person } from "#/schemas/person";
 import { genderOptions } from "#/schemas/person";
@@ -525,7 +526,10 @@ function PersonDetailSectionsInner({
 				</div>
 
 				<SectionCard>
-					<RelationshipsSection personId={personId} />
+					<RelationshipsSection
+						personId={personId}
+						personName={formatPersonName(person.name, person.nickname)}
+					/>
 				</SectionCard>
 				<SectionCard>
 					<ImportantDatesSection personId={personId} person={person} />

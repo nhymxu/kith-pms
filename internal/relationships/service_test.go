@@ -360,6 +360,39 @@ func TestDeleteType_RestrictsWhenInUse(t *testing.T) {
 	}
 }
 
+func TestListByPerson_InverseTypeName(t *testing.T) {
+	svc, db := newSvc(t)
+	ctx := context.Background()
+
+	minh := insertPerson(t, db, "Minh")
+	lan := insertPerson(t, db, "Lan")
+	hoa := insertPerson(t, db, "Hoa")
+
+	sibling, _ := svc.CreateType(ctx, "em ruột", "anh ruột")
+	friend, _ := svc.CreateType(ctx, "Friend", "")
+
+	svc.AttachRelationship(ctx, minh, lan, sibling.ID, "")
+	svc.AttachRelationship(ctx, minh, hoa, friend.ID, "")
+
+	views, err := svc.ListByPerson(ctx, minh)
+	if err != nil {
+		t.Fatalf("ListByPerson: %v", err)
+	}
+
+	got := map[string]string{}
+	for _, v := range views {
+		got[v.TypeName] = v.InverseTypeName
+	}
+
+	if got["em ruột"] != "anh ruột" {
+		t.Errorf("paired inverse: got %q, want %q", got["em ruột"], "anh ruột")
+	}
+
+	if got["Friend"] != "Friend" {
+		t.Errorf("symmetric inverse: got %q, want %q", got["Friend"], "Friend")
+	}
+}
+
 func TestListByPerson_ShapeAndOrder(t *testing.T) {
 	svc, db := newSvc(t)
 	ctx := context.Background()

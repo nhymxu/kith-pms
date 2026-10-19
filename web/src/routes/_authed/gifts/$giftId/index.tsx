@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
@@ -23,15 +24,24 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/gifts/$giftId/")({
 	component: GiftDetailPage,
-	pendingComponent: () => (
-		<p className="text-sm font-base text-foreground/60">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-sm font-base text-destructive">Gift not found.</p>
-	),
+	pendingComponent: GiftPending,
+	errorComponent: GiftError,
 });
 
+function GiftPending() {
+	const { t } = useTranslation("common");
+	return <p className="text-sm font-base text-foreground/60">{t("loading")}</p>;
+}
+
+function GiftError() {
+	const { t } = useTranslation("gifts");
+	return (
+		<p className="text-sm font-base text-destructive">{t("page.notFound")}</p>
+	);
+}
+
 function GiftDetailPage() {
+	const { t } = useTranslation("gifts");
 	const { giftId } = Route.useParams();
 	const id = Number(giftId);
 	const navigate = useNavigate();
@@ -53,9 +63,9 @@ function GiftDetailPage() {
 
 	const debtLabel =
 		data.debt_type === "i_owe"
-			? "I owe"
+			? t("debt.iOwe")
 			: data.debt_type === "they_owe"
-				? "They owe"
+				? t("debt.theyOwe")
 				: "—";
 
 	const amountLabel = formatCurrency(data.amount_cents, data.currency);
@@ -69,22 +79,24 @@ function GiftDetailPage() {
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
 						<Link to="/gifts/$giftId/edit" params={{ giftId }}>
-							Edit
+							{t("detail.edit")}
 						</Link>
 					</Button>
 					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-						Delete
+						{t("delete.confirm")}
 					</Button>
 				</div>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-base">Details</CardTitle>
+					<CardTitle className="text-base">{t("detail.details")}</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm font-base">
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Person</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.person")}
+						</span>
 						<Link
 							to="/people/$personId"
 							params={{ personId: String(data.person_id) }}
@@ -94,27 +106,43 @@ function GiftDetailPage() {
 						</Link>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Direction</span>
-						<Badge variant="neutral">{data.direction}</Badge>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.direction")}
+						</span>
+						<Badge variant="neutral">
+							{t(`direction.${data.direction}`, {
+								defaultValue: data.direction,
+							})}
+						</Badge>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Debt</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.debt")}
+						</span>
 						<span>{debtLabel}</span>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Date</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.date")}
+						</span>
 						<span>{formatDate(data.date)}</span>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Amount</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.amount")}
+						</span>
 						<span>{amountLabel}</span>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Notes</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.notes")}
+						</span>
 						<span className="whitespace-pre-wrap">{data.notes || "—"}</span>
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Image</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.image")}
+						</span>
 						{data.image_path ? (
 							<img
 								src={`/v1/gifts/${data.id}/image`}
@@ -122,7 +150,7 @@ function GiftDetailPage() {
 								className="mt-1 rounded-base border-bw border-line max-h-64 object-contain"
 							/>
 						) : (
-							<span className="text-sub">No image</span>
+							<span className="text-sub">{t("detail.noImage")}</span>
 						)}
 					</div>
 				</CardContent>
@@ -131,22 +159,23 @@ function GiftDetailPage() {
 			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete gift?</DialogTitle>
+						<DialogTitle>{t("delete.title")}</DialogTitle>
 						<DialogDescription>
-							This will permanently delete "{data.title}". This action cannot be
-							undone.
+							{t("delete.description", { title: data.title })}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>
-							Cancel
+							{t("delete.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
 							onClick={() => deleteMutation.mutate()}
 							disabled={deleteMutation.isPending}
 						>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+							{deleteMutation.isPending
+								? t("delete.deleting")
+								: t("delete.confirm")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

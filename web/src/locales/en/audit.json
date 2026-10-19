@@ -1,0 +1,23 @@
+{
+	"title": "Audit Log",
+	"filters": {
+		"from": "From",
+		"to": "To",
+		"clearDates": "Clear dates"
+	},
+	"table": {
+		"timestamp": "Timestamp",
+		"action": "Action",
+		"type": "Type",
+		"target": "Target",
+		"detail": "Detail",
+		"empty": "No audit entries."
+	},
+	"detailActions": {
+		"profile_update": "Profile",
+		"avatar_upload": "Avatar upload",
+		"avatar_delete": "Avatar delete",
+		"set_self": "Set self",
+		"last_contact_update": "Last contact"
+	}
+}

@@ -1,0 +1,107 @@
+{
+	"page": {
+		"title": "Reminders",
+		"newReminder": "New Reminder",
+		"newTitle": "New Reminder",
+		"editTitle": "Edit Reminder",
+		"tabAll": "All",
+		"notFound": "Reminder not found."
+	},
+	"list": {
+		"empty": "No reminders found."
+	},
+	"table": {
+		"title": "Title",
+		"person": "Person",
+		"dueDate": "Due Date",
+		"recurrence": "Recurrence",
+		"status": "Status"
+	},
+	"status": {
+		"done": "Done",
+		"overdue": "Overdue",
+		"upcoming": "Upcoming"
+	},
+	"complete": {
+		"action": "Mark complete"
+	},
+	"days": {
+		"sun": "Sun",
+		"mon": "Mon",
+		"tue": "Tue",
+		"wed": "Wed",
+		"thu": "Thu",
+		"fri": "Fri",
+		"sat": "Sat"
+	},
+	"units": {
+		"days": "days",
+		"weeks": "weeks",
+		"months": "months"
+	},
+	"daysBefore": {
+		"onTheDay": "On the day",
+		"oneDay": "1 day before",
+		"threeDays": "3 days before",
+		"oneWeek": "1 week before",
+		"twoWeeks": "2 weeks before",
+		"oneMonth": "1 month before"
+	},
+	"recurrence": {
+		"daily": "Daily",
+		"weekly": "Weekly",
+		"monthly": "Monthly",
+		"yearly": "Yearly",
+		"customInterval": "Custom interval",
+		"dayOfWeek": "Day of week",
+		"relativeContact": "Relative to last contact",
+		"everyDays_one": "Every {{count}} day",
+		"everyDays_other": "Every {{count}} days",
+		"everyWeeks_one": "Every {{count}} week",
+		"everyWeeks_other": "Every {{count}} weeks",
+		"everyMonths_one": "Every {{count}} month",
+		"everyMonths_other": "Every {{count}} months",
+		"everyDay": "Every {{day}}",
+		"afterContact": "{{interval}}d after contact",
+		"recurring": "Recurring"
+	},
+	"form": {
+		"loading": "Loading form…",
+		"save": "Save Reminder",
+		"create": "Create Reminder",
+		"update": "Update Reminder",
+		"saving": "Saving…",
+		"saveFailed": "Failed to save reminder",
+		"title": "Title",
+		"titlePlaceholder": "Call dentist",
+		"dueDate": "Due Date",
+		"person": "Person (optional)",
+		"noPerson": "No person",
+		"notes": "Notes",
+		"notesPlaceholder": "Optional notes…",
+		"birthdayReminder": "Birthday reminder",
+		"birthdayHint": "Select a person with a date of birth. Due date is computed automatically.",
+		"remindMe": "Remind me",
+		"recurring": "Recurring",
+		"repeat": "Repeat",
+		"every": "Every",
+		"day": "Day",
+		"daysAfterEntry": "days after last journal entry",
+		"endDate": "End date (optional)"
+	},
+	"detail": {
+		"edit": "Edit",
+		"details": "Details",
+		"status": "Status",
+		"due": "Due",
+		"person": "Person",
+		"notes": "Notes"
+	},
+	"delete": {
+		"title": "Delete reminder?",
+		"description": "This will permanently delete \"{{title}}\". This action cannot be undone.",
+		"cancel": "Cancel",
+		"confirm": "Delete",
+		"deleting": "Deleting…"
+	}
+}

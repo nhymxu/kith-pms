@@ -2,6 +2,7 @@
 // touches features/network/*. Re-audit for reintroduced palette classes when
 // that plan lands.
 
+import { useTranslation } from "react-i18next";
 import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import type { ColorBy } from "./graph-types";
 
@@ -46,6 +47,7 @@ export function GraphControls({
 	onShowUnconnectedChange,
 	onRecenter,
 }: GraphControlsProps) {
+	const { t } = useTranslation("network");
 	return (
 		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-bw border-line px-3 py-2.5">
 			{title && (
@@ -57,13 +59,13 @@ export function GraphControls({
 			{/* Group filter */}
 			{groups.length > 0 && (
 				<div className="flex items-center gap-1.5 text-[11px] text-sub">
-					<span className="font-medium">Group</span>
+					<span className="font-medium">{t("controls.group")}</span>
 					<select
 						value={activeGroup ?? ""}
 						onChange={(e) => onGroupChange(e.target.value || null)}
 						className="h-7 rounded-base border-field-bw border-field-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
 					>
-						<option value="">Any</option>
+						<option value="">{t("controls.any")}</option>
 						{groups.map((g) => (
 							<option key={g} value={g}>
 								{g}
@@ -76,16 +78,16 @@ export function GraphControls({
 			{/* Rel type filter */}
 			{relTypes.length > 0 && (
 				<div className="flex items-center gap-1.5 text-[11px] text-sub">
-					<span className="font-medium">Type</span>
+					<span className="font-medium">{t("controls.type")}</span>
 					<select
 						value={activeRelType ?? ""}
 						onChange={(e) => onRelTypeChange(e.target.value || null)}
 						className="h-7 rounded-base border-field-bw border-field-line bg-field px-1.5 text-[11px] text-ink focus:outline-none focus:ring-1 focus:ring-ring"
 					>
-						<option value="">Any</option>
-						{relTypes.map((t) => (
-							<option key={t} value={t}>
-								{t}
+						<option value="">{t("controls.any")}</option>
+						{relTypes.map((rel) => (
+							<option key={rel} value={rel}>
+								{rel}
 							</option>
 						))}
 					</select>
@@ -94,7 +96,7 @@ export function GraphControls({
 
 			{/* Color by segmented control */}
 			<div className="flex items-center gap-1.5 text-[11px] text-sub">
-				<span className="font-medium">Color by</span>
+				<span className="font-medium">{t("controls.colorBy")}</span>
 				<div className="flex items-center gap-0.5 rounded-base border-bw border-line bg-field p-0.5">
 					{(["labels", "type"] as ColorBy[]).map((v) => (
 						<button
@@ -107,7 +109,7 @@ export function GraphControls({
 									: "text-sub hover:bg-chip"
 							}`}
 						>
-							{v === "labels" ? "Labels" : "Rel. type"}
+							{v === "labels" ? t("controls.labels") : t("controls.relType")}
 						</button>
 					))}
 				</div>
@@ -121,7 +123,7 @@ export function GraphControls({
 					onChange={(e) => onShowAvatarChange(e.target.checked)}
 					className="h-3.5 w-3.5 rounded-base border-bw border-line accent-accent"
 				/>
-				Avatars
+				{t("controls.avatars")}
 			</label>
 
 			{/* Only my connections (optional — network page only) */}
@@ -134,7 +136,7 @@ export function GraphControls({
 							onChange={(e) => onShowOnlyMineChange(e.target.checked)}
 							className="h-3.5 w-3.5 rounded-base border-bw border-line accent-accent"
 						/>
-						Only mine
+						{t("controls.onlyMine")}
 					</label>
 					{showOnlyMine && onOnlyMineDepthChange && (
 						<div className="flex items-center gap-1.5">
@@ -150,13 +152,15 @@ export function GraphControls({
 												: "text-sub hover:bg-chip"
 										}`}
 									>
-										{v === "direct" ? "Direct" : "Alters"}
+										{v === "direct"
+											? t("controls.direct")
+											: t("controls.alters")}
 									</button>
 								))}
 							</div>
 							{(onlyMineDepth ?? "direct") === "alter" && (
 								<span className="text-[10px] text-sub italic">
-									indirect connections
+									{t("controls.indirect")}
 								</span>
 							)}
 						</div>
@@ -173,7 +177,7 @@ export function GraphControls({
 						onChange={(e) => onShowUnconnectedChange(e.target.checked)}
 						className="h-3.5 w-3.5 rounded-base border-bw border-line accent-accent"
 					/>
-					Unconnected
+					{t("controls.unconnected")}
 				</label>
 			)}
 
@@ -181,8 +185,8 @@ export function GraphControls({
 			<button
 				type="button"
 				onClick={onRecenter}
-				title="Recenter"
-				aria-label="Recenter graph"
+				title={t("controls.recenter")}
+				aria-label={t("controls.recenterAria")}
 				className="ml-auto flex h-7 w-7 items-center justify-center rounded-base border-bw border-line bg-field text-sub hover:border-accent hover:text-accent-text"
 			>
 				<svg

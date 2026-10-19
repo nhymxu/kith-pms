@@ -5,7 +5,9 @@ import {
 } from "@tanstack/react-query";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
+import { SafeTrans } from "#/components/safe-trans";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
@@ -18,6 +20,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
 import { listWorkHistory, replaceWorkHistory } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import type { WorkEntry } from "#/schemas/work-history";
 
@@ -36,6 +39,7 @@ interface EntryFormProps {
 }
 
 function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
+	const { t } = useTranslation("people");
 	const [company, setCompany] = useState(entry.company ?? "");
 	const [title, setTitle] = useState(entry.title ?? "");
 	const [startDate, setStartDate] = useState(entry.start_date ?? "");
@@ -50,13 +54,13 @@ function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
 					className="h-8 flex-1"
 					value={company}
 					onChange={(e) => setCompany(e.target.value)}
-					placeholder="Company *"
+					placeholder={t("sections.work.company")}
 				/>
 				<Input
 					className="h-8 flex-1"
 					value={title}
 					onChange={(e) => setTitle(e.target.value)}
-					placeholder="Title"
+					placeholder={t("sections.work.jobTitle")}
 				/>
 			</div>
 			<div className="flex gap-2">
@@ -65,31 +69,31 @@ function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
 					className="h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
 					value={startDate}
 					onChange={(e) => setStartDate(e.target.value)}
-					placeholder="Start date"
+					placeholder={t("sections.work.startDate")}
 				/>
 				<input
 					type="month"
 					className="h-8 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
 					value={endDate}
 					onChange={(e) => setEndDate(e.target.value)}
-					placeholder="End date (blank = Present)"
+					placeholder={t("sections.work.endDate")}
 				/>
 			</div>
 			<Input
 				className="h-8"
 				value={location}
 				onChange={(e) => setLocation(e.target.value)}
-				placeholder="Location"
+				placeholder={t("sections.work.location")}
 			/>
 			<Textarea
 				rows={2}
 				value={description}
 				onChange={(e) => setDescription(e.target.value)}
-				placeholder="Description"
+				placeholder={t("sections.work.description")}
 			/>
 			<div className="flex gap-2 justify-end">
 				<Button variant="neutral" size="sm" onClick={onCancel}>
-					<X className="size-3" /> Cancel
+					<X className="size-3" /> {t("sections.work.cancel")}
 				</Button>
 				<Button
 					size="sm"
@@ -106,7 +110,7 @@ function WorkEntryForm({ entry, onSave, onCancel }: EntryFormProps) {
 						})
 					}
 				>
-					<Check className="size-3" /> Save
+					<Check className="size-3" /> {t("sections.work.save")}
 				</Button>
 			</div>
 		</div>
@@ -118,6 +122,7 @@ interface WorkHistorySectionInnerProps {
 }
 
 function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
@@ -147,7 +152,7 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 			setSaveError(null);
 		},
 		onError: (e) =>
-			setSaveError(e instanceof Error ? e.message : "Failed to save"),
+			setSaveError(apiErrorMessage(e, t("sections.work.saveFailed"))),
 	});
 
 	function handleSave(updated: Partial<WorkEntry>) {
@@ -183,9 +188,9 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Work History</SectionHeading>
+				<SectionHeading>{t("sections.work.title")}</SectionHeading>
 				<Button variant="neutral" size="sm" onClick={() => setEditingId("new")}>
-					<Plus className="size-3" /> Add
+					<Plus className="size-3" /> {t("sections.work.add")}
 				</Button>
 			</div>
 			{saveError && (
@@ -231,8 +236,11 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 							{(e.start_date || e.end_date) && (
 								<p className="font-mono text-[12px] text-sub">
 									{e.start_date
-										? `${e.start_date} – ${e.end_date || "Present"}`
-										: `– ${e.end_date}`}
+										? t("sections.work.range", {
+												start: e.start_date,
+												end: e.end_date || t("sections.work.present"),
+											})
+										: t("sections.work.rangeEndOnly", { end: e.end_date })}
 								</p>
 							)}
 							{e.location && <p className="text-sub">{e.location}</p>}
@@ -250,7 +258,7 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 					/>
 				)}
 				{data.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-sub">No work history.</p>
+					<p className="text-sm text-sub">{t("sections.work.empty")}</p>
 				)}
 			</div>
 			<Dialog
@@ -259,20 +267,28 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove work entry?</DialogTitle>
+						<DialogTitle>{t("sections.work.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{(() => {
 						const e = data.find((e) => e.id === confirmDeleteId);
 						return e ? (
 							<p className="text-[13px] text-sub">
-								Remove <span className="font-medium">{e.company}</span>
-								{e.title ? ` · ${e.title}` : ""}?
+								<SafeTrans
+									t={t}
+									i18nKey={
+										e.title
+											? "sections.work.removeBodyWithTitle"
+											: "sections.work.removeBody"
+									}
+									values={{ company: e.company, title: e.title }}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						) : null;
 					})()}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmDeleteId(null)}>
-							Cancel
+							{t("sections.work.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -284,7 +300,9 @@ function WorkHistorySectionInner({ personId }: WorkHistorySectionInnerProps) {
 								}
 							}}
 						>
-							{saveMutation.isPending ? "Removing…" : "Remove"}
+							{saveMutation.isPending
+								? t("sections.work.removing")
+								: t("sections.work.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

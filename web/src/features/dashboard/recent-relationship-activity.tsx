@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardActivity } from "./dashboard-data";
 import { EmptyState } from "./empty-state";
@@ -16,13 +17,14 @@ export function RecentRelationshipActivity({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	const [expanded, setExpanded] = useState(false);
 	const visibleActivities = expanded ? activities : activities.slice(0, 6);
 
 	return (
 		<DashboardCard
-			title="Recent activity"
-			subtitle="Latest journal context"
+			title={t("activity.title")}
+			subtitle={t("activity.subtitle")}
 			icon={BookOpen}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -77,15 +79,17 @@ export function RecentRelationshipActivity({
 							className="w-full py-2 text-[11px] text-sub hover:bg-chip border-t border-line -mx-4 px-4 mt-1 transition-colors"
 							onClick={() => setExpanded((v) => !v)}
 						>
-							{expanded ? "Show less" : `Show ${activities.length - 6} more`}
+							{expanded
+								? t("showLess")
+								: t("showMore", { count: activities.length - 6 })}
 						</button>
 					) : null}
 				</div>
 			) : (
 				<EmptyState
 					icon={BookOpen}
-					title="No journal activity"
-					description="Log a recent interaction to build relationship context."
+					title={t("activity.emptyTitle")}
+					description={t("activity.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>

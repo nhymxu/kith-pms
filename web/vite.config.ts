@@ -41,6 +41,7 @@ export default mergeConfig(
 		test: {
 			environment: "jsdom",
 			globals: true,
+			setupFiles: ["./src/test-setup.ts"],
 			coverage: {
 				provider: "v8",
 				// `lcov` is what Codecov consumes; `text` keeps the local signal visible.

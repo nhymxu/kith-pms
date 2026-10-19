@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { AuthProvider, useAuth } from "./lib/auth-context";
+import { i18nReady } from "./lib/i18n";
 // Imported first (before the router mounts) so its module-level capture of
 // window.location.search reflects the raw pre-navigation URL.
 import "./lib/initial-search";
@@ -21,6 +22,8 @@ function InnerApp() {
 
 const rootEl = document.getElementById("root");
 if (!rootEl) throw new Error("Root element not found");
+
+await i18nReady;
 
 createRoot(rootEl).render(
 	<StrictMode>

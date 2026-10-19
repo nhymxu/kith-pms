@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { setupMe } from "#/endpoints/me";
 import { listPeople } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/me/setup")({
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/_authed/me/setup")({
 });
 
 function MeSetupPage() {
+	const { t } = useTranslation("me");
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 	const [q, setQ] = useState("");
@@ -31,18 +34,15 @@ function MeSetupPage() {
 			qc.invalidateQueries({ queryKey: keys.me.all });
 			navigate({ to: "/me" });
 		},
-		onError: (e) =>
-			setApiError(e instanceof Error ? e.message : "Setup failed"),
+		onError: (e) => setApiError(apiErrorMessage(e, t("setup.failed"))),
 	});
 
 	return (
 		<div className="space-y-4 max-w-[480px]">
 			<h1 className="text-[24px] font-semibold tracking-tight text-ink font-display">
-				Who are you?
+				{t("setup.title")}
 			</h1>
-			<p className="text-[13px] text-sub">
-				Select which person in your contacts represents you.
-			</p>
+			<p className="text-[13px] text-sub">{t("setup.subtitle")}</p>
 
 			{apiError && (
 				<Alert variant="destructive">
@@ -51,7 +51,7 @@ function MeSetupPage() {
 			)}
 
 			<Input
-				placeholder="Search people…"
+				placeholder={t("setup.searchPlaceholder")}
 				value={q}
 				onChange={(e) => setQ(e.target.value)}
 			/>
@@ -81,6 +81,7 @@ function PeopleSelectionList({
 	onSelect,
 	mutation,
 }: PeopleSelectionListProps) {
+	const { t } = useTranslation("me");
 	const { data: peopleList } = useSuspenseQuery({
 		queryKey: keys.people.list({ q: q || undefined }),
 		queryFn: () => listPeople({ q: q || undefined, page_size: 30 }),
@@ -111,7 +112,7 @@ function PeopleSelectionList({
 					</button>
 				))}
 				{people.length === 0 && (
-					<p className="text-[13px] text-sub">No people found.</p>
+					<p className="text-[13px] text-sub">{t("setup.noPeople")}</p>
 				)}
 			</div>
 
@@ -119,7 +120,7 @@ function PeopleSelectionList({
 				<Card>
 					<CardHeader className="pb-2">
 						<CardTitle className="text-[13px] font-medium">
-							Selected: {selectedPerson.name}
+							{t("setup.selected", { name: selectedPerson.name })}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
@@ -127,7 +128,7 @@ function PeopleSelectionList({
 							onClick={() => mutation.mutate(selectedPerson.id)}
 							disabled={mutation.isPending}
 						>
-							{mutation.isPending ? "Setting up…" : "Confirm selection"}
+							{mutation.isPending ? t("setup.confirming") : t("setup.confirm")}
 						</Button>
 					</CardContent>
 				</Card>

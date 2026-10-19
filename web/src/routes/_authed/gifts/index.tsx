@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authed/gifts/")({
 });
 
 function GiftsPage() {
+	const { t } = useTranslation("gifts");
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
@@ -45,10 +47,10 @@ function GiftsPage() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					Gifts
+					{t("page.title")}
 				</h1>
 				<Button asChild>
-					<Link to="/gifts/new">New Gift</Link>
+					<Link to="/gifts/new">{t("page.newGift")}</Link>
 				</Button>
 			</div>
 			<GiftsTable

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -17,14 +18,8 @@ import type { SearchItem } from "#/schemas/search";
 
 type ResultGroup = "people" | "journal" | "gifts" | "notes";
 
-const GROUP_LABELS: Record<ResultGroup, string> = {
-	people: "People",
-	journal: "Journal",
-	gifts: "Gifts",
-	notes: "Notes",
-};
-
 export function CommandPalette() {
+	const { t } = useTranslation("search");
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const debouncedQuery = useDebounce(query, 250);
@@ -114,26 +109,26 @@ export function CommandPalette() {
 		<CommandDialog
 			open={open}
 			onOpenChange={setOpen}
-			title="Search"
-			description="Search people, journal entries, gifts, and notes"
+			title={t("title")}
+			description={t("description")}
 			shouldFilter={false}
 		>
 			<CommandInput
 				value={query}
 				onValueChange={setQuery}
-				placeholder="Search people, notes, gifts…"
+				placeholder={t("placeholder")}
 			/>
 			<CommandList>
 				{trimmedQuery.length === 0 && (
-					<CommandEmpty>Type to search…</CommandEmpty>
+					<CommandEmpty>{t("typeToSearch")}</CommandEmpty>
 				)}
 				{trimmedQuery.length > 0 && !isFetching && !hasResults && (
-					<CommandEmpty>No results found.</CommandEmpty>
+					<CommandEmpty>{t("noResults")}</CommandEmpty>
 				)}
 				{groups.map(
 					(group) =>
 						group.items.length > 0 && (
-							<CommandGroup key={group.key} heading={GROUP_LABELS[group.key]}>
+							<CommandGroup key={group.key} heading={t(`groups.${group.key}`)}>
 								{group.items.map((item) => (
 									<CommandItem
 										key={`${group.key}-${item.id}`}

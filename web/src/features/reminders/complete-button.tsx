@@ -1,5 +1,6 @@
 // Complete button: marks a reminder as done and invalidates query cache
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import { completeReminder } from "#/endpoints/reminders";
 import { keys } from "#/query-keys";
@@ -13,6 +14,7 @@ export function CompleteButton({
 	reminderId,
 	onCompleted,
 }: CompleteButtonProps) {
+	const { t } = useTranslation("reminders");
 	const qc = useQueryClient();
 
 	const mutation = useMutation({
@@ -31,7 +33,7 @@ export function CompleteButton({
 			onClick={() => mutation.mutate()}
 			disabled={mutation.isPending}
 		>
-			{mutation.isPending ? "…" : "Mark complete"}
+			{mutation.isPending ? "…" : t("complete.action")}
 		</Button>
 	);
 }

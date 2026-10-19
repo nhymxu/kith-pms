@@ -1,4 +1,5 @@
 import { z } from "zod";
+import i18n from "#/lib/i18n";
 
 export const recurrenceRuleSchema = z.object({
 	type: z.enum([
@@ -57,7 +58,7 @@ export const reminderRequestSchema = z
 	})
 	.refine(
 		(v) => v.recurrence_rule?.type === "birthday" || v.title.trim().length > 0,
-		{ message: "title is required", path: ["title"] },
+		{ error: () => i18n.t("errors:validation.titleRequired"), path: ["title"] },
 	);
 
 export type ReminderRequest = z.infer<typeof reminderRequestSchema>;

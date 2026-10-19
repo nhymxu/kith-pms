@@ -27,9 +27,9 @@ export const labelRefSchema = z.object({
 });
 
 export const genderOptions = [
-	{ value: "male", label: "Male" },
-	{ value: "female", label: "Female" },
-	{ value: "rather_not_say", label: "Rather not say" },
+	{ value: "male" },
+	{ value: "female" },
+	{ value: "rather_not_say" },
 ] as const;
 
 export type GenderValue = "" | "male" | "female" | "rather_not_say";

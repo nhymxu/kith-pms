@@ -3,13 +3,21 @@
 
 export class ApiError extends Error {
 	readonly status: number;
+	// Stable server code (e.g. "person_not_found"); empty when the response had none.
 	readonly code: string;
+	readonly params: Record<string, unknown>;
 
-	constructor(status: number, code: string, message: string) {
+	constructor(
+		status: number,
+		code: string,
+		message: string,
+		params: Record<string, unknown> = {},
+	) {
 		super(message);
 		this.name = "ApiError";
 		this.status = status;
 		this.code = code;
+		this.params = params;
 	}
 }
 
@@ -63,20 +71,24 @@ export async function apiFetch<T = unknown>(
 	}
 
 	if (!response.ok) {
-		let code = String(response.status);
+		let code = "";
 		let message = response.statusText || "Request failed";
+		let params: Record<string, unknown> = {};
 
 		try {
-			const body = (await response.json()) as { error?: string };
-			if (body.error) {
-				message = body.error;
-				code = body.error;
-			}
+			const body = (await response.json()) as {
+				error?: string;
+				code?: string;
+				params?: Record<string, unknown>;
+			};
+			if (body.error) message = body.error;
+			if (body.code) code = body.code;
+			if (body.params) params = body.params;
 		} catch {
 			// ignore parse error; use defaults
 		}
 
-		const err = new ApiError(response.status, code, message);
+		const err = new ApiError(response.status, code, message, params);
 
 		if (response.status === 401 && !skipSessionLost) {
 			fireSessionLost();

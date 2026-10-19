@@ -1,0 +1,263 @@
+{
+	"language": {
+		"title": "Language",
+		"description": "Language of the interface. Dates, times and numbers keep their own formats.",
+		"label": "Interface language",
+		"save": "Save language",
+		"saving": "Saving…",
+		"saved": "Saved!",
+		"error": "Failed to save. Please try again."
+	},
+	"relationships": {
+		"title": "Relationships",
+		"description": "How relationship rows read on a person's profile. The type always describes the other person: on Minh's profile, \"em ruột Lan\" means Lan is Minh's em ruột.",
+		"styleLabel": "Display style",
+		"styles": {
+			"plain": "Type, then name (default)",
+			"sentence": "Sentence",
+			"badge": "Name with badge"
+		},
+		"exampleLabel": "Example",
+		"onProfile": "On {{name}}'s profile",
+		"save": "Save display style",
+		"saving": "Saving…",
+		"saved": "Saved!",
+		"error": "Failed to save. Please try again."
+	},
+	"nav": {
+		"title": "Settings",
+		"general": "General",
+		"appearance": "Appearance",
+		"peopleLabels": "People Labels",
+		"journalLabels": "Journal Labels",
+		"relationshipTypes": "Relationship Types",
+		"security": "Security"
+	},
+	"common": {
+		"save": "Save",
+		"saving": "Saving…",
+		"saved": "Saved!",
+		"saveFailed": "Failed to save. Please try again.",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"deleting": "Deleting…",
+		"saveChanges": "Save changes",
+		"saveError": "Save failed"
+	},
+	"general": {
+		"title": "General",
+		"dateTime": {
+			"title": "Date, Time & Numbers",
+			"description": "Controls how dates, times, and numeric amounts are displayed throughout the app. The backend always stores UTC.",
+			"dateFormat": "Date format",
+			"dateOptions": {
+				"iso": "ISO (default)",
+				"us": "US",
+				"european": "European"
+			},
+			"timeFormat": "Time format",
+			"timeOptions": {
+				"h24": "24-hour (default)",
+				"h12": "12-hour"
+			},
+			"numberFormat": "Number format",
+			"numberOptions": {
+				"commaThousands": "Comma thousands (default)",
+				"dotThousands": "Dot thousands"
+			},
+			"timezone": "Timezone",
+			"timezonePlaceholder": "e.g. Asia/Saigon",
+			"timezoneHint": "Used for display only. Default: UTC.",
+			"save": "Save preferences"
+		},
+		"audit": {
+			"title": "Audit Log",
+			"description": "Automatically remove audit entries older than the specified number of days. Set to 0 to keep all entries.",
+			"retention": "Retention period (days)",
+			"retentionHint": "0 = keep forever (disabled)",
+			"runCleanup": "Run cleanup now",
+			"running": "Running…",
+			"deleted_one": "Deleted {{count}} entry.",
+			"deleted_other": "Deleted {{count}} entries.",
+			"cleanupFailed": "Cleanup failed. Please try again."
+		},
+		"network": {
+			"title": "Network Defaults",
+			"description": "Default filter settings applied when you open the Network page. You can still change them on the fly.",
+			"colorBy": "Color by",
+			"colorLabels": "Labels",
+			"colorType": "Rel. type",
+			"visibility": "Visibility",
+			"showAvatars": "Show avatars",
+			"showOnlyMine": "Show only my connections",
+			"showUnconnected": "Show unconnected people",
+			"depthDirect": "Direct only",
+			"depthAlters": "Include alters (2nd level)",
+			"save": "Save defaults"
+		},
+		"favorites": {
+			"title": "Favorites",
+			"description": "Controls how favoriting behaves on the People list. Toggling favorite status on a person's own page is always available.",
+			"allowToggle": "Allow favorite/unfavorite directly on the People list",
+			"favoriteFirst": "Show favorites first by default",
+			"defaultSort": "Default sort",
+			"sort": {
+				"nameAsc": "Name A→Z",
+				"nameDesc": "Name Z→A",
+				"lastContactNewest": "Last contact: newest",
+				"lastContactOldest": "Last contact: oldest"
+			},
+			"save": "Save defaults"
+		},
+		"pageSize": {
+			"title": "Page size",
+			"description": "Default rows per page for the Journal, People, and Audit lists. Applies unless a page size is set explicitly in the URL.",
+			"rowsPerPage": "Rows per page",
+			"save": "Save default"
+		},
+		"widgets": {
+			"title": "Dashboard Widgets",
+			"description": "How many people to show in the Favorites and Last Contact widgets on the dashboard.",
+			"favorites": "Favorites",
+			"lastContact": "Last Contact"
+		},
+		"searchScope": {
+			"title": "Search scope",
+			"description": "Choose what the search box returns. Indexes always stay up to date — unchecking a type only hides it from results.",
+			"people": "People",
+			"journal": "Journal",
+			"gifts": "Gifts",
+			"notes": "Notes",
+			"save": "Save scope",
+			"pickOne": "Pick at least one type."
+		}
+	},
+	"appearance": {
+		"title": "Appearance",
+		"description": "Choose a theme. It applies instantly and is saved to your account.",
+		"themeError": "Failed to save theme. Your previous theme was restored.",
+		"themes": {
+			"quiet-ink": {
+				"label": "Quiet Ink",
+				"description": "Clean white default with indigo accents."
+			},
+			"warm-album": {
+				"label": "Warm Album",
+				"description": "Cream paper tones, serif headings, forest green."
+			},
+			"bold-press": {
+				"label": "Bold Press",
+				"description": "Neobrutalist: black borders, hard shadows, punchy colors."
+			},
+			"nightdesk": {
+				"label": "Nightdesk",
+				"description": "Dark desk with amber accents and serif headings."
+			},
+			"softclay": {
+				"label": "Soft Clay",
+				"description": "Borderless rounded panels floating on soft shadows."
+			},
+			"ledger": {
+				"label": "Ledger",
+				"description": "Compact, data-dense, monospace headings, teal ink."
+			}
+		},
+		"navLayoutTitle": "Navigation layout",
+		"navLayoutDescription": "Choose where the main navigation appears.",
+		"navLayoutError": "Failed to save navigation layout. Your previous layout was restored.",
+		"navLayouts": {
+			"top": {
+				"label": "Top bar",
+				"description": "Navigation lives in a horizontal bar above the page content."
+			},
+			"side": {
+				"label": "Side rail",
+				"description": "Navigation lives in a vertical rail along the left edge."
+			}
+		}
+	},
+	"security": {
+		"title": "Security",
+		"changePassword": {
+			"title": "Change password",
+			"description": "Update your login password.",
+			"current": "Current password",
+			"new": "New password",
+			"confirm": "Confirm new password",
+			"submit": "Change password",
+			"pending": "Changing…",
+			"success": "Password changed successfully. You may want to log out all other sessions.",
+			"changeAgain": "Change again",
+			"rateLimited": "Too many attempts. Please wait before trying again.",
+			"failed": "Failed to change password"
+		},
+		"logoutAll": "Log out all sessions",
+		"loggingOut": "Logging out…",
+		"logoutFailed": "Failed"
+	},
+	"relationshipTypes": {
+		"title": "Relationship Types",
+		"new": "New Type",
+		"empty": "No relationship types yet.",
+		"uses_one": "{{count}} use",
+		"uses_other": "{{count}} uses",
+		"dialog": {
+			"editTitle": "Edit relationship type",
+			"newTitle": "New relationship type"
+		},
+		"form": {
+			"name": "Name *",
+			"namePlaceholder": "e.g. Friend",
+			"reverseName": "Reverse name (optional)",
+			"reverseNamePlaceholder": "e.g. Friend of",
+			"create": "Create type"
+		},
+		"delete": {
+			"title": "Delete relationship type?",
+			"description": "Permanently delete \"{{name}}\"? Existing relationships of this type will be affected."
+		}
+	},
+	"journalLabels": {
+		"title": "Journal Labels",
+		"new": "New Label",
+		"empty": "No labels yet. Create one to start tagging journal entries.",
+		"count_one": "{{count}} entry",
+		"count_other": "{{count}} entries",
+		"dialog": {
+			"editTitle": "Edit label",
+			"newTitle": "New label"
+		},
+		"form": {
+			"name": "Name *",
+			"namePlaceholder": "e.g. CONVERSATION",
+			"color": "Color (hex)",
+			"create": "Create label"
+		},
+		"delete": {
+			"title": "Delete label?",
+			"description": "Permanently delete \"{{name}}\"? Journal entries with this label will be unaffected (label detached)."
+		}
+	},
+	"peopleLabels": {
+		"title": "People Labels",
+		"new": "New Label",
+		"empty": "No labels yet. Create one to start categorising people.",
+		"count_one": "{{count}} people",
+		"count_other": "{{count}} people",
+		"connectMembers": "Connect members",
+		"dialog": {
+			"editTitle": "Edit label",
+			"newTitle": "New label"
+		},
+		"form": {
+			"name": "Name *",
+			"namePlaceholder": "e.g. Family",
+			"color": "Color (hex)",
+			"create": "Create label"
+		},
+		"delete": {
+			"title": "Delete label?",
+			"description": "Permanently delete \"{{name}}\"? People with this label will be unaffected (label detached)."
+		}
+	}
+}

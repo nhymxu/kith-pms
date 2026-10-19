@@ -1,4 +1,5 @@
 import { z } from "zod";
+import i18n from "#/lib/i18n";
 
 export const relationshipTypeSchema = z.object({
 	id: z.number(),
@@ -30,7 +31,12 @@ export type RelationshipView = z.infer<typeof relationshipViewSchema>;
 export type RelationshipViewList = z.infer<typeof relationshipViewListSchema>;
 
 export const relationshipTypeRequestSchema = z.object({
-	name: z.string().min(1, "Name is required").max(80),
+	name: z
+		.string()
+		.min(1, { error: () => i18n.t("errors:validation.nameRequired") })
+		.max(80, {
+			error: () => i18n.t("errors:validation.nameTooLong", { max: 80 }),
+		}),
 	reverse_name: z.string().optional().default(""),
 });
 

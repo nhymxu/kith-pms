@@ -1,5 +1,7 @@
 import { useMutation, type useQueryClient } from "@tanstack/react-query";
+import type { ParseKeys } from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -12,13 +14,21 @@ import { Label } from "#/components/ui/label";
 import { updateSettings } from "#/endpoints/settings";
 import type { UserSettings } from "#/schemas/settings";
 
+type SettingsKey = ParseKeys<"settings">;
+
 type DefaultPeopleSort = UserSettings["default_people_sort"];
 
-const SORT_OPTIONS: { value: DefaultPeopleSort; label: string }[] = [
-	{ value: "name", label: "Name A→Z" },
-	{ value: "-name", label: "Name Z→A" },
-	{ value: "-last_contact", label: "Last contact: newest" },
-	{ value: "last_contact", label: "Last contact: oldest" },
+const SORT_OPTIONS: { value: DefaultPeopleSort; labelKey: SettingsKey }[] = [
+	{ value: "name", labelKey: "general.favorites.sort.nameAsc" },
+	{ value: "-name", labelKey: "general.favorites.sort.nameDesc" },
+	{
+		value: "-last_contact",
+		labelKey: "general.favorites.sort.lastContactNewest",
+	},
+	{
+		value: "last_contact",
+		labelKey: "general.favorites.sort.lastContactOldest",
+	},
 ];
 
 export function FavoritesSettingsCard({
@@ -34,6 +44,7 @@ export function FavoritesSettingsCard({
 	) => Parameters<typeof updateSettings>[0];
 	queryClient: ReturnType<typeof useQueryClient>;
 }) {
+	const { t } = useTranslation("settings");
 	const [favoritesDefaults, setFavoritesDefaults] = useState<{
 		allowToggleOnList: boolean;
 		favoriteFirstDefault: boolean;
@@ -72,11 +83,10 @@ export function FavoritesSettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-[14px] font-medium text-ink">
-					Favorites
+					{t("general.favorites.title")}
 				</CardTitle>
 				<CardDescription className="text-[12px] text-sub">
-					Controls how favoriting behaves on the People list. Toggling favorite
-					status on a person's own page is always available.
+					{t("general.favorites.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
@@ -93,7 +103,7 @@ export function FavoritesSettingsCard({
 						className="accent-accent"
 					/>
 					<span className="text-[13px] text-ink">
-						Allow favorite/unfavorite directly on the People list
+						{t("general.favorites.allowToggle")}
 					</span>
 				</label>
 
@@ -110,12 +120,14 @@ export function FavoritesSettingsCard({
 						className="accent-accent"
 					/>
 					<span className="text-[13px] text-ink">
-						Show favorites first by default
+						{t("general.favorites.favoriteFirst")}
 					</span>
 				</label>
 
 				<div className="space-y-2">
-					<Label className="text-[13px]">Default sort</Label>
+					<Label className="text-[13px]">
+						{t("general.favorites.defaultSort")}
+					</Label>
 					<div className="space-y-1.5">
 						{SORT_OPTIONS.map((opt) => (
 							<label
@@ -135,7 +147,7 @@ export function FavoritesSettingsCard({
 									}
 									className="accent-accent"
 								/>
-								<span className="text-[13px] text-ink">{opt.label}</span>
+								<span className="text-[13px] text-ink">{t(opt.labelKey)}</span>
 							</label>
 						))}
 					</div>
@@ -147,15 +159,13 @@ export function FavoritesSettingsCard({
 					disabled={favoritesMutation.isPending}
 				>
 					{favoritesMutation.isPending
-						? "Saving…"
+						? t("common.saving")
 						: favoritesMutation.isSuccess
-							? "Saved!"
-							: "Save defaults"}
+							? t("common.saved")
+							: t("general.favorites.save")}
 				</Button>
 				{favoritesMutation.isError && (
-					<p className="text-[12px] text-danger-fg">
-						Failed to save. Please try again.
-					</p>
+					<p className="text-[12px] text-danger-fg">{t("common.saveFailed")}</p>
 				)}
 			</CardContent>
 		</Card>

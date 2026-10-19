@@ -4,6 +4,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { getReminder, updateReminder } from "#/endpoints/reminders";
 import { ReminderForm } from "#/features/reminders/reminder-form";
 import { keys } from "#/query-keys";
@@ -11,15 +12,24 @@ import type { ReminderRequest } from "#/schemas/reminder";
 
 export const Route = createFileRoute("/_authed/reminders/$reminderId/edit")({
 	component: EditReminderPage,
-	pendingComponent: () => (
-		<p className="text-sm font-base text-foreground/60">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-sm font-base text-destructive">Reminder not found.</p>
-	),
+	pendingComponent: EditPending,
+	errorComponent: EditError,
 });
 
+function EditPending() {
+	const { t } = useTranslation("common");
+	return <p className="text-sm font-base text-foreground/60">{t("loading")}</p>;
+}
+
+function EditError() {
+	const { t } = useTranslation("reminders");
+	return (
+		<p className="text-sm font-base text-destructive">{t("page.notFound")}</p>
+	);
+}
+
 function EditReminderPage() {
+	const { t } = useTranslation("reminders");
 	const { reminderId } = Route.useParams();
 	const id = Number(reminderId);
 	const navigate = useNavigate();
@@ -42,12 +52,12 @@ function EditReminderPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				Edit Reminder
+				{t("page.editTitle")}
 			</h1>
 			<ReminderForm
 				initial={data}
 				onSubmit={(v) => mutation.mutateAsync(v)}
-				submitLabel="Update Reminder"
+				submitLabel={t("form.update")}
 			/>
 		</div>
 	);

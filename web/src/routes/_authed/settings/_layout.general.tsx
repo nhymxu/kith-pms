@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import type { ParseKeys } from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -14,6 +16,7 @@ import { runAuditCleanup } from "#/endpoints/audit";
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import { DashboardWidgetsSettingsCard } from "#/features/settings/dashboard-widgets-settings-card";
 import { FavoritesSettingsCard } from "#/features/settings/favorites-settings-card";
+import { LanguageSettingsCard } from "#/features/settings/language-settings-card";
 import { PageSizeSettingsCard } from "#/features/settings/page-size-settings-card";
 import { RelationshipDisplaySettingsCard } from "#/features/settings/relationship-display-settings-card";
 import { SearchScopeSettingsCard } from "#/features/settings/search-scope-settings-card";
@@ -30,40 +33,66 @@ import {
 import { getTheme } from "#/lib/theme";
 import type { SettingsResponse } from "#/schemas/settings";
 
+type SettingsKey = ParseKeys<"settings">;
+
 export const Route = createFileRoute("/_authed/settings/_layout/general")({
 	component: GeneralSettingsPage,
 });
 
 const DATE_FORMAT_OPTIONS: {
 	value: DateFormat;
-	label: string;
+	labelKey: SettingsKey;
 	example: string;
 }[] = [
-	{ value: "YYYY-MM-DD", label: "ISO (default)", example: "2026-05-19" },
-	{ value: "MM/DD/YYYY", label: "US", example: "05/19/2026" },
-	{ value: "DD/MM/YYYY", label: "European", example: "19/05/2026" },
+	{
+		value: "YYYY-MM-DD",
+		labelKey: "general.dateTime.dateOptions.iso",
+		example: "2026-05-19",
+	},
+	{
+		value: "MM/DD/YYYY",
+		labelKey: "general.dateTime.dateOptions.us",
+		example: "05/19/2026",
+	},
+	{
+		value: "DD/MM/YYYY",
+		labelKey: "general.dateTime.dateOptions.european",
+		example: "19/05/2026",
+	},
 ];
 
 const TIME_FORMAT_OPTIONS: {
 	value: TimeFormat;
-	label: string;
+	labelKey: SettingsKey;
 	example: string;
 }[] = [
-	{ value: "24h", label: "24-hour (default)", example: "14:30" },
-	{ value: "12h", label: "12-hour", example: "2:30 PM" },
+	{
+		value: "24h",
+		labelKey: "general.dateTime.timeOptions.h24",
+		example: "14:30",
+	},
+	{
+		value: "12h",
+		labelKey: "general.dateTime.timeOptions.h12",
+		example: "2:30 PM",
+	},
 ];
 
 const NUMBER_FORMAT_OPTIONS: {
 	value: NumberFormat;
-	label: string;
+	labelKey: SettingsKey;
 	example: string;
 }[] = [
 	{
 		value: "1,234.56",
-		label: "Comma thousands (default)",
+		labelKey: "general.dateTime.numberOptions.commaThousands",
 		example: "1,234.56",
 	},
-	{ value: "1.234,56", label: "Dot thousands", example: "1.234,56" },
+	{
+		value: "1.234,56",
+		labelKey: "general.dateTime.numberOptions.dotThousands",
+		example: "1.234,56",
+	},
 ];
 
 const COMMON_TIMEZONES = [
@@ -90,6 +119,7 @@ const COMMON_TIMEZONES = [
 ];
 
 function GeneralSettingsPage() {
+	const { t } = useTranslation("settings");
 	const queryClient = useQueryClient();
 
 	const { data: apiSettings, isPlaceholderData } = useQuery({
@@ -118,6 +148,7 @@ function GeneralSettingsPage() {
 				nav_layout: p.navLayout,
 				number_format: p.numberFormat,
 				relationship_display: p.relationshipDisplay,
+				language: p.language,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
@@ -212,6 +243,7 @@ function GeneralSettingsPage() {
 		nav_layout: apiSettings?.nav_layout ?? getUserPrefs().navLayout,
 		relationship_display:
 			apiSettings?.relationship_display ?? getUserPrefs().relationshipDisplay,
+		language: apiSettings?.language ?? getUserPrefs().language,
 		search_scope: apiSettings?.search_scope ?? [
 			"people",
 			"journal",
@@ -275,23 +307,31 @@ function GeneralSettingsPage() {
 	return (
 		<div className="space-y-6 max-w-md">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				General
+				{t("general.title")}
 			</h1>
+
+			<LanguageSettingsCard
+				apiSettings={apiSettings}
+				isPlaceholderData={isPlaceholderData}
+				buildPayload={buildPayload}
+				queryClient={queryClient}
+			/>
 
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-[14px] font-medium">
-						Date, Time &amp; Numbers
+						{t("general.dateTime.title")}
 					</CardTitle>
 					<CardDescription className="text-[12px]">
-						Controls how dates, times, and numeric amounts are displayed
-						throughout the app. The backend always stores UTC.
+						{t("general.dateTime.description")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-5">
 					{/* Date format */}
 					<div className="space-y-2">
-						<Label className="text-[13px]">Date format</Label>
+						<Label className="text-[13px]">
+							{t("general.dateTime.dateFormat")}
+						</Label>
 						<div className="space-y-1.5">
 							{DATE_FORMAT_OPTIONS.map((opt) => (
 								<label
@@ -308,7 +348,9 @@ function GeneralSettingsPage() {
 										}
 										className="accent-accent"
 									/>
-									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="text-[13px] text-ink">
+										{t(opt.labelKey)}
+									</span>
 									<span className="font-mono text-[11px] text-sub">
 										{opt.example}
 									</span>
@@ -319,7 +361,9 @@ function GeneralSettingsPage() {
 
 					{/* Time format */}
 					<div className="space-y-2">
-						<Label className="text-[13px]">Time format</Label>
+						<Label className="text-[13px]">
+							{t("general.dateTime.timeFormat")}
+						</Label>
 						<div className="space-y-1.5">
 							{TIME_FORMAT_OPTIONS.map((opt) => (
 								<label
@@ -336,7 +380,9 @@ function GeneralSettingsPage() {
 										}
 										className="accent-accent"
 									/>
-									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="text-[13px] text-ink">
+										{t(opt.labelKey)}
+									</span>
 									<span className="font-mono text-[11px] text-sub">
 										{opt.example}
 									</span>
@@ -347,7 +393,9 @@ function GeneralSettingsPage() {
 
 					{/* Number format */}
 					<div className="space-y-2">
-						<Label className="text-[13px]">Number format</Label>
+						<Label className="text-[13px]">
+							{t("general.dateTime.numberFormat")}
+						</Label>
 						<div className="space-y-1.5">
 							{NUMBER_FORMAT_OPTIONS.map((opt) => (
 								<label
@@ -364,7 +412,9 @@ function GeneralSettingsPage() {
 										}
 										className="accent-accent"
 									/>
-									<span className="text-[13px] text-ink">{opt.label}</span>
+									<span className="text-[13px] text-ink">
+										{t(opt.labelKey)}
+									</span>
 									<span className="font-mono text-[11px] text-sub">
 										{opt.example}
 									</span>
@@ -375,14 +425,16 @@ function GeneralSettingsPage() {
 
 					{/* Timezone */}
 					<div className="space-y-2">
-						<Label className="text-[13px]">Timezone</Label>
+						<Label className="text-[13px]">
+							{t("general.dateTime.timezone")}
+						</Label>
 						<input
 							list="tz-list"
 							value={prefs.timezone}
 							onChange={(e) =>
 								setPrefs((p) => ({ ...p, timezone: e.target.value }))
 							}
-							placeholder="e.g. Asia/Saigon"
+							placeholder={t("general.dateTime.timezonePlaceholder")}
 							className="h-9 w-full border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
 						<datalist id="tz-list">
@@ -391,7 +443,7 @@ function GeneralSettingsPage() {
 							))}
 						</datalist>
 						<p className="text-[11px] text-sub">
-							Used for display only. Default: UTC.
+							{t("general.dateTime.timezoneHint")}
 						</p>
 					</div>
 
@@ -401,14 +453,14 @@ function GeneralSettingsPage() {
 						disabled={isPlaceholderData || prefsMutation.isPending}
 					>
 						{prefsMutation.isPending
-							? "Saving…"
+							? t("common.saving")
 							: prefsMutation.isSuccess
-								? "Saved!"
-								: "Save preferences"}
+								? t("common.saved")
+								: t("general.dateTime.save")}
 					</Button>
 					{prefsMutation.isError && (
 						<p className="text-[12px] text-danger-fg">
-							Failed to save. Please try again.
+							{t("common.saveFailed")}
 						</p>
 					)}
 				</CardContent>
@@ -416,15 +468,18 @@ function GeneralSettingsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium">Audit Log</CardTitle>
+					<CardTitle className="text-[14px] font-medium">
+						{t("general.audit.title")}
+					</CardTitle>
 					<CardDescription className="text-[12px]">
-						Automatically remove audit entries older than the specified number
-						of days. Set to 0 to keep all entries.
+						{t("general.audit.description")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label className="text-[13px]">Retention period (days)</Label>
+						<Label className="text-[13px]">
+							{t("general.audit.retention")}
+						</Label>
 						<input
 							type="number"
 							min={0}
@@ -434,7 +489,9 @@ function GeneralSettingsPage() {
 							}
 							className="h-9 w-32 border-field-bw border-field-line rounded-base bg-field px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
-						<p className="text-[11px] text-sub">0 = keep forever (disabled)</p>
+						<p className="text-[11px] text-sub">
+							{t("general.audit.retentionHint")}
+						</p>
 					</div>
 
 					<div className="flex items-center gap-3">
@@ -444,10 +501,10 @@ function GeneralSettingsPage() {
 							disabled={isPlaceholderData || auditMutation.isPending}
 						>
 							{auditMutation.isPending
-								? "Saving…"
+								? t("common.saving")
 								: auditMutation.isSuccess
-									? "Saved!"
-									: "Save"}
+									? t("common.saved")
+									: t("common.save")}
 						</Button>
 						<Button
 							variant="outline"
@@ -455,19 +512,22 @@ function GeneralSettingsPage() {
 							onClick={() => cleanupMutation.mutate()}
 							disabled={cleanupMutation.isPending || retentionDays === 0}
 						>
-							{cleanupMutation.isPending ? "Running…" : "Run cleanup now"}
+							{cleanupMutation.isPending
+								? t("general.audit.running")
+								: t("general.audit.runCleanup")}
 						</Button>
 					</div>
 
 					{cleanupMutation.isSuccess && (
 						<p className="text-[12px] text-sub">
-							Deleted {cleanupMutation.data.deleted}{" "}
-							{cleanupMutation.data.deleted === 1 ? "entry" : "entries"}.
+							{t("general.audit.deleted", {
+								count: cleanupMutation.data.deleted,
+							})}
 						</p>
 					)}
 					{cleanupMutation.isError && (
 						<p className="text-[12px] text-danger-fg">
-							Cleanup failed. Please try again.
+							{t("general.audit.cleanupFailed")}
 						</p>
 					)}
 				</CardContent>
@@ -476,16 +536,17 @@ function GeneralSettingsPage() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-[14px] font-medium">
-						Network Defaults
+						{t("general.network.title")}
 					</CardTitle>
 					<CardDescription className="text-[12px]">
-						Default filter settings applied when you open the Network page. You
-						can still change them on the fly.
+						{t("general.network.description")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label className="text-[13px]">Color by</Label>
+						<Label className="text-[13px]">
+							{t("general.network.colorBy")}
+						</Label>
 						<div className="flex gap-4">
 							{(["labels", "type"] as const).map((val) => (
 								<label
@@ -503,7 +564,9 @@ function GeneralSettingsPage() {
 										className="accent-accent"
 									/>
 									<span className="text-[13px] text-ink">
-										{val === "labels" ? "Labels" : "Rel. type"}
+										{val === "labels"
+											? t("general.network.colorLabels")
+											: t("general.network.colorType")}
 									</span>
 								</label>
 							))}
@@ -511,18 +574,23 @@ function GeneralSettingsPage() {
 					</div>
 
 					<div className="space-y-2">
-						<Label className="text-[13px]">Visibility</Label>
+						<Label className="text-[13px]">
+							{t("general.network.visibility")}
+						</Label>
 						<div className="space-y-1.5">
 							{(
 								[
-									{ key: "showAvatar" as const, label: "Show avatars" },
+									{
+										key: "showAvatar" as const,
+										label: t("general.network.showAvatars"),
+									},
 									{
 										key: "showOnlyMine" as const,
-										label: "Show only my connections",
+										label: t("general.network.showOnlyMine"),
 									},
 									{
 										key: "showUnconnected" as const,
-										label: "Show unconnected people",
+										label: t("general.network.showUnconnected"),
 									},
 								] satisfies {
 									key: keyof typeof networkDefaults;
@@ -586,14 +654,14 @@ function GeneralSettingsPage() {
 						disabled={isPlaceholderData || networkMutation.isPending}
 					>
 						{networkMutation.isPending
-							? "Saving…"
+							? t("common.saving")
 							: networkMutation.isSuccess
-								? "Saved!"
-								: "Save defaults"}
+								? t("common.saved")
+								: t("general.network.save")}
 					</Button>
 					{networkMutation.isError && (
 						<p className="text-[12px] text-danger-fg">
-							Failed to save. Please try again.
+							{t("common.saveFailed")}
 						</p>
 					)}
 				</CardContent>

@@ -21,10 +21,10 @@ export function NavLink({
 			<Link
 				to={to}
 				onClick={onClick}
-				className="relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-sub hover:text-ink transition-colors"
+				className="relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-2 text-[13px] text-sub hover:text-ink transition-colors"
 				activeProps={{
 					className:
-						"relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] text-nav-active-fg after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:bg-nav-active",
+						"relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-2 text-[13px] text-nav-active-fg after:absolute after:inset-x-3 after:-bottom-px after:h-[2px] after:bg-nav-active",
 				}}
 			>
 				<Icon className="size-3.5 shrink-0" />

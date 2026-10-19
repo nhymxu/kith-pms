@@ -7,6 +7,7 @@ import {
 	useTable,
 } from "@tanstack/react-table";
 import { type ReactNode, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	Table,
 	TableBody,
@@ -56,6 +57,7 @@ export function DataTable<T extends RowData>({
 	hideToolbar = false,
 	pageSizeSelector,
 }: DataTableProps<T>) {
+	const { t } = useTranslation();
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [internalPageIndex, setInternalPageIndex] = useState(0);
@@ -84,7 +86,7 @@ export function DataTable<T extends RowData>({
 				className="size-4 cursor-pointer accent-accent"
 				checked={table.getIsAllPageRowsSelected()}
 				onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-				aria-label="Select all"
+				aria-label={t("table.selectAll")}
 			/>
 		),
 		cell: ({ row }) => (
@@ -94,7 +96,7 @@ export function DataTable<T extends RowData>({
 				checked={row.getIsSelected()}
 				onChange={(e) => row.toggleSelected(e.target.checked)}
 				onClick={(e) => e.stopPropagation()}
-				aria-label="Select row"
+				aria-label={t("table.selectRow")}
 			/>
 		),
 	};
@@ -209,7 +211,7 @@ export function DataTable<T extends RowData>({
 							>
 								{emptyState ?? (
 									<span className="text-sm text-foreground/50">
-										No results found.
+										{t("table.noResults")}
 									</span>
 								)}
 							</TableCell>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Sheet, SheetContent, SheetTitle } from "#/components/ui/sheet";
 import { getSettings } from "#/endpoints/settings";
 import { CommandPalette } from "#/features/search/command-palette";
@@ -42,6 +43,7 @@ const mainContentClass =
 function AppShellInner({ children }: AppShellProps) {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const layout = useNavLayoutMode();
+	const { t } = useTranslation();
 
 	const mobileDrawer = (
 		<Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -49,7 +51,7 @@ function AppShellInner({ children }: AppShellProps) {
 				side="left"
 				className="w-72 border-r border-line bg-sidebar p-0"
 			>
-				<SheetTitle className="sr-only">Navigation</SheetTitle>
+				<SheetTitle className="sr-only">{t("nav.navigation")}</SheetTitle>
 				<Sidebar onNavClick={() => setMobileOpen(false)} />
 			</SheetContent>
 		</Sheet>

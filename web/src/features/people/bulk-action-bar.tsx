@@ -4,6 +4,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
 import {
@@ -36,6 +37,7 @@ function BulkActionBarInner({
 	personIds,
 	onClear,
 }: BulkActionBarProps) {
+	const { t } = useTranslation("people");
 	const [labelId, setLabelId] = useState<string>("");
 	const [lastResult, setLastResult] = useState<string | null>(null);
 	const [connectOpen, setConnectOpen] = useState(false);
@@ -49,19 +51,19 @@ function BulkActionBarInner({
 	const mutation = useMutation({
 		mutationFn: () => bulkAssignLabel(Number(labelId), personIds),
 		onSuccess: (data) => {
-			setLastResult(`Assigned to ${data.attached} people`);
+			setLastResult(t("bulkBar.assigned", { count: data.attached }));
 			qc.invalidateQueries({ queryKey: keys.people.all });
 			qc.invalidateQueries({ queryKey: keys.peopleLabels.all });
 			setLabelId("");
 			onClear();
 		},
-		onError: () => setLastResult("Failed to assign label"),
+		onError: () => setLastResult(t("bulkBar.assignFailed")),
 	});
 
 	return (
 		<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-panel border-bw border-line shadow-shadow rounded-full">
 			<span className="text-sm font-medium text-ink">
-				{selectedCount} selected
+				{t("bulkBar.selected", { count: selectedCount })}
 			</span>
 			{lastResult && <span className="text-xs text-sub">{lastResult}</span>}
 			<Select
@@ -72,7 +74,7 @@ function BulkActionBarInner({
 				}}
 			>
 				<SelectTrigger className="h-8 w-40">
-					<SelectValue placeholder="Assign label…" />
+					<SelectValue placeholder={t("bulkBar.assignPlaceholder")} />
 				</SelectTrigger>
 				<SelectContent>
 					{labels.map((l) => (
@@ -87,13 +89,13 @@ function BulkActionBarInner({
 				disabled={!labelId || mutation.isPending}
 				onClick={() => mutation.mutate()}
 			>
-				{mutation.isPending ? "Assigning…" : "Assign"}
+				{mutation.isPending ? t("bulkBar.assigning") : t("bulkBar.assign")}
 			</Button>
 			<Button size="sm" variant="neutral" onClick={() => setConnectOpen(true)}>
-				Connect to person…
+				{t("bulkBar.connect")}
 			</Button>
 			<Button size="sm" variant="neutral" onClick={onClear}>
-				Clear
+				{t("bulkBar.clear")}
 			</Button>
 			<ConnectToPersonDialog
 				selectedIds={personIds}

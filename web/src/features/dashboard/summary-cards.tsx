@@ -1,4 +1,5 @@
 import { Bell, BookOpen, CalendarDays, Gift, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { DashboardSummaryCard } from "./dashboard-data";
 
 const icons = {
@@ -26,6 +27,7 @@ export function SummaryCards({
 	isLoading: boolean;
 	isStale: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	return (
 		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-line border-bw border-line rounded-base bg-panel shadow-shadow">
 			{cards.map((card) => {
@@ -34,7 +36,7 @@ export function SummaryCards({
 					<div key={card.id} className="p-4 min-w-0">
 						<p className="text-[10px] uppercase tracking-wider text-sub flex items-center gap-1.5">
 							<Icon className="size-3 shrink-0" />
-							{card.label}
+							{t(`cards.${card.id}`)}
 						</p>
 						{isLoading ? (
 							<>
@@ -49,7 +51,7 @@ export function SummaryCards({
 								<p
 									className={`text-[11px] mt-0.5 ${accentClass[card.id]} ${isStale ? "text-sub" : ""}`}
 								>
-									{isStale ? "Cached" : card.detail}
+									{isStale ? t("cards.cached") : card.detail}
 								</p>
 							</>
 						)}

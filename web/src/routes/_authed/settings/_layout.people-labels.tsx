@@ -7,6 +7,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Network, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -27,6 +28,7 @@ import {
 	updatePeopleLabel,
 } from "#/endpoints/people-labels";
 import { ConnectMembersDialog } from "#/features/people/connect-members-dialog";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import {
 	type PeopleLabel,
@@ -46,6 +48,7 @@ interface LabelFormDialogProps {
 }
 
 function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const [apiError, setApiError] = useState<string | null>(null);
 
@@ -58,7 +61,7 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			qc.invalidateQueries({ queryKey: keys.peopleLabels.all });
 			onClose();
 		},
-		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
+		onError: (e) => setApiError(apiErrorMessage(e, t("common.saveError"))),
 	});
 
 	const form = useForm({
@@ -93,14 +96,18 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			)}
 			<form.Field name="name">
 				{(f) => (
-					<FormField field={f} label="Name *" placeholder="e.g. Family" />
+					<FormField
+						field={f}
+						label={t("peopleLabels.form.name")}
+						placeholder={t("peopleLabels.form.namePlaceholder")}
+					/>
 				)}
 			</form.Field>
 			<form.Field name="color">
 				{(f) => (
 					<FormField
 						field={f}
-						label="Color (hex)"
+						label={t("peopleLabels.form.color")}
 						placeholder="#a0c4ff"
 						type="color"
 					/>
@@ -108,12 +115,17 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			</form.Field>
 			<DialogFooter>
 				<Button type="button" variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-							{initial ? "Save changes" : "Create label"}
+						<SubmitButton
+							isPending={isSubmitting}
+							pendingLabel={t("common.saving")}
+						>
+							{initial
+								? t("common.saveChanges")
+								: t("peopleLabels.form.create")}
 						</SubmitButton>
 					)}
 				</form.Subscribe>
@@ -129,6 +141,7 @@ function DeleteLabelDialog({
 	label: PeopleLabel;
 	onClose: () => void;
 }) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const mutation = useMutation({
 		mutationFn: () => deletePeopleLabel(label.id),
@@ -140,22 +153,21 @@ function DeleteLabelDialog({
 	return (
 		<>
 			<DialogHeader>
-				<DialogTitle>Delete label?</DialogTitle>
+				<DialogTitle>{t("peopleLabels.delete.title")}</DialogTitle>
 				<DialogDescription>
-					Permanently delete "{label.name}"? People with this label will be
-					unaffected (label detached).
+					{t("peopleLabels.delete.description", { name: label.name })}
 				</DialogDescription>
 			</DialogHeader>
 			<DialogFooter>
 				<Button variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<Button
 					variant="destructive"
 					onClick={() => mutation.mutate()}
 					disabled={mutation.isPending}
 				>
-					{mutation.isPending ? "Deleting…" : "Delete"}
+					{mutation.isPending ? t("common.deleting") : t("common.delete")}
 				</Button>
 			</DialogFooter>
 		</>
@@ -177,6 +189,7 @@ function PeopleLabelsList({
 	onDialogChange,
 	onConnectingLabelChange,
 }: PeopleLabelsListProps) {
+	const { t } = useTranslation("settings");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.peopleLabels.list(),
 		queryFn: listPeopleLabels,
@@ -185,9 +198,7 @@ function PeopleLabelsList({
 	return (
 		<>
 			{data.length === 0 && (
-				<p className="text-[13px] text-sub">
-					No labels yet. Create one to start categorising people.
-				</p>
+				<p className="text-[13px] text-sub">{t("peopleLabels.empty")}</p>
 			)}
 
 			<ul className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
@@ -200,14 +211,14 @@ function PeopleLabelsList({
 						<span className="text-[13px] text-ink">{label.name}</span>
 						{label.count !== undefined && label.count > 0 && (
 							<span className="font-mono text-[11px] text-sub">
-								{label.count} people
+								{t("peopleLabels.count", { count: label.count })}
 							</span>
 						)}
 						<div className="ml-auto flex gap-1">
 							<Button
 								variant="ghost"
 								size="icon"
-								title="Connect members"
+								title={t("peopleLabels.connectMembers")}
 								onClick={() => onConnectingLabelChange(label)}
 							>
 								<Network className="size-3.5" />
@@ -235,6 +246,7 @@ function PeopleLabelsList({
 }
 
 function PeopleLabelsPage() {
+	const { t } = useTranslation("settings");
 	const [dialog, setDialog] = useState<DialogMode>(null);
 	const [connectingLabel, setConnectingLabel] = useState<PeopleLabel | null>(
 		null,
@@ -244,10 +256,10 @@ function PeopleLabelsPage() {
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					People Labels
+					{t("peopleLabels.title")}
 				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Label
+					<Plus className="size-3 mr-1" /> {t("peopleLabels.new")}
 				</Button>
 			</div>
 
@@ -265,7 +277,9 @@ function PeopleLabelsPage() {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>
-							{dialog?.kind === "edit" ? "Edit label" : "New label"}
+							{dialog?.kind === "edit"
+								? t("peopleLabels.dialog.editTitle")
+								: t("peopleLabels.dialog.newTitle")}
 						</DialogTitle>
 					</DialogHeader>
 					<LabelFormDialog

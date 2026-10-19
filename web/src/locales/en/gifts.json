@@ -1,0 +1,82 @@
+{
+	"page": {
+		"title": "Gifts",
+		"newGift": "New Gift",
+		"newTitle": "New Gift",
+		"editing": "Editing",
+		"notFound": "Gift not found."
+	},
+	"list": {
+		"empty": "No gifts yet."
+	},
+	"table": {
+		"gift": "Gift",
+		"person": "Person",
+		"date": "Date",
+		"amount": "Amount",
+		"direction": "Direction"
+	},
+	"direction": {
+		"given": "Given",
+		"received": "Received",
+		"planned": "Planned"
+	},
+	"debt": {
+		"none": "None",
+		"iOwe": "I owe",
+		"theyOwe": "They owe"
+	},
+	"form": {
+		"loading": "Loading form…",
+		"save": "Save Gift",
+		"create": "Create Gift",
+		"saveChanges": "Save changes",
+		"saving": "Saving…",
+		"cancel": "Cancel",
+		"saveFailed": "Failed to save gift",
+		"person": "Person",
+		"searchPersonPlaceholder": "Search person…",
+		"noResults": "No results",
+		"titleLabel": "Title / Occasion",
+		"titlePlaceholder": "Birthday gift",
+		"direction": "Direction",
+		"debtType": "Debt type",
+		"amount": "Amount",
+		"currency": "Currency",
+		"date": "Date",
+		"notes": "Notes",
+		"notesPlaceholder": "Optional notes…",
+		"image": "Image"
+	},
+	"image": {
+		"tooLarge": "Cropped image is too large — try a smaller crop area.",
+		"replaceAria": "Replace gift image",
+		"uploadAria": "Upload gift image",
+		"converting": "Converting…",
+		"replace": "Replace",
+		"upload": "Upload",
+		"removing": "Removing…",
+		"remove": "Remove",
+		"uploading": "Uploading image…",
+		"uploadFailed": "Upload failed."
+	},
+	"detail": {
+		"edit": "Edit",
+		"details": "Details",
+		"person": "Person",
+		"direction": "Direction",
+		"debt": "Debt",
+		"date": "Date",
+		"amount": "Amount",
+		"notes": "Notes",
+		"image": "Image",
+		"noImage": "No image"
+	},
+	"delete": {
+		"title": "Delete gift?",
+		"description": "This will permanently delete \"{{title}}\". This action cannot be undone.",
+		"cancel": "Cancel",
+		"confirm": "Delete",
+		"deleting": "Deleting…"
+	}
+}

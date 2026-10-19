@@ -7,7 +7,9 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Link2, ListPlus, Search, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
+import { SafeTrans } from "#/components/safe-trans";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import {
@@ -27,6 +29,7 @@ import {
 	listRelationships,
 } from "#/endpoints/people";
 import { listRelationshipTypes } from "#/endpoints/relationship-types";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
 import { BulkRelationshipModal } from "./bulk-relationship-modal";
@@ -63,6 +66,7 @@ function RelationshipsSectionInner({
 	personId,
 	personName,
 }: RelationshipsSectionProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const display = useRelationshipDisplay();
 	const [addOpen, setAddOpen] = useState(false);
@@ -111,7 +115,8 @@ function RelationshipsSectionInner({
 			setPersonSearch("");
 			setNotes("");
 		},
-		onError: (e) => setErr(e instanceof Error ? e.message : "Failed"),
+		onError: (e) =>
+			setErr(apiErrorMessage(e, t("sections.relationships.failed"))),
 	});
 
 	const detach = useMutation({
@@ -129,18 +134,19 @@ function RelationshipsSectionInner({
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Relationships</SectionHeading>
+				<SectionHeading>{t("sections.relationships.title")}</SectionHeading>
 				<div className="flex gap-1">
 					<Button variant="neutral" size="sm" onClick={() => setBulkOpen(true)}>
-						<ListPlus className="size-3" /> Add multiple
+						<ListPlus className="size-3" />{" "}
+						{t("sections.relationships.addMultiple")}
 					</Button>
 					<Button variant="neutral" size="sm" onClick={() => setAddOpen(true)}>
-						<Link2 className="size-3" /> Add
+						<Link2 className="size-3" /> {t("sections.relationships.add")}
 					</Button>
 				</div>
 			</div>
 			{!rels.length ? (
-				<p className="text-sm text-sub">No relationships yet.</p>
+				<p className="text-sm text-sub">{t("sections.relationships.empty")}</p>
 			) : (
 				<div className="space-y-2">
 					{rels.map((r) => (
@@ -190,7 +196,7 @@ function RelationshipsSectionInner({
 			<Dialog open={addOpen} onOpenChange={(v) => !v && setAddOpen(false)}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Add relationship</DialogTitle>
+						<DialogTitle>{t("sections.relationships.addTitle")}</DialogTitle>
 					</DialogHeader>
 					{err && (
 						<Alert variant="destructive">
@@ -199,23 +205,23 @@ function RelationshipsSectionInner({
 					)}
 					<div className="space-y-3">
 						<div>
-							<Label>Type</Label>
+							<Label>{t("sections.relationships.type")}</Label>
 							<select
 								className="w-full h-10 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 								value={typeId}
 								onChange={(e) => setTypeId(Number(e.target.value))}
 							>
-								<option value="">Select…</option>
-								{types.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.name}
+								<option value="">{t("sections.relationships.select")}</option>
+								{types.map((rt) => (
+									<option key={rt.id} value={rt.id}>
+										{rt.name}
 									</option>
 								))}
 							</select>
 						</div>
 						<div className="space-y-1">
 							<div className="flex items-center gap-2">
-								<Label>Person</Label>
+								<Label>{t("sections.relationships.person")}</Label>
 								{myProfile.id !== personId && !otherPersonId && (
 									<button
 										type="button"
@@ -228,7 +234,7 @@ function RelationshipsSectionInner({
 										}}
 										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
-										+ Me
+										{t("sections.relationships.addMe")}
 									</button>
 								)}
 							</div>
@@ -255,7 +261,9 @@ function RelationshipsSectionInner({
 											type="text"
 											value={personSearch}
 											onChange={(e) => setPersonSearch(e.target.value)}
-											placeholder="Search by name…"
+											placeholder={t(
+												"sections.relationships.searchPlaceholder",
+											)}
 											className="h-9 w-full border-field-bw border-field-line rounded-md bg-field pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 										/>
 									</div>
@@ -285,23 +293,23 @@ function RelationshipsSectionInner({
 							)}
 						</div>
 						<div>
-							<Label>Notes</Label>
+							<Label>{t("sections.relationships.notes")}</Label>
 							<Input
 								value={notes}
 								onChange={(e) => setNotes(e.target.value)}
-								placeholder="Optional notes"
+								placeholder={t("sections.relationships.notesPlaceholder")}
 							/>
 						</div>
 					</div>
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setAddOpen(false)}>
-							Cancel
+							{t("sections.relationships.cancel")}
 						</Button>
 						<Button
 							disabled={attach.isPending || !typeId || !otherPersonId}
 							onClick={() => attach.mutate()}
 						>
-							Save
+							{t("sections.relationships.save")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -328,25 +336,30 @@ function RelationshipsSectionInner({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove relationship?</DialogTitle>
+						<DialogTitle>{t("sections.relationships.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{confirmRel && (
 						<p className="text-[13px] text-sub">
-							Remove the{" "}
-							<span className="font-medium">{confirmRel.type_name}</span>{" "}
-							relationship with{" "}
-							<span className="font-medium">
-								{formatPersonName(
-									confirmRel.other_person_name,
-									confirmRel.other_person_nickname,
-								)}
-							</span>
-							?
+							<SafeTrans
+								t={t}
+								i18nKey="sections.relationships.removeBody"
+								values={{
+									type: confirmRel.type_name,
+									person: formatPersonName(
+										confirmRel.other_person_name,
+										confirmRel.other_person_nickname,
+									),
+								}}
+								components={{
+									type: <span className="font-medium" />,
+									person: <span className="font-medium" />,
+								}}
+							/>
 						</p>
 					)}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmRelId(null)}>
-							Cancel
+							{t("sections.relationships.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -355,7 +368,9 @@ function RelationshipsSectionInner({
 								confirmRelId !== null && detach.mutate(confirmRelId)
 							}
 						>
-							{detach.isPending ? "Removing…" : "Remove"}
+							{detach.isPending
+								? t("sections.relationships.removing")
+								: t("sections.relationships.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

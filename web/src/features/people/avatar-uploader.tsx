@@ -5,12 +5,14 @@ import {
 } from "@tanstack/react-query";
 import { Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { deleteAvatar, getAvatarUrl, uploadAvatar } from "#/endpoints/people";
 import { getSettings } from "#/endpoints/settings";
 import { useImageFilePick } from "#/hooks/use-image-file-pick";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { FILE_INPUT_ACCEPT } from "#/lib/image-constraints";
 import { keys } from "#/query-keys";
 
@@ -25,6 +27,7 @@ export function AvatarUploader({
 	hasAvatar,
 	showControls = true,
 }: AvatarUploaderProps) {
+	const { t } = useTranslation("people");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [preview, setPreview] = useState<string | null>(null);
 	const [clientError, setClientError] = useState<string | null>(null);
@@ -141,7 +144,7 @@ export function AvatarUploader({
 				{currentSrc ? (
 					<img
 						src={currentSrc}
-						alt="Avatar"
+						alt={t("avatar.alt")}
 						className="size-full object-cover"
 					/>
 				) : (
@@ -169,10 +172,10 @@ export function AvatarUploader({
 					>
 						<Upload className="size-3" />
 						{isConverting
-							? "Converting…"
+							? t("avatar.converting")
 							: hasAvatar || preview
-								? "Replace"
-								: "Upload"}
+								? t("avatar.replace")
+								: t("avatar.upload")}
 					</Button>
 					{(hasAvatar || preview) && (
 						<Button
@@ -182,7 +185,7 @@ export function AvatarUploader({
 							disabled={isPending}
 							onClick={() => deleteMutation.mutate()}
 						>
-							<Trash2 className="size-3" /> Remove
+							<Trash2 className="size-3" /> {t("avatar.remove")}
 						</Button>
 					)}
 				</div>
@@ -193,9 +196,7 @@ export function AvatarUploader({
 					<AlertDescription>
 						{pickError ??
 							clientError ??
-							(uploadMutation.error instanceof Error
-								? uploadMutation.error.message
-								: "Upload failed")}
+							apiErrorMessage(uploadMutation.error, t("avatar.uploadFailed"))}
 					</AlertDescription>
 				</Alert>
 			)}

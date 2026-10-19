@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { SafeTrans } from "#/components/safe-trans";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -13,6 +15,7 @@ import {
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { updatePerson } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import type { ContactInfo, Person } from "#/schemas/person";
 
@@ -24,7 +27,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 	);
 }
 
-const CONTACT_TYPES = ["phone", "email", "address", "social", "other"];
+const CONTACT_TYPES = ["phone", "email", "address", "social", "other"] as const;
 
 const SOCIAL_BASE_URLS: Record<string, string> = {
 	twitter: "https://twitter.com/",
@@ -54,6 +57,7 @@ interface EditRowProps {
 }
 
 function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
+	const { t } = useTranslation("people");
 	const [type, setType] = useState(contact.type ?? "phone");
 	const [value, setValue] = useState(contact.value ?? "");
 	const [label, setLabel] = useState(contact.label ?? "");
@@ -65,9 +69,9 @@ function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
 				value={type}
 				onChange={(e) => setType(e.target.value)}
 			>
-				{CONTACT_TYPES.map((t) => (
-					<option key={t} value={t}>
-						{t}
+				{CONTACT_TYPES.map((ct) => (
+					<option key={ct} value={ct}>
+						{t(`types.contact.${ct}`)}
 					</option>
 				))}
 			</select>
@@ -75,13 +79,13 @@ function ContactEditRow({ contact, onSave, onCancel }: EditRowProps) {
 				className="h-8 flex-1 min-w-[120px]"
 				value={value}
 				onChange={(e) => setValue(e.target.value)}
-				placeholder="Value"
+				placeholder={t("sections.contacts.valuePlaceholder")}
 			/>
 			<Input
 				className="h-8 w-24"
 				value={label}
 				onChange={(e) => setLabel(e.target.value)}
-				placeholder="Label"
+				placeholder={t("sections.contacts.labelPlaceholder")}
 			/>
 			<button
 				type="button"
@@ -106,6 +110,7 @@ interface ContactsSectionProps {
 }
 
 export function ContactsSection({ person }: ContactsSectionProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [confirmContactId, setConfirmContactId] = useState<number | null>(null);
@@ -142,7 +147,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 			setSaveError(null);
 		},
 		onError: (e) =>
-			setSaveError(e instanceof Error ? e.message : "Failed to save"),
+			setSaveError(apiErrorMessage(e, t("sections.contacts.saveFailed"))),
 	});
 
 	function handleSave(updated: Partial<ContactInfo>) {
@@ -177,9 +182,9 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Contacts</SectionHeading>
+				<SectionHeading>{t("sections.contacts.title")}</SectionHeading>
 				<Button variant="neutral" size="sm" onClick={() => setEditingId("new")}>
-					<Plus className="size-3" /> Add
+					<Plus className="size-3" /> {t("sections.contacts.add")}
 				</Button>
 			</div>
 			{saveError && (
@@ -201,7 +206,9 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 							key={c.id}
 							className="flex gap-3 text-sm border-bw border-line rounded-md p-2 items-center"
 						>
-							<Badge variant="neutral">{c.type}</Badge>
+							<Badge variant="neutral">
+								{t(`types.contact.${c.type}`, { defaultValue: c.type })}
+							</Badge>
 							{c.type === "social" ? (
 								(() => {
 									const url = resolveSocialUrl(c.value, c.label ?? "");
@@ -248,7 +255,7 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 					/>
 				)}
 				{person.contacts.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-sub">No contacts.</p>
+					<p className="text-sm text-sub">{t("sections.contacts.empty")}</p>
 				)}
 			</div>
 			<Dialog
@@ -257,21 +264,34 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove contact?</DialogTitle>
+						<DialogTitle>{t("sections.contacts.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{(() => {
 						const c = person.contacts.find((c) => c.id === confirmContactId);
 						return c ? (
 							<p className="text-[13px] text-sub">
-								Remove the <span className="font-medium">{c.type}</span> contact{" "}
-								<span className="font-medium">{c.value}</span>
-								{c.label ? ` (${c.label})` : ""}?
+								<SafeTrans
+									t={t}
+									i18nKey={
+										c.label
+											? "sections.contacts.removeBodyWithLabel"
+											: "sections.contacts.removeBody"
+									}
+									values={{
+										type: t(`types.contact.${c.type}`, {
+											defaultValue: c.type,
+										}),
+										value: c.value,
+										label: c.label,
+									}}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						) : null;
 					})()}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmContactId(null)}>
-							Cancel
+							{t("sections.contacts.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -280,7 +300,9 @@ export function ContactsSection({ person }: ContactsSectionProps) {
 								confirmContactId !== null && handleDelete(confirmContactId)
 							}
 						>
-							{saveMutation.isPending ? "Removing…" : "Remove"}
+							{saveMutation.isPending
+								? t("sections.contacts.removing")
+								: t("sections.contacts.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

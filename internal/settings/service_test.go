@@ -50,6 +50,7 @@ func validBase() settings.UserSettings {
 		NavLayout:                 "top",
 		NumberFormat:              "1,234.56",
 		RelationshipDisplay:       "plain",
+		Language:                  "en",
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}
 }
@@ -467,6 +468,54 @@ func TestSettings_Update_InvalidRelationshipDisplay_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidRelationshipDisplay) {
 		t.Errorf("want ErrInvalidRelationshipDisplay, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_Language(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.Language != "en" {
+		t.Errorf("default language: want \"en\", got %q", got.Language)
+	}
+}
+
+func TestSettings_Update_Language_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	for _, lang := range []string{"vi", "en"} {
+		in := validBase()
+		in.Language = lang
+
+		if _, err := svc.Update(ctx, in); err != nil {
+			t.Fatalf("update %q: %v", lang, err)
+		}
+
+		got, err := svc.Get(ctx)
+		if err != nil {
+			t.Fatalf("get: %v", err)
+		}
+
+		if got.Language != lang {
+			t.Errorf("persisted language: want %q, got %q", lang, got.Language)
+		}
+	}
+}
+
+func TestSettings_Update_InvalidLanguage_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.Language = "xx"
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidLanguage) {
+		t.Errorf("want ErrInvalidLanguage, got %v", err)
 	}
 }
 

@@ -3,6 +3,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ImageCropDialog } from "#/components/image-crop-dialog";
 import { Button } from "#/components/ui/button";
 import { getSettings } from "#/endpoints/settings";
@@ -35,6 +36,7 @@ export function GiftImageUploader({
 	uploadError,
 	isRemoving = false,
 }: GiftImageUploaderProps) {
+	const { t } = useTranslation("gifts");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [cropSrc, setCropSrc] = useState<string | null>(null);
 	const cropSrcRef = useRef<string | null>(null);
@@ -130,7 +132,7 @@ export function GiftImageUploader({
 		if (cropSrc) URL.revokeObjectURL(cropSrc);
 		setCropSrc(null);
 		if (file.size > maxImageBytes) {
-			setImageError("Cropped image is too large — try a smaller crop area.");
+			setImageError(t("image.tooLarge"));
 			return;
 		}
 		// Show the baked crop immediately; the caller's imageSrc (edit: server
@@ -173,7 +175,7 @@ export function GiftImageUploader({
 					e.preventDefault(); // avoid the duplicate activation click
 					openPicker();
 				}}
-				aria-label={hasImage ? "Replace gift image" : "Upload gift image"}
+				aria-label={hasImage ? t("image.replaceAria") : t("image.uploadAria")}
 				disabled={controlsDisabled || isConverting}
 				className="h-32 w-32 rounded-md border-bw border-dashed border-line overflow-hidden bg-chip flex items-center justify-center transition-colors cursor-pointer hover:border-accent disabled:cursor-not-allowed"
 			>
@@ -202,7 +204,11 @@ export function GiftImageUploader({
 					onClick={openPicker}
 				>
 					<Upload className="size-3" />
-					{isConverting ? "Converting…" : hasImage ? "Replace" : "Upload"}
+					{isConverting
+						? t("image.converting")
+						: hasImage
+							? t("image.replace")
+							: t("image.upload")}
 				</Button>
 				{hasImage && (
 					<Button
@@ -212,12 +218,15 @@ export function GiftImageUploader({
 						disabled={controlsDisabled}
 						onClick={handleRemove}
 					>
-						<Trash2 className="size-3" /> {isRemoving ? "Removing…" : "Remove"}
+						<Trash2 className="size-3" />{" "}
+						{isRemoving ? t("image.removing") : t("image.remove")}
 					</Button>
 				)}
 			</div>
 
-			{uploadPending && <p className="text-xs text-sub">Uploading image…</p>}
+			{uploadPending && (
+				<p className="text-xs text-sub">{t("image.uploading")}</p>
+			)}
 			{message && <p className="text-xs text-danger-fg">{message}</p>}
 
 			{cropSrc && (

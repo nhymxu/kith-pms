@@ -1,5 +1,6 @@
 import { useMutation, type useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -28,6 +29,7 @@ export function DashboardWidgetsSettingsCard({
 	) => Parameters<typeof updateSettings>[0];
 	queryClient: ReturnType<typeof useQueryClient>;
 }) {
+	const { t } = useTranslation("settings");
 	const [favoritesCount, setFavoritesCount] = useState(5);
 	const [lastContactCount, setLastContactCount] = useState(5);
 
@@ -60,16 +62,17 @@ export function DashboardWidgetsSettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-[14px] font-medium text-ink">
-					Dashboard Widgets
+					{t("general.widgets.title")}
 				</CardTitle>
 				<CardDescription className="text-[12px] text-sub">
-					How many people to show in the Favorites and Last Contact widgets on
-					the dashboard.
+					{t("general.widgets.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label className="text-[13px]">Favorites</Label>
+					<Label className="text-[13px]">
+						{t("general.widgets.favorites")}
+					</Label>
 					<input
 						type="number"
 						min={MIN_COUNT}
@@ -83,7 +86,9 @@ export function DashboardWidgetsSettingsCard({
 				</div>
 
 				<div className="space-y-2">
-					<Label className="text-[13px]">Last Contact</Label>
+					<Label className="text-[13px]">
+						{t("general.widgets.lastContact")}
+					</Label>
 					<input
 						type="number"
 						min={MIN_COUNT}
@@ -102,15 +107,13 @@ export function DashboardWidgetsSettingsCard({
 					disabled={widgetsMutation.isPending}
 				>
 					{widgetsMutation.isPending
-						? "Saving…"
+						? t("common.saving")
 						: widgetsMutation.isSuccess
-							? "Saved!"
-							: "Save"}
+							? t("common.saved")
+							: t("common.save")}
 				</Button>
 				{widgetsMutation.isError && (
-					<p className="text-[12px] text-danger-fg">
-						Failed to save. Please try again.
-					</p>
+					<p className="text-[12px] text-danger-fg">{t("common.saveFailed")}</p>
 				)}
 			</CardContent>
 		</Card>

@@ -1,0 +1,77 @@
+{
+	"title": "Tổng quan",
+	"header": {
+		"followUps_other": "{{date}} — {{count}} việc cần chú ý",
+		"lastRefreshed": "Làm mới lúc {{time}}",
+		"logInteraction": "+ Ghi lại tương tác",
+		"loadError": "Một số dữ liệu tổng quan không tải được. Các mục khác hiển thị dữ liệu đã lưu hoặc để trống."
+	},
+	"cards": {
+		"people": "Người",
+		"followups": "Theo dõi",
+		"dates": "Dịp đặc biệt",
+		"gifts": "Quà",
+		"journal": "Nhật ký",
+		"cached": "Đã lưu",
+		"peopleDetail": "{{count}} người liên hệ trong 30 ngày",
+		"followupsDetail": "{{overdue}} quá hạn · {{today}} hôm nay",
+		"datesDetail": "30 ngày tới",
+		"giftsDetail": "{{count}} món đang theo dõi",
+		"journalDetail": "{{count}} mục gần đây đã tải"
+	},
+	"showLess": "Thu gọn",
+	"showMore": "Xem thêm {{count}}",
+	"refresh": "Làm mới {{title}}",
+	"neverContacted": "Chưa liên hệ",
+	"lastContact": "Liên hệ gần nhất: {{when}}",
+	"pulse": {
+		"title": "Nhịp quan hệ",
+		"subtitle": "Tương tác nhật ký trong 14 ngày qua",
+		"touches": "Lượt chạm",
+		"entries": "Mục nhật ký",
+		"emptyTitle": "Chưa có nhịp gần đây",
+		"emptyDescription": "Thêm mục nhật ký để xem xu hướng hoạt động quan hệ."
+	},
+	"actions": {
+		"title": "Việc cần làm",
+		"subtitle": "Theo dõi, nhắc nhở và ý tưởng quà",
+		"emptyTitle": "Không còn việc nào",
+		"emptyDescription": "Không có việc theo dõi phù hợp cần chú ý.",
+		"reminder": "Nhắc nhở",
+		"giftIdea": "Ý tưởng quà",
+		"filters": {
+			"all": "Tất cả",
+			"overdue": "Quá hạn",
+			"today": "Hôm nay",
+			"upcoming": "Sắp tới",
+			"gift": "Quà"
+		}
+	},
+	"lastContacted": {
+		"title": "Liên hệ gần nhất",
+		"subtitle": "Những người bạn vừa liên hệ",
+		"emptyTitle": "Chưa có lịch sử liên hệ",
+		"emptyDescription": "Ghi nhật ký hoặc tương tác để thấy liên hệ gần đây ở đây."
+	},
+	"favorites": {
+		"title": "Yêu thích",
+		"subtitle": "Truy cập nhanh những người đã gắn sao",
+		"emptyTitle": "Chưa có người yêu thích",
+		"emptyDescription": "Gắn sao từ hồ sơ hoặc danh sách người."
+	},
+	"activity": {
+		"title": "Hoạt động gần đây",
+		"subtitle": "Nhật ký mới nhất",
+		"emptyTitle": "Chưa có hoạt động nhật ký",
+		"emptyDescription": "Ghi lại một tương tác gần đây để có thêm ngữ cảnh quan hệ.",
+		"journalEntry": "Mục nhật ký"
+	},
+	"moments": {
+		"title": "Dịp sắp tới",
+		"subtitle": "Những ngày đáng chuẩn bị",
+		"emptyTitle": "Không có dịp sắp tới",
+		"emptyDescription": "Sinh nhật và cột mốc trong 30 ngày tới sẽ hiện ở đây.",
+		"years_other": "{{count}} năm",
+		"milestone": "Cột mốc sắp tới"
+	}
+}

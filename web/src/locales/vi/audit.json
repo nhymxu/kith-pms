@@ -1,0 +1,23 @@
+{
+	"title": "Nhật ký hoạt động",
+	"filters": {
+		"from": "Từ",
+		"to": "Đến",
+		"clearDates": "Xóa ngày"
+	},
+	"table": {
+		"timestamp": "Thời gian",
+		"action": "Hành động",
+		"type": "Loại",
+		"target": "Đối tượng",
+		"detail": "Chi tiết",
+		"empty": "Chưa có nhật ký nào."
+	},
+	"detailActions": {
+		"profile_update": "Hồ sơ",
+		"avatar_upload": "Tải ảnh đại diện",
+		"avatar_delete": "Xóa ảnh đại diện",
+		"set_self": "Đặt là tôi",
+		"last_contact_update": "Liên hệ gần nhất"
+	}
+}

@@ -2,6 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	sortableHeader,
 	type TableColumn,
@@ -18,12 +19,13 @@ interface JournalTableProps {
 }
 
 export function JournalTable({ data, toolbarActions }: JournalTableProps) {
+	const { t } = useTranslation("journal");
 	const columns = useMemo<TableColumn<JournalActivity>[]>(
 		() => [
 			{
 				id: "occurred_at_date",
 				accessorKey: "occurred_at_date",
-				header: sortableHeader<JournalActivity>("Date"),
+				header: sortableHeader<JournalActivity>(t("table.date")),
 				enableSorting: true,
 				cell: valueCell<JournalActivity, string>((val) =>
 					val ? (
@@ -38,7 +40,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 			{
 				id: "title",
 				accessorKey: "title",
-				header: sortableHeader<JournalActivity>("Title"),
+				header: sortableHeader<JournalActivity>(t("table.title")),
 				enableSorting: true,
 				cell: valueCell<JournalActivity, string>((val, row) => (
 					<Link
@@ -52,7 +54,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 			},
 			{
 				id: "people",
-				header: "People",
+				header: t("table.people"),
 				cell: ({ row }) => {
 					const people = row.original.people ?? [];
 					if (!people.length)
@@ -73,7 +75,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 			},
 			{
 				id: "content_preview",
-				header: "Preview",
+				header: t("table.preview"),
 				cell: ({ row }) => {
 					const content = row.original.content ?? "";
 					const preview =
@@ -86,7 +88,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 				},
 			},
 		],
-		[],
+		[t],
 	);
 
 	return (
@@ -95,9 +97,7 @@ export function JournalTable({ data, toolbarActions }: JournalTableProps) {
 			data={data}
 			toolbarActions={toolbarActions}
 			emptyState={
-				<span className="text-sm text-foreground/50">
-					No journal entries yet.
-				</span>
+				<span className="text-sm text-foreground/50">{t("list.empty")}</span>
 			}
 		/>
 	);

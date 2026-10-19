@@ -1,3 +1,4 @@
+import i18n from "#/lib/i18n";
 import type { AuditEntry } from "#/schemas/audit";
 import type { UpcomingDateItem } from "#/schemas/date";
 import type { GiftWithPerson } from "#/schemas/gift";
@@ -20,10 +21,8 @@ export type DashboardSource = {
 
 export type DashboardSummaryCard = {
 	id: "people" | "followups" | "dates" | "gifts" | "journal";
-	label: string;
 	value: number;
 	detail: string;
-	trend: string;
 };
 
 export type DashboardPulsePoint = {
@@ -58,7 +57,6 @@ export type DashboardMoment = {
 };
 
 export type DashboardViewModel = {
-	meName: string;
 	lastUpdatedAt: string;
 	summaryCards: DashboardSummaryCard[];
 	pulse: DashboardPulsePoint[];
@@ -84,6 +82,7 @@ export function buildDashboardViewModel(
 	source: DashboardSource,
 	now = new Date(),
 ): DashboardViewModel {
+	const t = i18n.getFixedT(null, "dashboard");
 	const people = source.people?.items ?? [];
 	const journalItems = source.journal?.items ?? [];
 	const reminders = source.reminders ?? [];
@@ -115,45 +114,39 @@ export function buildDashboardViewModel(
 		(source.people?.total ?? people.length) + (source.archivedPeopleCount ?? 0);
 
 	return {
-		meName: source.me?.name ?? "Your network",
 		lastUpdatedAt: now.toISOString(),
 		summaryCards: [
 			{
 				id: "people",
-				label: "People",
 				value: totalPeopleCount,
-				detail: `${peopleWithRecentContact(people, now)} contacted in 30 days`,
-				trend: people.length ? "Network ready" : "Add first person",
+				detail: t("cards.peopleDetail", {
+					count: peopleWithRecentContact(people, now),
+				}),
 			},
 			{
 				id: "followups",
-				label: "Follow-ups",
 				value: openReminders.length,
-				detail: `${overdueActions.length} overdue · ${todayActions.length} today`,
-				trend: openReminders.length ? "Action needed" : "Clear queue",
+				detail: t("cards.followupsDetail", {
+					overdue: overdueActions.length,
+					today: todayActions.length,
+				}),
 			},
 			{
 				id: "dates",
-				label: "Moments",
 				value: dates.length,
-				detail: "Next 30 days",
-				trend: dates.length ? "Plan outreach" : "No upcoming dates",
+				detail: t("cards.datesDetail"),
 			},
 			{
 				id: "gifts",
-				label: "Gifts",
 				value: plannedGifts.length,
-				detail: `${source.gifts?.total ?? gifts.length} total tracked`,
-				trend: plannedGifts.length ? "Ideas pending" : "Nothing planned",
+				detail: t("cards.giftsDetail", {
+					count: source.gifts?.total ?? gifts.length,
+				}),
 			},
 			{
 				id: "journal",
-				label: "Journal",
 				value: source.journal?.total ?? journalItems.length,
-				detail: `${journalItems.length} recent entries loaded`,
-				trend: journalItems.length
-					? "Recent context available"
-					: "Start logging",
+				detail: t("cards.journalDetail", { count: journalItems.length }),
 			},
 		],
 		pulse: buildPulse(journalItems, now),
@@ -161,17 +154,19 @@ export function buildDashboardViewModel(
 		activities: journalItems.map((entry) => ({
 			id: String(entry.id),
 			title: entry.title,
-			detail: entry.content || "Journal entry",
+			detail: entry.content || t("activity.journalEntry"),
 			date: entry.occurred_at_date,
 			people: entry.people.map((person) => person.name),
 		})),
 		moments: dates.map((date, index) => ({
 			id: `${date.person.id}-${date.kind}-${date.next_occurrence}-${index}`,
-			label: date.kind,
+			label: i18n.t(`people:sections.dates.kind.${date.kind}`, {
+				defaultValue: date.kind,
+			}),
 			detail:
 				date.years_since > 0
-					? `${date.years_since} years`
-					: "Upcoming milestone",
+					? t("moments.years", { count: date.years_since })
+					: t("moments.milestone"),
 			date: date.next_occurrence,
 			personName: date.person.name,
 		})),
@@ -216,11 +211,12 @@ function buildActions(
 	gifts: GiftWithPerson[],
 	now: Date,
 ): DashboardAction[] {
+	const t = i18n.getFixedT(null, "dashboard");
 	const reminderActions = reminders.map((reminder) => ({
 		id: `reminder-${reminder.id}`,
 		type: classifyReminder(reminder.due_date, now),
 		label: reminder.title,
-		detail: reminder.notes || "Reminder",
+		detail: reminder.notes || t("actions.reminder"),
 		date: reminder.due_date,
 		personName: reminder.person_name || undefined,
 	})) satisfies DashboardAction[];
@@ -231,7 +227,7 @@ function buildActions(
 			id: `gift-${gift.id}`,
 			type: "gift" as const,
 			label: gift.title,
-			detail: "Gift idea",
+			detail: t("actions.giftIdea"),
 			date: gift.date || gift.created_at.slice(0, 10),
 			personName: gift.person_name,
 		}));

@@ -5,7 +5,9 @@ import {
 } from "@tanstack/react-query";
 import { Check, Lock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
+import { SafeTrans } from "#/components/safe-trans";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -21,6 +23,7 @@ import {
 	listDatesByPerson,
 	replaceDatesForPerson,
 } from "#/endpoints/important-dates";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import type { ImportantDate } from "#/schemas/date";
 import type { Person } from "#/schemas/person";
@@ -33,7 +36,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 	);
 }
 
-const DATE_KINDS = ["Anniversary", "Memorial", "Custom"];
+const DATE_KINDS = ["Anniversary", "Memorial", "Custom"] as const;
 
 interface DateFormProps {
 	date: Partial<ImportantDate>;
@@ -42,6 +45,7 @@ interface DateFormProps {
 }
 
 function DateForm({ date, onSave, onCancel }: DateFormProps) {
+	const { t } = useTranslation("people");
 	const [kind, setKind] = useState(date.kind ?? "Custom");
 	const [label, setLabel] = useState(date.label ?? "");
 	const [dateValue, setDateValue] = useState(date.date_value ?? "");
@@ -57,7 +61,7 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 				>
 					{DATE_KINDS.map((k) => (
 						<option key={k} value={k}>
-							{k}
+							{t(`sections.dates.kind.${k}`)}
 						</option>
 					))}
 				</select>
@@ -65,7 +69,7 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 					className="h-8 flex-1"
 					value={label}
 					onChange={(e) => setLabel(e.target.value)}
-					placeholder="Label (optional)"
+					placeholder={t("sections.dates.labelPlaceholder")}
 				/>
 			</div>
 			<div className="flex gap-2 items-center">
@@ -73,7 +77,7 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 					className="h-8 flex-1"
 					value={dateValue}
 					onChange={(e) => setDateValue(e.target.value)}
-					placeholder="Date (YYYY-MM-DD or --MM-DD)"
+					placeholder={t("sections.dates.datePlaceholder")}
 				/>
 				<label className="flex items-center gap-1 text-sm text-sub cursor-pointer">
 					<input
@@ -81,12 +85,12 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 						checked={recurring}
 						onChange={(e) => setRecurring(e.target.checked)}
 					/>
-					Recurring
+					{t("sections.dates.recurring")}
 				</label>
 			</div>
 			<div className="flex gap-2 justify-end">
 				<Button variant="neutral" size="sm" onClick={onCancel}>
-					<X className="size-3" /> Cancel
+					<X className="size-3" /> {t("sections.dates.cancel")}
 				</Button>
 				<Button
 					size="sm"
@@ -95,7 +99,7 @@ function DateForm({ date, onSave, onCancel }: DateFormProps) {
 						onSave({ ...date, kind, label, date_value: dateValue, recurring })
 					}
 				>
-					<Check className="size-3" /> Save
+					<Check className="size-3" /> {t("sections.dates.save")}
 				</Button>
 			</div>
 		</div>
@@ -111,6 +115,7 @@ function ImportantDatesSectionInner({
 	personId,
 	person,
 }: ImportantDatesSectionInnerProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
@@ -139,7 +144,7 @@ function ImportantDatesSectionInner({
 			setSaveError(null);
 		},
 		onError: (e) =>
-			setSaveError(e instanceof Error ? e.message : "Failed to save"),
+			setSaveError(apiErrorMessage(e, t("sections.dates.saveFailed"))),
 	});
 
 	function handleSave(updated: Partial<ImportantDate>) {
@@ -172,9 +177,9 @@ function ImportantDatesSectionInner({
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Important Dates</SectionHeading>
+				<SectionHeading>{t("sections.dates.title")}</SectionHeading>
 				<Button variant="neutral" size="sm" onClick={() => setEditingId("new")}>
-					<Plus className="size-3" /> Add
+					<Plus className="size-3" /> {t("sections.dates.add")}
 				</Button>
 			</div>
 			{saveError && (
@@ -186,7 +191,7 @@ function ImportantDatesSectionInner({
 				{/* Birthday from DOB — read-only */}
 				{person.date_of_birth && (
 					<div className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2 bg-muted">
-						<Badge variant="neutral">Birthday</Badge>
+						<Badge variant="neutral">{t("sections.dates.birthday")}</Badge>
 						<span className="font-mono text-[12px] text-sub flex-1">
 							{person.date_of_birth}
 						</span>
@@ -206,7 +211,9 @@ function ImportantDatesSectionInner({
 							key={d.id}
 							className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2"
 						>
-							<Badge variant="neutral">{d.kind}</Badge>
+							<Badge variant="neutral">
+								{t(`sections.dates.kind.${d.kind}`, { defaultValue: d.kind })}
+							</Badge>
 							{d.label && <span className="text-sub">{d.label}</span>}
 							<span className="font-mono text-[12px] text-sub flex-1">
 								{d.date_value}
@@ -237,7 +244,7 @@ function ImportantDatesSectionInner({
 					/>
 				)}
 				{data.length === 0 && !person.date_of_birth && editingId !== "new" && (
-					<p className="text-sm text-sub">No important dates.</p>
+					<p className="text-sm text-sub">{t("sections.dates.empty")}</p>
 				)}
 			</div>
 			<Dialog
@@ -246,21 +253,34 @@ function ImportantDatesSectionInner({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove date?</DialogTitle>
+						<DialogTitle>{t("sections.dates.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{(() => {
 						const d = data.find((d) => d.id === confirmDeleteId);
 						return d ? (
 							<p className="text-[13px] text-sub">
-								Remove the <span className="font-medium">{d.kind}</span>
-								{d.label ? ` (${d.label})` : ""} date{" "}
-								<span className="font-medium">{d.date_value}</span>?
+								<SafeTrans
+									t={t}
+									i18nKey={
+										d.label
+											? "sections.dates.removeBodyWithLabel"
+											: "sections.dates.removeBody"
+									}
+									values={{
+										kind: t(`sections.dates.kind.${d.kind}`, {
+											defaultValue: d.kind,
+										}),
+										label: d.label,
+										value: d.date_value,
+									}}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						) : null;
 					})()}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmDeleteId(null)}>
-							Cancel
+							{t("sections.dates.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -272,7 +292,9 @@ function ImportantDatesSectionInner({
 								}
 							}}
 						>
-							{saveMutation.isPending ? "Removing…" : "Remove"}
+							{saveMutation.isPending
+								? t("sections.dates.removing")
+								: t("sections.dates.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

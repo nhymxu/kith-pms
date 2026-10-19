@@ -1,0 +1,19 @@
+{
+	"title": "Hồ sơ của tôi",
+	"loading": "Đang tải…",
+	"notSetUp": "Bạn chưa thiết lập hồ sơ cá nhân. Hãy chọn một người trong danh bạ để đại diện cho bạn.",
+	"setUpAction": "Thiết lập hồ sơ",
+	"dateOfBirth": "Ngày sinh",
+	"editProfile": "Sửa hồ sơ",
+	"changeMe": "Đổi người đại diện",
+	"setup": {
+		"title": "Bạn là ai?",
+		"subtitle": "Chọn người trong danh bạ đại diện cho bạn.",
+		"searchPlaceholder": "Tìm người…",
+		"failed": "Thiết lập thất bại",
+		"noPeople": "Không tìm thấy ai.",
+		"selected": "Đã chọn: {{name}}",
+		"confirming": "Đang thiết lập…",
+		"confirm": "Xác nhận lựa chọn"
+	}
+}

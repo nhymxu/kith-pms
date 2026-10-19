@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -40,6 +41,7 @@ export function BulkRelationshipModal({
 	onClose,
 	onSuccess,
 }: BulkRelationshipModalProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [pending, setPending] = useState<PendingPair[]>([]);
 	const [selectedTypeId, setSelectedTypeId] = useState<string>("");
@@ -84,14 +86,14 @@ export function BulkRelationshipModal({
 				})),
 			),
 		onSuccess: (data) => {
-			setResultMsg(`Created ${data.created} relationships`);
+			setResultMsg(t("bulkRel.created", { count: data.created }));
 			qc.invalidateQueries({
 				queryKey: keys.relationships.byPerson(fromPersonId),
 			});
 			onSuccess();
 			handleClose();
 		},
-		onError: () => setResultMsg("Failed to save relationships"),
+		onError: () => setResultMsg(t("bulkRel.saveFailed")),
 	});
 
 	function handleAddToList() {
@@ -99,7 +101,7 @@ export function BulkRelationshipModal({
 
 		const typeIdNum = Number(selectedTypeId);
 		const typeName =
-			types?.find((t) => t.id === typeIdNum)?.name ?? String(selectedTypeId);
+			types?.find((rt) => rt.id === typeIdNum)?.name ?? String(selectedTypeId);
 
 		const newPairs = selectedPeople
 			.filter(
@@ -137,11 +139,14 @@ export function BulkRelationshipModal({
 			});
 			setLabelAddAllMsg(
 				result.total > LABEL_ADD_ALL_PAGE_SIZE
-					? `Added first ${LABEL_ADD_ALL_PAGE_SIZE} of ${result.total} people with this label`
-					: `Added ${result.items.length} people with this label`,
+					? t("bulkRel.addedFirst", {
+							limit: LABEL_ADD_ALL_PAGE_SIZE,
+							total: result.total,
+						})
+					: t("bulkRel.added", { count: result.items.length }),
 			);
 		},
-		onError: () => setLabelAddAllMsg("Failed to load people with this label"),
+		onError: () => setLabelAddAllMsg(t("bulkRel.labelLoadFailed")),
 	});
 
 	function handleAddAllWithLabel() {
@@ -179,30 +184,32 @@ export function BulkRelationshipModal({
 
 	const isMultiCanHave =
 		selectedTypeId !== "" &&
-		types?.find((t) => t.id === Number(selectedTypeId))?.inverse_type_id ==
+		types?.find((rt) => rt.id === Number(selectedTypeId))?.inverse_type_id ==
 			null;
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
-					<DialogTitle>Add multiple relationships</DialogTitle>
+					<DialogTitle>{t("bulkRel.title")}</DialogTitle>
 				</DialogHeader>
 
 				<div className="space-y-4">
 					<div className="flex gap-2 items-end">
 						<div className="flex-1 space-y-1.5">
-							<p className="text-xs font-medium text-sub">Type</p>
+							<p className="text-xs font-medium text-sub">
+								{t("bulkRel.type")}
+							</p>
 							<select
 								value={selectedTypeId}
 								onChange={(e) => setSelectedTypeId(e.target.value)}
 								className="w-full h-9 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 							>
-								<option value="">Select type…</option>
-								{types?.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.inverse_type_id == null ? "⇄ " : ""}
-										{t.name}
+								<option value="">{t("bulkRel.selectType")}</option>
+								{types?.map((rt) => (
+									<option key={rt.id} value={rt.id}>
+										{rt.inverse_type_id == null ? "⇄ " : ""}
+										{rt.name}
 									</option>
 								))}
 							</select>
@@ -213,17 +220,15 @@ export function BulkRelationshipModal({
 							disabled={!selectedTypeId || selectedPeople.length === 0}
 							onClick={handleAddToList}
 						>
-							Add to list
+							{t("bulkRel.addToList")}
 						</Button>
 					</div>
-					<p className="text-xs text-sub -mt-2">
-						⇄ marks symmetric types — these support label quick-select below
-					</p>
+					<p className="text-xs text-sub -mt-2">{t("bulkRel.symmetricHint")}</p>
 
 					<div className="space-y-1.5">
 						<div className="flex items-center gap-2">
 							<p className="text-xs font-medium text-sub">
-								People (select multiple)
+								{t("bulkRel.people")}
 							</p>
 							{myProfile &&
 								myProfile.id !== fromPersonId &&
@@ -241,12 +246,12 @@ export function BulkRelationshipModal({
 										}
 										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
-										+ Me
+										{t("bulkRel.addMe")}
 									</button>
 								)}
 						</div>
 						<Input
-							placeholder="Search by name…"
+							placeholder={t("bulkRel.searchPlaceholder")}
 							value={personSearch}
 							onChange={(e) => setPersonSearch(e.target.value)}
 						/>
@@ -258,7 +263,7 @@ export function BulkRelationshipModal({
 									disabled={addAllWithLabelMutation.isPending}
 									className="flex-1 h-8 border-field-bw border-field-line rounded-md bg-field px-2 text-xs"
 								>
-									<option value="">Add all with label…</option>
+									<option value="">{t("bulkRel.addAllWithLabel")}</option>
 									{labels.map((l) => (
 										<option key={l.id} value={l.id}>
 											{l.name}
@@ -271,7 +276,9 @@ export function BulkRelationshipModal({
 									disabled={!labelAddAllId || addAllWithLabelMutation.isPending}
 									onClick={handleAddAllWithLabel}
 								>
-									{addAllWithLabelMutation.isPending ? "Adding…" : "Add all"}
+									{addAllWithLabelMutation.isPending
+										? t("bulkRel.adding")
+										: t("bulkRel.addAll")}
 								</Button>
 							</div>
 						)}
@@ -353,15 +360,15 @@ export function BulkRelationshipModal({
 
 				<DialogFooter>
 					<Button variant="neutral" onClick={handleClose}>
-						Cancel
+						{t("bulkRel.cancel")}
 					</Button>
 					<Button
 						disabled={pending.length === 0 || mutation.isPending}
 						onClick={() => mutation.mutate()}
 					>
 						{mutation.isPending
-							? "Saving…"
-							: `Save ${pending.length} relationship${pending.length !== 1 ? "s" : ""}`}
+							? t("bulkRel.saving")
+							: t("bulkRel.save", { count: pending.length })}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

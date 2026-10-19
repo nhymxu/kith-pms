@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Pencil, Star, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -33,6 +34,7 @@ import {
 	updatePerson,
 } from "#/endpoints/people";
 import { getSettings } from "#/endpoints/settings";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import {
 	datetimeLocalToUtc,
 	daysRemaining,
@@ -85,6 +87,7 @@ function OverviewSection({
 	onEdit,
 	onCancel,
 }: OverviewSectionProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [name, setName] = useState(person.name);
 	const [nickname, setNickname] = useState(person.nickname);
@@ -134,23 +137,25 @@ function OverviewSection({
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
-				<SectionHeading>Overview</SectionHeading>
+				<SectionHeading>{t("detail.overview.title")}</SectionHeading>
 				{editing ? (
 					<div className="flex gap-2">
 						<Button variant="neutral" size="sm" onClick={onCancel}>
-							Cancel
+							{t("detail.overview.cancel")}
 						</Button>
 						<Button
 							size="sm"
 							disabled={saveMutation.isPending}
 							onClick={() => saveMutation.mutate()}
 						>
-							{saveMutation.isPending ? "Saving…" : "Save"}
+							{saveMutation.isPending
+								? t("detail.overview.saving")
+								: t("detail.overview.save")}
 						</Button>
 					</div>
 				) : (
 					<Button variant="neutral" size="sm" onClick={onEdit}>
-						<Pencil className="size-3" /> Edit
+						<Pencil className="size-3" /> {t("detail.overview.edit")}
 					</Button>
 				)}
 			</div>
@@ -164,23 +169,23 @@ function OverviewSection({
 			{editing ? (
 				<div className="space-y-3">
 					<div>
-						<Label>Full name</Label>
+						<Label>{t("detail.overview.fullName")}</Label>
 						<Input
 							value={name}
 							onChange={(e) => setName(e.target.value)}
-							placeholder="Full name"
+							placeholder={t("detail.overview.fullName")}
 						/>
 					</div>
 					<div>
-						<Label>Nickname</Label>
+						<Label>{t("detail.overview.nickname")}</Label>
 						<Input
 							value={nickname}
 							onChange={(e) => setNickname(e.target.value)}
-							placeholder="Nickname"
+							placeholder={t("detail.overview.nickname")}
 						/>
 					</div>
 					<div>
-						<Label>Date of birth</Label>
+						<Label>{t("detail.overview.dateOfBirth")}</Label>
 						<Input
 							type="date"
 							value={dob}
@@ -198,13 +203,13 @@ function OverviewSection({
 								htmlFor="birthday-reminder-toggle"
 								className="font-normal cursor-pointer"
 							>
-								Annual birthday reminder
+								{t("detail.overview.birthdayReminder")}
 							</Label>
 						</div>
 					)}
 					<div>
 						<div className="flex items-center justify-between mb-1.5">
-							<Label>Last contact</Label>
+							<Label>{t("detail.overview.lastContact")}</Label>
 							{lastContactAt && (
 								<Button
 									type="button"
@@ -213,7 +218,7 @@ function OverviewSection({
 									className="h-6 px-2 text-xs"
 									onClick={() => setLastContactAt("")}
 								>
-									<X className="size-3" /> Clear
+									<X className="size-3" /> {t("detail.overview.clear")}
 								</Button>
 							)}
 						</div>
@@ -224,7 +229,7 @@ function OverviewSection({
 						/>
 					</div>
 					<div>
-						<Label>Gender</Label>
+						<Label>{t("detail.overview.gender")}</Label>
 						<RadioGroup
 							value={gender}
 							onValueChange={setGender}
@@ -236,7 +241,7 @@ function OverviewSection({
 									htmlFor="edit-gender-unselected"
 									className="font-normal cursor-pointer text-sub"
 								>
-									Unselected
+									{t("detail.overview.genderUnselected")}
 								</Label>
 							</div>
 							{genderOptions.map((opt) => (
@@ -249,19 +254,19 @@ function OverviewSection({
 										htmlFor={`edit-gender-${opt.value}`}
 										className="font-normal cursor-pointer"
 									>
-										{opt.label}
+										{t(`gender.${opt.value}`)}
 									</Label>
 								</div>
 							))}
 						</RadioGroup>
 					</div>
 					<div>
-						<Label>Bio</Label>
+						<Label>{t("detail.overview.bio")}</Label>
 						<Textarea
 							rows={3}
 							value={bio}
 							onChange={(e) => setBio(e.target.value)}
-							placeholder="Bio…"
+							placeholder={t("detail.overview.bioPlaceholder")}
 						/>
 					</div>
 				</div>
@@ -270,41 +275,59 @@ function OverviewSection({
 					<dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
 						{person.nickname && (
 							<>
-								<dt className="font-medium text-sub">Nickname</dt>
+								<dt className="font-medium text-sub">
+									{t("detail.overview.nickname")}
+								</dt>
 								<dd>{person.nickname}</dd>
 							</>
 						)}
 						{person.is_self ? (
 							<>
-								<dt className="font-medium text-sub">Relationship</dt>
+								<dt className="font-medium text-sub">
+									{t("detail.overview.relationship")}
+								</dt>
 								<dd>
-									<Badge variant="neutral">Self profile</Badge>
+									<Badge variant="neutral">
+										{t("detail.overview.selfProfile")}
+									</Badge>
 								</dd>
 							</>
 						) : null}
 						{person.date_of_birth && (
 							<>
-								<dt className="font-medium text-sub">Date of birth</dt>
+								<dt className="font-medium text-sub">
+									{t("detail.overview.dateOfBirth")}
+								</dt>
 								<dd className="flex items-center gap-2">
 									{formatDate(person.date_of_birth)}
 									{person.has_birthday_reminder && (
-										<Badge variant="neutral">🎂 reminder on</Badge>
+										<Badge variant="neutral">
+											{t("detail.overview.reminderOn")}
+										</Badge>
 									)}
 								</dd>
 							</>
 						)}
 						{person.gender && (
 							<>
-								<dt className="font-medium text-sub">Gender</dt>
+								<dt className="font-medium text-sub">
+									{t("detail.overview.gender")}
+								</dt>
 								<dd>
-									{genderOptions.find((o) => o.value === person.gender)
-										?.label ?? person.gender}
+									{(() => {
+										const known = genderOptions.find(
+											(o) => o.value === person.gender,
+										);
+										return known ? t(`gender.${known.value}`) : person.gender;
+									})()}
 								</dd>
 							</>
 						)}
 						{person.last_contact_at && (
 							<>
-								<dt className="font-medium text-sub">Last contact</dt>
+								<dt className="font-medium text-sub">
+									{t("detail.overview.lastContact")}
+								</dt>
 								<dd>{formatDate(person.last_contact_at)}</dd>
 							</>
 						)}
@@ -329,6 +352,7 @@ function PersonDetailSectionsInner({
 	personId,
 	onClose,
 }: PersonDetailSectionsInnerProps) {
+	const { t } = useTranslation("people");
 	const [editing, setEditing] = useState(false);
 	const qc = useQueryClient();
 
@@ -356,7 +380,7 @@ function PersonDetailSectionsInner({
 			qc.invalidateQueries({ queryKey: keys.search.all });
 		},
 		onError: (e) =>
-			setRestoreError(e instanceof Error ? e.message : "Failed to restore"),
+			setRestoreError(apiErrorMessage(e, t("detail.restoreFailed"))),
 	});
 
 	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -371,7 +395,7 @@ function PersonDetailSectionsInner({
 			setConfirmDeleteOpen(false);
 		},
 		onError: (e) =>
-			setDeleteError(e instanceof Error ? e.message : "Failed to delete"),
+			setDeleteError(apiErrorMessage(e, t("detail.deleteFailed"))),
 	});
 
 	const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
@@ -387,7 +411,7 @@ function PersonDetailSectionsInner({
 			setConfirmArchiveOpen(false);
 		},
 		onError: (e) =>
-			setArchiveError(e instanceof Error ? e.message : "Failed to archive"),
+			setArchiveError(apiErrorMessage(e, t("detail.archiveFailed"))),
 	});
 
 	const [confirmUnarchiveOpen, setConfirmUnarchiveOpen] = useState(false);
@@ -403,7 +427,7 @@ function PersonDetailSectionsInner({
 			setConfirmUnarchiveOpen(false);
 		},
 		onError: (e) =>
-			setUnarchiveError(e instanceof Error ? e.message : "Failed to unarchive"),
+			setUnarchiveError(apiErrorMessage(e, t("detail.unarchiveFailed"))),
 	});
 
 	const { data: settingsData } = useQuery({
@@ -418,10 +442,11 @@ function PersonDetailSectionsInner({
 				<Alert variant="warning">
 					<AlertDescription className="flex flex-wrap items-center justify-between gap-2 w-full">
 						<span>
-							Pending deletion —{" "}
 							{retentionDays > 0
-								? `${daysRemaining(person.deleted_at, retentionDays)} days left before it's permanently removed.`
-								: "permanent purge is disabled."}
+								? t("detail.pendingDeletion", {
+										days: daysRemaining(person.deleted_at, retentionDays),
+									})
+								: t("detail.pendingDeletionNoPurge")}
 						</span>
 						{restoreError && (
 							<span className="text-danger-fg">{restoreError}</span>
@@ -431,7 +456,9 @@ function PersonDetailSectionsInner({
 							disabled={restoreMutation.isPending}
 							onClick={() => restoreMutation.mutate()}
 						>
-							{restoreMutation.isPending ? "Restoring…" : "Restore"}
+							{restoreMutation.isPending
+								? t("detail.restoring")
+								: t("detail.restore")}
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -439,7 +466,7 @@ function PersonDetailSectionsInner({
 			{person.archived_at && (
 				<Alert variant="warning">
 					<AlertDescription className="flex flex-wrap items-center justify-between gap-2 w-full">
-						<span>Archived — hidden from lists, search, and pickers.</span>
+						<span>{t("detail.archivedBanner")}</span>
 						{unarchiveError && (
 							<span className="text-danger-fg">{unarchiveError}</span>
 						)}
@@ -450,7 +477,7 @@ function PersonDetailSectionsInner({
 								setConfirmUnarchiveOpen(true);
 							}}
 						>
-							Unarchive
+							{t("detail.unarchive")}
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -464,7 +491,9 @@ function PersonDetailSectionsInner({
 						type="button"
 						onClick={() => favoriteMutation.mutate()}
 						disabled={favoriteMutation.isPending}
-						aria-label={person.is_favorite ? "Unfavorite" : "Favorite"}
+						aria-label={
+							person.is_favorite ? t("detail.unfavorite") : t("detail.favorite")
+						}
 						className="text-sub hover:text-warning-fg disabled:opacity-50"
 					>
 						<Star
@@ -483,7 +512,7 @@ function PersonDetailSectionsInner({
 								setConfirmArchiveOpen(true);
 							}}
 						>
-							Archive
+							{t("detail.archive")}
 						</Button>
 					)}
 					{!person.deleted_at && !person.is_self && (
@@ -495,7 +524,7 @@ function PersonDetailSectionsInner({
 								setConfirmDeleteOpen(true);
 							}}
 						>
-							Delete
+							{t("detail.delete")}
 						</Button>
 					)}
 					{onClose && (
@@ -565,7 +594,9 @@ function PersonDetailSectionsInner({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete {person.name}?</DialogTitle>
+						<DialogTitle>
+							{t("detail.deleteDialog.title", { name: person.name })}
+						</DialogTitle>
 					</DialogHeader>
 					{deleteError && (
 						<Alert variant="destructive">
@@ -573,26 +604,28 @@ function PersonDetailSectionsInner({
 						</Alert>
 					)}
 					<p className="text-[13px] text-sub">
-						{person.name} will be hidden{" "}
 						{retentionDays > 0
-							? `and permanently deleted after ${retentionDays} days`
-							: "until you restore it (permanent purge is disabled)"}
-						. You can restore them from this page or the Pending Delete tab
-						before then.
+							? t("detail.deleteDialog.body", {
+									name: person.name,
+									days: retentionDays,
+								})
+							: t("detail.deleteDialog.bodyNoPurge", { name: person.name })}
 					</p>
 					<DialogFooter>
 						<Button
 							variant="neutral"
 							onClick={() => setConfirmDeleteOpen(false)}
 						>
-							Cancel
+							{t("detail.deleteDialog.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
 							disabled={deleteMutation.isPending}
 							onClick={() => deleteMutation.mutate()}
 						>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+							{deleteMutation.isPending
+								? t("detail.deleteDialog.deleting")
+								: t("detail.deleteDialog.delete")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -604,7 +637,9 @@ function PersonDetailSectionsInner({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Archive {person.name}?</DialogTitle>
+						<DialogTitle>
+							{t("detail.archiveDialog.title", { name: person.name })}
+						</DialogTitle>
 					</DialogHeader>
 					{archiveError && (
 						<Alert variant="destructive">
@@ -612,23 +647,22 @@ function PersonDetailSectionsInner({
 						</Alert>
 					)}
 					<p className="text-[13px] text-sub">
-						{person.name} will be hidden from the People list, Cmd-K search, and
-						every attach-person picker, but their journal, gift, and
-						relationship history stays untouched. Unarchive anytime from this
-						page.
+						{t("detail.archiveDialog.body", { name: person.name })}
 					</p>
 					<DialogFooter>
 						<Button
 							variant="neutral"
 							onClick={() => setConfirmArchiveOpen(false)}
 						>
-							Cancel
+							{t("detail.archiveDialog.cancel")}
 						</Button>
 						<Button
 							disabled={archiveMutation.isPending}
 							onClick={() => archiveMutation.mutate()}
 						>
-							{archiveMutation.isPending ? "Archiving…" : "Archive"}
+							{archiveMutation.isPending
+								? t("detail.archiveDialog.archiving")
+								: t("detail.archiveDialog.archive")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -640,7 +674,9 @@ function PersonDetailSectionsInner({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Unarchive {person.name}?</DialogTitle>
+						<DialogTitle>
+							{t("detail.unarchiveDialog.title", { name: person.name })}
+						</DialogTitle>
 					</DialogHeader>
 					{unarchiveError && (
 						<Alert variant="destructive">
@@ -648,21 +684,22 @@ function PersonDetailSectionsInner({
 						</Alert>
 					)}
 					<p className="text-[13px] text-sub">
-						{person.name} will reappear in the People list, Cmd-K search, and
-						every attach-person picker, and their pending reminders will resume.
+						{t("detail.unarchiveDialog.body", { name: person.name })}
 					</p>
 					<DialogFooter>
 						<Button
 							variant="neutral"
 							onClick={() => setConfirmUnarchiveOpen(false)}
 						>
-							Cancel
+							{t("detail.unarchiveDialog.cancel")}
 						</Button>
 						<Button
 							disabled={unarchiveMutation.isPending}
 							onClick={() => unarchiveMutation.mutate()}
 						>
-							{unarchiveMutation.isPending ? "Unarchiving…" : "Unarchive"}
+							{unarchiveMutation.isPending
+								? t("detail.unarchiveDialog.unarchiving")
+								: t("detail.unarchiveDialog.unarchive")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -671,9 +708,14 @@ function PersonDetailSectionsInner({
 	);
 }
 
-const personDetailFallback = (
-	<div className="py-12 text-center text-sub font-base">Loading…</div>
-);
+function PersonDetailFallback() {
+	const { t } = useTranslation("people");
+	return (
+		<div className="py-12 text-center text-sub font-base">
+			{t("detail.loading")}
+		</div>
+	);
+}
 
 interface PersonDetailSectionsProps {
 	personId: number;
@@ -685,7 +727,7 @@ export function PersonDetailSections({
 	onClose,
 }: PersonDetailSectionsProps) {
 	return (
-		<QueryBoundary fallback={personDetailFallback}>
+		<QueryBoundary fallback={<PersonDetailFallback />}>
 			<PersonDetailSectionsInner
 				key={personId}
 				personId={personId}

@@ -63,6 +63,13 @@ var (
 	ErrInvalidRelationshipDisplay = errors.New(
 		"settings: relationship_display must be one of plain, sentence, badge",
 	)
+	// ErrInvalidLanguage is returned when language is not a bundled locale. Keep the
+	// valid set in sync with the zod enum in web/src/schemas/settings.ts, the
+	// Language union + DEFAULTS in web/src/lib/format-datetime.ts, the FOUC guard in
+	// web/index.html, LANGUAGE_OPTIONS in
+	// web/src/features/settings/language-settings-card.tsx, and the catalog
+	// directories under web/src/locales/.
+	ErrInvalidLanguage = errors.New("settings: language must be one of en, vi")
 )
 
 var validDateFormats = map[string]bool{
@@ -123,6 +130,11 @@ var validRelationshipDisplay = map[string]bool{
 	"plain":    true,
 	"sentence": true,
 	"badge":    true,
+}
+
+var validLanguages = map[string]bool{
+	"en": true,
+	"vi": true,
 }
 
 type Service struct {
@@ -226,6 +238,10 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.RelationshipDisplay = v
 	}
 
+	if v, ok := rows[KeyLanguage]; ok && validLanguages[v] {
+		result.Language = v
+	}
+
 	if v, ok := rows[KeySearchScope]; ok {
 		scope := make([]string, 0, len(Defaults.SearchScope))
 
@@ -301,6 +317,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidRelationshipDisplay
 	}
 
+	if !validLanguages[in.Language] {
+		return UserSettings{}, ErrInvalidLanguage
+	}
+
 	if len(in.SearchScope) == 0 {
 		return UserSettings{}, ErrInvalidSearchScope
 	}
@@ -343,6 +363,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyNavLayout:                 in.NavLayout,
 		KeyNumberFormat:              in.NumberFormat,
 		KeyRelationshipDisplay:       in.RelationshipDisplay,
+		KeyLanguage:                  in.Language,
 		KeySearchScope:               strings.Join(in.SearchScope, ","),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {

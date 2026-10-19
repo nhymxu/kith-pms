@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	Card,
 	CardContent,
@@ -79,6 +80,7 @@ function NavLayoutPreview({ meta }: { meta: NavLayoutMeta }) {
 }
 
 function AppearancePage() {
+	const { t } = useTranslation("settings");
 	const queryClient = useQueryClient();
 
 	const { data: apiSettings, isPlaceholderData } = useQuery({
@@ -106,6 +108,7 @@ function AppearancePage() {
 				nav_layout: p.navLayout,
 				number_format: p.numberFormat,
 				relationship_display: p.relationshipDisplay,
+				language: p.language,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
@@ -180,10 +183,8 @@ function AppearancePage() {
 		<div className="space-y-6 max-w-3xl">
 			<Card>
 				<CardHeader>
-					<CardTitle>Appearance</CardTitle>
-					<CardDescription>
-						Choose a theme. It applies instantly and is saved to your account.
-					</CardDescription>
+					<CardTitle>{t("appearance.title")}</CardTitle>
+					<CardDescription>{t("appearance.description")}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -205,20 +206,22 @@ function AppearancePage() {
 									<ThemeSwatch meta={meta} />
 									<div className="flex items-center gap-1.5">
 										<span className="text-[13px] font-medium text-ink">
-											{meta.label}
+											{t(`appearance.themes.${meta.id}.label`)}
 										</span>
 										{selected && (
 											<Check className="size-3.5 text-accent-text shrink-0" />
 										)}
 									</div>
-									<p className="text-[12px] text-sub">{meta.description}</p>
+									<p className="text-[12px] text-sub">
+										{t(`appearance.themes.${meta.id}.description`)}
+									</p>
 								</button>
 							);
 						})}
 					</div>
 					{mutation.isError && (
 						<p className="text-[12px] text-danger-fg mt-3">
-							Failed to save theme. Your previous theme was restored.
+							{t("appearance.themeError")}
 						</p>
 					)}
 				</CardContent>
@@ -226,9 +229,9 @@ function AppearancePage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Navigation layout</CardTitle>
+					<CardTitle>{t("appearance.navLayoutTitle")}</CardTitle>
 					<CardDescription>
-						Choose where the main navigation appears.
+						{t("appearance.navLayoutDescription")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -251,21 +254,22 @@ function AppearancePage() {
 									<NavLayoutPreview meta={meta} />
 									<div className="flex items-center gap-1.5">
 										<span className="text-[13px] font-medium text-ink">
-											{meta.label}
+											{t(`appearance.navLayouts.${meta.id}.label`)}
 										</span>
 										{selected && (
 											<Check className="size-3.5 text-accent-text shrink-0" />
 										)}
 									</div>
-									<p className="text-[12px] text-sub">{meta.description}</p>
+									<p className="text-[12px] text-sub">
+										{t(`appearance.navLayouts.${meta.id}.description`)}
+									</p>
 								</button>
 							);
 						})}
 					</div>
 					{layoutMutation.isError && (
 						<p className="text-[12px] text-danger-fg mt-3">
-							Failed to save navigation layout. Your previous layout was
-							restored.
+							{t("appearance.navLayoutError")}
 						</p>
 					)}
 				</CardContent>

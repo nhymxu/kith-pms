@@ -1,3 +1,4 @@
+import i18n from "#/lib/i18n";
 import { isHeicByNameOrType } from "#/lib/image-constraints";
 
 /**
@@ -48,7 +49,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
 			quality: INTERMEDIATE_QUALITY,
 		});
 	} catch {
-		throw new Error("Couldn't read this HEIC image.");
+		throw new Error(i18n.t("common:imagePick.unreadableHeic"));
 	}
 
 	const base = file.name.replace(/\.[^./\\]+$/, "") || "image";

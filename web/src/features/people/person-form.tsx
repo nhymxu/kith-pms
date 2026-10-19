@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
@@ -13,6 +14,7 @@ import { Label } from "#/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
 import { Textarea } from "#/components/ui/textarea";
 import { createPerson, updatePerson } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { datetimeLocalToUtc, utcToDatetimeLocal } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import {
@@ -36,6 +38,7 @@ function BirthdayCheckbox({
 	dobSet: boolean;
 	onDobClear: () => void;
 }) {
+	const { t } = useTranslation("people");
 	useEffect(() => {
 		if (!dobSet && checked) onDobClear();
 	}, [dobSet, checked, onDobClear]);
@@ -53,7 +56,7 @@ function BirthdayCheckbox({
 				htmlFor="create_birthday_reminder"
 				className="font-normal cursor-pointer"
 			>
-				Create an annual birthday reminder
+				{t("form.birthdayReminder")}
 			</Label>
 		</div>
 	);
@@ -65,6 +68,7 @@ interface PersonFormProps {
 }
 
 export function PersonForm({ mode, initial }: PersonFormProps) {
+	const { t } = useTranslation("people");
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 	const [apiError, setApiError] = useState<string | null>(null);
@@ -131,7 +135,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				if (err instanceof z.ZodError) {
 					setApiError(err.issues.map((i) => i.message).join(", "));
 				} else {
-					setApiError(err instanceof Error ? err.message : "Save failed");
+					setApiError(apiErrorMessage(err, t("form.saveFailed")));
 				}
 			}
 		},
@@ -154,22 +158,32 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 			{/* Identity */}
 			<div className="space-y-4">
 				<h2 className="text-sm font-medium uppercase tracking-wide text-sub">
-					Identity
+					{t("form.identity")}
 				</h2>
 				<div className="grid grid-cols-2 gap-4">
 					<form.Field name="name">
 						{(f) => (
-							<FormField field={f} label="Name *" placeholder="Full name" />
+							<FormField
+								field={f}
+								label={t("form.name")}
+								placeholder={t("form.namePlaceholder")}
+							/>
 						)}
 					</form.Field>
 					<form.Field name="nickname">
 						{(f) => (
-							<FormField field={f} label="Nickname" placeholder="Goes by…" />
+							<FormField
+								field={f}
+								label={t("form.nickname")}
+								placeholder={t("form.nicknamePlaceholder")}
+							/>
 						)}
 					</form.Field>
 				</div>
 				<form.Field name="date_of_birth">
-					{(f) => <FormField field={f} label="Date of birth" type="date" />}
+					{(f) => (
+						<FormField field={f} label={t("form.dateOfBirth")} type="date" />
+					)}
 				</form.Field>
 
 				{/* Birthday reminder checkbox — only shown when DOB is set */}
@@ -196,7 +210,11 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				<form.Field name="last_contact_at">
 					{(f) => (
 						<div>
-							<FormField field={f} label="Last contact" type="datetime-local" />
+							<FormField
+								field={f}
+								label={t("form.lastContact")}
+								type="datetime-local"
+							/>
 							{f.state.value && (
 								<Button
 									type="button"
@@ -205,7 +223,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 									className="mt-1.5 h-6 px-2 text-xs"
 									onClick={() => f.handleChange("")}
 								>
-									<X className="size-3" /> Clear last contact
+									<X className="size-3" /> {t("form.clearLastContact")}
 								</Button>
 							)}
 						</div>
@@ -214,7 +232,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				<form.Field name="gender">
 					{(f) => (
 						<div className="space-y-1.5">
-							<Label>Gender</Label>
+							<Label>{t("form.gender")}</Label>
 							<RadioGroup
 								value={f.state.value}
 								onValueChange={(v: string) => f.handleChange(v)}
@@ -226,7 +244,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 										htmlFor="gender-unselected"
 										className="font-normal cursor-pointer text-sub"
 									>
-										Unselected
+										{t("form.genderUnselected")}
 									</Label>
 								</div>
 								{genderOptions.map((opt) => (
@@ -239,7 +257,7 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 											htmlFor={`gender-${opt.value}`}
 											className="font-normal cursor-pointer"
 										>
-											{opt.label}
+											{t(`gender.${opt.value}`)}
 										</Label>
 									</div>
 								))}
@@ -250,13 +268,13 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 				<form.Field name="bio">
 					{(f) => (
 						<div className="space-y-1.5">
-							<Label htmlFor="bio">Bio</Label>
+							<Label htmlFor="bio">{t("form.bio")}</Label>
 							<Textarea
 								id="bio"
 								value={f.state.value}
 								onBlur={f.handleBlur}
 								onChange={(e) => f.handleChange(e.target.value)}
-								placeholder="Background, context, anything worth remembering…"
+								placeholder={t("form.bioPlaceholder")}
 								rows={3}
 							/>
 						</div>
@@ -286,8 +304,11 @@ export function PersonForm({ mode, initial }: PersonFormProps) {
 
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
-					<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-						{mode === "create" ? "Create person" : "Save changes"}
+					<SubmitButton
+						isPending={isSubmitting}
+						pendingLabel={t("form.saving")}
+					>
+						{mode === "create" ? t("form.create") : t("form.save")}
 					</SubmitButton>
 				)}
 			</form.Subscribe>

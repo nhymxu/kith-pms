@@ -1,0 +1,82 @@
+{
+	"page": {
+		"title": "Quà tặng",
+		"newGift": "Quà mới",
+		"newTitle": "Quà tặng mới",
+		"editing": "Đang sửa",
+		"notFound": "Không tìm thấy quà tặng."
+	},
+	"list": {
+		"empty": "Chưa có quà tặng nào."
+	},
+	"table": {
+		"gift": "Quà",
+		"person": "Người",
+		"date": "Ngày",
+		"amount": "Số tiền",
+		"direction": "Chiều"
+	},
+	"direction": {
+		"given": "Đã tặng",
+		"received": "Đã nhận",
+		"planned": "Dự định"
+	},
+	"debt": {
+		"none": "Không",
+		"iOwe": "Tôi nợ",
+		"theyOwe": "Họ nợ"
+	},
+	"form": {
+		"loading": "Đang tải biểu mẫu…",
+		"save": "Lưu quà tặng",
+		"create": "Tạo quà tặng",
+		"saveChanges": "Lưu thay đổi",
+		"saving": "Đang lưu…",
+		"cancel": "Hủy",
+		"saveFailed": "Không thể lưu quà tặng",
+		"person": "Người",
+		"searchPersonPlaceholder": "Tìm người…",
+		"noResults": "Không có kết quả",
+		"titleLabel": "Tiêu đề / Dịp",
+		"titlePlaceholder": "Quà sinh nhật",
+		"direction": "Chiều",
+		"debtType": "Loại nợ",
+		"amount": "Số tiền",
+		"currency": "Tiền tệ",
+		"date": "Ngày",
+		"notes": "Ghi chú",
+		"notesPlaceholder": "Ghi chú (tùy chọn)…",
+		"image": "Ảnh"
+	},
+	"image": {
+		"tooLarge": "Ảnh đã cắt quá lớn, hãy thử vùng cắt nhỏ hơn.",
+		"replaceAria": "Thay ảnh quà tặng",
+		"uploadAria": "Tải ảnh quà tặng lên",
+		"converting": "Đang chuyển đổi…",
+		"replace": "Thay",
+		"upload": "Tải lên",
+		"removing": "Đang xóa…",
+		"remove": "Xóa",
+		"uploading": "Đang tải ảnh lên…",
+		"uploadFailed": "Tải lên thất bại."
+	},
+	"detail": {
+		"edit": "Sửa",
+		"details": "Chi tiết",
+		"person": "Người",
+		"direction": "Chiều",
+		"debt": "Nợ",
+		"date": "Ngày",
+		"amount": "Số tiền",
+		"notes": "Ghi chú",
+		"image": "Ảnh",
+		"noImage": "Không có ảnh"
+	},
+	"delete": {
+		"title": "Xóa quà tặng?",
+		"description": "Quà \"{{title}}\" sẽ bị xóa vĩnh viễn. Không thể hoàn tác.",
+		"cancel": "Hủy",
+		"confirm": "Xóa",
+		"deleting": "Đang xóa…"
+	}
+}

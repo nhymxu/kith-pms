@@ -1,7 +1,9 @@
 // Gift create/edit form — TanStack Form + Zod validation
+
 import { useForm } from "@tanstack/react-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -12,6 +14,7 @@ import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
 import { GiftImageUploader } from "#/features/gifts/gift-image-uploader";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import {
 	type GiftRequest,
@@ -27,13 +30,18 @@ interface GiftFormProps {
 	onImageChange?: (file: File | null) => void;
 }
 
-const formFallback = (
-	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
-);
+function FormFallback() {
+	const { t } = useTranslation("gifts");
+	return (
+		<div className="py-8 text-center text-[13px] text-sub">
+			{t("form.loading")}
+		</div>
+	);
+}
 
 export function GiftForm(props: GiftFormProps) {
 	return (
-		<QueryBoundary fallback={formFallback}>
+		<QueryBoundary fallback={<FormFallback />}>
 			<GiftFormInner {...props} />
 		</QueryBoundary>
 	);
@@ -42,10 +50,11 @@ export function GiftForm(props: GiftFormProps) {
 function GiftFormInner({
 	initial,
 	onSubmit,
-	submitLabel = "Save Gift",
+	submitLabel,
 	onCancel,
 	onImageChange,
 }: GiftFormProps) {
+	const { t } = useTranslation("gifts");
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [personSearch, setPersonSearch] = useState("");
 	const [croppedPreview, setCroppedPreview] = useState<string | null>(null);
@@ -94,7 +103,7 @@ function GiftFormInner({
 			try {
 				await onSubmit(value as GiftRequest);
 			} catch (err) {
-				setApiError(err instanceof Error ? err.message : "Failed to save gift");
+				setApiError(apiErrorMessage(err, t("form.saveFailed")));
 			}
 		},
 	});
@@ -119,7 +128,7 @@ function GiftFormInner({
 
 			{/* Person search combobox */}
 			<div className="space-y-1.5">
-				<Label>Person</Label>
+				<Label>{t("form.person")}</Label>
 				<form.Field name="person_id">
 					{(field) => {
 						const selected = peopleList.items.find(
@@ -128,7 +137,7 @@ function GiftFormInner({
 						return (
 							<div className="space-y-1">
 								<Input
-									placeholder="Search person…"
+									placeholder={t("form.searchPersonPlaceholder")}
 									value={
 										personSearch !== ""
 											? personSearch
@@ -142,7 +151,9 @@ function GiftFormInner({
 								{personSearch && (
 									<div className="border-bw border-line rounded-base bg-panel shadow-shadow max-h-48 overflow-y-auto">
 										{filteredPeople.length === 0 ? (
-											<p className="px-3 py-2 text-sm text-sub">No results</p>
+											<p className="px-3 py-2 text-sm text-sub">
+												{t("form.noResults")}
+											</p>
 										) : (
 											filteredPeople.map((p) => (
 												<button
@@ -170,15 +181,15 @@ function GiftFormInner({
 				{(field) => (
 					<FormField
 						field={field}
-						label="Title / Occasion"
-						placeholder="Birthday gift"
+						label={t("form.titleLabel")}
+						placeholder={t("form.titlePlaceholder")}
 					/>
 				)}
 			</form.Field>
 
 			{/* Direction radio group */}
 			<div className="space-y-1.5">
-				<Label>Direction</Label>
+				<Label>{t("form.direction")}</Label>
 				<form.Field name="direction">
 					{(field) => (
 						<div className="flex gap-4">
@@ -194,7 +205,9 @@ function GiftFormInner({
 										checked={field.state.value === v}
 										onChange={() => field.handleChange(v)}
 									/>
-									<span className="capitalize text-sm">{v}</span>
+									<span className="capitalize text-sm">
+										{t(`direction.${v}`)}
+									</span>
 								</label>
 							))}
 						</div>
@@ -204,15 +217,15 @@ function GiftFormInner({
 
 			{/* Debt type radio group */}
 			<div className="space-y-1.5">
-				<Label>Debt type</Label>
+				<Label>{t("form.debtType")}</Label>
 				<form.Field name="debt_type">
 					{(field) => (
 						<div className="flex gap-4">
 							{(
 								[
-									["", "None"],
-									["i_owe", "I owe"],
-									["they_owe", "They owe"],
+									["", t("debt.none")],
+									["i_owe", t("debt.iOwe")],
+									["they_owe", t("debt.theyOwe")],
 								] as const
 							).map(([v, label]) => (
 								<label
@@ -237,7 +250,7 @@ function GiftFormInner({
 			{/* Amount + currency */}
 			<div className="flex gap-3">
 				<div className="flex-1 space-y-1.5">
-					<Label>Amount</Label>
+					<Label>{t("form.amount")}</Label>
 					<form.Field name="amount_cents">
 						{(field) => (
 							<input
@@ -264,7 +277,7 @@ function GiftFormInner({
 						{(field) => (
 							<FormField
 								field={field}
-								label="Currency"
+								label={t("form.currency")}
 								placeholder="USD"
 								maxLength={3}
 							/>
@@ -274,19 +287,21 @@ function GiftFormInner({
 			</div>
 
 			<form.Field name="date">
-				{(field) => <FormField field={field} label="Date" type="date" />}
+				{(field) => (
+					<FormField field={field} label={t("form.date")} type="date" />
+				)}
 			</form.Field>
 
 			{/* Notes */}
 			<div className="space-y-1.5">
-				<Label>Notes</Label>
+				<Label>{t("form.notes")}</Label>
 				<form.Field name="notes">
 					{(field) => (
 						<Textarea
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
-							placeholder="Optional notes…"
+							placeholder={t("form.notesPlaceholder")}
 							rows={3}
 						/>
 					)}
@@ -295,7 +310,7 @@ function GiftFormInner({
 
 			{onImageChange && (
 				<div className="space-y-1.5">
-					<Label>Image</Label>
+					<Label>{t("form.image")}</Label>
 					<GiftImageUploader
 						imageSrc={croppedPreview}
 						hasImage={Boolean(croppedPreview)}
@@ -327,11 +342,14 @@ function GiftFormInner({
 								onClick={onCancel}
 								disabled={isSubmitting}
 							>
-								Cancel
+								{t("form.cancel")}
 							</Button>
 						)}
-						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-							{submitLabel}
+						<SubmitButton
+							isPending={isSubmitting}
+							pendingLabel={t("form.saving")}
+						>
+							{submitLabel ?? t("form.save")}
 						</SubmitButton>
 					</div>
 				)}

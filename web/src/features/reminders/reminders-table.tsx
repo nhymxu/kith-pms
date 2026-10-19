@@ -2,6 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	sortableHeader,
 	type TableColumn,
@@ -34,17 +35,18 @@ function StatusBadge({
 	completed: boolean;
 	dueDate: string;
 }) {
+	const { t } = useTranslation("reminders");
 	if (completed)
 		return (
 			<Pill variant="plain" strike>
-				Done
+				{t("status.done")}
 			</Pill>
 		);
 	const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
 	return isOverdue ? (
-		<Pill variant="danger">Overdue</Pill>
+		<Pill variant="danger">{t("status.overdue")}</Pill>
 	) : (
-		<Pill variant="accent">Upcoming</Pill>
+		<Pill variant="accent">{t("status.upcoming")}</Pill>
 	);
 }
 
@@ -53,12 +55,13 @@ export function RemindersTable({
 	toolbarActions,
 	onCompleted,
 }: RemindersTableProps) {
+	const { t } = useTranslation("reminders");
 	const columns = useMemo<TableColumn<ReminderWithPerson>[]>(
 		() => [
 			{
 				id: "title",
 				accessorKey: "title",
-				header: sortableHeader<ReminderWithPerson>("Title"),
+				header: sortableHeader<ReminderWithPerson>(t("table.title")),
 				enableSorting: true,
 				cell: valueCell<ReminderWithPerson, string>((val, row) => (
 					<Link
@@ -73,14 +76,14 @@ export function RemindersTable({
 			{
 				id: "person_name",
 				accessorKey: "person_name",
-				header: sortableHeader<ReminderWithPerson>("Person"),
+				header: sortableHeader<ReminderWithPerson>(t("table.person")),
 				enableSorting: true,
 				cell: valueCell<ReminderWithPerson, string>((val) => val || "—"),
 			},
 			{
 				id: "due_date",
 				accessorKey: "due_date",
-				header: sortableHeader<ReminderWithPerson>("Due Date"),
+				header: sortableHeader<ReminderWithPerson>(t("table.dueDate")),
 				enableSorting: true,
 				cell: valueCell<ReminderWithPerson, string>((val) =>
 					val ? (
@@ -94,11 +97,11 @@ export function RemindersTable({
 			},
 			{
 				id: "recurrence",
-				header: "Recurrence",
+				header: t("table.recurrence"),
 				cell: ({ row }) =>
 					row.original.recurrence_rule ? (
 						<Pill variant="accent">
-							↻ {recurrenceLabel(row.original.recurrence_rule)}
+							↻ {recurrenceLabel(row.original.recurrence_rule, t)}
 						</Pill>
 					) : (
 						<span className="text-sub/60">—</span>
@@ -106,7 +109,7 @@ export function RemindersTable({
 			},
 			{
 				id: "status",
-				header: "Status",
+				header: t("table.status"),
 				cell: ({ row }) => (
 					<StatusBadge
 						completed={row.original.completed ?? false}
@@ -126,7 +129,7 @@ export function RemindersTable({
 					) : null,
 			},
 		],
-		[onCompleted],
+		[onCompleted, t],
 	);
 
 	return (
@@ -135,7 +138,7 @@ export function RemindersTable({
 			data={data}
 			toolbarActions={toolbarActions}
 			emptyState={
-				<span className="text-sm text-foreground/50">No reminders found.</span>
+				<span className="text-sm text-foreground/50">{t("list.empty")}</span>
 			}
 		/>
 	);

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { createReminder } from "#/endpoints/reminders";
 import { ReminderForm } from "#/features/reminders/reminder-form";
 import { keys } from "#/query-keys";
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/_authed/reminders/new")({
 });
 
 function NewReminderPage() {
+	const { t } = useTranslation("reminders");
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 
@@ -25,11 +27,11 @@ function NewReminderPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				New Reminder
+				{t("page.newTitle")}
 			</h1>
 			<ReminderForm
 				onSubmit={(v) => mutation.mutateAsync(v)}
-				submitLabel="Create Reminder"
+				submitLabel={t("form.create")}
 			/>
 		</div>
 	);

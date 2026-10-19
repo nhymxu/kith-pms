@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "#/components/ui/badge";
 import {
 	Popover,
@@ -22,11 +23,12 @@ export function useRelationshipDisplay(): RelationshipDisplay {
 }
 
 function DirectionHint({ text }: { text: string }) {
+	const { t } = useTranslation("people");
 	return (
 		<Popover>
 			<PopoverTrigger
 				openOnHover
-				aria-label="Show relationship direction"
+				aria-label={t("relationship.showDirection")}
 				className="text-sub hover:text-ink shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-ring"
 			>
 				<Info className="size-3.5" />
@@ -57,8 +59,17 @@ export function RelationshipLabel({
 	otherName,
 	other,
 }: RelationshipLabelProps) {
-	const sentence = `is ${typeName} of ${selfName}`;
-	const tooltip = `${otherName} ${sentence}\n${selfName} is ${inverseTypeName || typeName} of ${otherName}`;
+	const { t } = useTranslation("people");
+	const sentence = t("relationship.sentence", {
+		type: typeName,
+		self: selfName,
+	});
+	const tooltip = t("relationship.tooltip", {
+		other: otherName,
+		type: typeName,
+		self: selfName,
+		inverse: inverseTypeName || typeName,
+	});
 
 	switch (display) {
 		case "sentence":

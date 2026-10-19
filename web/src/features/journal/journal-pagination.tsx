@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	Popover,
 	PopoverContent,
@@ -19,6 +20,7 @@ export function JournalPagination({
 	total,
 	onPageChange,
 }: JournalPaginationProps) {
+	const { t } = useTranslation("journal");
 	const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
 	return (
@@ -30,7 +32,7 @@ export function JournalPagination({
 					onClick={() => onPageChange(page - 1)}
 					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-ink hover:bg-chip disabled:opacity-40 disabled:pointer-events-none border-r border-line"
 				>
-					<ChevronLeft className="size-4" /> Prev
+					<ChevronLeft className="size-4" /> {t("pagination.prev")}
 				</button>
 
 				<JumpPopover
@@ -45,7 +47,7 @@ export function JournalPagination({
 					onClick={() => onPageChange(page + 1)}
 					className="flex items-center gap-1.5 px-3 h-9 text-[13px] font-medium text-ink hover:bg-chip disabled:opacity-40 disabled:pointer-events-none border-l border-line"
 				>
-					Next <ChevronRight className="size-4" />
+					{t("pagination.next")} <ChevronRight className="size-4" />
 				</button>
 			</div>
 		</div>
@@ -59,6 +61,7 @@ interface JumpPopoverProps {
 }
 
 function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
+	const { t } = useTranslation("journal");
 	const [open, setOpen] = useState(false);
 	const [value, setValue] = useState(String(page));
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -91,7 +94,7 @@ function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
 					htmlFor="journal-page-jump"
 					className="text-[11px] font-medium text-sub"
 				>
-					Jump to page
+					{t("pagination.jumpToPage")}
 				</label>
 				<div className="flex items-center gap-2 mt-1.5">
 					<input
@@ -115,7 +118,7 @@ function JumpPopover({ page, pageCount, onPageChange }: JumpPopoverProps) {
 						onClick={submit}
 						className="h-8 px-3 rounded-md bg-accent text-accent-foreground text-[13px] font-medium hover:bg-accent/90 shrink-0"
 					>
-						Go
+						{t("pagination.go")}
 					</button>
 				</div>
 			</PopoverContent>

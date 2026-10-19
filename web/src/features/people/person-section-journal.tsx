@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ExternalLink, Plus } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
 import { listJournal } from "#/endpoints/journal";
@@ -22,6 +23,7 @@ interface JournalListInnerProps {
 }
 
 function JournalListInner({ personId }: JournalListInnerProps) {
+	const { t } = useTranslation("people");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.journal.list({ person_ids: [personId] }),
 		queryFn: () => listJournal({ person_ids: [personId], page_size: 20 }),
@@ -29,9 +31,7 @@ function JournalListInner({ personId }: JournalListInnerProps) {
 	const entries = data.items;
 
 	if (entries.length === 0) {
-		return (
-			<p className="text-sm text-sub">No journal entries for this person.</p>
-		);
+		return <p className="text-sm text-sub">{t("sections.journal.empty")}</p>;
 	}
 
 	return (
@@ -74,26 +74,27 @@ interface JournalSectionProps {
 }
 
 export function JournalSection({ personId }: JournalSectionProps) {
+	const { t } = useTranslation("people");
 	const [journalOpen, setJournalOpen] = useState(false);
 
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Journal</SectionHeading>
+				<SectionHeading>{t("sections.journal.title")}</SectionHeading>
 				<div className="flex items-center gap-5">
 					<Link
 						to="/journal"
 						search={{ people: [personId] }}
 						className="flex items-center gap-1 text-xs font-medium text-sub hover:text-ink"
 					>
-						View all <ExternalLink className="size-3" />
+						{t("sections.journal.viewAll")} <ExternalLink className="size-3" />
 					</Link>
 					<Button
 						variant="neutral"
 						size="sm"
 						onClick={() => setJournalOpen(true)}
 					>
-						<Plus className="size-3" /> Quick journal
+						<Plus className="size-3" /> {t("sections.journal.quick")}
 					</Button>
 				</div>
 			</div>

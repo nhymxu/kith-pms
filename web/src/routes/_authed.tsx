@@ -5,11 +5,14 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { AppShell } from "#/components/app-shell/app-shell";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { onSessionLost } from "#/lib/api-client";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { syncSettingsFromApi } from "#/lib/format-datetime";
+import { useSyncLanguage } from "#/lib/use-sync-language";
 
 export const Route = createFileRoute("/_authed")({
 	beforeLoad({ context, location }) {
@@ -30,6 +33,7 @@ export const Route = createFileRoute("/_authed")({
 
 function AuthedLayout() {
 	const navigate = useNavigate();
+	useSyncLanguage();
 
 	// Subscribe to 401 session-lost events (fires when apiFetch gets a 401 after initial load).
 	useEffect(() => {
@@ -52,20 +56,20 @@ function AuthedLayout() {
 }
 
 function AuthedErrorBoundary({ error }: { error: unknown }) {
-	const message =
-		error instanceof Error ? error.message : "An unexpected error occurred.";
+	const { t } = useTranslation();
+	const message = apiErrorMessage(error, t("errors.unexpected"));
 	return (
 		<div className="flex items-center justify-center min-h-screen p-4 bg-background">
 			<Card className="max-w-md w-full">
 				<CardHeader>
 					<CardTitle className="text-destructive">
-						Something went wrong
+						{t("errors.somethingWentWrong")}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<p className="text-sm font-base">{message}</p>
 					<Button variant="neutral" onClick={() => window.location.assign("/")}>
-						Go home
+						{t("errors.goHome")}
 					</Button>
 				</CardContent>
 			</Card>
@@ -74,12 +78,15 @@ function AuthedErrorBoundary({ error }: { error: unknown }) {
 }
 
 function AuthedNotFound() {
+	const { t } = useTranslation();
 	return (
 		<div className="flex flex-col items-center justify-center py-24 gap-4">
 			<h1 className="text-[32px] font-semibold text-ink">404</h1>
-			<p className="text-sm font-base text-foreground/60">Page not found.</p>
+			<p className="text-sm font-base text-foreground/60">
+				{t("errors.pageNotFound")}
+			</p>
 			<Button variant="neutral" asChild>
-				<a href="/">Go home</a>
+				<a href="/">{t("errors.goHome")}</a>
 			</Button>
 		</div>
 	);

@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authed/audit/")({
 });
 
 function AuditPage() {
+	const { t } = useTranslation("audit");
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
@@ -53,7 +55,7 @@ function AuditPage() {
 	return (
 		<div className="space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				Audit Log
+				{t("title")}
 			</h1>
 
 			<div className="flex flex-wrap gap-3 items-end">
@@ -62,7 +64,7 @@ function AuditPage() {
 						htmlFor="from-date"
 						className="text-[11px] font-medium text-sub"
 					>
-						From
+						{t("filters.from")}
 					</label>
 					<input
 						id="from-date"
@@ -83,7 +85,7 @@ function AuditPage() {
 				</div>
 				<div className="space-y-1">
 					<label htmlFor="to-date" className="text-[11px] font-medium text-sub">
-						To
+						{t("filters.to")}
 					</label>
 					<input
 						id="to-date"
@@ -118,7 +120,7 @@ function AuditPage() {
 							})
 						}
 					>
-						Clear dates
+						{t("filters.clearDates")}
 					</Button>
 				)}
 			</div>

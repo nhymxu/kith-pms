@@ -2,6 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	sortableHeader,
 	type TableColumn,
@@ -30,11 +31,16 @@ function DebtBadge({
 	debtType: string;
 	direction: string;
 }) {
-	if (direction === "given") return <Pill variant="plain">Given</Pill>;
-	if (direction === "received") return <Pill variant="accent">Received</Pill>;
-	if (debtType === "i_owe") return <Pill variant="warning">I owe</Pill>;
-	if (debtType === "they_owe") return <Pill variant="success">They owe</Pill>;
-	return <Pill variant="plain">Planned</Pill>;
+	const { t } = useTranslation("gifts");
+	if (direction === "given")
+		return <Pill variant="plain">{t("direction.given")}</Pill>;
+	if (direction === "received")
+		return <Pill variant="accent">{t("direction.received")}</Pill>;
+	if (debtType === "i_owe")
+		return <Pill variant="warning">{t("debt.iOwe")}</Pill>;
+	if (debtType === "they_owe")
+		return <Pill variant="success">{t("debt.theyOwe")}</Pill>;
+	return <Pill variant="plain">{t("direction.planned")}</Pill>;
 }
 
 export function GiftsTable({
@@ -46,6 +52,7 @@ export function GiftsTable({
 	pageIndex,
 	onPageChange,
 }: GiftsTableProps) {
+	const { t } = useTranslation("gifts");
 	const columns = useMemo<TableColumn<GiftWithPerson>[]>(
 		() => [
 			{
@@ -71,7 +78,7 @@ export function GiftsTable({
 			{
 				id: "title",
 				accessorKey: "title",
-				header: sortableHeader<GiftWithPerson>("Gift"),
+				header: sortableHeader<GiftWithPerson>(t("table.gift")),
 				enableSorting: true,
 				cell: valueCell<GiftWithPerson, string>((val, row) => (
 					<Link
@@ -86,7 +93,7 @@ export function GiftsTable({
 			{
 				id: "person_name",
 				accessorKey: "person_name",
-				header: sortableHeader<GiftWithPerson>("Person"),
+				header: sortableHeader<GiftWithPerson>(t("table.person")),
 				enableSorting: true,
 				cell: valueCell<GiftWithPerson, string>((val, row) =>
 					row.person_id ? (
@@ -105,7 +112,7 @@ export function GiftsTable({
 			{
 				id: "date",
 				accessorKey: "date",
-				header: sortableHeader<GiftWithPerson>("Date"),
+				header: sortableHeader<GiftWithPerson>(t("table.date")),
 				enableSorting: true,
 				cell: valueCell<GiftWithPerson, string>((val) =>
 					val ? (
@@ -120,7 +127,7 @@ export function GiftsTable({
 			{
 				id: "amount",
 				accessorKey: "amount_cents",
-				header: "Amount",
+				header: t("table.amount"),
 				cell: valueCell<GiftWithPerson, number | null>((val, row) =>
 					val != null ? (
 						<span className="font-mono text-[12px] text-ink">
@@ -133,7 +140,7 @@ export function GiftsTable({
 			},
 			{
 				id: "debt",
-				header: "Direction",
+				header: t("table.direction"),
 				cell: ({ row }) => (
 					<DebtBadge
 						debtType={row.original.debt_type ?? ""}
@@ -142,7 +149,7 @@ export function GiftsTable({
 				),
 			},
 		],
-		[],
+		[t],
 	);
 
 	return (
@@ -156,7 +163,7 @@ export function GiftsTable({
 			pageIndex={pageIndex}
 			onPageChange={onPageChange}
 			emptyState={
-				<span className="text-sm text-foreground/50">No gifts yet.</span>
+				<span className="text-sm text-foreground/50">{t("list.empty")}</span>
 			}
 		/>
 	);

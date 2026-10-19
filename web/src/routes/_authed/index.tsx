@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import { listAudit } from "#/endpoints/audit";
 import { listGifts } from "#/endpoints/gifts";
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/_authed/")({
 });
 
 function DashboardPage() {
+	const { t, i18n } = useTranslation("dashboard");
 	const queryClient = useQueryClient();
 	const [refreshingId, setRefreshingId] = useState<string>();
 	const [journalDialogOpen, setJournalDialogOpen] = useState(false);
@@ -91,6 +93,7 @@ function DashboardPage() {
 		queryFn: getMe,
 		retry: false,
 	});
+	// biome-ignore lint/correctness/useExhaustiveDependencies: view-model strings are built outside React and must rebuild on language change
 	const viewModel = useMemo(
 		() =>
 			buildDashboardViewModel({
@@ -116,6 +119,7 @@ function DashboardPage() {
 			gifts.data,
 			audit.data,
 			me.data,
+			i18n.language,
 		],
 	);
 	const isLoading = [people, journal, reminders, dates, gifts].some(
@@ -160,27 +164,30 @@ function DashboardPage() {
 			<header className="flex flex-wrap items-end justify-between gap-3">
 				<div>
 					<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-						Dashboard
+						{t("title")}
 					</h1>
 					<p className="text-[12px] text-sub mt-0.5">
-						{formatHeaderDate(viewModel.lastUpdatedAt)} — {followupsCount}{" "}
-						follow-up{followupsCount === 1 ? "" : "s"} need attention
+						{t("header.followUps", {
+							count: followupsCount,
+							date: formatHeaderDate(viewModel.lastUpdatedAt),
+						})}
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<span className="font-mono text-[11px] text-sub">
-						Last refreshed {formatTime(viewModel.lastUpdatedAt)}
+						{t("header.lastRefreshed", {
+							time: formatTime(viewModel.lastUpdatedAt),
+						})}
 					</span>
 					<Button onClick={() => setJournalDialogOpen(true)}>
-						+ Log interaction
+						{t("header.logInteraction")}
 					</Button>
 				</div>
 			</header>
 
 			{hasError ? (
 				<div className="rounded-md border-bw border-warning-line bg-warning-bg px-4 py-3 text-[13px] text-warning-fg">
-					Some dashboard data could not load. Available sections are shown with
-					cached or empty data.
+					{t("header.loadError")}
 				</div>
 			) : null}
 

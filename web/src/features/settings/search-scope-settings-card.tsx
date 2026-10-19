@@ -1,5 +1,6 @@
 import { useMutation, type useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -12,13 +13,6 @@ import { updateSettings } from "#/endpoints/settings";
 import type { UserSettings } from "#/schemas/settings";
 
 type SearchScopeToken = UserSettings["search_scope"][number];
-
-const SEARCH_SCOPE_OPTIONS: { value: SearchScopeToken; label: string }[] = [
-	{ value: "people", label: "People" },
-	{ value: "journal", label: "Journal" },
-	{ value: "gifts", label: "Gifts" },
-	{ value: "notes", label: "Notes" },
-];
 
 const ALL_SCOPES: SearchScopeToken[] = ["people", "journal", "gifts", "notes"];
 
@@ -35,6 +29,7 @@ export function SearchScopeSettingsCard({
 	) => Parameters<typeof updateSettings>[0];
 	queryClient: ReturnType<typeof useQueryClient>;
 }) {
+	const { t } = useTranslation("settings");
 	const [searchScope, setSearchScope] =
 		useState<SearchScopeToken[]>(ALL_SCOPES);
 
@@ -62,27 +57,28 @@ export function SearchScopeSettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-[14px] font-medium text-ink">
-					Search scope
+					{t("general.searchScope.title")}
 				</CardTitle>
 				<CardDescription className="text-[12px] text-sub">
-					Choose what the search box returns. Indexes always stay up to date —
-					unchecking a type only hides it from results.
+					{t("general.searchScope.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-1.5">
-					{SEARCH_SCOPE_OPTIONS.map((opt) => (
+					{ALL_SCOPES.map((value) => (
 						<label
-							key={opt.value}
+							key={value}
 							className="flex items-center gap-3 cursor-pointer"
 						>
 							<input
 								type="checkbox"
-								checked={searchScope.includes(opt.value)}
-								onChange={(e) => toggle(opt.value, e.target.checked)}
+								checked={searchScope.includes(value)}
+								onChange={(e) => toggle(value, e.target.checked)}
 								className="accent-accent"
 							/>
-							<span className="text-[13px] text-ink">{opt.label}</span>
+							<span className="text-[13px] text-ink">
+								{t(`general.searchScope.${value}`)}
+							</span>
 						</label>
 					))}
 				</div>
@@ -93,18 +89,18 @@ export function SearchScopeSettingsCard({
 					disabled={searchScope.length === 0 || searchScopeMutation.isPending}
 				>
 					{searchScopeMutation.isPending
-						? "Saving…"
+						? t("common.saving")
 						: searchScopeMutation.isSuccess
-							? "Saved!"
-							: "Save scope"}
+							? t("common.saved")
+							: t("general.searchScope.save")}
 				</Button>
 				{searchScope.length === 0 && (
-					<p className="text-[12px] text-danger-fg">Pick at least one type.</p>
+					<p className="text-[12px] text-danger-fg">
+						{t("general.searchScope.pickOne")}
+					</p>
 				)}
 				{searchScopeMutation.isError && (
-					<p className="text-[12px] text-danger-fg">
-						Failed to save. Please try again.
-					</p>
+					<p className="text-[12px] text-danger-fg">{t("common.saveFailed")}</p>
 				)}
 			</CardContent>
 		</Card>

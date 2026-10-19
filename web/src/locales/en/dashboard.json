@@ -1,0 +1,79 @@
+{
+	"title": "Dashboard",
+	"header": {
+		"followUps_one": "{{date}} — {{count}} follow-up need attention",
+		"followUps_other": "{{date}} — {{count}} follow-ups need attention",
+		"lastRefreshed": "Last refreshed {{time}}",
+		"logInteraction": "+ Log interaction",
+		"loadError": "Some dashboard data could not load. Available sections are shown with cached or empty data."
+	},
+	"cards": {
+		"people": "People",
+		"followups": "Follow-ups",
+		"dates": "Moments",
+		"gifts": "Gifts",
+		"journal": "Journal",
+		"cached": "Cached",
+		"peopleDetail": "{{count}} contacted in 30 days",
+		"followupsDetail": "{{overdue}} overdue · {{today}} today",
+		"datesDetail": "Next 30 days",
+		"giftsDetail": "{{count}} total tracked",
+		"journalDetail": "{{count}} recent entries loaded"
+	},
+	"showLess": "Show less",
+	"showMore": "Show {{count}} more",
+	"refresh": "Refresh {{title}}",
+	"neverContacted": "Never contacted",
+	"lastContact": "Last contact: {{when}}",
+	"pulse": {
+		"title": "Relationship pulse",
+		"subtitle": "Journal touches over the last 14 days",
+		"touches": "Touches",
+		"entries": "Entries",
+		"emptyTitle": "No recent pulse yet",
+		"emptyDescription": "Add journal entries to see relationship activity trends."
+	},
+	"actions": {
+		"title": "Action queue",
+		"subtitle": "Follow-ups, reminders, and gift ideas",
+		"emptyTitle": "Queue is clear",
+		"emptyDescription": "No matching follow-ups need attention.",
+		"reminder": "Reminder",
+		"giftIdea": "Gift idea",
+		"filters": {
+			"all": "All",
+			"overdue": "Overdue",
+			"today": "Today",
+			"upcoming": "Upcoming",
+			"gift": "Gift"
+		}
+	},
+	"lastContacted": {
+		"title": "Last Contact",
+		"subtitle": "People you've recently connected with",
+		"emptyTitle": "No contact history yet",
+		"emptyDescription": "Log a journal entry or interaction to see recent contacts here."
+	},
+	"favorites": {
+		"title": "Favorites",
+		"subtitle": "Quick access to your starred people",
+		"emptyTitle": "No favorites yet",
+		"emptyDescription": "Star someone from their profile or the people list."
+	},
+	"activity": {
+		"title": "Recent activity",
+		"subtitle": "Latest journal context",
+		"emptyTitle": "No journal activity",
+		"emptyDescription": "Log a recent interaction to build relationship context.",
+		"journalEntry": "Journal entry"
+	},
+	"moments": {
+		"title": "Upcoming moments",
+		"subtitle": "Dates worth preparing for",
+		"emptyTitle": "No upcoming moments",
+		"emptyDescription": "Birthdays and milestones in the next 30 days appear here.",
+		"years_one": "{{count}} year",
+		"years_other": "{{count}} years",
+		"milestone": "Upcoming milestone"
+	}
+}

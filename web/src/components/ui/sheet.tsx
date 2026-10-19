@@ -1,6 +1,7 @@
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "#/lib/utils";
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -73,6 +74,7 @@ function SheetContent({
 }: React.ComponentProps<typeof SheetPrimitive.Popup> & {
 	side?: "top" | "bottom" | "left" | "right";
 }) {
+	const { t } = useTranslation();
 	return (
 		<SheetPortal>
 			<SheetOverlay />
@@ -95,7 +97,7 @@ function SheetContent({
 				{children}
 				<SheetPrimitive.Close className="absolute right-4 top-4 rounded-base text-sub hover:text-ink focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
 					<X className="h-4 w-4" />
-					<span className="sr-only">Close</span>
+					<span className="sr-only">{t("close")}</span>
 				</SheetPrimitive.Close>
 			</SheetPrimitive.Popup>
 		</SheetPortal>

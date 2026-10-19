@@ -6,8 +6,10 @@ import {
 } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
+import type { TFunction } from "i18next";
 import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { TableColumn } from "#/components/data-table/column-helpers";
 import { DataTable } from "#/components/data-table/data-table";
 import { Badge } from "#/components/ui/badge";
@@ -35,10 +37,10 @@ import type { Person } from "#/schemas/person";
 import { BulkActionBar } from "./bulk-action-bar";
 
 const SORT_OPTIONS = [
-	{ value: "name", label: "Name A→Z" },
-	{ value: "-name", label: "Name Z→A" },
-	{ value: "-last_contact", label: "Last contact: newest" },
-	{ value: "last_contact", label: "Last contact: oldest" },
+	{ value: "name", labelKey: "list.sort.nameAsc" },
+	{ value: "-name", labelKey: "list.sort.nameDesc" },
+	{ value: "-last_contact", labelKey: "list.sort.lastContactNewest" },
+	{ value: "last_contact", labelKey: "list.sort.lastContactOldest" },
 ] as const;
 
 type SortValue = (typeof SORT_OPTIONS)[number]["value"];
@@ -71,6 +73,7 @@ function buildColumns(
 	>,
 	allowToggle: boolean,
 	retentionDays: number,
+	t: TFunction<"people">,
 ): TableColumn<Person>[] {
 	return [
 		{
@@ -83,7 +86,7 @@ function buildColumns(
 					return (
 						<Star
 							className={`size-4 ${p.is_favorite ? "fill-warning-fg text-warning-fg" : "text-sub"}`}
-							aria-label={p.is_favorite ? "Favorite" : undefined}
+							aria-label={p.is_favorite ? t("list.favorite") : undefined}
 						/>
 					);
 				}
@@ -97,7 +100,9 @@ function buildColumns(
 						}}
 						className="text-sub hover:text-warning-fg disabled:opacity-50"
 						disabled={favoriteMutation.isPending}
-						aria-label={p.is_favorite ? "Unfavorite" : "Favorite"}
+						aria-label={
+							p.is_favorite ? t("list.unfavorite") : t("list.favorite")
+						}
 					>
 						<Star
 							className={`size-4 ${p.is_favorite ? "fill-warning-fg text-warning-fg" : ""}`}
@@ -108,7 +113,7 @@ function buildColumns(
 		},
 		{
 			id: "name",
-			header: "Name",
+			header: t("list.columns.name"),
 			accessorKey: "name",
 			cell: ({ row }) => {
 				const p = row.original;
@@ -133,7 +138,9 @@ function buildColumns(
 						<div>
 							<p className="text-[13px] text-ink flex items-center gap-1.5">
 								{p.name}
-								{p.archived_at && <Badge variant="neutral">Archived</Badge>}
+								{p.archived_at && (
+									<Badge variant="neutral">{t("list.archived")}</Badge>
+								)}
 							</p>
 							{p.nickname && (
 								<p className="text-[11px] text-sub">"{p.nickname}"</p>
@@ -145,7 +152,7 @@ function buildColumns(
 		},
 		{
 			id: "labels",
-			header: "Labels",
+			header: t("list.columns.labels"),
 			cell: ({ row }) => {
 				const labels = row.original.labels ?? [];
 				return (
@@ -168,7 +175,7 @@ function buildColumns(
 		},
 		{
 			id: "last_contact_at",
-			header: "Last contact",
+			header: t("list.columns.lastContact"),
 			accessorKey: "last_contact_at",
 			cell: ({ getValue }) => {
 				const v = getValue<string | null>();
@@ -191,8 +198,10 @@ function buildColumns(
 					return (
 						<span className="text-[11px] text-sub">
 							{retentionDays > 0
-								? `${daysRemaining(p.deleted_at, retentionDays)}d left, restore from profile`
-								: "kept indefinitely, restore from profile"}
+								? t("list.daysLeft", {
+										days: daysRemaining(p.deleted_at, retentionDays),
+									})
+								: t("list.keptIndefinitely")}
 						</span>
 					);
 				}
@@ -202,7 +211,7 @@ function buildColumns(
 							to="/people/$personId/edit"
 							params={{ personId: String(p.id) }}
 						>
-							Edit
+							{t("list.edit")}
 						</Link>
 					</Button>
 				);
@@ -232,6 +241,7 @@ export function PeopleTable({
 	onPendingDeleteOnlyChange,
 	onArchivedOnlyChange,
 }: PeopleTableProps) {
+	const { t } = useTranslation("people");
 	const [localQ, setLocalQ] = useState(q);
 	const debouncedQ = useDebounce(localQ, 300);
 	const isFirst = useRef(true);
@@ -249,7 +259,7 @@ export function PeopleTable({
 		queryFn: getSettings,
 	});
 	const retentionDays = settingsData?.people_delete_retention_days ?? 30;
-	const columns = buildColumns(favoriteMutation, allowToggle, retentionDays);
+	const columns = buildColumns(favoriteMutation, allowToggle, retentionDays, t);
 
 	useEffect(() => {
 		if (isFirst.current) {
@@ -302,7 +312,7 @@ export function PeopleTable({
 		<div className="space-y-3">
 			<div className="flex items-center gap-3">
 				<Input
-					placeholder="Search people…"
+					placeholder={t("list.searchPlaceholder")}
 					value={localQ}
 					onChange={(e) => setLocalQ(e.target.value)}
 					className="max-w-xs"
@@ -317,7 +327,7 @@ export function PeopleTable({
 					<SelectContent>
 						{SORT_OPTIONS.map((opt) => (
 							<SelectItem key={opt.value} value={opt.value}>
-								{opt.label}
+								{t(opt.labelKey)}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -330,7 +340,7 @@ export function PeopleTable({
 					<Star
 						className={`size-3 ${favoriteOnly ? "fill-warning-fg text-warning-fg" : ""}`}
 					/>
-					Favorites only
+					{t("list.favoritesOnly")}
 				</button>
 				<button
 					type="button"
@@ -340,21 +350,21 @@ export function PeopleTable({
 					<Star
 						className={`size-3 ${favoriteFirst ? "fill-warning-fg text-warning-fg" : ""}`}
 					/>
-					Favorites first
+					{t("list.favoritesFirst")}
 				</button>
 				<button
 					type="button"
 					onClick={() => onPendingDeleteOnlyChange(!pendingDeleteOnly)}
 					className={`h-9 text-xs border rounded-md px-3 transition-colors ${pendingDeleteOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
 				>
-					Pending Delete
+					{t("list.pendingDelete")}
 				</button>
 				<button
 					type="button"
 					onClick={() => onArchivedOnlyChange(!archivedOnly)}
 					className={`h-9 text-xs border rounded-md px-3 transition-colors ${archivedOnly ? "border-accent bg-accent/10" : "border-line hover:border-sub"}`}
 				>
-					Archived
+					{t("list.archivedFilter")}
 				</button>
 			</div>
 			{allLabelsData && allLabelsData.length > 0 && (
@@ -387,7 +397,7 @@ export function PeopleTable({
 							onClick={() => onLabelsChange([])}
 							className="text-xs text-sub hover:text-ink"
 						>
-							Clear
+							{t("list.clearLabels")}
 						</button>
 					)}
 				</div>
@@ -408,11 +418,11 @@ export function PeopleTable({
 				emptyState={
 					isLoading ? (
 						<span className="text-sm font-base text-foreground/50">
-							Loading…
+							{t("list.loading")}
 						</span>
 					) : (
 						<span className="text-sm font-base text-foreground/50">
-							No people found.
+							{t("list.empty")}
 						</span>
 					)
 				}

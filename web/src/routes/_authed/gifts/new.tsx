@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { createGift, uploadGiftImage } from "#/endpoints/gifts";
 import { GiftForm } from "#/features/gifts/gift-form";
 import { keys } from "#/query-keys";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/_authed/gifts/new")({
 });
 
 function NewGiftPage() {
+	const { t } = useTranslation("gifts");
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 	const pendingImage = useRef<File | null>(null);
@@ -31,11 +33,11 @@ function NewGiftPage() {
 	return (
 		<div className="max-w-lg space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				New Gift
+				{t("page.newTitle")}
 			</h1>
 			<GiftForm
 				onSubmit={(v) => mutation.mutateAsync(v)}
-				submitLabel="Create Gift"
+				submitLabel={t("form.create")}
 				onImageChange={(f) => {
 					pendingImage.current = f;
 				}}

@@ -1,0 +1,54 @@
+{
+	"title": "Mạng lưới của bạn",
+	"loadFailed": "Không tải được đồ thị mạng lưới.",
+	"loading": "Đang tải mạng lưới…",
+	"empty": "Chưa có kết nối nào. Hãy thêm quan hệ giữa các người để xem mạng lưới.",
+	"controls": {
+		"group": "Nhóm",
+		"type": "Loại",
+		"any": "Tất cả",
+		"colorBy": "Tô màu theo",
+		"labels": "Nhãn",
+		"relType": "Loại quan hệ",
+		"avatars": "Ảnh đại diện",
+		"onlyMine": "Chỉ của tôi",
+		"direct": "Trực tiếp",
+		"alters": "Gián tiếp",
+		"indirect": "kết nối gián tiếp",
+		"unconnected": "Chưa kết nối",
+		"recenter": "Căn giữa",
+		"recenterAria": "Căn giữa đồ thị"
+	},
+	"legend": {
+		"nodesByGroup": "Nút theo nhóm:",
+		"you": "Bạn",
+		"edgesAreRelationships": "· cạnh: quan hệ",
+		"edgesByType": "Cạnh theo loại:"
+	},
+	"panel": {
+		"expand": "Mở rộng bảng",
+		"expandAria": "Mở rộng bảng đã chọn",
+		"collapse": "Thu gọn bảng",
+		"collapseAria": "Thu gọn bảng đã chọn",
+		"selected": "Đã chọn",
+		"clickHint": "Bấm vào một nút để xem chi tiết.",
+		"lastContacted": "Liên hệ lần cuối {{when}}",
+		"connections_other": "{{count}} kết nối"
+	},
+	"card": {
+		"close": "Đóng",
+		"openProfile": "Mở hồ sơ →"
+	},
+	"tooltip": {
+		"you": "bạn"
+	},
+	"date": {
+		"birthdayWithAge": "{{monthDay}}, {{year}} ({{age}} tuổi)",
+		"today": "hôm nay",
+		"yesterday": "hôm qua",
+		"daysAgo_other": "{{count}} ngày trước",
+		"weeksAgo_other": "{{count}} tuần trước",
+		"monthsAgo_other": "{{count}} tháng trước",
+		"yearsAgo_other": "{{count}} năm trước"
+	}
+}

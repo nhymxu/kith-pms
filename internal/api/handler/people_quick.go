@@ -39,21 +39,21 @@ type PeopleQuickAPI struct {
 func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if h.JournalSvc == nil {
-		return apiErr(c, http.StatusInternalServerError, "journal service not configured")
+		return apiErr(c, http.StatusInternalServerError, "internal", "journal service not configured")
 	}
 
 	// Verify person exists.
 	p, err := h.PeopleSvc.Get(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "person not found")
+		return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 	}
 
 	var req struct {
@@ -64,12 +64,12 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 		PersonIDs      []int64 `json:"person_ids"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	req.Title = strings.TrimSpace(req.Title)
 	if req.Title == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	today := time.Now().Format("2006-01-02")
@@ -78,7 +78,7 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 	}
 
 	if _, err := time.Parse("2006-01-02", req.OccurredAtDate); err != nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "invalid date format (use YYYY-MM-DD)")
+		return apiErr(c, http.StatusUnprocessableEntity, "invalid_date_format", "invalid date format (use YYYY-MM-DD)")
 	}
 
 	activity := journal.Activity{
@@ -103,7 +103,7 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 
 	id, err := h.JournalSvc.Create(c.Request().Context(), activity, personIDs, nil)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to save journal entry")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to save journal entry")
 	}
 
 	return created(c, map[string]any{"id": id})
@@ -127,21 +127,21 @@ func (h *PeopleQuickAPI) QuickJournal(c *echo.Context) error {
 func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if h.GiftsSvc == nil {
-		return apiErr(c, http.StatusInternalServerError, "gifts service not configured")
+		return apiErr(c, http.StatusInternalServerError, "internal", "gifts service not configured")
 	}
 
 	// Verify person exists.
 	p, err := h.PeopleSvc.Get(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "person not found")
+		return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 	}
 
 	var req struct {
@@ -154,12 +154,12 @@ func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 		DebtType  string `json:"debt_type"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	req.Title = strings.TrimSpace(req.Title)
 	if req.Title == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	direction := gifts.Direction(strings.TrimSpace(req.Direction))
@@ -199,7 +199,7 @@ func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 
 	giftID, err := h.GiftsSvc.Create(c.Request().Context(), g)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to save gift")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to save gift")
 	}
 
 	return created(c, map[string]any{"id": giftID})
@@ -220,15 +220,15 @@ func (h *PeopleQuickAPI) QuickGift(c *echo.Context) error {
 func (h *PeopleQuickAPI) UpdateLastContact(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.PeopleSvc.UpdateLastContact(c.Request().Context(), personID, time.Now().UTC()); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return apiErr(c, http.StatusNotFound, "person not found")
+			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"updated": true})
@@ -249,15 +249,15 @@ func (h *PeopleQuickAPI) UpdateLastContact(c *echo.Context) error {
 func (h *PeopleQuickAPI) SetFavorite(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.PeopleSvc.SetFavorite(c.Request().Context(), personID, true); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return apiErr(c, http.StatusNotFound, "person not found")
+			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"favorite": true})
@@ -278,15 +278,15 @@ func (h *PeopleQuickAPI) SetFavorite(c *echo.Context) error {
 func (h *PeopleQuickAPI) UnsetFavorite(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.PeopleSvc.SetFavorite(c.Request().Context(), personID, false); err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			return apiErr(c, http.StatusNotFound, "person not found")
+			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"favorite": false})

@@ -43,12 +43,12 @@ type importantDateRequest struct {
 func (h *DatesAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	list, err := h.Svc.ListByPerson(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -70,12 +70,12 @@ func (h *DatesAPI) ListByPerson(c *echo.Context) error {
 func (h *DatesAPI) ReplaceForPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req datesReplaceRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	domainDates := make([]important_dates.ImportantDate, 0, len(req.Dates))
@@ -92,7 +92,7 @@ func (h *DatesAPI) ReplaceForPerson(c *echo.Context) error {
 	}
 
 	if err := h.Svc.ReplaceForPerson(c.Request().Context(), personID, domainDates); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, nil)
@@ -138,7 +138,7 @@ func (h *DatesAPI) Upcoming(c *echo.Context) error {
 
 	items, err := h.Svc.Upcoming(c.Request().Context(), today, days)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	result := make([]upcomingItem, 0, len(items))

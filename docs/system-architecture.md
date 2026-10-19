@@ -177,6 +177,22 @@ web/src/ (React + TypeScript)
 - **Embedding**: `internal/api/spa/spa.go` uses `//go:embed all:public`
 - **Asset Serving**: `/assets/*` served with 1-year immutable cache; `/` serves `index.html` (no-cache) for SPA shell
 
+### Internationalization
+
+```
+user setting `language` (en|vi, key/value row, default en)
+  ├─ GET/PUT /v1/settings  ──►  ["settings"] query cache
+  ├─ kith_user_prefs (localStorage)  ──►  first paint + <html lang> (index.html FOUC guard)
+  └─ useSyncLanguage (_authed.tsx) ──► setLanguage(lng)
+       ├─ lazy-import web/src/locales/<lng>/*.json (same-origin /assets/*.js chunks)
+       ├─ i18n.changeLanguage  ──► all useTranslation components re-render
+       └─ z.config(zod locale)
+```
+
+- `en` is bundled as the synchronous fallback; other catalogs are Vite chunks, so the hardcoded CSP (`script-src 'self'`) needs no change.
+- `/login` has no setting yet, so it uses the cached pref and falls back to `en`.
+- API errors: handlers send `{error, code, params}` (`apiErr` requires `code`; `JSONErrorHandler` sends `http_<status>`). The SPA maps `code` to `errors:server.<code>` and keeps the English `error` as fallback.
+
 ### Routing & Layouts (TanStack Router v1)
 
 **File-based routing** in `web/src/routes/`:

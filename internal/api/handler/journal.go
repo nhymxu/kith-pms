@@ -81,7 +81,7 @@ func (h *JournalAPI) List(c *echo.Context) error {
 
 	list, err := h.Svc.List(c.Request().Context(), params)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -102,16 +102,16 @@ func (h *JournalAPI) List(c *echo.Context) error {
 func (h *JournalAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	a, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if a == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	return ok(c, a)
@@ -133,11 +133,11 @@ func (h *JournalAPI) Get(c *echo.Context) error {
 func (h *JournalAPI) Create(c *echo.Context) error {
 	var req journalRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	a := journal.Activity{
@@ -149,7 +149,7 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 
 	id, err := h.Svc.Create(c.Request().Context(), a, req.PersonIDs, req.LabelIDs)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return created(c, map[string]any{"id": id})
@@ -172,16 +172,16 @@ func (h *JournalAPI) Create(c *echo.Context) error {
 func (h *JournalAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req journalRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	a := journal.Activity{
@@ -193,7 +193,7 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 	}
 
 	if err := h.Svc.Update(c.Request().Context(), a, req.PersonIDs, req.LabelIDs); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"id": id})
@@ -214,21 +214,21 @@ func (h *JournalAPI) Update(c *echo.Context) error {
 func (h *JournalAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	// Check existence before delete.
 	a, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if a == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)

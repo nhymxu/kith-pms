@@ -204,7 +204,7 @@ internal/
     handler/        HTTP handlers organized by domain
     spa/            Embedded React SPA (//go:embed public)
   relationships/    Relationship graph, queries, service
-  settings/         User preferences & configuration
+  settings/         User preferences & configuration (incl. UI language)
 pkg/
   config/           Config loading via nhymxu/gommon/cfgloader
 web/                React SPA source (pnpm workspace)

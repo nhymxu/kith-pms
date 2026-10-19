@@ -66,11 +66,12 @@ type AvatarsAPI struct {
 func (h *AvatarsAPI) Upload(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	maxAvatarBytes := config.C.EffectiveMaxUploadBytes()
-	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxAvatarBytes/(1024*1024))
+	maxMB := maxAvatarBytes / (1024 * 1024)
+	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxMB)
 
 	// Cap request body to the configured max + 1MB multipart overhead.
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxAvatarBytes+1024*1024)
@@ -78,41 +79,58 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 	file, err := c.FormFile("avatar")
 	if err != nil {
 		if strings.Contains(err.Error(), "request body too large") {
-			return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
+			return apiErrParams(
+				c,
+				http.StatusRequestEntityTooLarge,
+				"file_too_large",
+				tooLargeMsg,
+				map[string]any{"max_mb": maxMB},
+			)
 		}
 
-		return apiErr(c, http.StatusBadRequest, "no file uploaded")
+		return apiErr(c, http.StatusBadRequest, "no_file_uploaded", "no file uploaded")
 	}
 
 	if file.Size > maxAvatarBytes {
-		return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
+		return apiErrParams(
+			c,
+			http.StatusRequestEntityTooLarge,
+			"file_too_large",
+			tooLargeMsg,
+			map[string]any{"max_mb": maxMB},
+		)
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to open file")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to open file")
 	}
 	defer func() { _ = src.Close() }()
 
 	// Detect content type from actual bytes — don't trust client-supplied header.
 	detected, err := sniff512(src)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to read file")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to read file")
 	}
 	// DetectContentType may append params (e.g. "image/png; charset=...") — strip them.
 	detected = strings.SplitN(detected, ";", 2)[0]
 
 	detected = strings.TrimSpace(detected)
 	if !avatarAllowedTypes[detected] {
-		return apiErr(c, http.StatusUnprocessableEntity, "unsupported file type: use jpeg, png, gif, or webp")
+		return apiErr(
+			c,
+			http.StatusUnprocessableEntity,
+			"unsupported_file_type",
+			"unsupported file type: use jpeg, png, gif, or webp",
+		)
 	}
 
 	if err := h.PeopleSvc.UploadAvatar(c.Request().Context(), personID, src, file); err != nil {
 		if strings.Contains(err.Error(), "person not found") {
-			return apiErr(c, http.StatusNotFound, "person not found")
+			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusBadRequest, err.Error())
+		return apiErr(c, http.StatusBadRequest, "avatar_upload_failed", err.Error())
 	}
 
 	return ok(c, map[string]any{"uploaded": true})
@@ -133,15 +151,15 @@ func (h *AvatarsAPI) Upload(c *echo.Context) error {
 func (h *AvatarsAPI) Delete(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.PeopleSvc.DeleteAvatar(c.Request().Context(), personID); err != nil {
 		if strings.Contains(err.Error(), "person not found") {
-			return apiErr(c, http.StatusNotFound, "person not found")
+			return apiErr(c, http.StatusNotFound, "person_not_found", "person not found")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -162,28 +180,28 @@ func (h *AvatarsAPI) Delete(c *echo.Context) error {
 func (h *AvatarsAPI) Get(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.PeopleSvc.Get(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil || p.AvatarPath == "" {
-		return apiErr(c, http.StatusNotFound, "no avatar")
+		return apiErr(c, http.StatusNotFound, "no_avatar", "no avatar")
 	}
 
 	fullPath := filepath.Join(h.AvatarBasePath, p.AvatarPath)
 	cleanPath := filepath.Clean(fullPath)
 
 	if !strings.HasPrefix(cleanPath, filepath.Clean(h.AvatarBasePath)) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	f, err := os.Open(cleanPath)
 	if err != nil {
-		return apiErr(c, http.StatusNotFound, "avatar file not found")
+		return apiErr(c, http.StatusNotFound, "avatar_file_not_found", "avatar file not found")
 	}
 	defer func() { _ = f.Close() }()
 

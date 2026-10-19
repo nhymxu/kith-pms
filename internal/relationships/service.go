@@ -11,6 +11,13 @@ import (
 	"github.com/nhymxu/kith-pms/internal/people"
 )
 
+const (
+	// MaxTypeNameLen is the longest accepted relationship type name, in bytes.
+	MaxTypeNameLen = 80
+	// MaxMeshMembers caps the label size accepted by a mesh connect.
+	MaxMeshMembers = 500
+)
+
 // Sentinel errors returned by service methods.
 var (
 	ErrTypeInUse                = errors.New("relationships: type is in use and cannot be deleted")
@@ -423,7 +430,7 @@ func (s *Service) BulkAttachMesh(
 		return 0, 0, totalMembers, nil
 	}
 
-	if totalMembers > 500 {
+	if totalMembers > MaxMeshMembers {
 		return 0, 0, totalMembers, ErrMeshTooLarge
 	}
 
@@ -508,7 +515,7 @@ func validateTypeName(name string) error {
 		return ErrNameEmpty
 	}
 
-	if len(name) > 80 {
+	if len(name) > MaxTypeNameLen {
 		return ErrNameTooLong
 	}
 

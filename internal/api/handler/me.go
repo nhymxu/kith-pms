@@ -28,11 +28,11 @@ type MeAPI struct {
 func (h *MeAPI) GetMe(c *echo.Context) error {
 	self, err := h.PeopleSvc.GetSelf(c.Request().Context())
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if self == nil {
-		return apiErr(c, http.StatusNotFound, "self person not configured")
+		return apiErr(c, http.StatusNotFound, "self_person_not_configured", "self person not configured")
 	}
 
 	return ok(c, self)
@@ -62,12 +62,12 @@ func (h *MeAPI) PostSetup(c *echo.Context) error {
 		if id, parseErr := strconv.ParseInt(c.FormValue("person_id"), 10, 64); parseErr == nil && id > 0 {
 			req.PersonID = id
 		} else {
-			return apiErr(c, http.StatusBadRequest, "person_id is required")
+			return apiErr(c, http.StatusBadRequest, "person_id_required", "person_id is required")
 		}
 	}
 
 	if err := h.PeopleSvc.SetSelf(c.Request().Context(), req.PersonID); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"person_id": req.PersonID})

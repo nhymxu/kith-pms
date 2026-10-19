@@ -141,7 +141,7 @@ func SessionOrBearer(apiToken string, svc *Service) echo.MiddlewareFunc {
 
 			slog.Warn("auth: unauthorized request", "ip", c.RealIP(), "path", c.Request().URL.Path)
 
-			return jsonErr(c, http.StatusUnauthorized, "unauthorized")
+			return jsonErr(c, http.StatusUnauthorized, "unauthorized", "unauthorized")
 		}
 	}
 }
@@ -170,7 +170,7 @@ func SpaCSRF() echo.MiddlewareFunc {
 			}
 
 			if c.Request().Header.Get("X-Requested-With") != "kith-spa" {
-				return jsonErr(c, http.StatusForbidden, "missing X-Requested-With")
+				return jsonErr(c, http.StatusForbidden, "csrf_header_missing", "missing X-Requested-With")
 			}
 
 			return next(c)
@@ -185,8 +185,8 @@ func IsCookieAuthed(c *echo.Context) bool {
 }
 
 // jsonErr writes a JSON error envelope. Used by middleware where api package is not importable.
-func jsonErr(c *echo.Context, code int, msg string) error {
-	return c.JSON(code, map[string]string{"error": msg})
+func jsonErr(c *echo.Context, status int, code, msg string) error {
+	return c.JSON(status, map[string]string{"error": msg, "code": code})
 }
 
 func extractBearer(header string) (string, bool) {

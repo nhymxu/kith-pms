@@ -28,7 +28,7 @@ type RelationshipsAPI struct {
 func (h *RelationshipsAPI) ListTypes(c *echo.Context) error {
 	types, err := h.Svc.ListTypesWithCounts(c.Request().Context())
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, types)
@@ -53,7 +53,7 @@ func (h *RelationshipsAPI) CreateType(c *echo.Context) error {
 		ReverseName string `json:"reverse_name"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	rt, err := h.Svc.CreateType(c.Request().Context(), req.Name, req.ReverseName)
@@ -81,7 +81,7 @@ func (h *RelationshipsAPI) CreateType(c *echo.Context) error {
 func (h *RelationshipsAPI) UpdateType(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req struct {
@@ -89,7 +89,7 @@ func (h *RelationshipsAPI) UpdateType(c *echo.Context) error {
 		ReverseName string `json:"reverse_name"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if err := h.Svc.UpdateType(c.Request().Context(), id, req.Name, req.ReverseName); err != nil {
@@ -114,15 +114,15 @@ func (h *RelationshipsAPI) UpdateType(c *echo.Context) error {
 func (h *RelationshipsAPI) DeleteType(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.Svc.DeleteType(c.Request().Context(), id); err != nil {
 		if errors.Is(err, relationships.ErrTypeInUse) {
-			return apiErr(c, http.StatusConflict, "type is in use and cannot be deleted")
+			return apiErr(c, http.StatusConflict, "type_in_use", "type is in use and cannot be deleted")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -142,12 +142,12 @@ func (h *RelationshipsAPI) DeleteType(c *echo.Context) error {
 func (h *RelationshipsAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	views, err := h.Svc.ListByPerson(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, views)
@@ -171,7 +171,7 @@ func (h *RelationshipsAPI) ListByPerson(c *echo.Context) error {
 func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 	fromID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req struct {
@@ -180,15 +180,20 @@ func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 		Notes              string `json:"notes"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if req.ToPersonID <= 0 {
-		return apiErr(c, http.StatusUnprocessableEntity, "to_person_id is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "to_person_id_required", "to_person_id is required")
 	}
 
 	if req.RelationshipTypeID <= 0 {
-		return apiErr(c, http.StatusUnprocessableEntity, "relationship_type_id is required")
+		return apiErr(
+			c,
+			http.StatusUnprocessableEntity,
+			"relationship_type_id_required",
+			"relationship_type_id is required",
+		)
 	}
 
 	relID, err := h.Svc.AttachRelationship(
@@ -201,13 +206,18 @@ func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, relationships.ErrDuplicateRelationship):
-			return apiErr(c, http.StatusConflict, "relationship already exists")
+			return apiErr(c, http.StatusConflict, "relationship_exists", "relationship already exists")
 		case errors.Is(err, relationships.ErrSelfRelationship):
-			return apiErr(c, http.StatusUnprocessableEntity, "cannot relate a person to themselves")
+			return apiErr(c, http.StatusUnprocessableEntity, "relate_self", "cannot relate a person to themselves")
 		case errors.Is(err, relationships.ErrTypeNotFound):
-			return apiErr(c, http.StatusUnprocessableEntity, "relationship type not found")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"relationship_type_not_found",
+				"relationship type not found",
+			)
 		default:
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 	}
 
@@ -229,11 +239,11 @@ func (h *RelationshipsAPI) AttachRelationship(c *echo.Context) error {
 func (h *RelationshipsAPI) DetachRelationship(c *echo.Context) error {
 	relID, err := strconv.ParseInt(c.Param("relID"), 10, 64)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid relID")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid relID")
 	}
 
 	if err := h.Svc.DetachRelationship(c.Request().Context(), relID); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -255,7 +265,7 @@ func (h *RelationshipsAPI) Graph(c *echo.Context) error {
 	if raw := c.QueryParam("person_id"); raw != "" {
 		id, err := strconv.ParseInt(raw, 10, 64)
 		if err != nil || id <= 0 {
-			return apiErr(c, http.StatusBadRequest, "invalid person_id")
+			return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid person_id")
 		}
 
 		personID = id
@@ -263,7 +273,7 @@ func (h *RelationshipsAPI) Graph(c *echo.Context) error {
 
 	graph, err := h.Svc.Graph(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, graph)
@@ -273,7 +283,7 @@ func (h *RelationshipsAPI) Graph(c *echo.Context) error {
 func (h *RelationshipsAPI) BulkAttach(c *echo.Context) error {
 	fromID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid person id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid person id")
 	}
 
 	var req struct {
@@ -284,15 +294,21 @@ func (h *RelationshipsAPI) BulkAttach(c *echo.Context) error {
 		} `json:"relationships"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if len(req.Relationships) == 0 {
-		return apiErr(c, http.StatusBadRequest, "relationships required")
+		return apiErr(c, http.StatusBadRequest, "relationships_required", "relationships required")
 	}
 
 	if len(req.Relationships) > 50 {
-		return apiErr(c, http.StatusBadRequest, "max 50 relationships per request")
+		return apiErrParams(
+			c,
+			http.StatusBadRequest,
+			"too_many_relationships",
+			"max 50 relationships per request",
+			map[string]any{"max": 50},
+		)
 	}
 
 	pairs := make([]relationships.BulkRelationshipPair, len(req.Relationships))
@@ -302,15 +318,15 @@ func (h *RelationshipsAPI) BulkAttach(c *echo.Context) error {
 
 	created, skipped, err := h.Svc.BulkAttach(c.Request().Context(), fromID, pairs)
 	if errors.Is(err, relationships.ErrTypeNotFound) {
-		return apiErr(c, http.StatusUnprocessableEntity, "relationship type not found")
+		return apiErr(c, http.StatusUnprocessableEntity, "relationship_type_not_found", "relationship type not found")
 	}
 
 	if errors.Is(err, relationships.ErrSelfRelationship) {
-		return apiErr(c, http.StatusUnprocessableEntity, "cannot relate a person to themselves")
+		return apiErr(c, http.StatusUnprocessableEntity, "relate_self", "cannot relate a person to themselves")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]int{"created": created, "skipped": skipped})
@@ -321,10 +337,16 @@ func (h *RelationshipsAPI) BulkAttach(c *echo.Context) error {
 func relTypeErrResponse(c *echo.Context, err error) error {
 	switch {
 	case errors.Is(err, relationships.ErrNameEmpty):
-		return apiErr(c, http.StatusUnprocessableEntity, "name is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "name_required", "name is required")
 	case errors.Is(err, relationships.ErrNameTooLong):
-		return apiErr(c, http.StatusUnprocessableEntity, "name must be 80 characters or fewer")
+		return apiErrParams(
+			c,
+			http.StatusUnprocessableEntity,
+			"name_too_long",
+			"name must be 80 characters or fewer",
+			map[string]any{"max": relationships.MaxTypeNameLen},
+		)
 	default:
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 }

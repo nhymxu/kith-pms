@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -13,6 +14,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { apiFetch } from "#/lib/api-client";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 
 export function QuickGiftDialog({
@@ -24,6 +26,7 @@ export function QuickGiftDialog({
 	open: boolean;
 	onClose: () => void;
 }) {
+	const { t } = useTranslation("people");
 	const [title, setTitle] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const qc = useQueryClient();
@@ -39,14 +42,14 @@ export function QuickGiftDialog({
 			setTitle("");
 			onClose();
 		},
-		onError: (err) => setError(err instanceof Error ? err.message : "Failed"),
+		onError: (err) => setError(apiErrorMessage(err, t("quickGift.failed"))),
 	});
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Quick gift note</DialogTitle>
+					<DialogTitle>{t("quickGift.title")}</DialogTitle>
 				</DialogHeader>
 				{error && (
 					<Alert variant="destructive">
@@ -54,23 +57,23 @@ export function QuickGiftDialog({
 					</Alert>
 				)}
 				<div>
-					<Label>Gift title</Label>
+					<Label>{t("quickGift.giftTitle")}</Label>
 					<Input
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
-						placeholder="e.g. Birthday gift idea"
+						placeholder={t("quickGift.placeholder")}
 					/>
 				</div>
 				<DialogFooter>
 					<Button variant="neutral" onClick={onClose}>
-						Cancel
+						{t("quickGift.cancel")}
 					</Button>
 					<SubmitButton
 						isPending={mutation.isPending}
 						onClick={() => mutation.mutate()}
 						type="button"
 					>
-						Save
+						{t("quickGift.save")}
 					</SubmitButton>
 				</DialogFooter>
 			</DialogContent>

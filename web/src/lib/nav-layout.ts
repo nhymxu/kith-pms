@@ -14,20 +14,14 @@ export const DEFAULT_NAV_LAYOUT: NavLayout = "top";
 
 export interface NavLayoutMeta {
 	id: NavLayout;
-	label: string;
-	description: string;
 }
 
 export const NAV_LAYOUT_META: NavLayoutMeta[] = [
 	{
 		id: "top",
-		label: "Top bar",
-		description: "Navigation lives in a horizontal bar above the page content.",
 	},
 	{
 		id: "side",
-		label: "Side rail",
-		description: "Navigation lives in a vertical rail along the left edge.",
 	},
 ];
 

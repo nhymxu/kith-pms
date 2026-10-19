@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
@@ -23,15 +24,24 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/reminders/$reminderId")({
 	component: ReminderDetailPage,
-	pendingComponent: () => (
-		<p className="text-sm font-base text-foreground/60">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-sm font-base text-destructive">Reminder not found.</p>
-	),
+	pendingComponent: ReminderPending,
+	errorComponent: ReminderError,
 });
 
+function ReminderPending() {
+	const { t } = useTranslation("common");
+	return <p className="text-sm font-base text-foreground/60">{t("loading")}</p>;
+}
+
+function ReminderError() {
+	const { t } = useTranslation("reminders");
+	return (
+		<p className="text-sm font-base text-destructive">{t("page.notFound")}</p>
+	);
+}
+
 function ReminderDetailPage() {
+	const { t } = useTranslation("reminders");
 	const { reminderId } = Route.useParams();
 	const id = Number(reminderId);
 	const navigate = useNavigate();
@@ -63,32 +73,36 @@ function ReminderDetailPage() {
 					{!data.completed && <CompleteButton reminderId={id} />}
 					<Button variant="neutral" asChild>
 						<Link to="/reminders/$reminderId/edit" params={{ reminderId }}>
-							Edit
+							{t("detail.edit")}
 						</Link>
 					</Button>
 					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-						Delete
+						{t("delete.confirm")}
 					</Button>
 				</div>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-base">Details</CardTitle>
+					<CardTitle className="text-base">{t("detail.details")}</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-2 text-sm font-base">
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Status</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.status")}
+						</span>
 						{data.completed ? (
-							<Badge variant="neutral">Done</Badge>
+							<Badge variant="neutral">{t("status.done")}</Badge>
 						) : isOverdue ? (
-							<Badge variant="destructive">Overdue</Badge>
+							<Badge variant="destructive">{t("status.overdue")}</Badge>
 						) : (
-							<Badge>Upcoming</Badge>
+							<Badge>{t("status.upcoming")}</Badge>
 						)}
 					</div>
 					<div className="flex gap-2">
-						<span className="text-foreground/60 w-28 shrink-0">Due</span>
+						<span className="text-foreground/60 w-28 shrink-0">
+							{t("detail.due")}
+						</span>
 						<span>
 							{data.due_date &&
 							data.due_date.length > 10 &&
@@ -99,13 +113,17 @@ function ReminderDetailPage() {
 					</div>
 					{data.person_name && (
 						<div className="flex gap-2">
-							<span className="text-foreground/60 w-28 shrink-0">Person</span>
+							<span className="text-foreground/60 w-28 shrink-0">
+								{t("detail.person")}
+							</span>
 							<span>{data.person_name}</span>
 						</div>
 					)}
 					{data.notes && (
 						<div className="flex gap-2">
-							<span className="text-foreground/60 w-28 shrink-0">Notes</span>
+							<span className="text-foreground/60 w-28 shrink-0">
+								{t("detail.notes")}
+							</span>
 							<span className="whitespace-pre-wrap">{data.notes}</span>
 						</div>
 					)}
@@ -115,22 +133,23 @@ function ReminderDetailPage() {
 			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete reminder?</DialogTitle>
+						<DialogTitle>{t("delete.title")}</DialogTitle>
 						<DialogDescription>
-							This will permanently delete "{data.title}". This action cannot be
-							undone.
+							{t("delete.description", { title: data.title })}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>
-							Cancel
+							{t("delete.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
 							onClick={() => deleteMutation.mutate()}
 							disabled={deleteMutation.isPending}
 						>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+							{deleteMutation.isPending
+								? t("delete.deleting")
+								: t("delete.confirm")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

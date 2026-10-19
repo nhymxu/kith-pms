@@ -12,6 +12,9 @@ import (
 	"github.com/nhymxu/kith-pms/internal/audit"
 )
 
+// MaxLabelNameLen is the longest accepted label name, in bytes.
+const MaxLabelNameLen = 64
+
 var (
 	ErrNameEmpty    = errors.New("people labels: name must not be empty")
 	ErrNameTooLong  = errors.New("people labels: name must be 64 characters or fewer")
@@ -144,7 +147,7 @@ func validateLabel(name, color string) error {
 		return ErrNameEmpty
 	}
 
-	if len(name) > 64 {
+	if len(name) > MaxLabelNameLen {
 		return ErrNameTooLong
 	}
 

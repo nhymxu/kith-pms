@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "#/components/ui/input";
 import { listPeople } from "#/endpoints/people";
 import { formatPersonName } from "#/lib/format-person-name";
@@ -15,6 +16,7 @@ export function PersonSinglePicker({
 	value,
 	onChange,
 }: PersonSinglePickerProps) {
+	const { t } = useTranslation("people");
 	const [search, setSearch] = useState("");
 
 	const { data: results } = useQuery({
@@ -36,7 +38,7 @@ export function PersonSinglePicker({
 	return (
 		<div className="space-y-1.5">
 			{value ? (
-				<div className="inline-flex items-center gap-1 text-sm border-2 border-[var(--border)] rounded px-2 py-1 bg-[var(--secondary-background)]">
+				<div className="inline-flex items-center gap-1 text-sm border-bw border-chip-line rounded px-2 py-1 bg-chip">
 					<span>{value.name}</span>
 					<button
 						type="button"
@@ -48,7 +50,7 @@ export function PersonSinglePicker({
 				</div>
 			) : (
 				<Input
-					placeholder="Search person…"
+					placeholder={t("picker.searchPlaceholder")}
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
 				/>

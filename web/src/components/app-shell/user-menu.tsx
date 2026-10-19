@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut, Settings, Tag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -15,6 +16,7 @@ import { useAuth } from "#/lib/auth-context";
 import { keys } from "#/query-keys";
 
 export function UserMenu() {
+	const { t } = useTranslation();
 	const { user, logout } = useAuth();
 	const navigate = useNavigate();
 
@@ -34,8 +36,8 @@ export function UserMenu() {
 	const displayName = profile
 		? profile.nickname || profile.name
 		: user
-			? `User #${user.id}`
-			: "Account";
+			? t("user.fallbackName", { id: user.id })
+			: t("user.account");
 
 	const initials = profile
 		? (profile.nickname || profile.name).charAt(0).toUpperCase()
@@ -70,21 +72,21 @@ export function UserMenu() {
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-48">
-				<DropdownMenuLabel>Settings</DropdownMenuLabel>
+				<DropdownMenuLabel>{t("nav.settings")}</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => go("/settings")}>
 					<Settings className="size-4" />
-					Settings
+					{t("nav.settings")}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => go("/me")}>
 					<Tag className="size-4" />
-					Self Profile
+					{t("userMenu.selfProfile")}
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={handleLogout}>
 					<LogOut className="size-4" />
-					Log out
+					{t("userMenu.logout")}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

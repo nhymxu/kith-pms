@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -113,7 +114,10 @@ func JSONErrorHandler(c *echo.Context, err error) {
 		code = he.Code
 	}
 
-	if err2 := c.JSON(code, map[string]string{"error": http.StatusText(code)}); err2 != nil {
+	if err2 := c.JSON(code, map[string]string{
+		"error": http.StatusText(code),
+		"code":  "http_" + strconv.Itoa(code),
+	}); err2 != nil {
 		slog.Error("error handler: json response", "error", err2)
 	}
 }

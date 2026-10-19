@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { convertHeicToJpeg, isHeicFile } from "#/lib/heic-convert";
+import i18n from "#/lib/i18n";
 import {
 	ALLOWED_IMAGE_LABEL,
 	isAcceptedImageFile,
@@ -44,12 +45,16 @@ export function useImageFilePick({
 
 		try {
 			if (!isAcceptedImageFile(file)) {
-				setError(`Only ${ALLOWED_IMAGE_LABEL} images are allowed.`);
+				setError(
+					i18n.t("common:imagePick.onlyAllowed", {
+						types: ALLOWED_IMAGE_LABEL,
+					}),
+				);
 				return null;
 			}
 
 			if (file.size > maxBytes) {
-				setError(`File must be under ${maxSizeMB} MB.`);
+				setError(i18n.t("common:imagePick.tooLarge", { size: maxSizeMB }));
 				return null;
 			}
 
@@ -60,7 +65,9 @@ export function useImageFilePick({
 				return await convertHeicToJpeg(file);
 			} catch (err) {
 				setError(
-					err instanceof Error ? err.message : "Couldn't read this image.",
+					err instanceof Error
+						? err.message
+						: i18n.t("common:imagePick.unreadable"),
 				);
 				return null;
 			} finally {

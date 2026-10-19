@@ -1,0 +1,35 @@
+{
+	"dateRange": {
+		"from": "Từ",
+		"to": "Đến",
+		"clear": "Xóa ngày"
+	},
+	"form": {
+		"titlePlaceholder": "Tiêu đề (tùy chọn)",
+		"contentPlaceholder": "Viết ghi chú…",
+		"cancel": "Hủy",
+		"save": "Lưu",
+		"saving": "Đang lưu…"
+	},
+	"list": {
+		"add": "Thêm ghi chú",
+		"empty": "Không tìm thấy ghi chú nào."
+	},
+	"delete": {
+		"title": "Xóa ghi chú?",
+		"confirm": "Xóa",
+		"deleting": "Đang xóa…"
+	},
+	"filter": {
+		"byPerson": "Lọc theo người",
+		"clear": "Bỏ lọc"
+	},
+	"page": {
+		"title": "Ghi chú",
+		"tabMine": "Ghi chú của tôi",
+		"tabAll": "Tất cả ghi chú",
+		"loading": "Đang tải…",
+		"noSelfProfile": "Bạn chưa thiết lập hồ sơ cá nhân. Hãy chọn một người có sẵn để đại diện cho bạn trước khi thêm ghi chú cá nhân.",
+		"setupProfile": "Thiết lập hồ sơ của tôi"
+	}
+}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import i18n from "#/lib/i18n";
 
 export const journalLabelSchema = z.object({
 	id: z.number(),
@@ -13,11 +14,13 @@ export const journalLabelListSchema = z.array(journalLabelSchema);
 export const journalLabelRequestSchema = z.object({
 	name: z
 		.string()
-		.min(1, "Name is required")
-		.max(64, "Name must be 64 chars or fewer"),
-	color: z
-		.string()
-		.regex(/^#[0-9a-fA-F]{6}$/, "Color must be a hex color e.g. #a1b2c3"),
+		.min(1, { error: () => i18n.t("errors:validation.nameRequired") })
+		.max(64, {
+			error: () => i18n.t("errors:validation.nameTooLong", { max: 64 }),
+		}),
+	color: z.string().regex(/^#[0-9a-fA-F]{6}$/, {
+		error: () => i18n.t("errors:validation.colorInvalid"),
+	}),
 });
 
 export type JournalLabel = z.infer<typeof journalLabelSchema>;

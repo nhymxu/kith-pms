@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TooltipProvider } from "#/components/ui/tooltip";
 import type { Person } from "#/schemas/person";
 import { DashboardCard } from "./dashboard-card";
@@ -16,10 +17,11 @@ export function FavoritePeople({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	return (
 		<DashboardCard
-			title="Favorites"
-			subtitle="Quick access to your starred people"
+			title={t("favorites.title")}
+			subtitle={t("favorites.subtitle")}
 			icon={Star}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -45,8 +47,8 @@ export function FavoritePeople({
 			) : (
 				<EmptyState
 					icon={Star}
-					title="No favorites yet"
-					description="Star someone from their profile or the people list."
+					title={t("favorites.emptyTitle")}
+					description={t("favorites.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>

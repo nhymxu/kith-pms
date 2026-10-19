@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
 	Tooltip,
 	TooltipContent,
@@ -9,9 +10,10 @@ import { formatDate } from "#/lib/format-datetime";
 import type { Person } from "#/schemas/person";
 
 export function PersonAvatarTooltip({ person }: { person: Person }) {
+	const { t } = useTranslation("dashboard");
 	const lastContact = person.last_contact_at
 		? formatDate(person.last_contact_at)
-		: "Never contacted";
+		: t("neverContacted");
 
 	return (
 		<Tooltip>
@@ -40,7 +42,7 @@ export function PersonAvatarTooltip({ person }: { person: Person }) {
 					{person.name}
 					{person.nickname ? ` (${person.nickname})` : ""}
 				</p>
-				<p className="text-sub">Last contact: {lastContact}</p>
+				<p className="text-sub">{t("lastContact", { when: lastContact })}</p>
 			</TooltipContent>
 		</Tooltip>
 	);

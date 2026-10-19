@@ -1,0 +1,15 @@
+{
+	"page": {
+		"title": "Upcoming Dates"
+	},
+	"list": {
+		"empty": "No upcoming dates in the next 90 days.",
+		"loading": "Loading upcoming dates…",
+		"years_one": "{{count}} year",
+		"years_other": "{{count}} years"
+	},
+	"badge": {
+		"today": "Today",
+		"inDays": "In {{days}}d"
+	}
+}

@@ -1,4 +1,5 @@
 import { Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TooltipProvider } from "#/components/ui/tooltip";
 import type { Person } from "#/schemas/person";
 import { DashboardCard } from "./dashboard-card";
@@ -16,10 +17,11 @@ export function LastContactedPeople({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	return (
 		<DashboardCard
-			title="Last Contact"
-			subtitle="People you've recently connected with"
+			title={t("lastContacted.title")}
+			subtitle={t("lastContacted.subtitle")}
 			icon={Clock}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -45,8 +47,8 @@ export function LastContactedPeople({
 			) : (
 				<EmptyState
 					icon={Clock}
-					title="No contact history yet"
-					description="Log a journal entry or interaction to see recent contacts here."
+					title={t("lastContacted.emptyTitle")}
+					description={t("lastContacted.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>

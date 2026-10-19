@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { RelationshipGraph } from "#/endpoints/relationships";
 import { getRelationshipGraph } from "#/endpoints/relationships";
 import type { SelectedNodeInfo } from "#/features/network/graph-selected-panel";
@@ -15,12 +16,13 @@ const LazyRelationshipGraph = lazy(
 
 export const Route = createFileRoute("/_authed/network/")({
 	component: NetworkPage,
-	errorComponent: () => (
-		<p className="py-4 text-[13px] text-danger-fg">
-			Failed to load network graph.
-		</p>
-	),
+	errorComponent: NetworkLoadError,
 });
+
+function NetworkLoadError() {
+	const { t } = useTranslation("network");
+	return <p className="py-4 text-[13px] text-danger-fg">{t("loadFailed")}</p>;
+}
 
 interface NetworkGraphProps {
 	showOnlyMine: boolean;
@@ -39,6 +41,7 @@ function NetworkGraph({
 	onNodeSelect,
 	panelCollapsed,
 }: NetworkGraphProps) {
+	const { t } = useTranslation("network");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.relationships.graph(),
 		queryFn: () => getRelationshipGraph(),
@@ -86,7 +89,7 @@ function NetworkGraph({
 	if (displayData.nodes.length === 0) {
 		return (
 			<div className="flex items-center justify-center rounded-base border-bw border-line bg-sidebar py-16 text-[13px] text-sub">
-				No connections yet. Add relationships to people to see your network.
+				{t("empty")}
 			</div>
 		);
 	}
@@ -107,6 +110,7 @@ function NetworkGraph({
 }
 
 function NetworkPage() {
+	const { t } = useTranslation("network");
 	const [showOnlyMine, setShowOnlyMine] = useState(
 		() => getNetworkPrefs().networkShowOnlyMine,
 	);
@@ -120,14 +124,14 @@ function NetworkPage() {
 
 	const fallback = (
 		<div className="flex items-center justify-center rounded-base border-bw border-line bg-sidebar py-16 text-[13px] text-sub">
-			Loading network…
+			{t("loading")}
 		</div>
 	);
 
 	return (
 		<div className="space-y-4">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				Your Network
+				{t("title")}
 			</h1>
 
 			<div

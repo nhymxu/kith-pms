@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { getRelationshipGraph } from "#/endpoints/relationships";
 import { keys } from "#/query-keys";
 
@@ -20,13 +21,14 @@ interface EgoGraphInnerProps {
 }
 
 function EgoGraphInner({ personId }: EgoGraphInnerProps) {
+	const { t } = useTranslation("people");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.relationships.graph(personId),
 		queryFn: () => getRelationshipGraph(personId),
 	});
 
 	if (data.nodes.length <= 1) {
-		return <p className="text-sm text-sub">No connections yet.</p>;
+		return <p className="text-sm text-sub">{t("sections.graph.empty")}</p>;
 	}
 
 	return (
@@ -41,13 +43,14 @@ interface PersonSectionRelationshipGraphProps {
 export function PersonSectionRelationshipGraph({
 	personId,
 }: PersonSectionRelationshipGraphProps) {
+	const { t } = useTranslation("people");
 	return (
 		<div>
-			<SectionHeading>Relationship Network</SectionHeading>
+			<SectionHeading>{t("sections.graph.title")}</SectionHeading>
 			<Suspense
 				fallback={
 					<div className="flex items-center justify-center rounded-md border-bw border-line bg-muted py-8 text-[13px] text-sub">
-						Loading…
+						{t("sections.graph.loading")}
 					</div>
 				}
 			>

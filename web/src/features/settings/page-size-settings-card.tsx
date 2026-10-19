@@ -1,5 +1,6 @@
 import { useMutation, type useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -27,6 +28,7 @@ export function PageSizeSettingsCard({
 	) => Parameters<typeof updateSettings>[0];
 	queryClient: ReturnType<typeof useQueryClient>;
 }) {
+	const { t } = useTranslation("settings");
 	const [defaultPageSize, setDefaultPageSize] = useState(25);
 
 	const [synced, setSynced] = useState(false);
@@ -47,16 +49,17 @@ export function PageSizeSettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-[14px] font-medium text-ink">
-					Page size
+					{t("general.pageSize.title")}
 				</CardTitle>
 				<CardDescription className="text-[12px] text-sub">
-					Default rows per page for the Journal, People, and Audit lists.
-					Applies unless a page size is set explicitly in the URL.
+					{t("general.pageSize.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label className="text-[13px]">Rows per page</Label>
+					<Label className="text-[13px]">
+						{t("general.pageSize.rowsPerPage")}
+					</Label>
 					<div className="space-y-1.5">
 						{PAGE_SIZE_OPTIONS.map((size) => (
 							<label
@@ -83,15 +86,13 @@ export function PageSizeSettingsCard({
 					disabled={pageSizeMutation.isPending}
 				>
 					{pageSizeMutation.isPending
-						? "Saving…"
+						? t("common.saving")
 						: pageSizeMutation.isSuccess
-							? "Saved!"
-							: "Save default"}
+							? t("common.saved")
+							: t("general.pageSize.save")}
 				</Button>
 				{pageSizeMutation.isError && (
-					<p className="text-[12px] text-danger-fg">
-						Failed to save. Please try again.
-					</p>
+					<p className="text-[12px] text-danger-fg">{t("common.saveFailed")}</p>
 				)}
 			</CardContent>
 		</Card>

@@ -30,18 +30,18 @@ type PeopleLabelsAPI struct {
 func (h *PeopleLabelsAPI) Attach(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req struct {
 		LabelID int64 `json:"label_id"`
 	}
 	if err := c.Bind(&req); err != nil || req.LabelID <= 0 {
-		return apiErr(c, http.StatusBadRequest, "label_id is required")
+		return apiErr(c, http.StatusBadRequest, "label_id_required", "label_id is required")
 	}
 
 	if err := h.Svc.Attach(c.Request().Context(), personID, req.LabelID); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"attached": true})
@@ -62,16 +62,16 @@ func (h *PeopleLabelsAPI) Attach(c *echo.Context) error {
 func (h *PeopleLabelsAPI) Detach(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	labelID, err := strconv.ParseInt(c.Param("labelID"), 10, 64)
 	if err != nil || labelID <= 0 {
-		return apiErr(c, http.StatusBadRequest, "invalid labelID")
+		return apiErr(c, http.StatusBadRequest, "invalid_label_id", "invalid labelID")
 	}
 
 	if err := h.Svc.Detach(c.Request().Context(), personID, labelID); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)

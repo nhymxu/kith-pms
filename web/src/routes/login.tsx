@@ -6,10 +6,12 @@ import {
 	useSearch,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { useAuth } from "#/lib/auth-context";
 
 const loginSearchSchema = z.object({
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+	const { t } = useTranslation();
 	const { login } = useAuth();
 	const navigate = useNavigate();
 	const search = useSearch({ from: "/login" });
@@ -43,7 +46,7 @@ function LoginPage() {
 				const safeTarget = target.startsWith("/") ? target : "/";
 				navigate({ to: safeTarget });
 			} catch (err) {
-				setApiError(err instanceof Error ? err.message : "Login failed");
+				setApiError(apiErrorMessage(err, t("auth.loginFailed")));
 			}
 		},
 	});
@@ -61,7 +64,9 @@ function LoginPage() {
 					}}
 					className="border-bw border-line rounded-base bg-panel shadow-shadow p-6 space-y-4"
 				>
-					<p className="text-[15px] font-semibold text-ink">Sign in</p>
+					<p className="text-[15px] font-semibold text-ink">
+						{t("auth.signIn")}
+					</p>
 
 					{apiError && (
 						<Alert variant="destructive">
@@ -73,13 +78,13 @@ function LoginPage() {
 						name="password"
 						validators={{
 							onChange: ({ value }) =>
-								!value ? "Password is required" : undefined,
+								!value ? t("auth.passwordRequired") : undefined,
 						}}
 					>
 						{(field) => (
 							<FormField
 								field={field}
-								label="Password"
+								label={t("auth.password")}
 								type="password"
 								placeholder="••••••••"
 								autoComplete="current-password"
@@ -92,10 +97,10 @@ function LoginPage() {
 						{(isSubmitting) => (
 							<SubmitButton
 								isPending={isSubmitting}
-								pendingLabel="Signing in…"
+								pendingLabel={t("auth.signingIn")}
 								className="w-full"
 							>
-								Sign in
+								{t("auth.signIn")}
 							</SubmitButton>
 						)}
 					</form.Subscribe>

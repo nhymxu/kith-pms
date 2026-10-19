@@ -2,6 +2,7 @@
 // touches features/network/*. Re-audit for reintroduced palette classes when
 // that plan lands.
 
+import { useTranslation } from "react-i18next";
 import { formatPersonName } from "#/lib/format-person-name";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
@@ -43,13 +44,14 @@ export function GraphSelectedPanel({
 	collapsed,
 	onCollapsedChange,
 }: GraphSelectedPanelProps) {
+	const { t } = useTranslation("network");
 	if (collapsed) {
 		return (
 			<button
 				type="button"
 				onClick={() => onCollapsedChange(false)}
-				title="Expand panel"
-				aria-label="Expand selected panel"
+				title={t("panel.expand")}
+				aria-label={t("panel.expandAria")}
 				className="flex h-9 w-9 shrink-0 items-center justify-center self-start rounded-base border-bw border-line bg-panel text-sub hover:border-accent hover:text-accent-text"
 			>
 				<ChevronIcon direction="left" />
@@ -61,13 +63,13 @@ export function GraphSelectedPanel({
 		<div className="rounded-base border-bw border-line bg-panel p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h2 className="text-[10px] font-semibold uppercase tracking-wider text-sub">
-					Selected
+					{t("panel.selected")}
 				</h2>
 				<button
 					type="button"
 					onClick={() => onCollapsedChange(true)}
-					title="Collapse panel"
-					aria-label="Collapse selected panel"
+					title={t("panel.collapse")}
+					aria-label={t("panel.collapseAria")}
 					className="flex h-6 w-6 items-center justify-center rounded-base text-sub hover:bg-chip hover:text-ink"
 				>
 					<ChevronIcon direction="right" />
@@ -75,7 +77,7 @@ export function GraphSelectedPanel({
 			</div>
 
 			{!selected ? (
-				<p className="text-[13px] text-sub">Click any node to inspect it.</p>
+				<p className="text-[13px] text-sub">{t("panel.clickHint")}</p>
 			) : (
 				<div className="space-y-3">
 					{/* Name + nickname + group */}
@@ -110,8 +112,9 @@ export function GraphSelectedPanel({
 						<div className="flex items-center gap-1.5 text-[12px] text-sub">
 							<span>🕐</span>
 							<span>
-								Last contacted{" "}
-								{formatRelativeDate(selected.node.last_contact_at)}
+								{t("panel.lastContacted", {
+									when: formatRelativeDate(selected.node.last_contact_at),
+								})}
 							</span>
 						</div>
 					)}
@@ -120,8 +123,7 @@ export function GraphSelectedPanel({
 					{selected.connections.length > 0 && (
 						<div className="text-[12px] text-sub">
 							<span className="font-medium">
-								{selected.connections.length} connection
-								{selected.connections.length !== 1 ? "s" : ""}
+								{t("panel.connections", { count: selected.connections.length })}
 							</span>
 							<ul className="mt-1.5 space-y-1">
 								{selected.connections.map((c, i) => (

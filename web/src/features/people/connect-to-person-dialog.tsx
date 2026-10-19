@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { SafeTrans } from "#/components/safe-trans";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -26,6 +28,7 @@ export function ConnectToPersonDialog({
 	onClose,
 	onSuccess,
 }: ConnectToPersonDialogProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [target, setTarget] = useState<{ id: number; name: string } | null>(
 		null,
@@ -43,7 +46,7 @@ export function ConnectToPersonDialog({
 		? selectedIds.filter((id) => id !== target.id)
 		: selectedIds;
 
-	const selectedType = types?.find((t) => t.id === Number(typeId));
+	const selectedType = types?.find((rt) => rt.id === Number(typeId));
 
 	const mutation = useMutation({
 		mutationFn: () => {
@@ -57,7 +60,12 @@ export function ConnectToPersonDialog({
 			);
 		},
 		onSuccess: (data) => {
-			setResultMsg(`Connected ${data.created} (${data.skipped} skipped)`);
+			setResultMsg(
+				t("connectTo.connected", {
+					created: data.created,
+					skipped: data.skipped,
+				}),
+			);
 			qc.invalidateQueries({ queryKey: keys.relationships.graph() });
 			qc.invalidateQueries({ queryKey: keys.people.all });
 			qc.invalidateQueries({ queryKey: keys.relationshipTypes.list() });
@@ -69,8 +77,8 @@ export function ConnectToPersonDialog({
 			const partial = err.partial;
 			setResultMsg(
 				partial
-					? `Failed after connecting ${partial.created}`
-					: "Failed to connect",
+					? t("connectTo.partialFailure", { created: partial.created })
+					: t("connectTo.failure"),
 			);
 		},
 	});
@@ -88,44 +96,48 @@ export function ConnectToPersonDialog({
 		<Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
 			<DialogContent className="max-w-md">
 				<DialogHeader>
-					<DialogTitle>Connect to person</DialogTitle>
+					<DialogTitle>{t("connectTo.title")}</DialogTitle>
 				</DialogHeader>
 
 				<div className="space-y-4">
 					<div>
-						<p className="text-sm font-medium text-sub mb-1.5">Target person</p>
+						<p className="text-sm font-medium text-sub mb-1.5">
+							{t("connectTo.targetPerson")}
+						</p>
 						<PersonSinglePicker value={target} onChange={setTarget} />
 						{target && toIds.length === 0 && (
-							<p className="text-xs text-sub mt-1">
-								No other people to connect — target is the only selection.
-							</p>
+							<p className="text-xs text-sub mt-1">{t("connectTo.noOthers")}</p>
 						)}
 					</div>
 
 					<div>
 						<p className="text-sm font-medium text-sub mb-1.5">
-							Relationship type
+							{t("connectTo.relationshipType")}
 						</p>
 						<select
 							value={typeId}
 							onChange={(e) => setTypeId(e.target.value)}
 							className="w-full h-10 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 						>
-							<option value="">Select type…</option>
-							{types?.map((t) => (
-								<option key={t.id} value={t.id}>
-									{t.name}
+							<option value="">{t("connectTo.selectType")}</option>
+							{types?.map((rt) => (
+								<option key={rt.id} value={rt.id}>
+									{rt.name}
 								</option>
 							))}
 						</select>
 						{target && selectedType && (
 							<p className="text-xs text-sub mt-1">
-								{target.name} will be set as{" "}
-								<span className="font-medium">
-									{selectedType.reverse_name || selectedType.name}
-								</span>{" "}
-								of the {toIds.length} {toIds.length === 1 ? "person" : "people"}
-								.
+								<SafeTrans
+									t={t}
+									i18nKey="connectTo.willBeSet"
+									count={toIds.length}
+									values={{
+										name: target.name,
+										type: selectedType.reverse_name || selectedType.name,
+									}}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						)}
 					</div>
@@ -137,15 +149,15 @@ export function ConnectToPersonDialog({
 
 				<DialogFooter>
 					<Button variant="neutral" onClick={handleClose}>
-						Cancel
+						{t("connectTo.cancel")}
 					</Button>
 					<Button
 						disabled={!canConnect || mutation.isPending}
 						onClick={() => mutation.mutate()}
 					>
 						{mutation.isPending
-							? "Connecting…"
-							: `Connect ${toIds.length} ${toIds.length === 1 ? "person" : "people"}`}
+							? t("connectTo.connecting")
+							: t("connectTo.connect", { count: toIds.length })}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

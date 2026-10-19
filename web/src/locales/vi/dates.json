@@ -1,0 +1,14 @@
+{
+	"page": {
+		"title": "Ngày sắp tới"
+	},
+	"list": {
+		"empty": "Không có ngày quan trọng nào trong 90 ngày tới.",
+		"loading": "Đang tải ngày sắp tới…",
+		"years_other": "{{count}} năm"
+	},
+	"badge": {
+		"today": "Hôm nay",
+		"inDays": "Còn {{days}} ngày"
+	}
+}

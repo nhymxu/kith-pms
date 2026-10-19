@@ -1,4 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
@@ -11,9 +12,10 @@ interface Props {
 	onChange: (rows: LocationRow[]) => void;
 }
 
-const LOCATION_TYPES = ["home", "work", "other"];
+const LOCATION_TYPES = ["home", "work", "other"] as const;
 
 export function PersonFormLocations({ value, onChange }: Props) {
+	const { t } = useTranslation("people");
 	function add() {
 		onChange([
 			...value,
@@ -41,13 +43,17 @@ export function PersonFormLocations({ value, onChange }: Props) {
 	return (
 		<div className="space-y-3">
 			<div className="flex items-center justify-between">
-				<Label className="text-sm font-medium">Locations</Label>
+				<Label className="text-sm font-medium">
+					{t("form.locations.title")}
+				</Label>
 				<Button type="button" variant="neutral" size="sm" onClick={add}>
-					<Plus className="size-3" /> Add
+					<Plus className="size-3" /> {t("form.locations.add")}
 				</Button>
 			</div>
 			{value.length === 0 && (
-				<p className="text-xs font-base text-sub">No locations yet.</p>
+				<p className="text-xs font-base text-sub">
+					{t("form.locations.empty")}
+				</p>
 			)}
 			{value.map((row, i) => (
 				<div
@@ -61,9 +67,9 @@ export function PersonFormLocations({ value, onChange }: Props) {
 							value={row.type}
 							onChange={(e) => update(i, "type", e.target.value)}
 						>
-							{LOCATION_TYPES.map((t) => (
-								<option key={t} value={t}>
-									{t}
+							{LOCATION_TYPES.map((lt) => (
+								<option key={lt} value={lt}>
+									{t(`types.location.${lt}`)}
 								</option>
 							))}
 						</select>
@@ -77,23 +83,23 @@ export function PersonFormLocations({ value, onChange }: Props) {
 						</Button>
 					</div>
 					<Input
-						placeholder="Address"
+						placeholder={t("form.locations.address")}
 						value={row.address}
 						onChange={(e) => update(i, "address", e.target.value)}
 					/>
 					<div className="grid grid-cols-3 gap-2">
 						<Input
-							placeholder="City"
+							placeholder={t("form.locations.city")}
 							value={row.city}
 							onChange={(e) => update(i, "city", e.target.value)}
 						/>
 						<Input
-							placeholder="Country"
+							placeholder={t("form.locations.country")}
 							value={row.country}
 							onChange={(e) => update(i, "country", e.target.value)}
 						/>
 						<Input
-							placeholder="Postal code"
+							placeholder={t("form.locations.postalCode")}
 							value={row.postal_code}
 							onChange={(e) => update(i, "postal_code", e.target.value)}
 						/>

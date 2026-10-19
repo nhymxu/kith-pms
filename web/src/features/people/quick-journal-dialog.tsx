@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
@@ -14,6 +15,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import { apiFetch } from "#/lib/api-client";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import { PersonSinglePicker } from "./person-single-picker";
 
@@ -29,6 +31,7 @@ export function QuickJournalDialog({
 	open,
 	onClose,
 }: QuickJournalDialogProps) {
+	const { t } = useTranslation("people");
 	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
 	const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export function QuickJournalDialog({
 	const mutation = useMutation({
 		mutationFn: () => {
 			if (!targetPersonId) {
-				throw new Error("Select a person first");
+				throw new Error(t("quickJournal.selectPerson"));
 			}
 			return apiFetch(`/v1/people/${targetPersonId}/journal/quick`, {
 				method: "POST",
@@ -63,14 +66,14 @@ export function QuickJournalDialog({
 			qc.invalidateQueries({ queryKey: keys.people.all });
 			resetAndClose();
 		},
-		onError: (err) => setError(err instanceof Error ? err.message : "Failed"),
+		onError: (err) => setError(apiErrorMessage(err, t("quickJournal.failed"))),
 	});
 
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && resetAndClose()}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Quick journal entry</DialogTitle>
+					<DialogTitle>{t("quickJournal.title")}</DialogTitle>
 				</DialogHeader>
 				{error && (
 					<Alert variant="destructive">
@@ -80,7 +83,7 @@ export function QuickJournalDialog({
 				<div className="space-y-3">
 					{personId === undefined && (
 						<div>
-							<Label>Person</Label>
+							<Label>{t("quickJournal.person")}</Label>
 							<PersonSinglePicker
 								value={pickedPerson}
 								onChange={setPickedPerson}
@@ -88,26 +91,26 @@ export function QuickJournalDialog({
 						</div>
 					)}
 					<div>
-						<Label>Title</Label>
+						<Label>{t("quickJournal.entryTitle")}</Label>
 						<Input
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							placeholder="What happened?"
+							placeholder={t("quickJournal.titlePlaceholder")}
 						/>
 					</div>
 					<div>
-						<Label>Notes</Label>
+						<Label>{t("quickJournal.notes")}</Label>
 						<Textarea
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 							rows={3}
-							placeholder="Details…"
+							placeholder={t("quickJournal.notesPlaceholder")}
 						/>
 					</div>
 				</div>
 				<DialogFooter>
 					<Button variant="neutral" onClick={resetAndClose}>
-						Cancel
+						{t("quickJournal.cancel")}
 					</Button>
 					<SubmitButton
 						isPending={mutation.isPending}
@@ -115,7 +118,7 @@ export function QuickJournalDialog({
 						disabled={!targetPersonId}
 						type="button"
 					>
-						Save
+						{t("quickJournal.save")}
 					</SubmitButton>
 				</DialogFooter>
 			</DialogContent>

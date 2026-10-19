@@ -10,6 +10,7 @@ export type NetworkOnlyMineDepth = "direct" | "alter";
 export type NavLayout = "top" | "side";
 export type NumberFormat = "1,234.56" | "1.234,56";
 export type RelationshipDisplay = "plain" | "sentence" | "badge";
+export type Language = "en" | "vi";
 
 export interface UserPrefs {
 	dateFormat: DateFormat;
@@ -24,6 +25,7 @@ export interface UserPrefs {
 	navLayout: NavLayout;
 	numberFormat: NumberFormat;
 	relationshipDisplay: RelationshipDisplay;
+	language: Language;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -41,6 +43,7 @@ const DEFAULTS: UserPrefs = {
 	navLayout: "top",
 	numberFormat: "1,234.56",
 	relationshipDisplay: "plain",
+	language: "en",
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -99,6 +102,7 @@ export async function syncSettingsFromApi(): Promise<void> {
 			navLayout: s.nav_layout as NavLayout,
 			numberFormat: s.number_format as NumberFormat,
 			relationshipDisplay: s.relationship_display as RelationshipDisplay,
+			language: s.language as Language,
 		});
 		// Reflect a cross-device theme change immediately on load.
 		applyTheme(getTheme());

@@ -1,17 +1,21 @@
 import { type ReactNode, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 
 interface QueryBoundaryProps {
 	children: ReactNode;
 	fallback?: ReactNode;
 }
 
-const defaultFallback = (
-	<div className="py-8 text-center text-[13px] text-sub">Loading…</div>
-);
+function DefaultFallback() {
+	const { t } = useTranslation();
+	return (
+		<div className="py-8 text-center text-[13px] text-sub">{t("loading")}</div>
+	);
+}
 
 export function QueryBoundary({
 	children,
-	fallback = defaultFallback,
+	fallback = <DefaultFallback />,
 }: QueryBoundaryProps) {
 	return <Suspense fallback={fallback}>{children}</Suspense>;
 }

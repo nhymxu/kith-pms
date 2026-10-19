@@ -1,5 +1,6 @@
 import type { RowData } from "@tanstack/react-table";
 import { Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import type { TableInstance } from "./column-helpers";
@@ -17,6 +18,7 @@ export function DataTableToolbar<T extends RowData>({
 	onGlobalFilterChange,
 	children,
 }: DataTableToolbarProps<T>) {
+	const { t } = useTranslation();
 	const hasFilter = globalFilter.length > 0;
 
 	return (
@@ -24,7 +26,7 @@ export function DataTableToolbar<T extends RowData>({
 			<div className="relative flex-1 max-w-sm">
 				<Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/50" />
 				<Input
-					placeholder="Search…"
+					placeholder={t("table.searchPlaceholder")}
 					value={globalFilter}
 					onChange={(e) => onGlobalFilterChange(e.target.value)}
 					className="pl-9"
@@ -35,7 +37,7 @@ export function DataTableToolbar<T extends RowData>({
 						size="icon"
 						className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
 						onClick={() => onGlobalFilterChange("")}
-						aria-label="Clear search"
+						aria-label={t("table.clearSearch")}
 					>
 						<X className="size-3" />
 					</Button>

@@ -375,6 +375,17 @@ export const PersonSchema = z.object({
 - All POST/PUT/PATCH/DELETE requests automatically include `X-Requested-With: kith-spa` header
 - Handled in `lib/api-client.ts`
 
+### Internationalization (i18n)
+- **Library**: `i18next` + `react-i18next`. Setup in `web/src/lib/i18n.ts`; the active language follows the `language` user setting via `useSyncLanguage` (mounted in `_authed.tsx`), with the `kith_user_prefs` cache for first paint and `await i18nReady` before render in `main.tsx`.
+- **Catalogs**: `web/src/locales/<lng>/<namespace>.json`, one namespace per feature (`common`, `people`, `settings`, `errors`, ...). `en` is bundled (sync fallback) and is the source of the typed keys; other languages load as lazy same-origin chunks through `import.meta.glob`, which satisfies the `script-src 'self'` CSP. Never fetch catalogs from a CDN or `/locales/*.json`.
+- **Keys**: camelCase leaves nested by section (`people:sections.gifts.empty`). Use whole-sentence keys with `{{interpolation}}` so word order can differ per language. User data (names, relationship type names) is passed as a value and never translated.
+- **Components**: `const { t } = useTranslation("ns")`. Outside React, call `i18n.t(...)` at render time. Never store `t()` results in module constants or `useMemo` without `t`/`i18n.language` in the deps.
+- **Plurals**: `_one` / `_other` keys. `vi` has only `_other`, so the parity test ignores `_one`.
+- **`<Trans>` with user data**: use `SafeTrans`. `escapeValue` is off globally, so `<Trans>` would otherwise parse user text as markup.
+- **Dates, times, numbers** keep using `format-datetime.ts` and `format-currency.ts`; there is no `Intl` language switch.
+- **Server errors**: Go returns `{error, code, params}`; the SPA maps `code` through `errors:server.<code>` (`apiErrorMessage`). zod messages use `{ error: () => i18n.t("errors:validation.<key>") }` so they resolve at parse time.
+- **Adding a language**: add `web/src/locales/<lng>/` with every namespace file, then update the `language` sync set listed in `AGENTS.md` (Go `validLanguages`, zod enum, `Language` union, `LANGUAGE_OPTIONS` with the native name, `index.html` guard). The parity test must pass.
+
 ### Build
 - **Vite 8** for bundling
 - Output to `web/dist/`
@@ -430,6 +441,7 @@ TanStack Router normalizes the URL bar with schema-defaulted search params befor
 - **Framework**: Vitest + @testing-library/react
 - **Run tests**: `pnpm --dir web test`
 - **Build checks**: `pnpm --dir web check` (Biome lint/format verification)
+- **Catalog parity**: `web/src/locales/__tests__/catalog-parity.test.ts` fails when `en` and `vi` differ in keys or `{{vars}}`/`<tags>`, or when a Go error code lacks an `errors:server.<code>` entry. Vitest runs `src/test-setup.ts`, which initializes i18n in `en`.
 
 ### Test Structure
 ```go

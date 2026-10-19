@@ -9,8 +9,11 @@ import (
 
 // envelope is the standard JSON response wrapper.
 type envelope struct {
-	Data  any    `json:"data,omitempty"`
-	Error string `json:"error,omitempty"`
+	Data any `json:"data,omitempty"`
+	// Error is the English fallback text; clients localize by Code.
+	Error  string         `json:"error,omitempty"`
+	Code   string         `json:"code,omitempty"`
+	Params map[string]any `json:"params,omitempty"`
 }
 
 func ok(c *echo.Context, data any) error {
@@ -25,8 +28,15 @@ func noContent(c *echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func apiErr(c *echo.Context, code int, msg string) error {
-	return c.JSON(code, envelope{Error: msg})
+// apiErr writes an error envelope. code is a stable snake_case identifier the
+// SPA maps to a localized message; msg stays as the English fallback.
+func apiErr(c *echo.Context, status int, code, msg string) error {
+	return c.JSON(status, envelope{Error: msg, Code: code})
+}
+
+// apiErrParams is apiErr with values the client interpolates into the message.
+func apiErrParams(c *echo.Context, status int, code, msg string, params map[string]any) error {
+	return c.JSON(status, envelope{Error: msg, Code: code, Params: params})
 }
 
 // nullableString returns nil for empty strings, otherwise a pointer to the string.

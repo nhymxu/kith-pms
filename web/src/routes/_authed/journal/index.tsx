@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
@@ -30,19 +31,28 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_authed/journal/")({
 	validateSearch: searchSchema,
 	component: JournalPage,
-	pendingComponent: () => (
-		<p className="text-sm font-base text-foreground/60 py-4">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-sm font-base text-destructive">
-			Failed to load journal.
-		</p>
-	),
+	pendingComponent: JournalPending,
+	errorComponent: JournalError,
 });
+
+function JournalPending() {
+	const { t } = useTranslation("common");
+	return (
+		<p className="text-sm font-base text-foreground/60 py-4">{t("loading")}</p>
+	);
+}
+
+function JournalError() {
+	const { t } = useTranslation("journal");
+	return (
+		<p className="text-sm font-base text-destructive">{t("page.loadFailed")}</p>
+	);
+}
 
 const PEOPLE_FILTER_KEY = "journal.filter.people_with_journal";
 
 function JournalPage() {
+	const { t } = useTranslation("journal");
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 
@@ -97,10 +107,10 @@ function JournalPage() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					Journal
+					{t("page.title")}
 				</h1>
 				<Button asChild>
-					<Link to="/journal/new">New Entry</Link>
+					<Link to="/journal/new">{t("page.newEntry")}</Link>
 				</Button>
 			</div>
 
@@ -111,7 +121,7 @@ function JournalPage() {
 						htmlFor="journal-from-date"
 						className="text-[11px] font-medium text-sub"
 					>
-						From
+						{t("filter.from")}
 					</label>
 					<input
 						id="journal-from-date"
@@ -135,7 +145,7 @@ function JournalPage() {
 						htmlFor="journal-to-date"
 						className="text-[11px] font-medium text-sub"
 					>
-						To
+						{t("filter.to")}
 					</label>
 					<input
 						id="journal-to-date"
@@ -170,7 +180,7 @@ function JournalPage() {
 							})
 						}
 					>
-						Clear dates
+						{t("filter.clearDates")}
 					</Button>
 				)}
 			</div>
@@ -178,7 +188,9 @@ function JournalPage() {
 			{/* People filter */}
 			<div className="space-y-1">
 				<div className="flex items-center justify-between">
-					<p className="text-[11px] font-medium text-sub">Filter by person</p>
+					<p className="text-[11px] font-medium text-sub">
+						{t("filter.byPerson")}
+					</p>
 					<label className="flex items-center gap-1.5 cursor-pointer select-none">
 						<input
 							type="checkbox"
@@ -190,7 +202,9 @@ function JournalPage() {
 							}}
 							className="accent-accent size-3"
 						/>
-						<span className="text-[11px] text-sub">With journal only</span>
+						<span className="text-[11px] text-sub">
+							{t("filter.withJournalOnly")}
+						</span>
 					</label>
 				</div>
 				{allPeople.items.length > 0 && (
@@ -244,7 +258,7 @@ function JournalPage() {
 								}
 								className="text-xs text-sub hover:text-ink"
 							>
-								Clear
+								{t("filter.clear")}
 							</button>
 						)}
 					</div>
@@ -254,7 +268,9 @@ function JournalPage() {
 			{/* Journal label filter */}
 			{allJournalLabels.length > 0 && (
 				<div className="space-y-1">
-					<p className="text-[11px] font-medium text-sub">Filter by label</p>
+					<p className="text-[11px] font-medium text-sub">
+						{t("filter.byLabel")}
+					</p>
 					<div className="flex flex-wrap gap-2">
 						{allJournalLabels.map((l) => {
 							const active = (search.labels ?? []).includes(l.id);
@@ -293,7 +309,7 @@ function JournalPage() {
 								}
 								className="text-xs text-sub hover:text-ink"
 							>
-								Clear
+								{t("filter.clear")}
 							</button>
 						)}
 					</div>

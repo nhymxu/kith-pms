@@ -10,6 +10,9 @@ import (
 	"github.com/nhymxu/kith-pms/internal/relationships"
 )
 
+// maxBulkLabelPeople caps the people accepted by one bulk label attach.
+const maxBulkLabelPeople = 500
+
 // PeopleLabelsBulkAPI handles bulk label and mesh-connect operations.
 type PeopleLabelsBulkAPI struct {
 	Svc       *people.LabelService
@@ -24,24 +27,30 @@ func (h *PeopleLabelsBulkAPI) BulkAssign(c *echo.Context) error {
 		PersonIDs []int64 `json:"person_ids"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if req.LabelID == 0 || len(req.PersonIDs) == 0 {
-		return apiErr(c, http.StatusBadRequest, "label_id and person_ids required")
+		return apiErr(c, http.StatusBadRequest, "label_and_people_required", "label_id and person_ids required")
 	}
 
-	if len(req.PersonIDs) > 500 {
-		return apiErr(c, http.StatusBadRequest, "max 500 people per request")
+	if len(req.PersonIDs) > maxBulkLabelPeople {
+		return apiErrParams(
+			c,
+			http.StatusBadRequest,
+			"too_many_people",
+			"max 500 people per request",
+			map[string]any{"max": maxBulkLabelPeople},
+		)
 	}
 
 	label, err := h.Svc.Get(c.Request().Context(), req.LabelID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if label == nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "label not found")
+		return apiErr(c, http.StatusUnprocessableEntity, "label_not_found", "label not found")
 	}
 
 	// Deduplicate so already_had_label count is accurate.
@@ -59,19 +68,20 @@ func (h *PeopleLabelsBulkAPI) BulkAssign(c *echo.Context) error {
 
 	invalid, err := h.PeopleSvc.ValidatePeopleExist(c.Request().Context(), req.PersonIDs)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if len(invalid) > 0 {
 		return c.JSON(http.StatusUnprocessableEntity, map[string]any{
 			"error":       "invalid person ids",
+			"code":        "invalid_person_ids",
 			"invalid_ids": invalid,
 		})
 	}
 
 	attached, err := h.Svc.BulkAttach(c.Request().Context(), req.LabelID, req.PersonIDs)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]int{
@@ -84,12 +94,12 @@ func (h *PeopleLabelsBulkAPI) BulkAssign(c *echo.Context) error {
 func (h *PeopleLabelsBulkAPI) ConnectAllPreview(c *echo.Context) error {
 	labelID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid label id")
+		return apiErr(c, http.StatusBadRequest, "invalid_label_id", "invalid label id")
 	}
 
 	ids, err := h.Svc.ListPersonIDsByLabelID(c.Request().Context(), labelID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	n := len(ids)
@@ -101,39 +111,46 @@ func (h *PeopleLabelsBulkAPI) ConnectAllPreview(c *echo.Context) error {
 func (h *PeopleLabelsBulkAPI) ConnectAll(c *echo.Context) error {
 	labelID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid label id")
+		return apiErr(c, http.StatusBadRequest, "invalid_label_id", "invalid label id")
 	}
 
 	var req struct {
 		RelationshipTypeID int64 `json:"relationship_type_id"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if req.RelationshipTypeID == 0 {
-		return apiErr(c, http.StatusBadRequest, "relationship_type_id required")
+		return apiErr(c, http.StatusBadRequest, "relationship_type_id_required", "relationship_type_id required")
 	}
 
 	created, skipped, total, err := h.RelSvc.BulkAttachMesh(c.Request().Context(), labelID, req.RelationshipTypeID)
 	if errors.Is(err, relationships.ErrTypeNotFound) {
-		return apiErr(c, http.StatusUnprocessableEntity, "relationship type not found")
+		return apiErr(c, http.StatusUnprocessableEntity, "relationship_type_not_found", "relationship type not found")
 	}
 
 	if errors.Is(err, relationships.ErrMeshTooLarge) {
-		return apiErr(c, http.StatusUnprocessableEntity, "label has too many members for mesh connect (max 500)")
+		return apiErrParams(
+			c,
+			http.StatusUnprocessableEntity,
+			"label_too_many_members",
+			"label has too many members for mesh connect (max 500)",
+			map[string]any{"max": relationships.MaxMeshMembers},
+		)
 	}
 
 	if errors.Is(err, relationships.ErrAsymmetricTypeNotAllowed) {
 		return apiErr(
 			c,
 			http.StatusUnprocessableEntity,
+			"mesh_asymmetric_type",
 			"asymmetric relationship types cannot be used for mesh connect",
 		)
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]int{"created": created, "skipped": skipped, "total_members": total})

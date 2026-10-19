@@ -85,7 +85,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 	if h.PeopleSvc != nil && want["people"] {
 		list, err := h.PeopleSvc.List(ctx, people.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		for _, p := range list.Items {
@@ -101,7 +101,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 	if h.JournalSvc != nil && want["journal"] {
 		list, err := h.JournalSvc.List(ctx, journal.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		for _, a := range list.Items {
@@ -117,7 +117,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 	if h.GiftsSvc != nil && want["gifts"] {
 		list, err := h.GiftsSvc.List(ctx, gifts.ListParams{Query: q, Page: 1, PageSize: searchLimitPerType})
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		for _, g := range list.Items {
@@ -141,7 +141,7 @@ func (h *SearchAPI) Search(c *echo.Context) error {
 
 		hits, err := h.NoteSvc.Search(ctx, q, searchLimitPerType)
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		for _, n := range hits {

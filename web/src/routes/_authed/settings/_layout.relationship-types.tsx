@@ -7,6 +7,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -26,6 +27,7 @@ import {
 	listRelationshipTypes,
 	updateRelationshipType,
 } from "#/endpoints/relationship-types";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import {
 	type RelationshipType,
@@ -45,6 +47,7 @@ interface RelTypeFormDialogProps {
 }
 
 function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const [apiError, setApiError] = useState<string | null>(null);
 
@@ -57,7 +60,7 @@ function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 			qc.invalidateQueries({ queryKey: keys.relationshipTypes.all });
 			onClose();
 		},
-		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
+		onError: (e) => setApiError(apiErrorMessage(e, t("common.saveError"))),
 	});
 
 	const form = useForm({
@@ -92,26 +95,35 @@ function RelTypeFormDialog({ initial, onClose }: RelTypeFormDialogProps) {
 			)}
 			<form.Field name="name">
 				{(f) => (
-					<FormField field={f} label="Name *" placeholder="e.g. Friend" />
+					<FormField
+						field={f}
+						label={t("relationshipTypes.form.name")}
+						placeholder={t("relationshipTypes.form.namePlaceholder")}
+					/>
 				)}
 			</form.Field>
 			<form.Field name="reverse_name">
 				{(f) => (
 					<FormField
 						field={f}
-						label="Reverse name (optional)"
-						placeholder="e.g. Friend of"
+						label={t("relationshipTypes.form.reverseName")}
+						placeholder={t("relationshipTypes.form.reverseNamePlaceholder")}
 					/>
 				)}
 			</form.Field>
 			<DialogFooter>
 				<Button type="button" variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-							{initial ? "Save changes" : "Create type"}
+						<SubmitButton
+							isPending={isSubmitting}
+							pendingLabel={t("common.saving")}
+						>
+							{initial
+								? t("common.saveChanges")
+								: t("relationshipTypes.form.create")}
 						</SubmitButton>
 					)}
 				</form.Subscribe>
@@ -127,6 +139,7 @@ function DeleteRelTypeDialog({
 	relType: RelationshipType;
 	onClose: () => void;
 }) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const mutation = useMutation({
 		mutationFn: () => deleteRelationshipType(relType.id),
@@ -138,22 +151,21 @@ function DeleteRelTypeDialog({
 	return (
 		<>
 			<DialogHeader>
-				<DialogTitle>Delete relationship type?</DialogTitle>
+				<DialogTitle>{t("relationshipTypes.delete.title")}</DialogTitle>
 				<DialogDescription>
-					Permanently delete "{relType.name}"? Existing relationships of this
-					type will be affected.
+					{t("relationshipTypes.delete.description", { name: relType.name })}
 				</DialogDescription>
 			</DialogHeader>
 			<DialogFooter>
 				<Button variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<Button
 					variant="destructive"
 					onClick={() => mutation.mutate()}
 					disabled={mutation.isPending}
 				>
-					{mutation.isPending ? "Deleting…" : "Delete"}
+					{mutation.isPending ? t("common.deleting") : t("common.delete")}
 				</Button>
 			</DialogFooter>
 		</>
@@ -171,6 +183,7 @@ interface RelationshipTypesListProps {
 }
 
 function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
+	const { t } = useTranslation("settings");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
@@ -179,7 +192,7 @@ function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
 	return (
 		<>
 			{data.length === 0 && (
-				<p className="text-[13px] text-sub">No relationship types yet.</p>
+				<p className="text-[13px] text-sub">{t("relationshipTypes.empty")}</p>
 			)}
 
 			<ul className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
@@ -196,7 +209,7 @@ function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
 						)}
 						{(rt.usage_count ?? 0) > 0 && (
 							<span className="font-mono text-[11px] text-sub">
-								{rt.usage_count} uses
+								{t("relationshipTypes.uses", { count: rt.usage_count })}
 							</span>
 						)}
 						<div className="ml-auto flex gap-1">
@@ -223,16 +236,17 @@ function RelationshipTypesList({ onDialogChange }: RelationshipTypesListProps) {
 }
 
 function RelationshipTypesPage() {
+	const { t } = useTranslation("settings");
 	const [dialog, setDialog] = useState<DialogMode>(null);
 
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					Relationship Types
+					{t("relationshipTypes.title")}
 				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Type
+					<Plus className="size-3 mr-1" /> {t("relationshipTypes.new")}
 				</Button>
 			</div>
 
@@ -248,8 +262,8 @@ function RelationshipTypesPage() {
 					<DialogHeader>
 						<DialogTitle>
 							{dialog?.kind === "edit"
-								? "Edit relationship type"
-								: "New relationship type"}
+								? t("relationshipTypes.dialog.editTitle")
+								: t("relationshipTypes.dialog.newTitle")}
 						</DialogTitle>
 					</DialogHeader>
 					<RelTypeFormDialog

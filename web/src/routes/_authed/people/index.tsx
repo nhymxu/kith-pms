@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { PageSizeSelector } from "#/components/page-size-selector";
 import { Button } from "#/components/ui/button";
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authed/people/")({
 });
 
 function PeoplePage() {
+	const { t } = useTranslation("people");
 	const navigate = useNavigate();
 	const search = Route.useSearch();
 	const {
@@ -325,10 +327,10 @@ function PeoplePage() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					People
+					{t("list.title")}
 				</h1>
 				<Button asChild>
-					<Link to="/people/new">New Person</Link>
+					<Link to="/people/new">{t("list.newPerson")}</Link>
 				</Button>
 			</div>
 			<PeopleTable

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -28,6 +29,7 @@ export function ConnectMembersDialog({
 	open,
 	onClose,
 }: ConnectMembersDialogProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [typeId, setTypeId] = useState<string>("");
 	const [resultMsg, setResultMsg] = useState<string | null>(null);
@@ -42,16 +44,16 @@ export function ConnectMembersDialog({
 		queryKey: keys.relationshipTypes.list(),
 		queryFn: listRelationshipTypes,
 		enabled: open,
-		select: (types) => types.filter((t) => t.inverse_type_id == null),
+		select: (types) => types.filter((rt) => rt.inverse_type_id == null),
 	});
 
 	const mutation = useMutation({
 		mutationFn: () => connectAllMembers(label.id, Number(typeId)),
 		onSuccess: (data) => {
-			setResultMsg(`Created ${data.created} relationships`);
+			setResultMsg(t("connectMembers.created", { count: data.created }));
 			qc.invalidateQueries({ queryKey: keys.relationships.graph() });
 		},
-		onError: () => setResultMsg("Failed to connect members"),
+		onError: () => setResultMsg(t("connectMembers.failed")),
 	});
 
 	const preview = previewQuery.data;
@@ -68,21 +70,22 @@ export function ConnectMembersDialog({
 		<Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Connect members of "{label.name}"</DialogTitle>
+					<DialogTitle>
+						{t("connectMembers.title", { label: label.name })}
+					</DialogTitle>
 					<DialogDescription>
-						Creates relationships between all members of this label.
+						{t("connectMembers.description")}
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-4">
 					<div>
 						<p className="text-sm font-medium text-sub mb-1.5">
-							Relationship type
+							{t("connectMembers.relationshipType")}
 						</p>
 						{typesQuery.data?.length === 0 ? (
 							<p className="text-sm text-sub">
-								No symmetric relationship types available. Create one (e.g.
-								Co-worker) in Settings → Relationship Types.
+								{t("connectMembers.noSymmetricTypes")}
 							</p>
 						) : (
 							<select
@@ -90,10 +93,10 @@ export function ConnectMembersDialog({
 								onChange={(e) => setTypeId(e.target.value)}
 								className="w-full h-10 border-field-bw border-field-line rounded-md bg-field px-2 text-sm"
 							>
-								<option value="">Select…</option>
-								{typesQuery.data?.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.name}
+								<option value="">{t("connectMembers.select")}</option>
+								{typesQuery.data?.map((rt) => (
+									<option key={rt.id} value={rt.id}>
+										{rt.name}
 									</option>
 								))}
 							</select>
@@ -101,20 +104,23 @@ export function ConnectMembersDialog({
 					</div>
 
 					{previewQuery.isLoading && (
-						<p className="text-sm text-sub">Loading preview…</p>
+						<p className="text-sm text-sub">
+							{t("connectMembers.loadingPreview")}
+						</p>
 					)}
 
 					{preview && preview.member_count < 2 && (
 						<p className="text-sm text-sub">
-							Need at least 2 members to connect. This label has{" "}
-							{preview.member_count}.
+							{t("connectMembers.tooFew", { members: preview.member_count })}
 						</p>
 					)}
 
 					{preview && preview.member_count >= 2 && (
 						<p className="text-sm text-sub">
-							Will create up to {preview.pair_count} relationships between{" "}
-							{preview.member_count} people. Existing relationships are skipped.
+							{t("connectMembers.willCreate", {
+								pairs: preview.pair_count,
+								members: preview.member_count,
+							})}
 						</p>
 					)}
 
@@ -125,15 +131,17 @@ export function ConnectMembersDialog({
 
 				<DialogFooter>
 					<Button variant="neutral" onClick={handleClose}>
-						Cancel
+						{t("connectMembers.cancel")}
 					</Button>
 					<Button
 						onClick={() => mutation.mutate()}
 						disabled={!canConnect || mutation.isPending}
 					>
 						{mutation.isPending
-							? "Connecting…"
-							: `Connect ${preview?.pair_count ?? ""} pairs`}
+							? t("connectMembers.connecting")
+							: t("connectMembers.connectPairs", {
+									pairs: preview?.pair_count ?? "",
+								})}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

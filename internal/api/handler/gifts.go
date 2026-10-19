@@ -78,7 +78,7 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 		Page:      page,
 	})
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -99,22 +99,22 @@ func (h *GiftsAPI) List(c *echo.Context) error {
 func (h *GiftsAPI) Create(c *echo.Context) error {
 	var req giftRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusBadRequest, "title is required")
+		return apiErr(c, http.StatusBadRequest, "title_required", "title is required")
 	}
 
 	if req.PersonID <= 0 {
-		return apiErr(c, http.StatusBadRequest, "person_id is required")
+		return apiErr(c, http.StatusBadRequest, "person_id_required", "person_id is required")
 	}
 
 	g := giftFromRequest(req)
 
 	id, err := h.Svc.Create(c.Request().Context(), g)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	g.ID = id
@@ -137,16 +137,16 @@ func (h *GiftsAPI) Create(c *echo.Context) error {
 func (h *GiftsAPI) GetByID(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	g, err := h.Svc.GetByIDWithPerson(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, g)
@@ -177,49 +177,67 @@ var giftImageAllowedTypes = map[string]bool{
 func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	maxGiftImageBytes := config.C.EffectiveMaxUploadBytes()
-	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxGiftImageBytes/(1024*1024))
+	maxMB := maxGiftImageBytes / (1024 * 1024)
+	tooLargeMsg := fmt.Sprintf("file too large (max %dMB)", maxMB)
 
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxGiftImageBytes+1024*1024)
 
 	file, err := c.FormFile("image")
 	if err != nil {
 		if strings.Contains(err.Error(), "request body too large") {
-			return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
+			return apiErrParams(
+				c,
+				http.StatusRequestEntityTooLarge,
+				"file_too_large",
+				tooLargeMsg,
+				map[string]any{"max_mb": maxMB},
+			)
 		}
 
-		return apiErr(c, http.StatusBadRequest, "no file uploaded")
+		return apiErr(c, http.StatusBadRequest, "no_file_uploaded", "no file uploaded")
 	}
 
 	if file.Size > maxGiftImageBytes {
-		return apiErr(c, http.StatusRequestEntityTooLarge, tooLargeMsg)
+		return apiErrParams(
+			c,
+			http.StatusRequestEntityTooLarge,
+			"file_too_large",
+			tooLargeMsg,
+			map[string]any{"max_mb": maxMB},
+		)
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to open file")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to open file")
 	}
 	defer func() { _ = src.Close() }()
 
 	detected, err := sniff512(src)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "failed to read file")
+		return apiErr(c, http.StatusInternalServerError, "internal", "failed to read file")
 	}
 
 	detected = strings.TrimSpace(strings.SplitN(detected, ";", 2)[0])
 	if !giftImageAllowedTypes[detected] {
-		return apiErr(c, http.StatusUnprocessableEntity, "unsupported file type: use jpeg, png, gif, or webp")
+		return apiErr(
+			c,
+			http.StatusUnprocessableEntity,
+			"unsupported_file_type",
+			"unsupported file type: use jpeg, png, gif, or webp",
+		)
 	}
 
 	if err := h.Svc.UploadImage(c.Request().Context(), id, src, file); err != nil {
 		if strings.Contains(err.Error(), "file service not configured") {
-			return apiErr(c, http.StatusInternalServerError, "file storage not configured")
+			return apiErr(c, http.StatusInternalServerError, "internal", "file storage not configured")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"uploaded": true})
@@ -240,15 +258,15 @@ func (h *GiftsAPI) UploadImage(c *echo.Context) error {
 func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.Svc.DeleteImage(c.Request().Context(), id); err != nil {
 		if err == sql.ErrNoRows {
-			return apiErr(c, http.StatusNotFound, "not found")
+			return apiErr(c, http.StatusNotFound, "not_found", "not found")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -269,32 +287,32 @@ func (h *GiftsAPI) DeleteImage(c *echo.Context) error {
 func (h *GiftsAPI) GetImage(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	g, err := h.Svc.GetByID(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if g.ImagePath == "" {
-		return apiErr(c, http.StatusNotFound, "no image")
+		return apiErr(c, http.StatusNotFound, "no_image", "no image")
 	}
 
 	fullPath := filepath.Join(h.GiftStoragePath, g.ImagePath)
 
 	cleanPath := filepath.Clean(fullPath)
 	if !strings.HasPrefix(cleanPath, filepath.Clean(h.GiftStoragePath)) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	f, err := os.Open(cleanPath)
 	if err != nil {
-		return apiErr(c, http.StatusNotFound, "image file not found")
+		return apiErr(c, http.StatusNotFound, "image_file_not_found", "image file not found")
 	}
 	defer func() { _ = f.Close() }()
 
@@ -319,23 +337,23 @@ func (h *GiftsAPI) GetImage(c *echo.Context) error {
 func (h *GiftsAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req giftRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusBadRequest, "title is required")
+		return apiErr(c, http.StatusBadRequest, "title_required", "title is required")
 	}
 
 	g := giftFromRequest(req)
 
 	g.ID = id
 	if err := h.Svc.Update(c.Request().Context(), g); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, g)
@@ -355,11 +373,11 @@ func (h *GiftsAPI) Update(c *echo.Context) error {
 func (h *GiftsAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -379,7 +397,7 @@ func (h *GiftsAPI) Delete(c *echo.Context) error {
 func (h *GiftsAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	list, err := h.Svc.List(c.Request().Context(), gifts.ListParams{
@@ -388,7 +406,7 @@ func (h *GiftsAPI) ListByPerson(c *echo.Context) error {
 		Page:     1,
 	})
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)

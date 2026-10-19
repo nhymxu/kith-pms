@@ -51,7 +51,7 @@ func withServerConfig(s settings.UserSettings) settingsResponse {
 func (h *SettingsAPI) Get(c *echo.Context) error {
 	s, err := h.Svc.Get(c.Request().Context())
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, withServerConfig(s))
@@ -73,29 +73,50 @@ func (h *SettingsAPI) Get(c *echo.Context) error {
 func (h *SettingsAPI) Update(c *echo.Context) error {
 	var req settings.UserSettings
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	updated, err := h.Svc.Update(c.Request().Context(), req)
 	if err != nil {
-		switch {
-		case errors.Is(err, settings.ErrInvalidDateFormat),
-			errors.Is(err, settings.ErrInvalidTimeFormat),
-			errors.Is(err, settings.ErrInvalidTimezone),
-			errors.Is(err, settings.ErrInvalidDefaultPeopleSort),
-			errors.Is(err, settings.ErrInvalidDefaultPageSize),
-			errors.Is(err, settings.ErrInvalidDashboardFavoritesCount),
-			errors.Is(err, settings.ErrInvalidDashboardLastContactCount),
-			errors.Is(err, settings.ErrInvalidTheme),
-			errors.Is(err, settings.ErrInvalidNavLayout),
-			errors.Is(err, settings.ErrInvalidNumberFormat),
-			errors.Is(err, settings.ErrInvalidRelationshipDisplay),
-			errors.Is(err, settings.ErrInvalidSearchScope):
-			return apiErr(c, http.StatusUnprocessableEntity, err.Error())
-		default:
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+		if code, found := settingsErrCode(err); found {
+			return apiErr(c, http.StatusUnprocessableEntity, code, err.Error())
 		}
+
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, withServerConfig(updated))
+}
+
+// settingsErrCodes maps each settings validation sentinel to its client code.
+var settingsErrCodes = []struct {
+	err  error
+	code string
+}{
+	{settings.ErrInvalidDateFormat, "settings_date_format_invalid"},
+	{settings.ErrInvalidTimeFormat, "settings_time_format_invalid"},
+	{settings.ErrInvalidTimezone, "settings_timezone_invalid"},
+	{settings.ErrInvalidRetentionDays, "settings_retention_days_invalid"},
+	{settings.ErrInvalidNetworkColorBy, "settings_network_color_by_invalid"},
+	{settings.ErrInvalidNetworkOnlyMineDepth, "settings_network_depth_invalid"},
+	{settings.ErrInvalidDefaultPeopleSort, "settings_people_sort_invalid"},
+	{settings.ErrInvalidDefaultPageSize, "settings_page_size_invalid"},
+	{settings.ErrInvalidDashboardFavoritesCount, "settings_dashboard_favorites_invalid"},
+	{settings.ErrInvalidDashboardLastContactCount, "settings_dashboard_last_contact_invalid"},
+	{settings.ErrInvalidTheme, "settings_theme_invalid"},
+	{settings.ErrInvalidNavLayout, "settings_nav_layout_invalid"},
+	{settings.ErrInvalidNumberFormat, "settings_number_format_invalid"},
+	{settings.ErrInvalidRelationshipDisplay, "settings_relationship_display_invalid"},
+	{settings.ErrInvalidLanguage, "settings_language_invalid"},
+	{settings.ErrInvalidSearchScope, "settings_search_scope_invalid"},
+}
+
+func settingsErrCode(err error) (string, bool) {
+	for _, e := range settingsErrCodes {
+		if errors.Is(err, e.err) {
+			return e.code, true
+		}
+	}
+
+	return "", false
 }

@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import type { ElementType, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 export function DashboardCard({
 	title,
@@ -18,6 +19,7 @@ export function DashboardCard({
 	children: ReactNode;
 	className?: string;
 }) {
+	const { t } = useTranslation("dashboard");
 	return (
 		<div
 			className={`border-bw border-line rounded-base bg-panel shadow-shadow ${className}`}
@@ -37,7 +39,7 @@ export function DashboardCard({
 						type="button"
 						className="size-6 shrink-0 flex items-center justify-center rounded text-sub hover:text-ink transition-colors"
 						onClick={onRefresh}
-						aria-label={`Refresh ${title}`}
+						aria-label={t("refresh", { title })}
 					>
 						<RefreshCw
 							className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`}

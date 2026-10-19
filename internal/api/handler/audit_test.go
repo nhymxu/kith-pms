@@ -73,6 +73,7 @@ func TestAuditCleanup_DeletesEntries(t *testing.T) {
 		NavLayout:                 "top",
 		NumberFormat:              "1,234.56",
 		RelationshipDisplay:       "plain",
+		Language:                  "en",
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}); err != nil {
 		t.Fatalf("update settings: %v", err)

@@ -34,7 +34,7 @@ type AuditAPI struct {
 // @Router       /audit [get]
 func (h *AuditAPI) List(c *echo.Context) error {
 	if h.Svc == nil {
-		return apiErr(c, http.StatusNotImplemented, "audit not configured")
+		return apiErr(c, http.StatusNotImplemented, "not_implemented", "audit not configured")
 	}
 
 	entityType := audit.EntityType(c.QueryParam("entity_type"))
@@ -70,7 +70,7 @@ func (h *AuditAPI) List(c *echo.Context) error {
 
 	total, err := h.Svc.Count(c.Request().Context(), listParams)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	type row struct {
@@ -119,12 +119,12 @@ func (h *AuditAPI) List(c *echo.Context) error {
 // @Router       /audit/cleanup [post]
 func (h *AuditAPI) Cleanup(c *echo.Context) error {
 	if h.Svc == nil || h.SettingsSvc == nil {
-		return apiErr(c, http.StatusNotImplemented, "audit not configured")
+		return apiErr(c, http.StatusNotImplemented, "not_implemented", "audit not configured")
 	}
 
 	days, err := h.SettingsSvc.GetRetentionDays(c.Request().Context())
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if days <= 0 {
@@ -133,7 +133,7 @@ func (h *AuditAPI) Cleanup(c *echo.Context) error {
 
 	n, err := h.Svc.Purge(c.Request().Context(), days)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return c.JSON(http.StatusOK, map[string]int64{"deleted": n})

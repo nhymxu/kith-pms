@@ -144,7 +144,7 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 		Sort:              sort,
 	})
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -165,16 +165,16 @@ func (h *PeopleAPI) List(c *echo.Context) error {
 func (h *PeopleAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	detail := PersonDetail{Person: p}
@@ -201,16 +201,21 @@ func (h *PeopleAPI) Get(c *echo.Context) error {
 func (h *PeopleAPI) Create(c *echo.Context) error {
 	var req personRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Name) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "name is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "name_required", "name is required")
 	}
 
 	if req.DateOfBirth != "" {
 		if _, err := time.Parse("2006-01-02", req.DateOfBirth); err != nil {
-			return apiErr(c, http.StatusUnprocessableEntity, "date_of_birth must be YYYY-MM-DD")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"date_of_birth_invalid",
+				"date_of_birth must be YYYY-MM-DD",
+			)
 		}
 	}
 
@@ -218,7 +223,7 @@ func (h *PeopleAPI) Create(c *echo.Context) error {
 
 	id, err := h.Svc.Create(c.Request().Context(), p, contacts, locations)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if req.CreateBirthdayReminder && req.DateOfBirth != "" && h.ReminderSvc != nil {
@@ -246,37 +251,42 @@ func (h *PeopleAPI) Create(c *echo.Context) error {
 func (h *PeopleAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	existing, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if existing == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	var req personRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Name) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "name is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "name_required", "name is required")
 	}
 
 	if req.DateOfBirth != "" {
 		if _, err := time.Parse("2006-01-02", req.DateOfBirth); err != nil {
-			return apiErr(c, http.StatusUnprocessableEntity, "date_of_birth must be YYYY-MM-DD")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"date_of_birth_invalid",
+				"date_of_birth must be YYYY-MM-DD",
+			)
 		}
 	}
 
 	p, contacts, locations := mapPersonRequest(id, req)
 
 	if err := h.Svc.Update(c.Request().Context(), p, contacts, locations); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if h.ReminderSvc != nil {
@@ -305,26 +315,26 @@ func (h *PeopleAPI) Update(c *echo.Context) error {
 func (h *PeopleAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
 		switch {
 		case errors.Is(err, people.ErrAlreadyDeleted):
-			return apiErr(c, http.StatusConflict, "person already deleted")
+			return apiErr(c, http.StatusConflict, "person_already_deleted", "person already deleted")
 		case errors.Is(err, people.ErrCannotDeleteSelf):
-			return apiErr(c, http.StatusConflict, "cannot delete the self profile")
+			return apiErr(c, http.StatusConflict, "self_profile_delete", "cannot delete the self profile")
 		default:
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 	}
 
@@ -346,24 +356,24 @@ func (h *PeopleAPI) Delete(c *echo.Context) error {
 func (h *PeopleAPI) Restore(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Restore(c.Request().Context(), id); err != nil {
 		if errors.Is(err, people.ErrNotDeleted) {
-			return apiErr(c, http.StatusConflict, "person is not deleted")
+			return apiErr(c, http.StatusConflict, "person_not_deleted", "person is not deleted")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -385,26 +395,26 @@ func (h *PeopleAPI) Restore(c *echo.Context) error {
 func (h *PeopleAPI) Archive(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Archive(c.Request().Context(), id); err != nil {
 		switch {
 		case errors.Is(err, people.ErrAlreadyArchived):
-			return apiErr(c, http.StatusConflict, "person already archived")
+			return apiErr(c, http.StatusConflict, "person_already_archived", "person already archived")
 		case errors.Is(err, people.ErrCannotArchiveSelf):
-			return apiErr(c, http.StatusConflict, "cannot archive the self profile")
+			return apiErr(c, http.StatusConflict, "self_profile_archive", "cannot archive the self profile")
 		default:
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 	}
 
@@ -427,24 +437,24 @@ func (h *PeopleAPI) Archive(c *echo.Context) error {
 func (h *PeopleAPI) Unarchive(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	p, err := h.Svc.Get(c.Request().Context(), id)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if p == nil {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Unarchive(c.Request().Context(), id); err != nil {
 		if errors.Is(err, people.ErrNotArchived) {
-			return apiErr(c, http.StatusConflict, "person is not archived")
+			return apiErr(c, http.StatusConflict, "person_not_archived", "person is not archived")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)

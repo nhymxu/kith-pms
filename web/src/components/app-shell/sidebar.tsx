@@ -11,6 +11,7 @@ import {
 	StickyNote,
 	Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getMe } from "#/endpoints/me";
 import { getAvatarUrl } from "#/endpoints/people";
 import { useAuth } from "#/lib/auth-context";
@@ -18,15 +19,15 @@ import { keys } from "#/query-keys";
 import { NavLink } from "./nav-link";
 
 export const NAV_ITEMS = [
-	{ to: "/", icon: LayoutDashboard, label: "Dashboard" },
-	{ to: "/people", icon: Users, label: "People" },
-	{ to: "/network", icon: Network, label: "Network" },
-	{ to: "/journal", icon: BookOpen, label: "Journal" },
-	{ to: "/notes", icon: StickyNote, label: "Notes" },
-	{ to: "/gifts", icon: Gift, label: "Gifts" },
-	{ to: "/important-dates", icon: Calendar, label: "Dates" },
-	{ to: "/reminders", icon: Heart, label: "Reminders" },
-	{ to: "/audit", icon: BarChart3, label: "Audit" },
+	{ to: "/", icon: LayoutDashboard, labelKey: "nav.dashboard" },
+	{ to: "/people", icon: Users, labelKey: "nav.people" },
+	{ to: "/network", icon: Network, labelKey: "nav.network" },
+	{ to: "/journal", icon: BookOpen, labelKey: "nav.journal" },
+	{ to: "/notes", icon: StickyNote, labelKey: "nav.notes" },
+	{ to: "/gifts", icon: Gift, labelKey: "nav.gifts" },
+	{ to: "/important-dates", icon: Calendar, labelKey: "nav.dates" },
+	{ to: "/reminders", icon: Heart, labelKey: "nav.reminders" },
+	{ to: "/audit", icon: BarChart3, labelKey: "nav.audit" },
 ] as const;
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ interface SidebarProps {
 }
 
 function SidebarFooter() {
+	const { t } = useTranslation();
 	const { user } = useAuth();
 
 	const { data: profile } = useQuery({
@@ -48,8 +50,8 @@ function SidebarFooter() {
 	const displayName = profile
 		? profile.nickname || profile.name
 		: user
-			? `User #${user.id}`
-			: "Account";
+			? t("user.fallbackName", { id: user.id })
+			: t("user.account");
 
 	const initials = profile
 		? (profile.nickname || profile.name).charAt(0).toUpperCase()
@@ -77,11 +79,11 @@ function SidebarFooter() {
 				<div className="truncate">{displayName}</div>
 				<div className="text-[11px] font-normal text-sub truncate">
 					<Link to="/me" className="hover:text-ink transition-colors">
-						Self profile
+						{t("nav.selfProfile")}
 					</Link>
 					{" · "}
 					<Link to="/settings" className="hover:text-ink transition-colors">
-						Settings
+						{t("nav.settings")}
 					</Link>
 				</div>
 			</div>
@@ -90,6 +92,7 @@ function SidebarFooter() {
 }
 
 export function Sidebar({ onNavClick, showFooter = false }: SidebarProps) {
+	const { t } = useTranslation();
 	return (
 		<div className="flex h-full flex-col bg-sidebar">
 			<div className="flex h-14 items-center border-b border-line px-5 shrink-0">
@@ -102,7 +105,7 @@ export function Sidebar({ onNavClick, showFooter = false }: SidebarProps) {
 						key={item.to}
 						to={item.to}
 						icon={item.icon}
-						label={item.label}
+						label={t(item.labelKey)}
 						onClick={onNavClick}
 					/>
 				))}

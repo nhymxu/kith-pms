@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import {
@@ -22,15 +23,24 @@ import { keys } from "#/query-keys";
 
 export const Route = createFileRoute("/_authed/journal/$entryId/")({
 	component: JournalEntryPage,
-	pendingComponent: () => (
-		<p className="text-sm font-base text-foreground/60">Loading…</p>
-	),
-	errorComponent: () => (
-		<p className="text-sm font-base text-destructive">Entry not found.</p>
-	),
+	pendingComponent: EntryPending,
+	errorComponent: EntryError,
 });
 
+function EntryPending() {
+	const { t } = useTranslation("common");
+	return <p className="text-sm font-base text-foreground/60">{t("loading")}</p>;
+}
+
+function EntryError() {
+	const { t } = useTranslation("journal");
+	return (
+		<p className="text-sm font-base text-destructive">{t("page.notFound")}</p>
+	);
+}
+
 function JournalEntryPage() {
+	const { t } = useTranslation("journal");
 	const { entryId } = Route.useParams();
 	const id = Number(entryId);
 	const navigate = useNavigate();
@@ -55,7 +65,7 @@ function JournalEntryPage() {
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
 					<Link to="/journal" className="text-[12px] text-sub hover:text-ink">
-						← Journal
+						{t("detail.back")}
 					</Link>
 					<h1 className="text-[20px] font-semibold tracking-tight text-ink font-display">
 						{data.title}
@@ -64,11 +74,11 @@ function JournalEntryPage() {
 				<div className="flex gap-2">
 					<Button variant="neutral" asChild>
 						<Link to="/journal/$entryId/edit" params={{ entryId }}>
-							Edit
+							{t("detail.edit")}
 						</Link>
 					</Button>
 					<Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-						Delete
+						{t("delete.confirm")}
 					</Button>
 				</div>
 			</div>
@@ -78,7 +88,7 @@ function JournalEntryPage() {
 					<CardTitle className="font-mono text-[12px] text-sub">
 						{formatDate(data.occurred_at_date)}
 						{data.occurred_at_time
-							? ` at ${formatTime(data.occurred_at_time)}`
+							? ` ${t("detail.atTime", { time: formatTime(data.occurred_at_time) })}`
 							: ""}
 					</CardTitle>
 				</CardHeader>
@@ -86,7 +96,7 @@ function JournalEntryPage() {
 					{data.labels.length > 0 && (
 						<div>
 							<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
-								Labels
+								{t("detail.labels")}
 							</p>
 							<div className="flex flex-wrap gap-1.5">
 								{data.labels.map((l) => (
@@ -97,7 +107,7 @@ function JournalEntryPage() {
 					)}
 					<div>
 						<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
-							People
+							{t("detail.people")}
 						</p>
 						{data.people.length > 0 ? (
 							<div className="flex flex-wrap gap-1.5">
@@ -106,19 +116,19 @@ function JournalEntryPage() {
 								))}
 							</div>
 						) : (
-							<p className="text-[13px] text-sub">No people linked.</p>
+							<p className="text-[13px] text-sub">{t("detail.noPeople")}</p>
 						)}
 					</div>
 					<div>
 						<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-1">
-							Notes
+							{t("detail.notes")}
 						</p>
 						{data.content ? (
 							<p className="text-[13px] text-ink whitespace-pre-wrap leading-relaxed">
 								{data.content}
 							</p>
 						) : (
-							<p className="text-[13px] text-sub">No notes.</p>
+							<p className="text-[13px] text-sub">{t("detail.noNotes")}</p>
 						)}
 					</div>
 				</CardContent>
@@ -127,22 +137,23 @@ function JournalEntryPage() {
 			<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete journal entry?</DialogTitle>
+						<DialogTitle>{t("delete.title")}</DialogTitle>
 						<DialogDescription>
-							This will permanently delete "{data.title}". This action cannot be
-							undone.
+							{t("delete.description", { title: data.title })}
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmOpen(false)}>
-							Cancel
+							{t("delete.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
 							onClick={() => deleteMutation.mutate()}
 							disabled={deleteMutation.isPending}
 						>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+							{deleteMutation.isPending
+								? t("delete.deleting")
+								: t("delete.confirm")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

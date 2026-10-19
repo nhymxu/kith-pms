@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const;
 
 interface PageSizeSelectorProps {
@@ -13,10 +15,11 @@ export function PageSizeSelector({
 	onChange,
 	onReset,
 }: PageSizeSelectorProps) {
+	const { t } = useTranslation();
 	return (
 		<div className="flex items-center gap-1.5">
 			<label htmlFor="page-size-select" className="text-[12px] text-sub">
-				Rows
+				{t("pagination.rows")}
 			</label>
 			<select
 				id="page-size-select"
@@ -36,7 +39,7 @@ export function PageSizeSelector({
 					onClick={onReset}
 					className="text-[11px] text-sub hover:text-ink"
 				>
-					Reset
+					{t("pagination.reset")}
 				</button>
 			)}
 		</div>

@@ -1,0 +1,104 @@
+{
+	"page": {
+		"title": "Nhắc nhở",
+		"newReminder": "Nhắc nhở mới",
+		"newTitle": "Nhắc nhở mới",
+		"editTitle": "Sửa nhắc nhở",
+		"tabAll": "Tất cả",
+		"notFound": "Không tìm thấy nhắc nhở."
+	},
+	"list": {
+		"empty": "Không tìm thấy nhắc nhở nào."
+	},
+	"table": {
+		"title": "Tiêu đề",
+		"person": "Người",
+		"dueDate": "Hạn",
+		"recurrence": "Lặp lại",
+		"status": "Trạng thái"
+	},
+	"status": {
+		"done": "Xong",
+		"overdue": "Quá hạn",
+		"upcoming": "Sắp tới"
+	},
+	"complete": {
+		"action": "Đánh dấu xong"
+	},
+	"days": {
+		"sun": "CN",
+		"mon": "T2",
+		"tue": "T3",
+		"wed": "T4",
+		"thu": "T5",
+		"fri": "T6",
+		"sat": "T7"
+	},
+	"units": {
+		"days": "ngày",
+		"weeks": "tuần",
+		"months": "tháng"
+	},
+	"daysBefore": {
+		"onTheDay": "Vào ngày đó",
+		"oneDay": "Trước 1 ngày",
+		"threeDays": "Trước 3 ngày",
+		"oneWeek": "Trước 1 tuần",
+		"twoWeeks": "Trước 2 tuần",
+		"oneMonth": "Trước 1 tháng"
+	},
+	"recurrence": {
+		"daily": "Hằng ngày",
+		"weekly": "Hằng tuần",
+		"monthly": "Hằng tháng",
+		"yearly": "Hằng năm",
+		"customInterval": "Khoảng tùy chọn",
+		"dayOfWeek": "Thứ trong tuần",
+		"relativeContact": "Sau lần liên hệ gần nhất",
+		"everyDays_other": "Mỗi {{count}} ngày",
+		"everyWeeks_other": "Mỗi {{count}} tuần",
+		"everyMonths_other": "Mỗi {{count}} tháng",
+		"everyDay": "Mỗi {{day}}",
+		"afterContact": "{{interval}} ngày sau khi liên hệ",
+		"recurring": "Lặp lại"
+	},
+	"form": {
+		"loading": "Đang tải biểu mẫu…",
+		"save": "Lưu nhắc nhở",
+		"create": "Tạo nhắc nhở",
+		"update": "Cập nhật nhắc nhở",
+		"saving": "Đang lưu…",
+		"saveFailed": "Không thể lưu nhắc nhở",
+		"title": "Tiêu đề",
+		"titlePlaceholder": "Gọi nha sĩ",
+		"dueDate": "Hạn",
+		"person": "Người (tùy chọn)",
+		"noPerson": "Không có người",
+		"notes": "Ghi chú",
+		"notesPlaceholder": "Ghi chú (tùy chọn)…",
+		"birthdayReminder": "Nhắc sinh nhật",
+		"birthdayHint": "Chọn một người có ngày sinh. Hạn được tính tự động.",
+		"remindMe": "Nhắc tôi",
+		"recurring": "Lặp lại",
+		"repeat": "Lặp",
+		"every": "Mỗi",
+		"day": "Thứ",
+		"daysAfterEntry": "ngày sau nhật ký gần nhất",
+		"endDate": "Ngày kết thúc (tùy chọn)"
+	},
+	"detail": {
+		"edit": "Sửa",
+		"details": "Chi tiết",
+		"status": "Trạng thái",
+		"due": "Hạn",
+		"person": "Người",
+		"notes": "Ghi chú"
+	},
+	"delete": {
+		"title": "Xóa nhắc nhở?",
+		"description": "Nhắc nhở \"{{title}}\" sẽ bị xóa vĩnh viễn. Không thể hoàn tác.",
+		"cancel": "Hủy",
+		"confirm": "Xóa",
+		"deleting": "Đang xóa…"
+	}
+}

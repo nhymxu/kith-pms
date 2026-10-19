@@ -1,0 +1,84 @@
+{
+	"save": "Save",
+	"cancel": "Cancel",
+	"delete": "Delete",
+	"loading": "Loading…",
+	"saving": "Saving…",
+	"close": "Close",
+	"auth": {
+		"signIn": "Sign in",
+		"signingIn": "Signing in…",
+		"password": "Password",
+		"passwordRequired": "Password is required",
+		"loginFailed": "Login failed"
+	},
+	"errors": {
+		"somethingWentWrong": "Something went wrong",
+		"unexpected": "An unexpected error occurred.",
+		"goHome": "Go home",
+		"pageNotFound": "Page not found."
+	},
+	"nav": {
+		"dashboard": "Dashboard",
+		"people": "People",
+		"network": "Network",
+		"journal": "Journal",
+		"notes": "Notes",
+		"gifts": "Gifts",
+		"dates": "Dates",
+		"reminders": "Reminders",
+		"audit": "Audit",
+		"settings": "Settings",
+		"selfProfile": "Self profile",
+		"navigation": "Navigation",
+		"open": "Open navigation",
+		"primary": "Primary navigation"
+	},
+	"user": {
+		"account": "Account",
+		"fallbackName": "User #{{id}}"
+	},
+	"userMenu": {
+		"selfProfile": "Self Profile",
+		"logout": "Log out"
+	},
+	"footer": {
+		"version": "Version:",
+		"load": "Load: {{ms}}ms",
+		"timezone": "Timezone: {{timezone}}"
+	},
+	"pagination": {
+		"rows": "Rows",
+		"reset": "Reset"
+	},
+	"table": {
+		"selectAll": "Select all",
+		"selectRow": "Select row",
+		"noResults": "No results found.",
+		"searchPlaceholder": "Search…",
+		"clearSearch": "Clear search",
+		"rowsOf": "{{shown}} of {{total}} rows",
+		"pageOf": "Page {{page}} of {{pages}}",
+		"firstPage": "First page",
+		"previousPage": "Previous page",
+		"nextPage": "Next page",
+		"lastPage": "Last page"
+	},
+	"imageCrop": {
+		"adjustTitle": "Adjust image",
+		"cropTitle": "Crop image",
+		"freeformHint": "Drag the corners to choose the crop area, or skip cropping to keep the whole image.",
+		"processFailed": "Couldn't process this image. Try a different file.",
+		"cropFailed": "Couldn't crop this image. Try a different file.",
+		"skip": "Skip crop",
+		"processing": "Processing…",
+		"apply": "Apply",
+		"saveCrop": "Save crop"
+	},
+	"imagePick": {
+		"onlyAllowed": "Only {{types}} images are allowed.",
+		"tooLarge": "File must be under {{size}} MB.",
+		"unreadable": "Couldn't read this image.",
+		"unreadableHeic": "Couldn't read this HEIC image."
+	}
+}

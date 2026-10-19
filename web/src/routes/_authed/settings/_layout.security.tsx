@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
@@ -15,7 +16,10 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { changePassword, logoutAll } from "#/endpoints/auth";
+import { ApiError } from "#/lib/api-client";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { useAuth } from "#/lib/auth-context";
+import i18n from "#/lib/i18n";
 
 export const Route = createFileRoute("/_authed/settings/_layout/security")({
 	component: SecurityPage,
@@ -23,20 +27,25 @@ export const Route = createFileRoute("/_authed/settings/_layout/security")({
 
 const changePasswordSchema = z
 	.object({
-		current_password: z.string().min(1, "Current password is required"),
+		current_password: z.string().min(1, {
+			error: () => i18n.t("errors:validation.currentPasswordRequired"),
+		}),
 		new_password: z
 			.string()
-			.min(8, "New password must be at least 8 characters"),
-		confirm_password: z.string().min(1, "Please confirm your new password"),
+			.min(8, { error: () => i18n.t("errors:validation.newPasswordTooShort") }),
+		confirm_password: z.string().min(1, {
+			error: () => i18n.t("errors:validation.confirmPasswordRequired"),
+		}),
 	})
 	.refine((d) => d.new_password === d.confirm_password, {
-		message: "Passwords do not match",
+		error: () => i18n.t("errors:validation.passwordsMismatch"),
 		path: ["confirm_password"],
 	});
 
 type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 
 function ChangePasswordForm() {
+	const { t } = useTranslation("settings");
 	const navigate = useNavigate();
 	const qc = useQueryClient();
 	const { logout } = useAuth();
@@ -68,12 +77,12 @@ function ChangePasswordForm() {
 				setSuccess(true);
 				form.reset();
 			} catch (err) {
-				const msg =
-					err instanceof Error ? err.message : "Failed to change password";
-				if (msg.includes("429") || msg.toLowerCase().includes("too many")) {
+				if (err instanceof ApiError && err.status === 429) {
 					setIsRateLimited(true);
 				} else {
-					setApiError(msg);
+					setApiError(
+						apiErrorMessage(err, t("security.changePassword.failed")),
+					);
 				}
 			}
 		},
@@ -84,13 +93,12 @@ function ChangePasswordForm() {
 			<div className="space-y-3">
 				<Alert>
 					<AlertDescription className="text-[13px]">
-						Password changed successfully. You may want to log out all other
-						sessions.
+						{t("security.changePassword.success")}
 					</AlertDescription>
 				</Alert>
 				<div className="flex gap-2">
 					<Button variant="neutral" size="sm" onClick={() => setSuccess(false)}>
-						Change again
+						{t("security.changePassword.changeAgain")}
 					</Button>
 					<LogoutAllButton
 						onDone={() => {
@@ -114,7 +122,7 @@ function ChangePasswordForm() {
 			{isRateLimited && (
 				<Alert variant="destructive">
 					<AlertDescription>
-						Too many attempts. Please wait before trying again.
+						{t("security.changePassword.rateLimited")}
 					</AlertDescription>
 				</Alert>
 			)}
@@ -127,7 +135,7 @@ function ChangePasswordForm() {
 				{(f) => (
 					<FormField
 						field={f}
-						label="Current password"
+						label={t("security.changePassword.current")}
 						type="password"
 						autoComplete="current-password"
 						placeholder="••••••••"
@@ -138,7 +146,7 @@ function ChangePasswordForm() {
 				{(f) => (
 					<FormField
 						field={f}
-						label="New password"
+						label={t("security.changePassword.new")}
 						type="password"
 						autoComplete="new-password"
 						placeholder="••••••••"
@@ -149,7 +157,7 @@ function ChangePasswordForm() {
 				{(f) => (
 					<FormField
 						field={f}
-						label="Confirm new password"
+						label={t("security.changePassword.confirm")}
 						type="password"
 						autoComplete="new-password"
 						placeholder="••••••••"
@@ -158,8 +166,11 @@ function ChangePasswordForm() {
 			</form.Field>
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
-					<SubmitButton isPending={isSubmitting} pendingLabel="Changing…">
-						Change password
+					<SubmitButton
+						isPending={isSubmitting}
+						pendingLabel={t("security.changePassword.pending")}
+					>
+						{t("security.changePassword.submit")}
 					</SubmitButton>
 				)}
 			</form.Subscribe>
@@ -168,6 +179,7 @@ function ChangePasswordForm() {
 }
 
 function LogoutAllButton({ onDone }: { onDone: () => void }) {
+	const { t } = useTranslation("settings");
 	const [isPending, setIsPending] = useState(false);
 	const [err, setErr] = useState<string | null>(null);
 
@@ -178,7 +190,7 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 			await logoutAll();
 			onDone();
 		} catch (e) {
-			setErr(e instanceof Error ? e.message : "Failed");
+			setErr(apiErrorMessage(e, t("security.logoutFailed")));
 			setIsPending(false);
 		}
 	}
@@ -191,7 +203,7 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 				onClick={handleLogoutAll}
 				disabled={isPending}
 			>
-				{isPending ? "Logging out…" : "Log out all sessions"}
+				{isPending ? t("security.loggingOut") : t("security.logoutAll")}
 			</Button>
 			{err && <p className="text-[11px] text-danger-fg">{err}</p>}
 		</div>
@@ -199,19 +211,20 @@ function LogoutAllButton({ onDone }: { onDone: () => void }) {
 }
 
 function SecurityPage() {
+	const { t } = useTranslation("settings");
 	return (
 		<div className="space-y-6 max-w-md">
 			<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-				Security
+				{t("security.title")}
 			</h1>
 
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-[14px] font-medium">
-						Change password
+						{t("security.changePassword.title")}
 					</CardTitle>
 					<CardDescription className="text-[12px]">
-						Update your login password.
+						{t("security.changePassword.description")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>

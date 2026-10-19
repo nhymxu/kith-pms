@@ -136,7 +136,7 @@ describe("buildDashboardViewModel", () => {
 		});
 		expect(viewModel.moments[0]).toMatchObject({
 			personName: "Alex Kim",
-			label: "birthday",
+			label: "Birthday",
 		});
 		expect(viewModel.pulse.at(-1)).toMatchObject({
 			date: "2026-05-17",

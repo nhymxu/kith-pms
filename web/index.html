@@ -13,6 +13,8 @@
           const t = p.theme;
           const ok = ['quiet-ink', 'warm-album', 'bold-press', 'nightdesk', 'softclay', 'ledger'];
           if (t && t !== 'quiet-ink' && ok.indexOf(t) !== -1) document.documentElement.setAttribute('data-theme', t);
+          // Keep the list in sync with validLanguages in internal/settings.
+          if (p.language === 'vi') document.documentElement.setAttribute('lang', 'vi');
         } catch (_e) {}
       })();
     </script>

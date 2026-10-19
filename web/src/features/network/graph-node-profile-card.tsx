@@ -3,6 +3,7 @@
 // that plan lands.
 
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { readToken } from "#/lib/read-css-token";
 import { formatBirthdayLabel, formatRelativeDate } from "./graph-date-format";
 import type { GraphNode } from "./graph-types";
@@ -75,6 +76,7 @@ export function GraphNodeProfileCard({
 	groupColorMap,
 	onClose,
 }: GraphNodeProfileCardProps) {
+	const { t } = useTranslation("network");
 	const birthday = node.date_of_birth
 		? formatBirthdayLabel(node.date_of_birth)
 		: null;
@@ -126,7 +128,7 @@ export function GraphNodeProfileCard({
 					type="button"
 					onClick={onClose}
 					className="flex-none text-[16px] leading-none text-sub hover:text-ink"
-					aria-label="Close"
+					aria-label={t("card.close")}
 				>
 					×
 				</button>
@@ -144,7 +146,7 @@ export function GraphNodeProfileCard({
 					{lastContacted && (
 						<div className="flex items-center gap-1.5 text-[11px] text-sub">
 							<span>🕐</span>
-							<span>Last contacted {lastContacted}</span>
+							<span>{t("panel.lastContacted", { when: lastContacted })}</span>
 						</div>
 					)}
 				</div>
@@ -159,7 +161,7 @@ export function GraphNodeProfileCard({
 					rel="noopener noreferrer"
 					className="text-[12px] font-medium text-accent-text hover:underline"
 				>
-					Open profile →
+					{t("card.openProfile")}
 				</Link>
 			</div>
 		</div>

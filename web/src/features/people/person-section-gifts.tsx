@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Gift } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -22,13 +23,15 @@ interface GiftsListInnerProps {
 }
 
 function GiftsListInner({ personId }: GiftsListInnerProps) {
+	const { t } = useTranslation("people");
+	const { t: tGifts } = useTranslation("gifts");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.gifts.list({ person_id: personId, page_size: 10 }),
 		queryFn: () => listGifts({ person_id: personId, page_size: 10 }),
 	});
 
 	if (!data.items.length) {
-		return <p className="text-sm text-sub">No gifts.</p>;
+		return <p className="text-sm text-sub">{t("sections.gifts.empty")}</p>;
 	}
 
 	return (
@@ -41,7 +44,7 @@ function GiftsListInner({ personId }: GiftsListInnerProps) {
 					className="flex items-center gap-3 text-sm border-bw border-line rounded-md p-2 hover:bg-chip"
 				>
 					<span className="font-medium flex-1">{g.title}</span>
-					<Badge variant="neutral">{g.direction}</Badge>
+					<Badge variant="neutral">{tGifts(`direction.${g.direction}`)}</Badge>
 					{g.date && (
 						<span className="font-mono text-[12px] text-sub">{g.date}</span>
 					)}
@@ -56,14 +59,15 @@ interface GiftsSectionProps {
 }
 
 export function GiftsSection({ personId }: GiftsSectionProps) {
+	const { t } = useTranslation("people");
 	const [giftOpen, setGiftOpen] = useState(false);
 
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Gifts</SectionHeading>
+				<SectionHeading>{t("sections.gifts.title")}</SectionHeading>
 				<Button variant="neutral" size="sm" onClick={() => setGiftOpen(true)}>
-					<Gift className="size-3" /> Quick gift
+					<Gift className="size-3" /> {t("sections.gifts.quick")}
 				</Button>
 			</div>
 			<QueryBoundary>

@@ -52,6 +52,9 @@ definitions:
         type: string
       favorite_first_default:
         type: boolean
+      language:
+        description: 'Language is the UI locale: "en" or "vi".'
+        type: string
       nav_layout:
         type: string
       network_color_by:
@@ -106,9 +109,15 @@ definitions:
     type: object
   internal_api_handler.envelope:
     properties:
+      code:
+        type: string
       data: {}
       error:
+        description: Error is the English fallback text; clients localize by Code.
         type: string
+      params:
+        additionalProperties: {}
+        type: object
     type: object
   internal_api_handler.giftRequest:
     properties:

@@ -1,0 +1,13 @@
+{
+	"title": "Tìm kiếm",
+	"description": "Tìm người, nhật ký, quà tặng và ghi chú",
+	"placeholder": "Tìm người, ghi chú, quà tặng…",
+	"typeToSearch": "Nhập để tìm kiếm…",
+	"noResults": "Không có kết quả.",
+	"groups": {
+		"people": "Người",
+		"journal": "Nhật ký",
+		"gifts": "Quà tặng",
+		"notes": "Ghi chú"
+	}
+}

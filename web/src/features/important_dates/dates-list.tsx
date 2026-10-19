@@ -1,6 +1,7 @@
 // Upcoming dates list: grouped by month, shows person name, date type, exact date + days-until badge
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { listUpcomingDates } from "#/endpoints/important-dates";
 import { getAvatarUrl } from "#/endpoints/people";
@@ -35,12 +36,13 @@ function exactDateLabel(dateStr: string): string {
 }
 
 function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
+	const { t } = useTranslation("dates");
 	const exact = exactDateLabel(dateStr);
 	if (days === 0)
 		return (
 			<div className="flex flex-col items-end gap-0.5">
 				<span className="font-mono text-[11px] text-accent-text font-medium">
-					Today
+					{t("badge.today")}
 				</span>
 				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
@@ -49,7 +51,7 @@ function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
 		return (
 			<div className="flex flex-col items-end gap-0.5">
 				<span className="font-mono text-[11px] text-warning-fg">
-					In {days}d
+					{t("badge.inDays", { days })}
 				</span>
 				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
@@ -57,30 +59,31 @@ function DaysUntilBadge({ days, dateStr }: { days: number; dateStr: string }) {
 	if (days <= 30)
 		return (
 			<div className="flex flex-col items-end gap-0.5">
-				<span className="font-mono text-[11px] text-sub">In {days}d</span>
+				<span className="font-mono text-[11px] text-sub">
+					{t("badge.inDays", { days })}
+				</span>
 				<span className="text-[10px] text-sub">{exact}</span>
 			</div>
 		);
 	return (
 		<div className="flex flex-col items-end gap-0.5">
-			<span className="font-mono text-[11px] text-sub">In {days}d</span>
+			<span className="font-mono text-[11px] text-sub">
+				{t("badge.inDays", { days })}
+			</span>
 			<span className="text-[10px] text-sub">{exact}</span>
 		</div>
 	);
 }
 
 function DatesListInner() {
+	const { t } = useTranslation("dates");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.dates.upcoming(),
 		queryFn: () => listUpcomingDates(90),
 	});
 
 	if (!data.length)
-		return (
-			<p className="text-[13px] text-sub">
-				No upcoming dates in the next 90 days.
-			</p>
-		);
+		return <p className="text-[13px] text-sub">{t("list.empty")}</p>;
 
 	// Group by month of next_occurrence
 	const groups = new Map<string, typeof data>();
@@ -125,9 +128,11 @@ function DatesListInner() {
 											{item.person.name}
 										</Link>
 										<p className="text-[11px] text-sub capitalize">
-											{item.kind}
+											{t(`people:sections.dates.kind.${item.kind}`, {
+												defaultValue: item.kind,
+											})}
 											{item.years_since > 0
-												? ` · ${item.years_since + 1} years`
+												? ` · ${t("list.years", { count: item.years_since + 1 })}`
 												: ""}
 										</p>
 									</div>
@@ -142,13 +147,14 @@ function DatesListInner() {
 	);
 }
 
-const datesListFallback = (
-	<p className="text-[13px] text-sub">Loading upcoming dates…</p>
-);
+function DatesListFallback() {
+	const { t } = useTranslation("dates");
+	return <p className="text-[13px] text-sub">{t("list.loading")}</p>;
+}
 
 export function DatesList() {
 	return (
-		<QueryBoundary fallback={datesListFallback}>
+		<QueryBoundary fallback={<DatesListFallback />}>
 			<DatesListInner />
 		</QueryBoundary>
 	);

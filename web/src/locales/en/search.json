@@ -1,0 +1,13 @@
+{
+	"title": "Search",
+	"description": "Search people, journal entries, gifts, and notes",
+	"placeholder": "Search people, notes, gifts…",
+	"typeToSearch": "Type to search…",
+	"noResults": "No results found.",
+	"groups": {
+		"people": "People",
+		"journal": "Journal",
+		"gifts": "Gifts",
+		"notes": "Notes"
+	}
+}

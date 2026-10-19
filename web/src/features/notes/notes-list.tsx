@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { Button } from "#/components/ui/button";
 import {
@@ -36,6 +37,7 @@ interface NoteFormProps {
 }
 
 function NoteForm({ note, onSave, onCancel, saving }: NoteFormProps) {
+	const { t } = useTranslation("notes");
 	const [title, setTitle] = useState(note?.title ?? "");
 	const [content, setContent] = useState(note?.content ?? "");
 
@@ -45,25 +47,26 @@ function NoteForm({ note, onSave, onCancel, saving }: NoteFormProps) {
 				className="h-8"
 				value={title}
 				onChange={(e) => setTitle(e.target.value)}
-				placeholder="Title (optional)"
+				placeholder={t("form.titlePlaceholder")}
 			/>
 			<Textarea
 				rows={3}
 				value={content}
 				onChange={(e) => setContent(e.target.value)}
-				placeholder="Write a note…"
+				placeholder={t("form.contentPlaceholder")}
 				autoFocus
 			/>
 			<div className="flex gap-2 justify-end">
 				<Button variant="neutral" size="sm" onClick={onCancel}>
-					<X className="size-3" /> Cancel
+					<X className="size-3" /> {t("form.cancel")}
 				</Button>
 				<Button
 					size="sm"
 					disabled={!content.trim() || saving}
 					onClick={() => onSave({ title: title.trim(), content })}
 				>
-					<Check className="size-3" /> {saving ? "Saving…" : "Save"}
+					<Check className="size-3" />{" "}
+					{saving ? t("form.saving") : t("form.save")}
 				</Button>
 			</div>
 		</div>
@@ -78,6 +81,7 @@ interface NotesListInnerProps {
 }
 
 function NotesListInner({ personId, paged }: NotesListInnerProps) {
+	const { t } = useTranslation("notes");
 	const [page, setPage] = useState(1);
 	const [fromDate, setFromDate] = useState("");
 	const [toDate, setToDate] = useState("");
@@ -141,9 +145,9 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 						idPrefix="my-notes"
 						from={fromDate}
 						to={toDate}
-						onChange={(f, t) => {
-							setFromDate(f);
-							setToDate(t);
+						onChange={(from, to) => {
+							setFromDate(from);
+							setToDate(to);
 							setPage(1);
 						}}
 					/>
@@ -151,7 +155,7 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 					<span />
 				)}
 				<Button variant="neutral" size="sm" onClick={() => setCreating(true)}>
-					<Plus className="size-3" /> Add note
+					<Plus className="size-3" /> {t("list.add")}
 				</Button>
 			</div>
 
@@ -208,7 +212,7 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 				)}
 
 				{data && items.length === 0 && !creating && (
-					<p className="text-sm text-sub">No notes found.</p>
+					<p className="text-sm text-sub">{t("list.empty")}</p>
 				)}
 			</div>
 
@@ -229,7 +233,7 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete note?</DialogTitle>
+						<DialogTitle>{t("delete.title")}</DialogTitle>
 					</DialogHeader>
 					{deleteTarget && (
 						<p className="text-[13px] text-sub">
@@ -238,7 +242,7 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 					)}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmDeleteId(null)}>
-							Cancel
+							{t("form.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -248,7 +252,9 @@ function NotesListInner({ personId, paged }: NotesListInnerProps) {
 									deleteMutation.mutate(confirmDeleteId);
 							}}
 						>
-							{deleteMutation.isPending ? "Deleting…" : "Delete"}
+							{deleteMutation.isPending
+								? t("delete.deleting")
+								: t("delete.confirm")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

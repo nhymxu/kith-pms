@@ -1,6 +1,7 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "#/lib/utils";
 
 function Dialog({
@@ -72,6 +73,7 @@ function DialogContent({
 	children,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Popup>) {
+	const { t } = useTranslation();
 	return (
 		<DialogPortal>
 			<DialogOverlay />
@@ -86,7 +88,7 @@ function DialogContent({
 				{children}
 				<DialogPrimitive.Close className="absolute right-4 top-4 rounded-base text-sub hover:text-ink focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
 					<X />
-					<span className="sr-only">Close</span>
+					<span className="sr-only">{t("close")}</span>
 				</DialogPrimitive.Close>
 			</DialogPrimitive.Popup>
 		</DialogPortal>

@@ -38,7 +38,7 @@ type noteRequest struct {
 func (h *NoteAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	page, _ := strconv.Atoi(c.QueryParam("page"))
@@ -60,7 +60,7 @@ func (h *NoteAPI) ListByPerson(c *echo.Context) error {
 		c.QueryParam("from_date"), c.QueryParam("to_date"),
 	)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -107,7 +107,7 @@ func (h *NoteAPI) ListAll(c *echo.Context) error {
 
 	list, err := h.Svc.ListAll(c.Request().Context(), params)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, list)
@@ -129,16 +129,16 @@ func (h *NoteAPI) ListAll(c *echo.Context) error {
 func (h *NoteAPI) Create(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req noteRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Content) == "" {
-		return apiErr(c, http.StatusBadRequest, "content is required")
+		return apiErr(c, http.StatusBadRequest, "content_required", "content is required")
 	}
 
 	n := &note.Note{
@@ -149,7 +149,7 @@ func (h *NoteAPI) Create(c *echo.Context) error {
 
 	id, err := h.Svc.Create(c.Request().Context(), n)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	n.ID = id
@@ -172,16 +172,16 @@ func (h *NoteAPI) Create(c *echo.Context) error {
 func (h *NoteAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	n, err := h.Svc.GetByID(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, n)
@@ -204,32 +204,32 @@ func (h *NoteAPI) Get(c *echo.Context) error {
 func (h *NoteAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req noteRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Content) == "" {
-		return apiErr(c, http.StatusBadRequest, "content is required")
+		return apiErr(c, http.StatusBadRequest, "content_required", "content is required")
 	}
 
 	existing, err := h.Svc.GetByID(c.Request().Context(), id)
 	if err == sql.ErrNoRows {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	existing.Title = strings.TrimSpace(req.Title)
 	existing.Content = req.Content
 
 	if err := h.Svc.Update(c.Request().Context(), existing); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, existing)
@@ -250,15 +250,15 @@ func (h *NoteAPI) Update(c *echo.Context) error {
 func (h *NoteAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if _, err := h.Svc.GetByID(c.Request().Context(), id); err == sql.ErrNoRows {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)

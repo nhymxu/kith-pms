@@ -1,6 +1,7 @@
 // Audit log table: read-only, columns for timestamp, actor, action, target, detail
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	sortableHeader,
 	type TableColumn,
@@ -34,25 +35,19 @@ const ACTION_VARIANTS: Record<string, PillVariant> = {
 	logout: "plain",
 };
 
-const DETAIL_ACTION_LABELS: Record<string, string> = {
-	profile_update: "Profile",
-	avatar_upload: "Avatar upload",
-	avatar_delete: "Avatar delete",
-	set_self: "Set self",
-	last_contact_update: "Last contact",
-};
-
 function formatValue(val: unknown): string {
 	if (val === null || val === undefined || val === "") return "—";
 	return String(val);
 }
 
 function MetadataCell({ meta }: { meta: AuditMetadata | null | undefined }) {
+	const { t } = useTranslation("audit");
 	if (!meta) return <span className="text-sub text-[12px]">—</span>;
 
 	const label = meta.detail_action
-		? (DETAIL_ACTION_LABELS[meta.detail_action] ??
-			meta.detail_action.replace(/_/g, " "))
+		? t(`detailActions.${meta.detail_action}`, {
+				defaultValue: meta.detail_action.replace(/_/g, " "),
+			})
 		: null;
 
 	return (
@@ -97,12 +92,13 @@ export function AuditTable({
 	pageIndex,
 	onPageChange,
 }: AuditTableProps) {
+	const { t } = useTranslation("audit");
 	const columns = useMemo<TableColumn<AuditEntry>[]>(
 		() => [
 			{
 				id: "created_at",
 				accessorKey: "created_at",
-				header: sortableHeader<AuditEntry>("Timestamp"),
+				header: sortableHeader<AuditEntry>(t("table.timestamp")),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => {
 					if (!val) return "—";
@@ -120,7 +116,7 @@ export function AuditTable({
 			{
 				id: "action",
 				accessorKey: "action",
-				header: sortableHeader<AuditEntry>("Action"),
+				header: sortableHeader<AuditEntry>(t("table.action")),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
 					<Pill variant={ACTION_VARIANTS[val] ?? "plain"}>{val}</Pill>
@@ -129,7 +125,7 @@ export function AuditTable({
 			{
 				id: "entity_type",
 				accessorKey: "entity_type",
-				header: sortableHeader<AuditEntry>("Type"),
+				header: sortableHeader<AuditEntry>(t("table.type")),
 				enableSorting: true,
 				cell: valueCell<AuditEntry, string>((val) => (
 					<span className="text-[12px] text-sub capitalize">
@@ -140,7 +136,7 @@ export function AuditTable({
 			{
 				id: "entity_name",
 				accessorKey: "entity_name",
-				header: "Target",
+				header: t("table.target"),
 				cell: valueCell<AuditEntry, string>((val) => (
 					<span className="text-[13px] text-ink">{val || "—"}</span>
 				)),
@@ -148,11 +144,11 @@ export function AuditTable({
 			{
 				id: "metadata",
 				accessorKey: "metadata",
-				header: "Detail",
+				header: t("table.detail"),
 				cell: ({ row }) => <MetadataCell meta={row.original.metadata} />,
 			},
 		],
-		[],
+		[t],
 	);
 
 	return (
@@ -166,7 +162,7 @@ export function AuditTable({
 			pageIndex={pageIndex}
 			onPageChange={onPageChange}
 			emptyState={
-				<span className="text-sm text-foreground/50">No audit entries.</span>
+				<span className="text-sm text-foreground/50">{t("table.empty")}</span>
 			}
 		/>
 	);

@@ -1,0 +1,388 @@
+{
+	"relationship": {
+		"sentence": "là {{type}} của {{self}}",
+		"tooltip": "{{other}} là {{type}} của {{self}}\n{{self}} là {{inverse}} của {{other}}",
+		"showDirection": "Xem chiều quan hệ"
+	},
+	"list": {
+		"title": "Danh bạ",
+		"newPerson": "Thêm người",
+		"sort": {
+			"nameAsc": "Tên A→Z",
+			"nameDesc": "Tên Z→A",
+			"lastContactNewest": "Liên hệ gần nhất",
+			"lastContactOldest": "Liên hệ lâu nhất"
+		},
+		"favorite": "Yêu thích",
+		"unfavorite": "Bỏ yêu thích",
+		"columns": {
+			"name": "Tên",
+			"labels": "Nhãn",
+			"lastContact": "Liên hệ gần nhất"
+		},
+		"archived": "Đã lưu trữ",
+		"daysLeft": "còn {{days}} ngày, khôi phục từ hồ sơ",
+		"keptIndefinitely": "giữ vô thời hạn, khôi phục từ hồ sơ",
+		"edit": "Sửa",
+		"searchPlaceholder": "Tìm người…",
+		"favoritesOnly": "Chỉ yêu thích",
+		"favoritesFirst": "Yêu thích lên đầu",
+		"pendingDelete": "Chờ xóa",
+		"archivedFilter": "Lưu trữ",
+		"clearLabels": "Xóa lọc",
+		"loading": "Đang tải…",
+		"empty": "Không tìm thấy ai."
+	},
+	"edit": {
+		"loading": "Đang tải…",
+		"notFound": "Không tìm thấy người này.",
+		"title": "Sửa {{name}}"
+	},
+	"bulkBar": {
+		"selected": "Đã chọn {{count}}",
+		"assigned": "Đã gán cho {{count}} người",
+		"assignFailed": "Gán nhãn thất bại",
+		"assignPlaceholder": "Gán nhãn…",
+		"assigning": "Đang gán…",
+		"assign": "Gán",
+		"connect": "Kết nối với người…",
+		"clear": "Bỏ chọn"
+	},
+	"bulkRel": {
+		"title": "Thêm nhiều quan hệ",
+		"type": "Loại",
+		"selectType": "Chọn loại…",
+		"addToList": "Thêm vào danh sách",
+		"symmetricHint": "⇄ là loại quan hệ đối xứng, dùng được chọn nhanh theo nhãn bên dưới",
+		"people": "Người (chọn nhiều)",
+		"addMe": "+ Tôi",
+		"searchPlaceholder": "Tìm theo tên…",
+		"addAllWithLabel": "Thêm tất cả theo nhãn…",
+		"adding": "Đang thêm…",
+		"addAll": "Thêm tất cả",
+		"created": "Đã tạo {{count}} quan hệ",
+		"saveFailed": "Lưu quan hệ thất bại",
+		"addedFirst": "Đã thêm {{limit}}/{{total}} người đầu tiên có nhãn này",
+		"added": "Đã thêm {{count}} người có nhãn này",
+		"labelLoadFailed": "Không tải được danh sách người có nhãn này",
+		"cancel": "Hủy",
+		"saving": "Đang lưu…",
+		"save_one": "Lưu {{count}} quan hệ",
+		"save_other": "Lưu {{count}} quan hệ"
+	},
+	"connectTo": {
+		"title": "Kết nối với người",
+		"targetPerson": "Người đích",
+		"noOthers": "Không còn ai khác để kết nối, người đích là lựa chọn duy nhất.",
+		"relationshipType": "Loại quan hệ",
+		"selectType": "Chọn loại…",
+		"willBeSet_one": "{{name}} sẽ là <b>{{type}}</b> của {{count}} người.",
+		"willBeSet_other": "{{name}} sẽ là <b>{{type}}</b> của {{count}} người.",
+		"connected": "Đã kết nối {{created}} (bỏ qua {{skipped}})",
+		"partialFailure": "Thất bại sau khi kết nối {{created}}",
+		"failure": "Kết nối thất bại",
+		"cancel": "Hủy",
+		"connecting": "Đang kết nối…",
+		"connect_one": "Kết nối {{count}} người",
+		"connect_other": "Kết nối {{count}} người"
+	},
+	"connectMembers": {
+		"title": "Kết nối các thành viên của \"{{label}}\"",
+		"description": "Tạo quan hệ giữa mọi thành viên của nhãn này.",
+		"relationshipType": "Loại quan hệ",
+		"noSymmetricTypes": "Chưa có loại quan hệ đối xứng. Hãy tạo một loại (ví dụ Đồng nghiệp) trong Cài đặt → Loại quan hệ.",
+		"select": "Chọn…",
+		"loadingPreview": "Đang tải bản xem trước…",
+		"tooFew": "Cần ít nhất 2 thành viên để kết nối. Nhãn này có {{members}}.",
+		"willCreate": "Sẽ tạo tối đa {{pairs}} quan hệ giữa {{members}} người. Quan hệ đã có sẽ bị bỏ qua.",
+		"created": "Đã tạo {{count}} quan hệ",
+		"failed": "Kết nối thành viên thất bại",
+		"cancel": "Hủy",
+		"connecting": "Đang kết nối…",
+		"connectPairs": "Kết nối {{pairs}} cặp"
+	},
+	"types": {
+		"contact": {
+			"phone": "điện thoại",
+			"email": "email",
+			"address": "địa chỉ",
+			"social": "mạng xã hội",
+			"other": "khác"
+		},
+		"location": {
+			"home": "nhà riêng",
+			"work": "công ty",
+			"other": "khác"
+		}
+	},
+	"gender": {
+		"male": "Nam",
+		"female": "Nữ",
+		"rather_not_say": "Không muốn nói"
+	},
+	"form": {
+		"birthdayReminder": "Tạo nhắc sinh nhật hằng năm",
+		"saveFailed": "Lưu thất bại",
+		"identity": "Thông tin cơ bản",
+		"name": "Tên *",
+		"namePlaceholder": "Họ và tên",
+		"nickname": "Biệt danh",
+		"nicknamePlaceholder": "Thường được gọi là…",
+		"dateOfBirth": "Ngày sinh",
+		"lastContact": "Liên hệ gần nhất",
+		"clearLastContact": "Xóa liên hệ gần nhất",
+		"gender": "Giới tính",
+		"genderUnselected": "Chưa chọn",
+		"bio": "Giới thiệu",
+		"bioPlaceholder": "Bối cảnh, hoàn cảnh, bất cứ điều gì đáng nhớ…",
+		"saving": "Đang lưu…",
+		"create": "Tạo người",
+		"save": "Lưu thay đổi",
+		"contacts": {
+			"title": "Liên hệ",
+			"add": "Thêm",
+			"empty": "Chưa có liên hệ nào.",
+			"type": "Loại",
+			"value": "Giá trị",
+			"valuePlaceholder": "vd. 0901 234 567",
+			"label": "Nhãn",
+			"labelPlaceholder": "vd. Công việc"
+		},
+		"locations": {
+			"title": "Địa điểm",
+			"add": "Thêm",
+			"empty": "Chưa có địa điểm nào.",
+			"address": "Địa chỉ",
+			"city": "Thành phố",
+			"country": "Quốc gia",
+			"postalCode": "Mã bưu chính"
+		}
+	},
+	"avatar": {
+		"alt": "Ảnh đại diện",
+		"converting": "Đang chuyển đổi…",
+		"replace": "Thay ảnh",
+		"upload": "Tải lên",
+		"remove": "Xóa",
+		"uploadFailed": "Tải lên thất bại"
+	},
+	"picker": {
+		"searchPlaceholder": "Tìm người…"
+	},
+	"quickActions": {
+		"journal": "Nhật ký nhanh",
+		"gift": "Quà nhanh",
+		"updateLastContact": "Cập nhật liên hệ gần nhất là hôm nay",
+		"confirmTitle": "Cập nhật liên hệ gần nhất?",
+		"confirmBody": "Thao tác này đặt ngày liên hệ gần nhất là <b>{{date}}</b>. Tiếp tục?",
+		"cancel": "Hủy",
+		"confirm": "Xác nhận"
+	},
+	"quickGift": {
+		"title": "Ghi chú quà nhanh",
+		"giftTitle": "Tên món quà",
+		"placeholder": "vd. Ý tưởng quà sinh nhật",
+		"failed": "Thất bại",
+		"cancel": "Hủy",
+		"save": "Lưu"
+	},
+	"quickJournal": {
+		"title": "Nhật ký nhanh",
+		"person": "Người",
+		"entryTitle": "Tiêu đề",
+		"titlePlaceholder": "Chuyện gì đã xảy ra?",
+		"notes": "Ghi chú",
+		"notesPlaceholder": "Chi tiết…",
+		"selectPerson": "Hãy chọn một người trước",
+		"failed": "Thất bại",
+		"cancel": "Hủy",
+		"save": "Lưu"
+	},
+	"sections": {
+		"gifts": {
+			"title": "Quà tặng",
+			"quick": "Quà nhanh",
+			"empty": "Chưa có quà."
+		},
+		"journal": {
+			"title": "Nhật ký",
+			"viewAll": "Xem tất cả",
+			"quick": "Nhật ký nhanh",
+			"empty": "Chưa có nhật ký nào về người này."
+		},
+		"notes": {
+			"title": "Ghi chú"
+		},
+		"graph": {
+			"title": "Mạng quan hệ",
+			"loading": "Đang tải…",
+			"empty": "Chưa có kết nối nào."
+		},
+		"contacts": {
+			"title": "Liên hệ",
+			"add": "Thêm",
+			"empty": "Chưa có liên hệ.",
+			"valuePlaceholder": "Giá trị",
+			"labelPlaceholder": "Nhãn",
+			"saveFailed": "Lưu thất bại",
+			"removeTitle": "Xóa liên hệ?",
+			"removeBody": "Xóa liên hệ <b>{{type}}</b> <b>{{value}}</b>?",
+			"removeBodyWithLabel": "Xóa liên hệ <b>{{type}}</b> <b>{{value}}</b> ({{label}})?",
+			"cancel": "Hủy",
+			"removing": "Đang xóa…",
+			"remove": "Xóa"
+		},
+		"labels": {
+			"title": "Nhãn",
+			"attached": "Đã gắn",
+			"noneAttached": "Chưa gắn nhãn nào.",
+			"available": "Có thể gắn",
+			"removeTitle": "Gỡ nhãn?",
+			"removeBody": "Gỡ nhãn <b>{{name}}</b>?",
+			"cancel": "Hủy",
+			"removing": "Đang gỡ…",
+			"remove": "Gỡ"
+		},
+		"dates": {
+			"title": "Ngày quan trọng",
+			"add": "Thêm",
+			"birthday": "Sinh nhật",
+			"empty": "Chưa có ngày quan trọng.",
+			"kind": {
+				"Anniversary": "Kỷ niệm",
+				"Memorial": "Ngày giỗ",
+				"Custom": "Tùy chỉnh",
+				"birthday": "Sinh nhật"
+			},
+			"labelPlaceholder": "Nhãn (tùy chọn)",
+			"datePlaceholder": "Ngày (YYYY-MM-DD hoặc --MM-DD)",
+			"recurring": "Lặp lại",
+			"cancel": "Hủy",
+			"save": "Lưu",
+			"saveFailed": "Lưu thất bại",
+			"removeTitle": "Xóa ngày?",
+			"removeBody": "Xóa ngày <b>{{kind}}</b> <b>{{value}}</b>?",
+			"removeBodyWithLabel": "Xóa ngày <b>{{kind}}</b> ({{label}}) <b>{{value}}</b>?",
+			"removing": "Đang xóa…",
+			"remove": "Xóa"
+		},
+		"locations": {
+			"title": "Địa điểm",
+			"add": "Thêm",
+			"empty": "Chưa có địa điểm.",
+			"address": "Địa chỉ",
+			"city": "Thành phố",
+			"postalCode": "Mã bưu chính",
+			"country": "Quốc gia",
+			"saveFailed": "Lưu thất bại",
+			"removeTitle": "Xóa địa điểm?",
+			"removeBody": "Xóa địa điểm <b>{{type}}</b>?",
+			"removeBodyWithAddress": "Xóa địa điểm <b>{{type}}</b> tại {{address}}?",
+			"cancel": "Hủy",
+			"removing": "Đang xóa…",
+			"remove": "Xóa"
+		},
+		"work": {
+			"title": "Quá trình làm việc",
+			"add": "Thêm",
+			"company": "Công ty *",
+			"jobTitle": "Chức danh",
+			"startDate": "Ngày bắt đầu",
+			"endDate": "Ngày kết thúc (để trống = Hiện tại)",
+			"location": "Địa điểm",
+			"description": "Mô tả",
+			"cancel": "Hủy",
+			"save": "Lưu",
+			"saveFailed": "Lưu thất bại",
+			"present": "Hiện tại",
+			"range": "{{start}} – {{end}}",
+			"rangeEndOnly": "– {{end}}",
+			"empty": "Chưa có quá trình làm việc.",
+			"removeTitle": "Xóa mục công việc?",
+			"removeBody": "Xóa <b>{{company}}</b>?",
+			"removeBodyWithTitle": "Xóa <b>{{company}}</b> · {{title}}?",
+			"removing": "Đang xóa…",
+			"remove": "Xóa"
+		},
+		"relationships": {
+			"title": "Quan hệ",
+			"addMultiple": "Thêm nhiều",
+			"add": "Thêm",
+			"empty": "Chưa có quan hệ nào.",
+			"addTitle": "Thêm quan hệ",
+			"type": "Loại",
+			"select": "Chọn…",
+			"person": "Người",
+			"addMe": "+ Tôi",
+			"searchPlaceholder": "Tìm theo tên…",
+			"notes": "Ghi chú",
+			"notesPlaceholder": "Ghi chú (tùy chọn)",
+			"failed": "Thất bại",
+			"cancel": "Hủy",
+			"save": "Lưu",
+			"removeTitle": "Xóa quan hệ?",
+			"removeBody": "Xóa quan hệ <type>{{type}}</type> với <person>{{person}}</person>?",
+			"removing": "Đang xóa…",
+			"remove": "Xóa"
+		}
+	},
+	"detail": {
+		"overview": {
+			"title": "Tổng quan",
+			"cancel": "Hủy",
+			"saving": "Đang lưu…",
+			"save": "Lưu",
+			"edit": "Sửa",
+			"fullName": "Họ và tên",
+			"nickname": "Biệt danh",
+			"dateOfBirth": "Ngày sinh",
+			"birthdayReminder": "Nhắc sinh nhật hằng năm",
+			"lastContact": "Liên hệ gần nhất",
+			"clear": "Xóa",
+			"gender": "Giới tính",
+			"genderUnselected": "Chưa chọn",
+			"bio": "Giới thiệu",
+			"bioPlaceholder": "Giới thiệu…",
+			"relationship": "Quan hệ",
+			"selfProfile": "Hồ sơ của tôi",
+			"reminderOn": "🎂 đã bật nhắc"
+		},
+		"pendingDeletion": "Đang chờ xóa, còn {{days}} ngày trước khi bị xóa vĩnh viễn.",
+		"pendingDeletionNoPurge": "Đang chờ xóa, xóa vĩnh viễn đang bị tắt.",
+		"restoreFailed": "Khôi phục thất bại",
+		"restoring": "Đang khôi phục…",
+		"restore": "Khôi phục",
+		"archivedBanner": "Đã lưu trữ, bị ẩn khỏi danh sách, tìm kiếm và bộ chọn.",
+		"unarchive": "Bỏ lưu trữ",
+		"archive": "Lưu trữ",
+		"delete": "Xóa",
+		"favorite": "Yêu thích",
+		"unfavorite": "Bỏ yêu thích",
+		"loading": "Đang tải…",
+		"deleteFailed": "Xóa thất bại",
+		"archiveFailed": "Lưu trữ thất bại",
+		"unarchiveFailed": "Bỏ lưu trữ thất bại",
+		"deleteDialog": {
+			"title": "Xóa {{name}}?",
+			"body": "{{name}} sẽ bị ẩn và xóa vĩnh viễn sau {{days}} ngày. Bạn có thể khôi phục từ trang này hoặc tab Chờ xóa trước thời hạn đó.",
+			"bodyNoPurge": "{{name}} sẽ bị ẩn cho đến khi bạn khôi phục (xóa vĩnh viễn đang bị tắt). Bạn có thể khôi phục từ trang này hoặc tab Chờ xóa.",
+			"cancel": "Hủy",
+			"deleting": "Đang xóa…",
+			"delete": "Xóa"
+		},
+		"archiveDialog": {
+			"title": "Lưu trữ {{name}}?",
+			"body": "{{name}} sẽ bị ẩn khỏi danh sách, tìm kiếm Cmd-K và mọi bộ chọn người, nhưng nhật ký, quà tặng và quan hệ vẫn được giữ nguyên. Bạn có thể bỏ lưu trữ bất cứ lúc nào từ trang này.",
+			"cancel": "Hủy",
+			"archiving": "Đang lưu trữ…",
+			"archive": "Lưu trữ"
+		},
+		"unarchiveDialog": {
+			"title": "Bỏ lưu trữ {{name}}?",
+			"body": "{{name}} sẽ xuất hiện lại trong danh sách, tìm kiếm Cmd-K và mọi bộ chọn người, các nhắc nhở đang chờ sẽ tiếp tục.",
+			"cancel": "Hủy",
+			"unarchiving": "Đang bỏ lưu trữ…",
+			"unarchive": "Bỏ lưu trữ"
+		}
+	}
+}

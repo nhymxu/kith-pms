@@ -5,6 +5,7 @@ import {
 	RectangleStencil,
 } from "react-advanced-cropper";
 import "react-advanced-cropper/dist/style.css";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -48,6 +49,7 @@ export function ImageCropDialog({
 	onCancel,
 	onCropped,
 }: ImageCropDialogProps) {
+	const { t } = useTranslation();
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const cropperRef = useRef<CropperRef | null>(null);
@@ -62,7 +64,7 @@ export function ImageCropDialog({
 		try {
 			await action();
 		} catch {
-			setError("Couldn't process this image. Try a different file.");
+			setError(t("imageCrop.processFailed"));
 		} finally {
 			setIsSaving(false);
 		}
@@ -71,7 +73,7 @@ export function ImageCropDialog({
 	async function handleSave() {
 		const coords = cropperRef.current?.getCoordinates();
 		if (!coords) {
-			setError("Couldn't crop this image. Try a different file.");
+			setError(t("imageCrop.cropFailed"));
 			return;
 		}
 		await withProcessing(async () => {
@@ -106,7 +108,9 @@ export function ImageCropDialog({
 		<Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
 			<DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-2xl">
 				<DialogHeader>
-					<DialogTitle>{freeform ? "Adjust image" : "Crop image"}</DialogTitle>
+					<DialogTitle>
+						{freeform ? t("imageCrop.adjustTitle") : t("imageCrop.cropTitle")}
+					</DialogTitle>
 				</DialogHeader>
 
 				<div className="relative h-[min(70vh,32rem)] bg-chip rounded-md overflow-hidden">
@@ -133,8 +137,7 @@ export function ImageCropDialog({
 
 				{freeform && (
 					<p className="text-xs text-foreground/60">
-						Drag the corners to choose the crop area, or skip cropping to keep
-						the whole image.
+						{t("imageCrop.freeformHint")}
 					</p>
 				)}
 
@@ -142,7 +145,7 @@ export function ImageCropDialog({
 
 				<DialogFooter>
 					<Button type="button" variant="neutral" onClick={onCancel}>
-						Cancel
+						{t("cancel")}
 					</Button>
 					{freeform && (
 						<Button
@@ -151,11 +154,15 @@ export function ImageCropDialog({
 							onClick={handleSkip}
 							disabled={isSaving}
 						>
-							Skip crop
+							{t("imageCrop.skip")}
 						</Button>
 					)}
 					<Button type="button" onClick={handleSave} disabled={isSaving}>
-						{isSaving ? "Processing…" : freeform ? "Apply" : "Save crop"}
+						{isSaving
+							? t("imageCrop.processing")
+							: freeform
+								? t("imageCrop.apply")
+								: t("imageCrop.saveCrop")}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

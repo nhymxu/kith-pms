@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { NotesList } from "#/features/notes/notes-list";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -13,9 +14,10 @@ interface NotesSectionProps {
 }
 
 export function NotesSection({ personId }: NotesSectionProps) {
+	const { t } = useTranslation("people");
 	return (
 		<div>
-			<SectionHeading>Notes</SectionHeading>
+			<SectionHeading>{t("sections.notes.title")}</SectionHeading>
 			<NotesList personId={personId} />
 		</div>
 	);

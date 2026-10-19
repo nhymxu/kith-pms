@@ -5,7 +5,9 @@ import {
 } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
+import { SafeTrans } from "#/components/safe-trans";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
@@ -33,6 +35,7 @@ interface LabelsSectionInnerProps {
 }
 
 function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [confirmDetachId, setConfirmDetachId] = useState<number | null>(null);
 	const { data: allLabels } = useSuspenseQuery({
@@ -63,7 +66,9 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 		<>
 			<div className="space-y-3">
 				<div>
-					<p className="text-[11px] text-sub mb-1">Attached</p>
+					<p className="text-[11px] text-sub mb-1">
+						{t("sections.labels.attached")}
+					</p>
 					<div className="flex flex-wrap gap-2">
 						{attached.map((l) => (
 							<div key={l.id} className="flex items-center gap-1">
@@ -78,13 +83,17 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 							</div>
 						))}
 						{attached.length === 0 && (
-							<p className="text-sm text-sub">None attached.</p>
+							<p className="text-sm text-sub">
+								{t("sections.labels.noneAttached")}
+							</p>
 						)}
 					</div>
 				</div>
 				{available.length > 0 && (
 					<div>
-						<p className="text-[11px] text-sub mb-1">Available</p>
+						<p className="text-[11px] text-sub mb-1">
+							{t("sections.labels.available")}
+						</p>
 						<div className="flex flex-wrap gap-2">
 							{available.map((l) => (
 								<button
@@ -107,19 +116,24 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove label?</DialogTitle>
+						<DialogTitle>{t("sections.labels.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{(() => {
 						const l = attached.find((l) => l.id === confirmDetachId);
 						return l ? (
 							<p className="text-[13px] text-sub">
-								Remove the label <span className="font-medium">{l.name}</span>?
+								<SafeTrans
+									t={t}
+									i18nKey="sections.labels.removeBody"
+									values={{ name: l.name }}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						) : null;
 					})()}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmDetachId(null)}>
-							Cancel
+							{t("sections.labels.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -131,7 +145,9 @@ function LabelsSectionInner({ person }: LabelsSectionInnerProps) {
 								}
 							}}
 						>
-							{detach.isPending ? "Removing…" : "Remove"}
+							{detach.isPending
+								? t("sections.labels.removing")
+								: t("sections.labels.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -145,9 +161,10 @@ interface LabelsSectionProps {
 }
 
 export function LabelsSection({ person }: LabelsSectionProps) {
+	const { t } = useTranslation("people");
 	return (
 		<div>
-			<SectionHeading>Labels</SectionHeading>
+			<SectionHeading>{t("sections.labels.title")}</SectionHeading>
 			<QueryBoundary>
 				<LabelsSectionInner person={person} />
 			</QueryBoundary>

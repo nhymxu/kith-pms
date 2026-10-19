@@ -1,0 +1,35 @@
+{
+	"dateRange": {
+		"from": "From",
+		"to": "To",
+		"clear": "Clear dates"
+	},
+	"form": {
+		"titlePlaceholder": "Title (optional)",
+		"contentPlaceholder": "Write a note…",
+		"cancel": "Cancel",
+		"save": "Save",
+		"saving": "Saving…"
+	},
+	"list": {
+		"add": "Add note",
+		"empty": "No notes found."
+	},
+	"delete": {
+		"title": "Delete note?",
+		"confirm": "Delete",
+		"deleting": "Deleting…"
+	},
+	"filter": {
+		"byPerson": "Filter by person",
+		"clear": "Clear"
+	},
+	"page": {
+		"title": "Notes",
+		"tabMine": "My notes",
+		"tabAll": "All notes",
+		"loading": "Loading…",
+		"noSelfProfile": "You haven't set up your self-profile yet. Pick an existing person to represent yourself before adding self notes.",
+		"setupProfile": "Set up my profile"
+	}
+}

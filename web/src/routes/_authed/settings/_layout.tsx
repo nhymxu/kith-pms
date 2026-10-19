@@ -5,29 +5,43 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import { BookOpen, Link2, Palette, Settings, Shield, Tag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authed/settings/_layout")({
 	component: SettingsLayout,
 });
 
 const NAV_ITEMS = [
-	{ to: "/settings/general" as const, icon: Settings, label: "General" },
-	{ to: "/settings/appearance" as const, icon: Palette, label: "Appearance" },
-	{ to: "/settings/people-labels" as const, icon: Tag, label: "People Labels" },
+	{ to: "/settings/general" as const, icon: Settings, labelKey: "nav.general" },
+	{
+		to: "/settings/appearance" as const,
+		icon: Palette,
+		labelKey: "nav.appearance",
+	},
+	{
+		to: "/settings/people-labels" as const,
+		icon: Tag,
+		labelKey: "nav.peopleLabels",
+	},
 	{
 		to: "/settings/journal-labels" as const,
 		icon: BookOpen,
-		label: "Journal Labels",
+		labelKey: "nav.journalLabels",
 	},
 	{
 		to: "/settings/relationship-types" as const,
 		icon: Link2,
-		label: "Relationship Types",
+		labelKey: "nav.relationshipTypes",
 	},
-	{ to: "/settings/security" as const, icon: Shield, label: "Security" },
-];
+	{
+		to: "/settings/security" as const,
+		icon: Shield,
+		labelKey: "nav.security",
+	},
+] as const;
 
 function SettingsLayout() {
+	const { t } = useTranslation("settings");
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
 
 	return (
@@ -35,10 +49,10 @@ function SettingsLayout() {
 			{/* Sidebar */}
 			<nav className="w-48 shrink-0">
 				<p className="text-[11px] font-semibold uppercase tracking-widest text-sub mb-3">
-					Settings
+					{t("nav.title")}
 				</p>
 				<ul className="space-y-0.5">
-					{NAV_ITEMS.map(({ to, icon: Icon, label }) => {
+					{NAV_ITEMS.map(({ to, icon: Icon, labelKey }) => {
 						const active = pathname === to || pathname.startsWith(`${to}/`);
 						return (
 							<li key={to}>
@@ -51,7 +65,7 @@ function SettingsLayout() {
 									}`}
 								>
 									<Icon className="size-4 shrink-0" />
-									{label}
+									{t(labelKey)}
 								</Link>
 							</li>
 						);

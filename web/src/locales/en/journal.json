@@ -1,0 +1,70 @@
+{
+	"form": {
+		"loading": "Loading form…",
+		"save": "Save Entry",
+		"saving": "Saving…",
+		"saveFailed": "Failed to save entry",
+		"titleLabel": "Title *",
+		"titlePlaceholder": "What happened?",
+		"dateLabel": "Date *",
+		"timeLabel": "Time (optional)",
+		"people": "People",
+		"addMe": "+ Me",
+		"searchPeoplePlaceholder": "Search people to add…",
+		"labels": "Labels",
+		"noLabels": "No labels yet. Create some in <settingsLink>Settings → Journal Labels</settingsLink>",
+		"content": "Content",
+		"contentPlaceholder": "Write about the interaction…",
+		"create": "Create Entry",
+		"saveChanges": "Save Changes"
+	},
+	"list": {
+		"empty": "No journal entries yet."
+	},
+	"table": {
+		"date": "Date",
+		"title": "Title",
+		"people": "People",
+		"preview": "Preview"
+	},
+	"pagination": {
+		"prev": "Prev",
+		"next": "Next",
+		"jumpToPage": "Jump to page",
+		"go": "Go"
+	},
+	"page": {
+		"title": "Journal",
+		"newEntry": "New Entry",
+		"newTitle": "New Journal Entry",
+		"editTitle": "Edit Entry",
+		"loadFailed": "Failed to load journal.",
+		"notFound": "Entry not found."
+	},
+	"filter": {
+		"from": "From",
+		"to": "To",
+		"clearDates": "Clear dates",
+		"byPerson": "Filter by person",
+		"withJournalOnly": "With journal only",
+		"clear": "Clear",
+		"byLabel": "Filter by label"
+	},
+	"detail": {
+		"back": "← Journal",
+		"edit": "Edit",
+		"atTime": "at {{time}}",
+		"labels": "Labels",
+		"people": "People",
+		"noPeople": "No people linked.",
+		"notes": "Notes",
+		"noNotes": "No notes."
+	},
+	"delete": {
+		"title": "Delete journal entry?",
+		"description": "This will permanently delete \"{{title}}\". This action cannot be undone.",
+		"cancel": "Cancel",
+		"confirm": "Delete",
+		"deleting": "Deleting…"
+	}
+}

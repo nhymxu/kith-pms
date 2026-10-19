@@ -9,6 +9,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// MaxLabelNameLen is the longest accepted label name, in bytes.
+const MaxLabelNameLen = 64
+
 var (
 	ErrLabelNameEmpty    = errors.New("journal labels: name must not be empty")
 	ErrLabelNameTooLong  = errors.New("journal labels: name must be 64 characters or fewer")
@@ -105,7 +108,7 @@ func validateJournalLabel(name, color string) error {
 		return ErrLabelNameEmpty
 	}
 
-	if len(name) > 64 {
+	if len(name) > MaxLabelNameLen {
 		return ErrLabelNameTooLong
 	}
 

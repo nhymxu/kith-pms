@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 
 const inputClass =
@@ -16,6 +17,7 @@ export function NotesDateRange({
 	to,
 	onChange,
 }: NotesDateRangeProps) {
+	const { t } = useTranslation("notes");
 	return (
 		<div className="flex flex-wrap gap-3 items-end">
 			<div className="space-y-1">
@@ -23,7 +25,7 @@ export function NotesDateRange({
 					htmlFor={`${idPrefix}-from`}
 					className="text-[11px] font-medium text-sub"
 				>
-					From
+					{t("dateRange.from")}
 				</label>
 				<input
 					id={`${idPrefix}-from`}
@@ -38,7 +40,7 @@ export function NotesDateRange({
 					htmlFor={`${idPrefix}-to`}
 					className="text-[11px] font-medium text-sub"
 				>
-					To
+					{t("dateRange.to")}
 				</label>
 				<input
 					id={`${idPrefix}-to`}
@@ -50,7 +52,7 @@ export function NotesDateRange({
 			</div>
 			{(from || to) && (
 				<Button variant="neutral" size="sm" onClick={() => onChange("", "")}>
-					Clear dates
+					{t("dateRange.clear")}
 				</Button>
 			)}
 		</div>

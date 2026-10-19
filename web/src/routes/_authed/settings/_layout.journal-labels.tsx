@@ -7,6 +7,7 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -26,6 +27,7 @@ import {
 	listJournalLabels,
 	updateJournalLabel,
 } from "#/endpoints/journal-labels";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import {
 	type JournalLabel,
@@ -45,6 +47,7 @@ interface LabelFormDialogProps {
 }
 
 function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const [apiError, setApiError] = useState<string | null>(null);
 
@@ -57,7 +60,7 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			qc.invalidateQueries({ queryKey: keys.journalLabels.all });
 			onClose();
 		},
-		onError: (e) => setApiError(e instanceof Error ? e.message : "Save failed"),
+		onError: (e) => setApiError(apiErrorMessage(e, t("common.saveError"))),
 	});
 
 	const form = useForm({
@@ -92,14 +95,18 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			)}
 			<form.Field name="name">
 				{(f) => (
-					<FormField field={f} label="Name *" placeholder="e.g. CONVERSATION" />
+					<FormField
+						field={f}
+						label={t("journalLabels.form.name")}
+						placeholder={t("journalLabels.form.namePlaceholder")}
+					/>
 				)}
 			</form.Field>
 			<form.Field name="color">
 				{(f) => (
 					<FormField
 						field={f}
-						label="Color (hex)"
+						label={t("journalLabels.form.color")}
 						placeholder="#9ea096"
 						type="color"
 					/>
@@ -107,12 +114,17 @@ function LabelFormDialog({ initial, onClose }: LabelFormDialogProps) {
 			</form.Field>
 			<DialogFooter>
 				<Button type="button" variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<form.Subscribe selector={(s) => s.isSubmitting}>
 					{(isSubmitting) => (
-						<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-							{initial ? "Save changes" : "Create label"}
+						<SubmitButton
+							isPending={isSubmitting}
+							pendingLabel={t("common.saving")}
+						>
+							{initial
+								? t("common.saveChanges")
+								: t("journalLabels.form.create")}
 						</SubmitButton>
 					)}
 				</form.Subscribe>
@@ -128,6 +140,7 @@ function DeleteLabelDialog({
 	label: JournalLabel;
 	onClose: () => void;
 }) {
+	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const mutation = useMutation({
 		mutationFn: () => deleteJournalLabel(label.id),
@@ -139,22 +152,21 @@ function DeleteLabelDialog({
 	return (
 		<>
 			<DialogHeader>
-				<DialogTitle>Delete label?</DialogTitle>
+				<DialogTitle>{t("journalLabels.delete.title")}</DialogTitle>
 				<DialogDescription>
-					Permanently delete "{label.name}"? Journal entries with this label
-					will be unaffected (label detached).
+					{t("journalLabels.delete.description", { name: label.name })}
 				</DialogDescription>
 			</DialogHeader>
 			<DialogFooter>
 				<Button variant="neutral" onClick={onClose}>
-					Cancel
+					{t("common.cancel")}
 				</Button>
 				<Button
 					variant="destructive"
 					onClick={() => mutation.mutate()}
 					disabled={mutation.isPending}
 				>
-					{mutation.isPending ? "Deleting…" : "Delete"}
+					{mutation.isPending ? t("common.deleting") : t("common.delete")}
 				</Button>
 			</DialogFooter>
 		</>
@@ -172,6 +184,7 @@ interface JournalLabelsListProps {
 }
 
 function JournalLabelsList({ onDialogChange }: JournalLabelsListProps) {
+	const { t } = useTranslation("settings");
 	const { data } = useSuspenseQuery({
 		queryKey: keys.journalLabels.list(),
 		queryFn: listJournalLabels,
@@ -180,9 +193,7 @@ function JournalLabelsList({ onDialogChange }: JournalLabelsListProps) {
 	return (
 		<>
 			{data.length === 0 && (
-				<p className="text-[13px] text-sub">
-					No labels yet. Create one to start tagging journal entries.
-				</p>
+				<p className="text-[13px] text-sub">{t("journalLabels.empty")}</p>
 			)}
 
 			<ul className="border-bw border-line rounded-base bg-panel divide-y divide-line-soft">
@@ -195,7 +206,7 @@ function JournalLabelsList({ onDialogChange }: JournalLabelsListProps) {
 						<span className="text-[13px] text-ink">{label.name}</span>
 						{label.count !== undefined && label.count > 0 && (
 							<span className="font-mono text-[11px] text-sub">
-								{label.count} entries
+								{t("journalLabels.count", { count: label.count })}
 							</span>
 						)}
 						<div className="ml-auto flex gap-1">
@@ -222,16 +233,17 @@ function JournalLabelsList({ onDialogChange }: JournalLabelsListProps) {
 }
 
 function JournalLabelsPage() {
+	const { t } = useTranslation("settings");
 	const [dialog, setDialog] = useState<DialogMode>(null);
 
 	return (
 		<div className="space-y-4 max-w-xl">
 			<div className="flex items-center justify-between">
 				<h1 className="text-[18px] font-semibold tracking-tight text-ink font-display">
-					Journal Labels
+					{t("journalLabels.title")}
 				</h1>
 				<Button size="sm" onClick={() => setDialog({ kind: "create" })}>
-					<Plus className="size-3 mr-1" /> New Label
+					<Plus className="size-3 mr-1" /> {t("journalLabels.new")}
 				</Button>
 			</div>
 
@@ -246,7 +258,9 @@ function JournalLabelsPage() {
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>
-							{dialog?.kind === "edit" ? "Edit label" : "New label"}
+							{dialog?.kind === "edit"
+								? t("journalLabels.dialog.editTitle")
+								: t("journalLabels.dialog.newTitle")}
 						</DialogTitle>
 					</DialogHeader>
 					<LabelFormDialog

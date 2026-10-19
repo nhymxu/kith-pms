@@ -1,4 +1,5 @@
 // Journal create/edit form — TanStack Form + Zod, people + label multi-select
+
 import { useForm } from "@tanstack/react-form";
 import {
 	keepPreviousData,
@@ -8,6 +9,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -19,6 +21,7 @@ import { listJournalLabels } from "#/endpoints/journal-labels";
 import { getMe } from "#/endpoints/me";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
 import { useDebounce } from "#/hooks/use-debounce";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import {
 	type JournalActivity,
@@ -33,13 +36,18 @@ interface JournalFormProps {
 	defaultPersonId?: number;
 }
 
-const formFallback = (
-	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
-);
+function FormFallback() {
+	const { t } = useTranslation("journal");
+	return (
+		<div className="py-8 text-center text-[13px] text-sub">
+			{t("form.loading")}
+		</div>
+	);
+}
 
 export function JournalForm(props: JournalFormProps) {
 	return (
-		<QueryBoundary fallback={formFallback}>
+		<QueryBoundary fallback={<FormFallback />}>
 			<JournalFormInner {...props} />
 		</QueryBoundary>
 	);
@@ -48,9 +56,10 @@ export function JournalForm(props: JournalFormProps) {
 function JournalFormInner({
 	initial,
 	onSubmit,
-	submitLabel = "Save Entry",
+	submitLabel,
 	defaultPersonId,
 }: JournalFormProps) {
+	const { t } = useTranslation("journal");
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [searchQ, setSearchQ] = useState("");
 	const debouncedSearchQ = useDebounce(searchQ, 300);
@@ -97,9 +106,7 @@ function JournalFormInner({
 			try {
 				await onSubmit(value as JournalRequest);
 			} catch (err) {
-				setApiError(
-					err instanceof Error ? err.message : "Failed to save entry",
-				);
+				setApiError(apiErrorMessage(err, t("form.saveFailed")));
 			}
 		},
 	});
@@ -120,16 +127,24 @@ function JournalFormInner({
 
 			<form.Field name="title">
 				{(f) => (
-					<FormField field={f} label="Title *" placeholder="What happened?" />
+					<FormField
+						field={f}
+						label={t("form.titleLabel")}
+						placeholder={t("form.titlePlaceholder")}
+					/>
 				)}
 			</form.Field>
 
 			<div className="grid grid-cols-2 gap-4">
 				<form.Field name="occurred_at_date">
-					{(f) => <FormField field={f} label="Date *" type="date" />}
+					{(f) => (
+						<FormField field={f} label={t("form.dateLabel")} type="date" />
+					)}
 				</form.Field>
 				<form.Field name="occurred_at_time">
-					{(f) => <FormField field={f} label="Time (optional)" type="time" />}
+					{(f) => (
+						<FormField field={f} label={t("form.timeLabel")} type="time" />
+					)}
 				</form.Field>
 			</div>
 
@@ -149,7 +164,7 @@ function JournalFormInner({
 					return (
 						<div className="space-y-2">
 							<div className="flex items-center gap-2">
-								<Label>People</Label>
+								<Label>{t("form.people")}</Label>
 								{!selectedIds.includes(myProfile.id) && (
 									<button
 										type="button"
@@ -158,7 +173,7 @@ function JournalFormInner({
 										}
 										className="text-xs text-accent-text hover:opacity-80 font-medium"
 									>
-										+ Me
+										{t("form.addMe")}
 									</button>
 								)}
 							</div>
@@ -203,7 +218,7 @@ function JournalFormInner({
 									type="text"
 									value={searchQ}
 									onChange={(e) => setSearchQ(e.target.value)}
-									placeholder="Search people to add…"
+									placeholder={t("form.searchPeoplePlaceholder")}
 									className="h-9 w-full border-field-bw border-field-line rounded-md bg-field px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
 								/>
 								{unselected.length > 0 && (
@@ -253,7 +268,7 @@ function JournalFormInner({
 
 					return (
 						<div className="space-y-2">
-							<Label>Labels</Label>
+							<Label>{t("form.labels")}</Label>
 							{selected.length > 0 && (
 								<div className="flex flex-wrap gap-1">
 									{selected.map((l) => (
@@ -297,13 +312,18 @@ function JournalFormInner({
 								)
 							) : (
 								<p className="text-[12px] text-sub">
-									No labels yet. Create some in{" "}
-									<Link
-										to="/settings/journal-labels"
-										className="text-accent-text hover:underline"
-									>
-										Settings → Journal Labels
-									</Link>
+									<Trans
+										t={t}
+										i18nKey="form.noLabels"
+										components={{
+											settingsLink: (
+												<Link
+													to="/settings/journal-labels"
+													className="text-accent-text hover:underline"
+												/>
+											),
+										}}
+									/>
 								</p>
 							)}
 						</div>
@@ -313,14 +333,14 @@ function JournalFormInner({
 
 			{/* Content */}
 			<div className="space-y-1.5">
-				<Label>Content</Label>
+				<Label>{t("form.content")}</Label>
 				<form.Field name="content">
 					{(f) => (
 						<Textarea
 							value={f.state.value}
 							onBlur={f.handleBlur}
 							onChange={(e) => f.handleChange(e.target.value)}
-							placeholder="Write about the interaction…"
+							placeholder={t("form.contentPlaceholder")}
 							rows={6}
 						/>
 					)}
@@ -329,8 +349,11 @@ function JournalFormInner({
 
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
-					<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-						{submitLabel}
+					<SubmitButton
+						isPending={isSubmitting}
+						pendingLabel={t("form.saving")}
+					>
+						{submitLabel ?? t("form.save")}
 					</SubmitButton>
 				)}
 			</form.Subscribe>

@@ -4041,6 +4041,10 @@ const docTemplate = `{
                 "favorite_first_default": {
                     "type": "boolean"
                 },
+                "language": {
+                    "description": "Language is the UI locale: \"en\" or \"vi\".",
+                    "type": "string"
+                },
                 "nav_layout": {
                     "type": "string"
                 },
@@ -4116,9 +4120,17 @@ const docTemplate = `{
         "internal_api_handler.envelope": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "string"
+                },
                 "data": {},
                 "error": {
+                    "description": "Error is the English fallback text; clients localize by Code.",
                     "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },

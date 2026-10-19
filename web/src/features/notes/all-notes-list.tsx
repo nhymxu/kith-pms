@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { QueryBoundary } from "#/components/query-boundary";
 import { listAllNotes } from "#/endpoints/notes";
 import { getAvatarUrl, listPeople } from "#/endpoints/people";
@@ -31,6 +32,7 @@ function groupByMonth(notes: NoteWithPerson[]) {
 const PAGE_SIZE = 20;
 
 function AllNotesListInner() {
+	const { t } = useTranslation("notes");
 	const [page, setPage] = useState(1);
 	const [fromDate, setFromDate] = useState("");
 	const [toDate, setToDate] = useState("");
@@ -71,15 +73,17 @@ function AllNotesListInner() {
 				idPrefix="notes"
 				from={fromDate}
 				to={toDate}
-				onChange={(f, t) => {
-					setFromDate(f);
-					setToDate(t);
+				onChange={(from, to) => {
+					setFromDate(from);
+					setToDate(to);
 					setPage(1);
 				}}
 			/>
 			{people.items.length > 0 && (
 				<div className="space-y-1">
-					<p className="text-[11px] font-medium text-sub">Filter by person</p>
+					<p className="text-[11px] font-medium text-sub">
+						{t("filter.byPerson")}
+					</p>
 					<div className="flex flex-wrap gap-2">
 						{people.items.map((p) => {
 							const active = personIds.includes(p.id);
@@ -117,7 +121,7 @@ function AllNotesListInner() {
 								onClick={() => change(setPersonIds)([])}
 								className="text-xs text-sub hover:text-ink"
 							>
-								Clear
+								{t("filter.clear")}
 							</button>
 						)}
 					</div>
@@ -132,7 +136,7 @@ function AllNotesListInner() {
 		return (
 			<>
 				{filterUi}
-				<p className="text-sm text-sub">No notes found.</p>
+				<p className="text-sm text-sub">{t("list.empty")}</p>
 			</>
 		);
 	}

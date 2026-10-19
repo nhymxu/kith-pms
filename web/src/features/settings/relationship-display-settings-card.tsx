@@ -1,5 +1,6 @@
 import { useMutation, type useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
@@ -18,13 +19,10 @@ import {
 } from "#/lib/format-datetime";
 import type { UserSettings } from "#/schemas/settings";
 
-const RELATIONSHIP_DISPLAY_OPTIONS: {
-	value: RelationshipDisplay;
-	label: string;
-}[] = [
-	{ value: "plain", label: "Type, then name (default)" },
-	{ value: "sentence", label: "Sentence" },
-	{ value: "badge", label: "Name with badge" },
+const RELATIONSHIP_DISPLAY_OPTIONS: RelationshipDisplay[] = [
+	"plain",
+	"sentence",
+	"badge",
 ];
 
 // Minh has Lan as em ruột, so Lan's own page lists Minh as anh ruột.
@@ -46,6 +44,7 @@ export function RelationshipDisplaySettingsCard({
 	) => Parameters<typeof updateSettings>[0];
 	queryClient: ReturnType<typeof useQueryClient>;
 }) {
+	const { t } = useTranslation("settings");
 	const [display, setDisplay] = useState<RelationshipDisplay>(
 		() => getUserPrefs().relationshipDisplay,
 	);
@@ -72,46 +71,50 @@ export function RelationshipDisplaySettingsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-[14px] font-medium text-ink">
-					Relationships
+					{t("relationships.title")}
 				</CardTitle>
 				<CardDescription className="text-[12px] text-sub">
-					How relationship rows read on a person's profile. The type always
-					describes the other person: on Minh's profile, "em ruột Lan" means Lan
-					is Minh's em ruột.
+					{t("relationships.description")}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="space-y-2">
-					<Label className="text-[13px]">Display style</Label>
+					<Label className="text-[13px]">{t("relationships.styleLabel")}</Label>
 					<div className="space-y-1.5">
 						{RELATIONSHIP_DISPLAY_OPTIONS.map((opt) => (
 							<label
-								key={opt.value}
+								key={opt}
 								className="flex items-center gap-3 cursor-pointer"
 							>
 								<input
 									type="radio"
 									name="relationshipDisplay"
-									value={opt.value}
-									checked={display === opt.value}
-									onChange={() => setDisplay(opt.value)}
+									value={opt}
+									checked={display === opt}
+									onChange={() => setDisplay(opt)}
 									className="accent-accent"
 								/>
-								<span className="text-[13px] text-ink">{opt.label}</span>
+								<span className="text-[13px] text-ink">
+									{t(`relationships.styles.${opt}`)}
+								</span>
 							</label>
 						))}
 					</div>
 				</div>
 
 				<div className="space-y-2">
-					<Label className="text-[13px]">Example</Label>
+					<Label className="text-[13px]">
+						{t("relationships.exampleLabel")}
+					</Label>
 					<div className="grid gap-2 sm:grid-cols-2">
 						{EXAMPLE_PROFILES.map((ex) => (
 							<div
 								key={ex.self}
 								className="border-bw border-line rounded-md p-2 space-y-1.5"
 							>
-								<p className="text-[11px] text-sub">On {ex.self}'s profile</p>
+								<p className="text-[11px] text-sub">
+									{t("relationships.onProfile", { name: ex.self })}
+								</p>
 								<div className="flex items-center gap-3 text-sm">
 									<RelationshipLabel
 										display={display}
@@ -133,14 +136,14 @@ export function RelationshipDisplaySettingsCard({
 					disabled={isPlaceholderData || mutation.isPending}
 				>
 					{mutation.isPending
-						? "Saving…"
+						? t("relationships.saving")
 						: mutation.isSuccess
-							? "Saved!"
-							: "Save display style"}
+							? t("relationships.saved")
+							: t("relationships.save")}
 				</Button>
 				{mutation.isError && (
 					<p className="text-[12px] text-danger-fg">
-						Failed to save. Please try again.
+						{t("relationships.error")}
 					</p>
 				)}
 			</CardContent>

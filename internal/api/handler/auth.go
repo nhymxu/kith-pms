@@ -37,7 +37,7 @@ func (h *AuthAPI) Login(c *echo.Context) error {
 		Password string `json:"password"`
 	}
 	if err := c.Bind(&req); err != nil || req.Password == "" {
-		return apiErr(c, http.StatusBadRequest, "password is required")
+		return apiErr(c, http.StatusBadRequest, "password_required", "password is required")
 	}
 
 	ip := c.RealIP()
@@ -46,10 +46,10 @@ func (h *AuthAPI) Login(c *echo.Context) error {
 	token, err := h.Svc.Login(c.Request().Context(), req.Password, ip, ua)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
-			return apiErr(c, http.StatusUnauthorized, "invalid credentials")
+			return apiErr(c, http.StatusUnauthorized, "invalid_credentials", "invalid credentials")
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	h.setSessionCookie(c, token)
@@ -108,7 +108,7 @@ func (h *AuthAPI) LogoutAll(c *echo.Context) error {
 func (h *AuthAPI) Me(c *echo.Context) error {
 	user := auth.UserFromContext(c)
 	if user == nil {
-		return apiErr(c, http.StatusUnauthorized, "unauthorized")
+		return apiErr(c, http.StatusUnauthorized, "unauthorized", "unauthorized")
 	}
 
 	return ok(c, map[string]any{
@@ -138,31 +138,36 @@ func (h *AuthAPI) ChangePassword(c *echo.Context) error {
 		ConfirmPassword string `json:"confirm_password"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if req.CurrentPassword == "" || req.NewPassword == "" || req.ConfirmPassword == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "all fields are required")
+		return apiErr(c, http.StatusUnprocessableEntity, "all_fields_required", "all fields are required")
 	}
 
 	if req.NewPassword != req.ConfirmPassword {
-		return apiErr(c, http.StatusUnprocessableEntity, "new passwords do not match")
+		return apiErr(c, http.StatusUnprocessableEntity, "passwords_mismatch", "new passwords do not match")
 	}
 
 	if len(req.NewPassword) < 8 {
-		return apiErr(c, http.StatusUnprocessableEntity, "password must be at least 8 characters")
+		return apiErr(c, http.StatusUnprocessableEntity, "password_too_short", "password must be at least 8 characters")
 	}
 
 	if req.CurrentPassword == req.NewPassword {
-		return apiErr(c, http.StatusUnprocessableEntity, "new password must differ from current")
+		return apiErr(c, http.StatusUnprocessableEntity, "password_unchanged", "new password must differ from current")
 	}
 
 	if err := h.Svc.ChangePassword(c.Request().Context(), req.CurrentPassword, req.NewPassword); err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
-			return apiErr(c, http.StatusUnprocessableEntity, "current password is incorrect")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"current_password_incorrect",
+				"current password is incorrect",
+			)
 		}
 
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	// Revoke all sessions and re-issue so the caller remains logged in.

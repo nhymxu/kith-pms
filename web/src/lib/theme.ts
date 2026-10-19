@@ -19,8 +19,6 @@ export const DEFAULT_THEME: Theme = "quiet-ink";
 
 export interface ThemeMeta {
 	id: Theme;
-	label: string;
-	description: string;
 	// Literal preview hex for picker swatch chips (not live theme tokens).
 	swatch: { bg: string; panel: string; accent: string; ink: string };
 }
@@ -28,8 +26,6 @@ export interface ThemeMeta {
 export const THEME_META: ThemeMeta[] = [
 	{
 		id: "quiet-ink",
-		label: "Quiet Ink",
-		description: "Clean white default with indigo accents.",
 		swatch: {
 			bg: "#ffffff",
 			panel: "#ffffff",
@@ -39,8 +35,6 @@ export const THEME_META: ThemeMeta[] = [
 	},
 	{
 		id: "warm-album",
-		label: "Warm Album",
-		description: "Cream paper tones, serif headings, forest green.",
 		swatch: {
 			bg: "#f7f4ec",
 			panel: "#fffdf7",
@@ -50,8 +44,6 @@ export const THEME_META: ThemeMeta[] = [
 	},
 	{
 		id: "bold-press",
-		label: "Bold Press",
-		description: "Neobrutalist: black borders, hard shadows, punchy colors.",
 		swatch: {
 			bg: "#f2eefe",
 			panel: "#ffffff",
@@ -61,8 +53,6 @@ export const THEME_META: ThemeMeta[] = [
 	},
 	{
 		id: "nightdesk",
-		label: "Nightdesk",
-		description: "Dark desk with amber accents and serif headings.",
 		swatch: {
 			bg: "#12151c",
 			panel: "#191e28",
@@ -72,8 +62,6 @@ export const THEME_META: ThemeMeta[] = [
 	},
 	{
 		id: "softclay",
-		label: "Soft Clay",
-		description: "Borderless rounded panels floating on soft shadows.",
 		swatch: {
 			bg: "#edeff5",
 			panel: "#ffffff",
@@ -83,8 +71,6 @@ export const THEME_META: ThemeMeta[] = [
 	},
 	{
 		id: "ledger",
-		label: "Ledger",
-		description: "Compact, data-dense, monospace headings, teal ink.",
 		swatch: {
 			bg: "#fcfcfb",
 			panel: "#ffffff",

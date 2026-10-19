@@ -32,6 +32,9 @@ type UserSettings struct {
 	// "plain", "sentence" or "badge".
 	RelationshipDisplay string `json:"relationship_display"`
 
+	// Language is the UI locale: "en" or "vi".
+	Language string `json:"language"`
+
 	SearchScope []string `json:"search_scope"`
 }
 
@@ -62,6 +65,8 @@ var Defaults = UserSettings{
 
 	RelationshipDisplay: "plain",
 
+	Language: "en",
+
 	SearchScope: []string{"people", "journal", "gifts", "notes"},
 }
 
@@ -91,6 +96,8 @@ const (
 	KeyNumberFormat = "number_format"
 
 	KeyRelationshipDisplay = "relationship_display"
+
+	KeyLanguage = "language"
 
 	KeySearchScope = "search_scope"
 )

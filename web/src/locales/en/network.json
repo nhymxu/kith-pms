@@ -1,0 +1,59 @@
+{
+	"title": "Your Network",
+	"loadFailed": "Failed to load network graph.",
+	"loading": "Loading network…",
+	"empty": "No connections yet. Add relationships to people to see your network.",
+	"controls": {
+		"group": "Group",
+		"type": "Type",
+		"any": "Any",
+		"colorBy": "Color by",
+		"labels": "Labels",
+		"relType": "Rel. type",
+		"avatars": "Avatars",
+		"onlyMine": "Only mine",
+		"direct": "Direct",
+		"alters": "Alters",
+		"indirect": "indirect connections",
+		"unconnected": "Unconnected",
+		"recenter": "Recenter",
+		"recenterAria": "Recenter graph"
+	},
+	"legend": {
+		"nodesByGroup": "Nodes by group:",
+		"you": "You",
+		"edgesAreRelationships": "· edges: relationships",
+		"edgesByType": "Edges by type:"
+	},
+	"panel": {
+		"expand": "Expand panel",
+		"expandAria": "Expand selected panel",
+		"collapse": "Collapse panel",
+		"collapseAria": "Collapse selected panel",
+		"selected": "Selected",
+		"clickHint": "Click any node to inspect it.",
+		"lastContacted": "Last contacted {{when}}",
+		"connections_one": "{{count}} connection",
+		"connections_other": "{{count}} connections"
+	},
+	"card": {
+		"close": "Close",
+		"openProfile": "Open profile →"
+	},
+	"tooltip": {
+		"you": "you"
+	},
+	"date": {
+		"birthdayWithAge": "{{monthDay}}, {{year}} ({{age}} yrs)",
+		"today": "today",
+		"yesterday": "yesterday",
+		"daysAgo_one": "{{count}} day ago",
+		"daysAgo_other": "{{count}} days ago",
+		"weeksAgo_one": "{{count}} week ago",
+		"weeksAgo_other": "{{count}} weeks ago",
+		"monthsAgo_one": "{{count}} month ago",
+		"monthsAgo_other": "{{count}} months ago",
+		"yearsAgo_one": "{{count}} year ago",
+		"yearsAgo_other": "{{count}} years ago"
+	}
+}

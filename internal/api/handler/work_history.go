@@ -42,12 +42,12 @@ type workEntryRequest struct {
 func (h *WorkHistoryAPI) ListByPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	entries, err := h.Svc.ListByPerson(c.Request().Context(), personID)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, entries)
@@ -70,18 +70,18 @@ func (h *WorkHistoryAPI) ListByPerson(c *echo.Context) error {
 func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 	personID, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	var req workHistoryReplaceRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	entries := make([]work_history.WorkEntry, 0, len(req.Entries))
 	for _, e := range req.Entries {
 		if e.Company == "" {
-			return apiErr(c, http.StatusUnprocessableEntity, "company is required for each entry")
+			return apiErr(c, http.StatusUnprocessableEntity, "company_required", "company is required for each entry")
 		}
 
 		// StartDate is optional (empty = unknown); validate only if non-empty.
@@ -89,7 +89,10 @@ func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 		if e.StartDate != "" {
 			startDate, err = work_history.ParseWorkDate(e.StartDate)
 			if err != nil {
-				return apiErr(c, http.StatusUnprocessableEntity, "invalid start_date: "+err.Error())
+				return apiErrParams(
+					c, http.StatusUnprocessableEntity, "invalid_start_date",
+					"invalid start_date: "+err.Error(), map[string]any{"detail": err.Error()},
+				)
 			}
 		}
 
@@ -98,7 +101,10 @@ func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 		if e.EndDate != "" {
 			endDate, err = work_history.ParseWorkDate(e.EndDate)
 			if err != nil {
-				return apiErr(c, http.StatusUnprocessableEntity, "invalid end_date: "+err.Error())
+				return apiErrParams(
+					c, http.StatusUnprocessableEntity, "invalid_end_date",
+					"invalid end_date: "+err.Error(), map[string]any{"detail": err.Error()},
+				)
 			}
 		}
 
@@ -115,7 +121,7 @@ func (h *WorkHistoryAPI) ReplaceForPerson(c *echo.Context) error {
 	}
 
 	if err := h.Svc.ReplaceForPerson(c.Request().Context(), personID, entries); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, nil)

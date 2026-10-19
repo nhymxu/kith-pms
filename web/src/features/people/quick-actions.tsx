@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Clock, Gift } from "lucide-react";
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Button } from "#/components/ui/button";
 import {
@@ -21,6 +22,7 @@ interface QuickActionsProps {
 }
 
 export function QuickActions({ personId }: QuickActionsProps) {
+	const { t } = useTranslation("people");
 	const [journalOpen, setJournalOpen] = useState(false);
 	const [giftOpen, setGiftOpen] = useState(false);
 	const [confirmLastContact, setConfirmLastContact] = useState(false);
@@ -43,17 +45,17 @@ export function QuickActions({ personId }: QuickActionsProps) {
 					size="sm"
 					onClick={() => setJournalOpen(true)}
 				>
-					<BookOpen className="size-3" /> Quick journal
+					<BookOpen className="size-3" /> {t("quickActions.journal")}
 				</Button>
 				<Button variant="neutral" size="sm" onClick={() => setGiftOpen(true)}>
-					<Gift className="size-3" /> Quick gift
+					<Gift className="size-3" /> {t("quickActions.gift")}
 				</Button>
 				<Button
 					variant="neutral"
 					size="sm"
 					onClick={() => setConfirmLastContact(true)}
 				>
-					<Clock className="size-3" /> Update last contact to today
+					<Clock className="size-3" /> {t("quickActions.updateLastContact")}
 				</Button>
 			</div>
 
@@ -74,28 +76,29 @@ export function QuickActions({ personId }: QuickActionsProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Update last contact?</DialogTitle>
+						<DialogTitle>{t("quickActions.confirmTitle")}</DialogTitle>
 					</DialogHeader>
 					<p className="text-sm text-sub">
-						This will set the last contact date to{" "}
-						<span className="font-medium">
-							{formatDateTime(new Date().toISOString())}
-						</span>
-						. Continue?
+						<Trans
+							t={t}
+							i18nKey="quickActions.confirmBody"
+							values={{ date: formatDateTime(new Date().toISOString()) }}
+							components={{ b: <span className="font-medium" /> }}
+						/>
 					</p>
 					<DialogFooter>
 						<Button
 							variant="neutral"
 							onClick={() => setConfirmLastContact(false)}
 						>
-							Cancel
+							{t("quickActions.cancel")}
 						</Button>
 						<SubmitButton
 							isPending={lastContactMutation.isPending}
 							onClick={() => lastContactMutation.mutate()}
 							type="button"
 						>
-							Confirm
+							{t("quickActions.confirm")}
 						</SubmitButton>
 					</DialogFooter>
 				</DialogContent>

@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { SafeTrans } from "#/components/safe-trans";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -13,6 +15,7 @@ import {
 } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { updatePerson } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import type { Location, Person } from "#/schemas/person";
 
@@ -24,7 +27,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 	);
 }
 
-const LOCATION_TYPES = ["home", "work", "other"];
+const LOCATION_TYPES = ["home", "work", "other"] as const;
 
 interface EditRowProps {
 	location: Partial<Location>;
@@ -33,6 +36,7 @@ interface EditRowProps {
 }
 
 function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
+	const { t } = useTranslation("people");
 	const [type, setType] = useState(location.type ?? "home");
 	const [address, setAddress] = useState(location.address ?? "");
 	const [city, setCity] = useState(location.city ?? "");
@@ -47,9 +51,9 @@ function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
 					value={type}
 					onChange={(e) => setType(e.target.value)}
 				>
-					{LOCATION_TYPES.map((t) => (
-						<option key={t} value={t}>
-							{t}
+					{LOCATION_TYPES.map((lt) => (
+						<option key={lt} value={lt}>
+							{t(`types.location.${lt}`)}
 						</option>
 					))}
 				</select>
@@ -83,26 +87,26 @@ function LocationEditRow({ location, onSave, onCancel }: EditRowProps) {
 				className="h-8"
 				value={address}
 				onChange={(e) => setAddress(e.target.value)}
-				placeholder="Address"
+				placeholder={t("sections.locations.address")}
 			/>
 			<div className="flex gap-2">
 				<Input
 					className="h-8 flex-1"
 					value={city}
 					onChange={(e) => setCity(e.target.value)}
-					placeholder="City"
+					placeholder={t("sections.locations.city")}
 				/>
 				<Input
 					className="h-8 w-24"
 					value={postalCode}
 					onChange={(e) => setPostalCode(e.target.value)}
-					placeholder="Postal code"
+					placeholder={t("sections.locations.postalCode")}
 				/>
 				<Input
 					className="h-8 flex-1"
 					value={country}
 					onChange={(e) => setCountry(e.target.value)}
-					placeholder="Country"
+					placeholder={t("sections.locations.country")}
 				/>
 			</div>
 		</div>
@@ -114,6 +118,7 @@ interface LocationsSectionProps {
 }
 
 export function LocationsSection({ person }: LocationsSectionProps) {
+	const { t } = useTranslation("people");
 	const qc = useQueryClient();
 	const [editingId, setEditingId] = useState<number | "new" | null>(null);
 	const [saveError, setSaveError] = useState<string | null>(null);
@@ -150,7 +155,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 			setSaveError(null);
 		},
 		onError: (e) =>
-			setSaveError(e instanceof Error ? e.message : "Failed to save"),
+			setSaveError(apiErrorMessage(e, t("sections.locations.saveFailed"))),
 	});
 
 	function handleSave(updated: Partial<Location>) {
@@ -184,9 +189,9 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 	return (
 		<div>
 			<div className="flex items-center justify-between mb-2">
-				<SectionHeading>Locations</SectionHeading>
+				<SectionHeading>{t("sections.locations.title")}</SectionHeading>
 				<Button variant="neutral" size="sm" onClick={() => setEditingId("new")}>
-					<Plus className="size-3" /> Add
+					<Plus className="size-3" /> {t("sections.locations.add")}
 				</Button>
 			</div>
 			{saveError && (
@@ -209,7 +214,9 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 							className="text-sm border-bw border-line rounded-md p-3 space-y-1"
 						>
 							<div className="flex items-center gap-2">
-								<Badge variant="neutral">{l.type}</Badge>
+								<Badge variant="neutral">
+									{t(`types.location.${l.type}`, { defaultValue: l.type })}
+								</Badge>
 								<div className="flex gap-1 ml-auto">
 									<button
 										type="button"
@@ -243,7 +250,7 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 					/>
 				)}
 				{person.locations.length === 0 && editingId !== "new" && (
-					<p className="text-sm text-sub">No locations.</p>
+					<p className="text-sm text-sub">{t("sections.locations.empty")}</p>
 				)}
 			</div>
 			<Dialog
@@ -252,20 +259,33 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Remove location?</DialogTitle>
+						<DialogTitle>{t("sections.locations.removeTitle")}</DialogTitle>
 					</DialogHeader>
 					{(() => {
 						const l = person.locations.find((l) => l.id === confirmDeleteId);
 						return l ? (
 							<p className="text-[13px] text-sub">
-								Remove the <span className="font-medium">{l.type}</span>{" "}
-								location{l.address ? ` at ${l.address}` : ""}?
+								<SafeTrans
+									t={t}
+									i18nKey={
+										l.address
+											? "sections.locations.removeBodyWithAddress"
+											: "sections.locations.removeBody"
+									}
+									values={{
+										type: t(`types.location.${l.type}`, {
+											defaultValue: l.type,
+										}),
+										address: l.address,
+									}}
+									components={{ b: <span className="font-medium" /> }}
+								/>
 							</p>
 						) : null;
 					})()}
 					<DialogFooter>
 						<Button variant="neutral" onClick={() => setConfirmDeleteId(null)}>
-							Cancel
+							{t("sections.locations.cancel")}
 						</Button>
 						<Button
 							variant="destructive"
@@ -277,7 +297,9 @@ export function LocationsSection({ person }: LocationsSectionProps) {
 								}
 							}}
 						>
-							{saveMutation.isPending ? "Removing…" : "Remove"}
+							{saveMutation.isPending
+								? t("sections.locations.removing")
+								: t("sections.locations.remove")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

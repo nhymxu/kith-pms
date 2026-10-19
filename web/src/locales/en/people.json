@@ -1,0 +1,388 @@
+{
+	"relationship": {
+		"sentence": "is {{type}} of {{self}}",
+		"tooltip": "{{other}} is {{type}} of {{self}}\n{{self}} is {{inverse}} of {{other}}",
+		"showDirection": "Show relationship direction"
+	},
+	"list": {
+		"title": "People",
+		"newPerson": "New Person",
+		"sort": {
+			"nameAsc": "Name A→Z",
+			"nameDesc": "Name Z→A",
+			"lastContactNewest": "Last contact: newest",
+			"lastContactOldest": "Last contact: oldest"
+		},
+		"favorite": "Favorite",
+		"unfavorite": "Unfavorite",
+		"columns": {
+			"name": "Name",
+			"labels": "Labels",
+			"lastContact": "Last contact"
+		},
+		"archived": "Archived",
+		"daysLeft": "{{days}}d left, restore from profile",
+		"keptIndefinitely": "kept indefinitely, restore from profile",
+		"edit": "Edit",
+		"searchPlaceholder": "Search people…",
+		"favoritesOnly": "Favorites only",
+		"favoritesFirst": "Favorites first",
+		"pendingDelete": "Pending Delete",
+		"archivedFilter": "Archived",
+		"clearLabels": "Clear",
+		"loading": "Loading…",
+		"empty": "No people found."
+	},
+	"edit": {
+		"loading": "Loading…",
+		"notFound": "Person not found.",
+		"title": "Edit {{name}}"
+	},
+	"bulkBar": {
+		"selected": "{{count}} selected",
+		"assigned": "Assigned to {{count}} people",
+		"assignFailed": "Failed to assign label",
+		"assignPlaceholder": "Assign label…",
+		"assigning": "Assigning…",
+		"assign": "Assign",
+		"connect": "Connect to person…",
+		"clear": "Clear"
+	},
+	"bulkRel": {
+		"title": "Add multiple relationships",
+		"type": "Type",
+		"selectType": "Select type…",
+		"addToList": "Add to list",
+		"symmetricHint": "⇄ marks symmetric types — these support label quick-select below",
+		"people": "People (select multiple)",
+		"addMe": "+ Me",
+		"searchPlaceholder": "Search by name…",
+		"addAllWithLabel": "Add all with label…",
+		"adding": "Adding…",
+		"addAll": "Add all",
+		"created": "Created {{count}} relationships",
+		"saveFailed": "Failed to save relationships",
+		"addedFirst": "Added first {{limit}} of {{total}} people with this label",
+		"added": "Added {{count}} people with this label",
+		"labelLoadFailed": "Failed to load people with this label",
+		"cancel": "Cancel",
+		"saving": "Saving…",
+		"save_one": "Save {{count}} relationship",
+		"save_other": "Save {{count}} relationships"
+	},
+	"connectTo": {
+		"title": "Connect to person",
+		"targetPerson": "Target person",
+		"noOthers": "No other people to connect — target is the only selection.",
+		"relationshipType": "Relationship type",
+		"selectType": "Select type…",
+		"willBeSet_one": "{{name}} will be set as <b>{{type}}</b> of the {{count}} person.",
+		"willBeSet_other": "{{name}} will be set as <b>{{type}}</b> of the {{count}} people.",
+		"connected": "Connected {{created}} ({{skipped}} skipped)",
+		"partialFailure": "Failed after connecting {{created}}",
+		"failure": "Failed to connect",
+		"cancel": "Cancel",
+		"connecting": "Connecting…",
+		"connect_one": "Connect {{count}} person",
+		"connect_other": "Connect {{count}} people"
+	},
+	"connectMembers": {
+		"title": "Connect members of \"{{label}}\"",
+		"description": "Creates relationships between all members of this label.",
+		"relationshipType": "Relationship type",
+		"noSymmetricTypes": "No symmetric relationship types available. Create one (e.g. Co-worker) in Settings → Relationship Types.",
+		"select": "Select…",
+		"loadingPreview": "Loading preview…",
+		"tooFew": "Need at least 2 members to connect. This label has {{members}}.",
+		"willCreate": "Will create up to {{pairs}} relationships between {{members}} people. Existing relationships are skipped.",
+		"created": "Created {{count}} relationships",
+		"failed": "Failed to connect members",
+		"cancel": "Cancel",
+		"connecting": "Connecting…",
+		"connectPairs": "Connect {{pairs}} pairs"
+	},
+	"types": {
+		"contact": {
+			"phone": "phone",
+			"email": "email",
+			"address": "address",
+			"social": "social",
+			"other": "other"
+		},
+		"location": {
+			"home": "home",
+			"work": "work",
+			"other": "other"
+		}
+	},
+	"gender": {
+		"male": "Male",
+		"female": "Female",
+		"rather_not_say": "Rather not say"
+	},
+	"form": {
+		"birthdayReminder": "Create an annual birthday reminder",
+		"saveFailed": "Save failed",
+		"identity": "Identity",
+		"name": "Name *",
+		"namePlaceholder": "Full name",
+		"nickname": "Nickname",
+		"nicknamePlaceholder": "Goes by…",
+		"dateOfBirth": "Date of birth",
+		"lastContact": "Last contact",
+		"clearLastContact": "Clear last contact",
+		"gender": "Gender",
+		"genderUnselected": "Unselected",
+		"bio": "Bio",
+		"bioPlaceholder": "Background, context, anything worth remembering…",
+		"saving": "Saving…",
+		"create": "Create person",
+		"save": "Save changes",
+		"contacts": {
+			"title": "Contacts",
+			"add": "Add",
+			"empty": "No contacts yet.",
+			"type": "Type",
+			"value": "Value",
+			"valuePlaceholder": "e.g. +1 555 0100",
+			"label": "Label",
+			"labelPlaceholder": "e.g. Work"
+		},
+		"locations": {
+			"title": "Locations",
+			"add": "Add",
+			"empty": "No locations yet.",
+			"address": "Address",
+			"city": "City",
+			"country": "Country",
+			"postalCode": "Postal code"
+		}
+	},
+	"avatar": {
+		"alt": "Avatar",
+		"converting": "Converting…",
+		"replace": "Replace",
+		"upload": "Upload",
+		"remove": "Remove",
+		"uploadFailed": "Upload failed"
+	},
+	"picker": {
+		"searchPlaceholder": "Search person…"
+	},
+	"quickActions": {
+		"journal": "Quick journal",
+		"gift": "Quick gift",
+		"updateLastContact": "Update last contact to today",
+		"confirmTitle": "Update last contact?",
+		"confirmBody": "This will set the last contact date to <b>{{date}}</b>. Continue?",
+		"cancel": "Cancel",
+		"confirm": "Confirm"
+	},
+	"quickGift": {
+		"title": "Quick gift note",
+		"giftTitle": "Gift title",
+		"placeholder": "e.g. Birthday gift idea",
+		"failed": "Failed",
+		"cancel": "Cancel",
+		"save": "Save"
+	},
+	"quickJournal": {
+		"title": "Quick journal entry",
+		"person": "Person",
+		"entryTitle": "Title",
+		"titlePlaceholder": "What happened?",
+		"notes": "Notes",
+		"notesPlaceholder": "Details…",
+		"selectPerson": "Select a person first",
+		"failed": "Failed",
+		"cancel": "Cancel",
+		"save": "Save"
+	},
+	"sections": {
+		"gifts": {
+			"title": "Gifts",
+			"quick": "Quick gift",
+			"empty": "No gifts."
+		},
+		"journal": {
+			"title": "Journal",
+			"viewAll": "View all",
+			"quick": "Quick journal",
+			"empty": "No journal entries for this person."
+		},
+		"notes": {
+			"title": "Notes"
+		},
+		"graph": {
+			"title": "Relationship Network",
+			"loading": "Loading…",
+			"empty": "No connections yet."
+		},
+		"contacts": {
+			"title": "Contacts",
+			"add": "Add",
+			"empty": "No contacts.",
+			"valuePlaceholder": "Value",
+			"labelPlaceholder": "Label",
+			"saveFailed": "Failed to save",
+			"removeTitle": "Remove contact?",
+			"removeBody": "Remove the <b>{{type}}</b> contact <b>{{value}}</b>?",
+			"removeBodyWithLabel": "Remove the <b>{{type}}</b> contact <b>{{value}}</b> ({{label}})?",
+			"cancel": "Cancel",
+			"removing": "Removing…",
+			"remove": "Remove"
+		},
+		"labels": {
+			"title": "Labels",
+			"attached": "Attached",
+			"noneAttached": "None attached.",
+			"available": "Available",
+			"removeTitle": "Remove label?",
+			"removeBody": "Remove the label <b>{{name}}</b>?",
+			"cancel": "Cancel",
+			"removing": "Removing…",
+			"remove": "Remove"
+		},
+		"dates": {
+			"title": "Important Dates",
+			"add": "Add",
+			"birthday": "Birthday",
+			"empty": "No important dates.",
+			"kind": {
+				"Anniversary": "Anniversary",
+				"Memorial": "Memorial",
+				"Custom": "Custom",
+				"birthday": "Birthday"
+			},
+			"labelPlaceholder": "Label (optional)",
+			"datePlaceholder": "Date (YYYY-MM-DD or --MM-DD)",
+			"recurring": "Recurring",
+			"cancel": "Cancel",
+			"save": "Save",
+			"saveFailed": "Failed to save",
+			"removeTitle": "Remove date?",
+			"removeBody": "Remove the <b>{{kind}}</b> date <b>{{value}}</b>?",
+			"removeBodyWithLabel": "Remove the <b>{{kind}}</b> ({{label}}) date <b>{{value}}</b>?",
+			"removing": "Removing…",
+			"remove": "Remove"
+		},
+		"locations": {
+			"title": "Locations",
+			"add": "Add",
+			"empty": "No locations.",
+			"address": "Address",
+			"city": "City",
+			"postalCode": "Postal code",
+			"country": "Country",
+			"saveFailed": "Failed to save",
+			"removeTitle": "Remove location?",
+			"removeBody": "Remove the <b>{{type}}</b> location?",
+			"removeBodyWithAddress": "Remove the <b>{{type}}</b> location at {{address}}?",
+			"cancel": "Cancel",
+			"removing": "Removing…",
+			"remove": "Remove"
+		},
+		"work": {
+			"title": "Work History",
+			"add": "Add",
+			"company": "Company *",
+			"jobTitle": "Title",
+			"startDate": "Start date",
+			"endDate": "End date (blank = Present)",
+			"location": "Location",
+			"description": "Description",
+			"cancel": "Cancel",
+			"save": "Save",
+			"saveFailed": "Failed to save",
+			"present": "Present",
+			"range": "{{start}} – {{end}}",
+			"rangeEndOnly": "– {{end}}",
+			"empty": "No work history.",
+			"removeTitle": "Remove work entry?",
+			"removeBody": "Remove <b>{{company}}</b>?",
+			"removeBodyWithTitle": "Remove <b>{{company}}</b> · {{title}}?",
+			"removing": "Removing…",
+			"remove": "Remove"
+		},
+		"relationships": {
+			"title": "Relationships",
+			"addMultiple": "Add multiple",
+			"add": "Add",
+			"empty": "No relationships yet.",
+			"addTitle": "Add relationship",
+			"type": "Type",
+			"select": "Select…",
+			"person": "Person",
+			"addMe": "+ Me",
+			"searchPlaceholder": "Search by name…",
+			"notes": "Notes",
+			"notesPlaceholder": "Optional notes",
+			"failed": "Failed",
+			"cancel": "Cancel",
+			"save": "Save",
+			"removeTitle": "Remove relationship?",
+			"removeBody": "Remove the <type>{{type}}</type> relationship with <person>{{person}}</person>?",
+			"removing": "Removing…",
+			"remove": "Remove"
+		}
+	},
+	"detail": {
+		"overview": {
+			"title": "Overview",
+			"cancel": "Cancel",
+			"saving": "Saving…",
+			"save": "Save",
+			"edit": "Edit",
+			"fullName": "Full name",
+			"nickname": "Nickname",
+			"dateOfBirth": "Date of birth",
+			"birthdayReminder": "Annual birthday reminder",
+			"lastContact": "Last contact",
+			"clear": "Clear",
+			"gender": "Gender",
+			"genderUnselected": "Unselected",
+			"bio": "Bio",
+			"bioPlaceholder": "Bio…",
+			"relationship": "Relationship",
+			"selfProfile": "Self profile",
+			"reminderOn": "🎂 reminder on"
+		},
+		"pendingDeletion": "Pending deletion — {{days}} days left before it's permanently removed.",
+		"pendingDeletionNoPurge": "Pending deletion — permanent purge is disabled.",
+		"restoreFailed": "Failed to restore",
+		"restoring": "Restoring…",
+		"restore": "Restore",
+		"archivedBanner": "Archived — hidden from lists, search, and pickers.",
+		"unarchive": "Unarchive",
+		"archive": "Archive",
+		"delete": "Delete",
+		"favorite": "Favorite",
+		"unfavorite": "Unfavorite",
+		"loading": "Loading…",
+		"deleteFailed": "Failed to delete",
+		"archiveFailed": "Failed to archive",
+		"unarchiveFailed": "Failed to unarchive",
+		"deleteDialog": {
+			"title": "Delete {{name}}?",
+			"body": "{{name}} will be hidden and permanently deleted after {{days}} days. You can restore them from this page or the Pending Delete tab before then.",
+			"bodyNoPurge": "{{name}} will be hidden until you restore it (permanent purge is disabled). You can restore them from this page or the Pending Delete tab before then.",
+			"cancel": "Cancel",
+			"deleting": "Deleting…",
+			"delete": "Delete"
+		},
+		"archiveDialog": {
+			"title": "Archive {{name}}?",
+			"body": "{{name}} will be hidden from the People list, Cmd-K search, and every attach-person picker, but their journal, gift, and relationship history stays untouched. Unarchive anytime from this page.",
+			"cancel": "Cancel",
+			"archiving": "Archiving…",
+			"archive": "Archive"
+		},
+		"unarchiveDialog": {
+			"title": "Unarchive {{name}}?",
+			"body": "{{name}} will reappear in the People list, Cmd-K search, and every attach-person picker, and their pending reminders will resume.",
+			"cancel": "Cancel",
+			"unarchiving": "Unarchiving…",
+			"unarchive": "Unarchive"
+		}
+	}
+}

@@ -1,0 +1,19 @@
+{
+	"title": "My Profile",
+	"loading": "Loading…",
+	"notSetUp": "You haven't set up your self-profile yet. Pick an existing person to represent yourself.",
+	"setUpAction": "Set up my profile",
+	"dateOfBirth": "Date of birth",
+	"editProfile": "Edit profile",
+	"changeMe": "Change Me person",
+	"setup": {
+		"title": "Who are you?",
+		"subtitle": "Select which person in your contacts represents you.",
+		"searchPlaceholder": "Search people…",
+		"failed": "Setup failed",
+		"noPeople": "No people found.",
+		"selected": "Selected: {{name}}",
+		"confirming": "Setting up…",
+		"confirm": "Confirm selection"
+	}
+}

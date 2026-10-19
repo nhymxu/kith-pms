@@ -5,6 +5,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ForceGraph2D, { type ForceGraphMethods } from "react-force-graph-2d";
+import { useTranslation } from "react-i18next";
 import { listPeopleLabels } from "#/endpoints/people-labels";
 import type { NetworkOnlyMineDepth } from "#/lib/format-datetime";
 import { getNetworkPrefs } from "#/lib/format-datetime";
@@ -60,6 +61,7 @@ export default function RelationshipGraph({
 	onNodeSelect,
 	sidebarCollapsed,
 }: RelationshipGraphProps) {
+	const { t } = useTranslation("network");
 	const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState(600);
@@ -467,7 +469,7 @@ export default function RelationshipGraph({
 					<span className="font-semibold">{tooltip.name}</span>
 					<span style={{ color: "#a1a1aa" }}>
 						{tooltip.isSelf
-							? " · you"
+							? ` · ${t("tooltip.you")}`
 							: tooltip.group
 								? ` · ${tooltip.group}`
 								: ""}

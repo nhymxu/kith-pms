@@ -1,0 +1,263 @@
+{
+	"language": {
+		"title": "Ngôn ngữ",
+		"description": "Ngôn ngữ giao diện. Ngày, giờ và số giữ định dạng riêng.",
+		"label": "Ngôn ngữ giao diện",
+		"save": "Lưu ngôn ngữ",
+		"saving": "Đang lưu…",
+		"saved": "Đã lưu!",
+		"error": "Lưu thất bại. Vui lòng thử lại."
+	},
+	"relationships": {
+		"title": "Quan hệ",
+		"description": "Cách hiển thị các dòng quan hệ trên hồ sơ một người. Loại quan hệ luôn mô tả người kia: trên hồ sơ của Minh, \"em ruột Lan\" nghĩa là Lan là em ruột của Minh.",
+		"styleLabel": "Kiểu hiển thị",
+		"styles": {
+			"plain": "Loại, rồi đến tên (mặc định)",
+			"sentence": "Câu",
+			"badge": "Tên kèm nhãn"
+		},
+		"exampleLabel": "Ví dụ",
+		"onProfile": "Trên hồ sơ của {{name}}",
+		"save": "Lưu kiểu hiển thị",
+		"saving": "Đang lưu…",
+		"saved": "Đã lưu!",
+		"error": "Lưu thất bại. Vui lòng thử lại."
+	},
+	"nav": {
+		"title": "Cài đặt",
+		"general": "Chung",
+		"appearance": "Giao diện",
+		"peopleLabels": "Nhãn người",
+		"journalLabels": "Nhãn nhật ký",
+		"relationshipTypes": "Loại quan hệ",
+		"security": "Bảo mật"
+	},
+	"common": {
+		"save": "Lưu",
+		"saving": "Đang lưu…",
+		"saved": "Đã lưu!",
+		"saveFailed": "Lưu thất bại. Vui lòng thử lại.",
+		"cancel": "Hủy",
+		"delete": "Xóa",
+		"deleting": "Đang xóa…",
+		"saveChanges": "Lưu thay đổi",
+		"saveError": "Lưu thất bại"
+	},
+	"general": {
+		"title": "Chung",
+		"dateTime": {
+			"title": "Ngày, giờ & số",
+			"description": "Quy định cách hiển thị ngày, giờ và số tiền trong toàn ứng dụng. Máy chủ luôn lưu theo UTC.",
+			"dateFormat": "Định dạng ngày",
+			"dateOptions": {
+				"iso": "ISO (mặc định)",
+				"us": "Mỹ",
+				"european": "Châu Âu"
+			},
+			"timeFormat": "Định dạng giờ",
+			"timeOptions": {
+				"h24": "24 giờ (mặc định)",
+				"h12": "12 giờ"
+			},
+			"numberFormat": "Định dạng số",
+			"numberOptions": {
+				"commaThousands": "Dấu phẩy ngăn nghìn (mặc định)",
+				"dotThousands": "Dấu chấm ngăn nghìn"
+			},
+			"timezone": "Múi giờ",
+			"timezonePlaceholder": "vd: Asia/Saigon",
+			"timezoneHint": "Chỉ dùng để hiển thị. Mặc định: UTC.",
+			"save": "Lưu tùy chọn"
+		},
+		"audit": {
+			"title": "Nhật ký hoạt động",
+			"description": "Tự động xóa các bản ghi cũ hơn số ngày chỉ định. Đặt 0 để giữ toàn bộ.",
+			"retention": "Thời gian lưu (ngày)",
+			"retentionHint": "0 = giữ vĩnh viễn (tắt)",
+			"runCleanup": "Dọn dẹp ngay",
+			"running": "Đang chạy…",
+			"deleted_one": "Đã xóa {{count}} bản ghi.",
+			"deleted_other": "Đã xóa {{count}} bản ghi.",
+			"cleanupFailed": "Dọn dẹp thất bại. Vui lòng thử lại."
+		},
+		"network": {
+			"title": "Mặc định mạng lưới",
+			"description": "Bộ lọc mặc định khi mở trang Mạng lưới. Bạn vẫn có thể đổi nhanh tại đó.",
+			"colorBy": "Tô màu theo",
+			"colorLabels": "Nhãn",
+			"colorType": "Loại quan hệ",
+			"visibility": "Hiển thị",
+			"showAvatars": "Hiện ảnh đại diện",
+			"showOnlyMine": "Chỉ hiện kết nối của tôi",
+			"showUnconnected": "Hiện người chưa kết nối",
+			"depthDirect": "Chỉ trực tiếp",
+			"depthAlters": "Gồm cả alter (cấp 2)",
+			"save": "Lưu mặc định"
+		},
+		"favorites": {
+			"title": "Yêu thích",
+			"description": "Điều khiển cách đánh dấu yêu thích trong danh sách Người. Trang riêng của mỗi người luôn cho phép đánh dấu.",
+			"allowToggle": "Cho phép đánh dấu yêu thích ngay trong danh sách Người",
+			"favoriteFirst": "Mặc định hiện người yêu thích trước",
+			"defaultSort": "Sắp xếp mặc định",
+			"sort": {
+				"nameAsc": "Tên A→Z",
+				"nameDesc": "Tên Z→A",
+				"lastContactNewest": "Liên hệ gần nhất: mới nhất",
+				"lastContactOldest": "Liên hệ gần nhất: cũ nhất"
+			},
+			"save": "Lưu mặc định"
+		},
+		"pageSize": {
+			"title": "Số dòng mỗi trang",
+			"description": "Số dòng mặc định mỗi trang cho danh sách Nhật ký, Người và Nhật ký hoạt động. Bỏ qua nếu URL đã chỉ định.",
+			"rowsPerPage": "Số dòng mỗi trang",
+			"save": "Lưu mặc định"
+		},
+		"widgets": {
+			"title": "Widget tổng quan",
+			"description": "Số người hiển thị trong widget Yêu thích và Liên hệ gần nhất trên trang Tổng quan.",
+			"favorites": "Yêu thích",
+			"lastContact": "Liên hệ gần nhất"
+		},
+		"searchScope": {
+			"title": "Phạm vi tìm kiếm",
+			"description": "Chọn loại kết quả mà ô tìm kiếm trả về. Chỉ mục luôn được cập nhật; bỏ chọn chỉ ẩn khỏi kết quả.",
+			"people": "Người",
+			"journal": "Nhật ký",
+			"gifts": "Quà tặng",
+			"notes": "Ghi chú",
+			"save": "Lưu phạm vi",
+			"pickOne": "Chọn ít nhất một loại."
+		}
+	},
+	"appearance": {
+		"title": "Giao diện",
+		"description": "Chọn một chủ đề. Áp dụng ngay và được lưu vào tài khoản.",
+		"themeError": "Không lưu được chủ đề. Đã khôi phục chủ đề trước đó.",
+		"themes": {
+			"quiet-ink": {
+				"label": "Quiet Ink",
+				"description": "Nền trắng sạch với điểm nhấn chàm."
+			},
+			"warm-album": {
+				"label": "Warm Album",
+				"description": "Tông giấy kem, tiêu đề serif, xanh rừng."
+			},
+			"bold-press": {
+				"label": "Bold Press",
+				"description": "Neobrutalist: viền đen, bóng cứng, màu rực."
+			},
+			"nightdesk": {
+				"label": "Nightdesk",
+				"description": "Bàn tối với điểm nhấn hổ phách và tiêu đề serif."
+			},
+			"softclay": {
+				"label": "Soft Clay",
+				"description": "Khung bo tròn không viền, nổi trên bóng mềm."
+			},
+			"ledger": {
+				"label": "Ledger",
+				"description": "Gọn, dày dữ liệu, tiêu đề monospace, mực xanh mòng két."
+			}
+		},
+		"navLayoutTitle": "Bố cục điều hướng",
+		"navLayoutDescription": "Chọn vị trí hiển thị thanh điều hướng chính.",
+		"navLayoutError": "Không lưu được bố cục điều hướng. Đã khôi phục bố cục trước đó.",
+		"navLayouts": {
+			"top": {
+				"label": "Thanh trên",
+				"description": "Điều hướng nằm trên thanh ngang phía trên nội dung."
+			},
+			"side": {
+				"label": "Thanh bên",
+				"description": "Điều hướng nằm trên thanh dọc ở cạnh trái."
+			}
+		}
+	},
+	"security": {
+		"title": "Bảo mật",
+		"changePassword": {
+			"title": "Đổi mật khẩu",
+			"description": "Cập nhật mật khẩu đăng nhập.",
+			"current": "Mật khẩu hiện tại",
+			"new": "Mật khẩu mới",
+			"confirm": "Xác nhận mật khẩu mới",
+			"submit": "Đổi mật khẩu",
+			"pending": "Đang đổi…",
+			"success": "Đổi mật khẩu thành công. Bạn nên đăng xuất các phiên khác.",
+			"changeAgain": "Đổi lại",
+			"rateLimited": "Quá nhiều lần thử. Vui lòng chờ rồi thử lại.",
+			"failed": "Đổi mật khẩu thất bại"
+		},
+		"logoutAll": "Đăng xuất mọi phiên",
+		"loggingOut": "Đang đăng xuất…",
+		"logoutFailed": "Thất bại"
+	},
+	"relationshipTypes": {
+		"title": "Loại quan hệ",
+		"new": "Loại mới",
+		"empty": "Chưa có loại quan hệ nào.",
+		"uses_one": "{{count}} lượt dùng",
+		"uses_other": "{{count}} lượt dùng",
+		"dialog": {
+			"editTitle": "Sửa loại quan hệ",
+			"newTitle": "Loại quan hệ mới"
+		},
+		"form": {
+			"name": "Tên *",
+			"namePlaceholder": "vd: Bạn bè",
+			"reverseName": "Tên chiều ngược (tùy chọn)",
+			"reverseNamePlaceholder": "vd: Bạn của",
+			"create": "Tạo loại"
+		},
+		"delete": {
+			"title": "Xóa loại quan hệ?",
+			"description": "Xóa vĩnh viễn \"{{name}}\"? Các quan hệ thuộc loại này sẽ bị ảnh hưởng."
+		}
+	},
+	"journalLabels": {
+		"title": "Nhãn nhật ký",
+		"new": "Nhãn mới",
+		"empty": "Chưa có nhãn. Tạo một nhãn để gắn cho các mục nhật ký.",
+		"count_one": "{{count}} mục",
+		"count_other": "{{count}} mục",
+		"dialog": {
+			"editTitle": "Sửa nhãn",
+			"newTitle": "Nhãn mới"
+		},
+		"form": {
+			"name": "Tên *",
+			"namePlaceholder": "vd: TRÒ CHUYỆN",
+			"color": "Màu (hex)",
+			"create": "Tạo nhãn"
+		},
+		"delete": {
+			"title": "Xóa nhãn?",
+			"description": "Xóa vĩnh viễn \"{{name}}\"? Các mục nhật ký có nhãn này không bị ảnh hưởng (chỉ gỡ nhãn)."
+		}
+	},
+	"peopleLabels": {
+		"title": "Nhãn người",
+		"new": "Nhãn mới",
+		"empty": "Chưa có nhãn. Tạo một nhãn để phân loại người.",
+		"count_one": "{{count}} người",
+		"count_other": "{{count}} người",
+		"connectMembers": "Kết nối thành viên",
+		"dialog": {
+			"editTitle": "Sửa nhãn",
+			"newTitle": "Nhãn mới"
+		},
+		"form": {
+			"name": "Tên *",
+			"namePlaceholder": "vd: Gia đình",
+			"color": "Màu (hex)",
+			"create": "Tạo nhãn"
+		},
+		"delete": {
+			"title": "Xóa nhãn?",
+			"description": "Xóa vĩnh viễn \"{{name}}\"? Những người có nhãn này không bị ảnh hưởng (chỉ gỡ nhãn)."
+		}
+	}
+}

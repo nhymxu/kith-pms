@@ -1,0 +1,84 @@
+{
+	"save": "Lưu",
+	"cancel": "Hủy",
+	"delete": "Xóa",
+	"loading": "Đang tải…",
+	"saving": "Đang lưu…",
+	"close": "Đóng",
+	"auth": {
+		"signIn": "Đăng nhập",
+		"signingIn": "Đang đăng nhập…",
+		"password": "Mật khẩu",
+		"passwordRequired": "Vui lòng nhập mật khẩu",
+		"loginFailed": "Đăng nhập thất bại"
+	},
+	"errors": {
+		"somethingWentWrong": "Đã xảy ra lỗi",
+		"unexpected": "Đã xảy ra lỗi không mong muốn.",
+		"goHome": "Về trang chủ",
+		"pageNotFound": "Không tìm thấy trang."
+	},
+	"nav": {
+		"dashboard": "Tổng quan",
+		"people": "Người",
+		"network": "Mạng lưới",
+		"journal": "Nhật ký",
+		"notes": "Ghi chú",
+		"gifts": "Quà tặng",
+		"dates": "Ngày quan trọng",
+		"reminders": "Nhắc nhở",
+		"audit": "Nhật ký hoạt động",
+		"settings": "Cài đặt",
+		"selfProfile": "Hồ sơ của tôi",
+		"navigation": "Điều hướng",
+		"open": "Mở điều hướng",
+		"primary": "Điều hướng chính"
+	},
+	"user": {
+		"account": "Tài khoản",
+		"fallbackName": "Người dùng #{{id}}"
+	},
+	"userMenu": {
+		"selfProfile": "Hồ sơ của tôi",
+		"logout": "Đăng xuất"
+	},
+	"footer": {
+		"version": "Phiên bản:",
+		"load": "Tải: {{ms}}ms",
+		"timezone": "Múi giờ: {{timezone}}"
+	},
+	"pagination": {
+		"rows": "Dòng",
+		"reset": "Đặt lại"
+	},
+	"table": {
+		"selectAll": "Chọn tất cả",
+		"selectRow": "Chọn dòng",
+		"noResults": "Không có kết quả.",
+		"searchPlaceholder": "Tìm kiếm…",
+		"clearSearch": "Xóa tìm kiếm",
+		"rowsOf": "{{shown}} / {{total}} dòng",
+		"pageOf": "Trang {{page}} / {{pages}}",
+		"firstPage": "Trang đầu",
+		"previousPage": "Trang trước",
+		"nextPage": "Trang sau",
+		"lastPage": "Trang cuối"
+	},
+	"imageCrop": {
+		"adjustTitle": "Chỉnh ảnh",
+		"cropTitle": "Cắt ảnh",
+		"freeformHint": "Kéo các góc để chọn vùng cắt, hoặc bỏ qua để giữ nguyên ảnh.",
+		"processFailed": "Không xử lý được ảnh này. Hãy thử tệp khác.",
+		"cropFailed": "Không cắt được ảnh này. Hãy thử tệp khác.",
+		"skip": "Bỏ qua",
+		"processing": "Đang xử lý…",
+		"apply": "Áp dụng",
+		"saveCrop": "Lưu ảnh cắt"
+	},
+	"imagePick": {
+		"onlyAllowed": "Chỉ chấp nhận ảnh {{types}}.",
+		"tooLarge": "Tệp phải nhỏ hơn {{size}} MB.",
+		"unreadable": "Không đọc được ảnh này.",
+		"unreadableHeic": "Không đọc được ảnh HEIC này."
+	}
+}

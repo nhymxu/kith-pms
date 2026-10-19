@@ -1,4 +1,5 @@
 import { Activity } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
 	CartesianGrid,
 	Line,
@@ -24,14 +25,15 @@ export function RelationshipPulseChart({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	const hasActivity = data.some(
 		(point) => point.entries > 0 || point.touches > 0,
 	);
 
 	return (
 		<DashboardCard
-			title="Relationship pulse"
-			subtitle="Journal touches over the last 14 days"
+			title={t("pulse.title")}
+			subtitle={t("pulse.subtitle")}
 			icon={Activity}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -73,7 +75,7 @@ export function RelationshipPulseChart({
 							<Line
 								type="monotone"
 								dataKey="touches"
-								name="Touches"
+								name={t("pulse.touches")}
 								stroke={CHART_COLORS.primary}
 								strokeWidth={2}
 								dot={false}
@@ -87,7 +89,7 @@ export function RelationshipPulseChart({
 							<Line
 								type="monotone"
 								dataKey="entries"
-								name="Entries"
+								name={t("pulse.entries")}
 								stroke={CHART_COLORS.secondary}
 								strokeWidth={1.5}
 								dot={false}
@@ -104,8 +106,8 @@ export function RelationshipPulseChart({
 			) : (
 				<EmptyState
 					icon={Activity}
-					title="No recent pulse yet"
-					description="Add journal entries to see relationship activity trends."
+					title={t("pulse.emptyTitle")}
+					description={t("pulse.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>

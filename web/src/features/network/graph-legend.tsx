@@ -2,6 +2,7 @@
 // touches features/network/*. Re-audit for reintroduced palette classes when
 // that plan lands.
 
+import { useTranslation } from "react-i18next";
 import { readToken } from "#/lib/read-css-token";
 import { typeColor } from "./graph-node-canvas";
 import type { ColorBy } from "./graph-types";
@@ -21,17 +22,20 @@ export function GraphLegend({
 	selfColor,
 	relTypes,
 }: GraphLegendProps) {
+	const { t } = useTranslation("network");
 	return (
 		<div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-bw border-line px-4 py-2.5 text-[11px] text-sub">
 			{colorBy === "labels" ? (
 				<>
-					<span className="font-semibold text-ink">Nodes by group:</span>
+					<span className="font-semibold text-ink">
+						{t("legend.nodesByGroup")}
+					</span>
 					<span className="flex items-center gap-1.5">
 						<span
 							className="h-2.5 w-2.5 rounded-full"
 							style={{ background: selfColor }}
 						/>
-						You
+						{t("legend.you")}
 					</span>
 					{groups.map((g) => (
 						<span key={g} className="flex items-center gap-1.5">
@@ -45,18 +49,20 @@ export function GraphLegend({
 							{g}
 						</span>
 					))}
-					<span>· edges: relationships</span>
+					<span>{t("legend.edgesAreRelationships")}</span>
 				</>
 			) : (
 				<>
-					<span className="font-semibold text-ink">Edges by type:</span>
-					{relTypes.map((t) => (
-						<span key={t} className="flex items-center gap-1.5">
+					<span className="font-semibold text-ink">
+						{t("legend.edgesByType")}
+					</span>
+					{relTypes.map((rel) => (
+						<span key={rel} className="flex items-center gap-1.5">
 							<span
 								className="h-0.5 w-4 rounded"
-								style={{ background: typeColor(t) }}
+								style={{ background: typeColor(rel) }}
 							/>
-							{t}
+							{rel}
 						</span>
 					))}
 				</>

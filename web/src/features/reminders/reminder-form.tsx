@@ -1,7 +1,10 @@
 // Reminder create/edit form — TanStack Form + Zod validation
+
 import { useForm } from "@tanstack/react-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import type { TFunction } from "i18next";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FormField } from "#/components/form/form-field";
 import { SubmitButton } from "#/components/form/submit-button";
 import { QueryBoundary } from "#/components/query-boundary";
@@ -18,6 +21,7 @@ import {
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
+import { apiErrorMessage } from "#/lib/api-error-message";
 import { datetimeLocalToUtc, utcToDatetimeLocal } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
 import {
@@ -33,48 +37,64 @@ interface ReminderFormProps {
 	submitLabel?: string;
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 const DAYS_BEFORE_OPTIONS = [
-	{ value: 0, label: "On the day" },
-	{ value: 1, label: "1 day before" },
-	{ value: 3, label: "3 days before" },
-	{ value: 7, label: "1 week before" },
-	{ value: 14, label: "2 weeks before" },
-	{ value: 30, label: "1 month before" },
-];
+	{ value: 0, key: "onTheDay" },
+	{ value: 1, key: "oneDay" },
+	{ value: 3, key: "threeDays" },
+	{ value: 7, key: "oneWeek" },
+	{ value: 14, key: "twoWeeks" },
+	{ value: 30, key: "oneMonth" },
+] as const;
 
-function recurrenceLabel(rule: RecurrenceRule): string {
+export function recurrenceLabel(
+	rule: RecurrenceRule,
+	t: TFunction<"reminders">,
+): string {
 	switch (rule.type) {
 		case "daily":
-			return "Daily";
+			return t("recurrence.daily");
 		case "weekly":
-			return "Weekly";
+			return t("recurrence.weekly");
 		case "monthly":
-			return "Monthly";
+			return t("recurrence.monthly");
 		case "yearly":
-			return "Yearly";
+			return t("recurrence.yearly");
 		case "custom": {
-			const n = rule.interval ?? 1;
-			const u = rule.unit ?? "days";
-			return `Every ${n} ${u}`;
+			const count = rule.interval ?? 1;
+			switch (rule.unit ?? "days") {
+				case "weeks":
+					return t("recurrence.everyWeeks", { count });
+				case "months":
+					return t("recurrence.everyMonths", { count });
+				default:
+					return t("recurrence.everyDays", { count });
+			}
 		}
 		case "day_of_week":
-			return `Every ${DAY_NAMES[rule.day_of_week ?? 0]}`;
+			return t("recurrence.everyDay", {
+				day: t(`days.${DAY_KEYS[rule.day_of_week ?? 0]}`),
+			});
 		case "relative_contact":
-			return `${rule.interval ?? 30}d after contact`;
+			return t("recurrence.afterContact", { interval: rule.interval ?? 30 });
 		default:
-			return "Recurring";
+			return t("recurrence.recurring");
 	}
 }
 
-const formFallback = (
-	<div className="py-8 text-center text-[13px] text-sub">Loading form…</div>
-);
+function FormFallback() {
+	const { t } = useTranslation("reminders");
+	return (
+		<div className="py-8 text-center text-[13px] text-sub">
+			{t("form.loading")}
+		</div>
+	);
+}
 
 export function ReminderForm(props: ReminderFormProps) {
 	return (
-		<QueryBoundary fallback={formFallback}>
+		<QueryBoundary fallback={<FormFallback />}>
 			<ReminderFormInner {...props} />
 		</QueryBoundary>
 	);
@@ -83,8 +103,9 @@ export function ReminderForm(props: ReminderFormProps) {
 function ReminderFormInner({
 	initial,
 	onSubmit,
-	submitLabel = "Save Reminder",
+	submitLabel,
 }: ReminderFormProps) {
+	const { t } = useTranslation("reminders");
 	const [apiError, setApiError] = useState<string | null>(null);
 	const isBirthdayInitial = initial?.recurrence_rule?.type === "birthday";
 	const [isBirthday, setIsBirthday] = useState(isBirthdayInitial);
@@ -143,9 +164,7 @@ function ReminderFormInner({
 				}
 				await onSubmit(payload as ReminderRequest);
 			} catch (err) {
-				setApiError(
-					err instanceof Error ? err.message : "Failed to save reminder",
-				);
+				setApiError(apiErrorMessage(err, t("form.saveFailed")));
 			}
 		},
 	});
@@ -166,21 +185,29 @@ function ReminderFormInner({
 
 			<form.Field name="title">
 				{(field) => (
-					<FormField field={field} label="Title" placeholder="Call dentist" />
+					<FormField
+						field={field}
+						label={t("form.title")}
+						placeholder={t("form.titlePlaceholder")}
+					/>
 				)}
 			</form.Field>
 
 			{!isBirthday && (
 				<form.Field name="due_date">
 					{(field) => (
-						<FormField field={field} label="Due Date" type="datetime-local" />
+						<FormField
+							field={field}
+							label={t("form.dueDate")}
+							type="datetime-local"
+						/>
 					)}
 				</form.Field>
 			)}
 
 			{/* Person picker (optional) */}
 			<div className="space-y-1.5">
-				<Label>Person (optional)</Label>
+				<Label>{t("form.person")}</Label>
 				<form.Field name="person_id">
 					{(field) => (
 						<Select
@@ -190,10 +217,10 @@ function ReminderFormInner({
 							}
 						>
 							<SelectTrigger>
-								<SelectValue placeholder="No person" />
+								<SelectValue placeholder={t("form.noPerson")} />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="__none__">No person</SelectItem>
+								<SelectItem value="__none__">{t("form.noPerson")}</SelectItem>
 								{peopleList.items.map((p) => (
 									<SelectItem key={p.id} value={String(p.id)}>
 										{p.name}
@@ -207,14 +234,14 @@ function ReminderFormInner({
 
 			{/* Notes */}
 			<div className="space-y-1.5">
-				<Label>Notes</Label>
+				<Label>{t("form.notes")}</Label>
 				<form.Field name="notes">
 					{(field) => (
 						<Textarea
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
-							placeholder="Optional notes…"
+							placeholder={t("form.notesPlaceholder")}
 							rows={3}
 						/>
 					)}
@@ -235,17 +262,14 @@ function ReminderFormInner({
 						}
 					}}
 				/>
-				<Label htmlFor="birthday-toggle">Birthday reminder</Label>
+				<Label htmlFor="birthday-toggle">{t("form.birthdayReminder")}</Label>
 			</div>
 
 			{isBirthday && (
 				<div className="space-y-3 rounded-base border-bw border-line p-3">
-					<p className="text-sm text-sub">
-						Select a person with a date of birth. Due date is computed
-						automatically.
-					</p>
+					<p className="text-sm text-sub">{t("form.birthdayHint")}</p>
 					<div className="space-y-1.5">
-						<Label>Remind me</Label>
+						<Label>{t("form.remindMe")}</Label>
 						<Select
 							value={String(daysBefore)}
 							onValueChange={(v) => setDaysBefore(Number(v))}
@@ -256,7 +280,7 @@ function ReminderFormInner({
 							<SelectContent>
 								{DAYS_BEFORE_OPTIONS.map((opt) => (
 									<SelectItem key={opt.value} value={String(opt.value)}>
-										{opt.label}
+										{t(`daysBefore.${opt.key}`)}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -281,7 +305,7 @@ function ReminderFormInner({
 							}
 						}}
 					/>
-					<Label htmlFor="recurring-toggle">Recurring</Label>
+					<Label htmlFor="recurring-toggle">{t("form.recurring")}</Label>
 				</div>
 			)}
 
@@ -293,7 +317,7 @@ function ReminderFormInner({
 							return (
 								<div className="space-y-3">
 									<div className="space-y-1.5">
-										<Label>Repeat</Label>
+										<Label>{t("form.repeat")}</Label>
 										<Select
 											value={rule.type}
 											onValueChange={(v) =>
@@ -307,14 +331,26 @@ function ReminderFormInner({
 												<SelectValue />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value="daily">Daily</SelectItem>
-												<SelectItem value="weekly">Weekly</SelectItem>
-												<SelectItem value="monthly">Monthly</SelectItem>
-												<SelectItem value="yearly">Yearly</SelectItem>
-												<SelectItem value="custom">Custom interval</SelectItem>
-												<SelectItem value="day_of_week">Day of week</SelectItem>
+												<SelectItem value="daily">
+													{t("recurrence.daily")}
+												</SelectItem>
+												<SelectItem value="weekly">
+													{t("recurrence.weekly")}
+												</SelectItem>
+												<SelectItem value="monthly">
+													{t("recurrence.monthly")}
+												</SelectItem>
+												<SelectItem value="yearly">
+													{t("recurrence.yearly")}
+												</SelectItem>
+												<SelectItem value="custom">
+													{t("recurrence.customInterval")}
+												</SelectItem>
+												<SelectItem value="day_of_week">
+													{t("recurrence.dayOfWeek")}
+												</SelectItem>
 												<SelectItem value="relative_contact">
-													Relative to last contact
+													{t("recurrence.relativeContact")}
 												</SelectItem>
 											</SelectContent>
 										</Select>
@@ -322,7 +358,7 @@ function ReminderFormInner({
 
 									{rule.type === "custom" && (
 										<div className="flex items-center gap-2">
-											<Label className="shrink-0">Every</Label>
+											<Label className="shrink-0">{t("form.every")}</Label>
 											<Input
 												type="number"
 												min={1}
@@ -348,9 +384,15 @@ function ReminderFormInner({
 													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="days">days</SelectItem>
-													<SelectItem value="weeks">weeks</SelectItem>
-													<SelectItem value="months">months</SelectItem>
+													<SelectItem value="days">
+														{t("units.days")}
+													</SelectItem>
+													<SelectItem value="weeks">
+														{t("units.weeks")}
+													</SelectItem>
+													<SelectItem value="months">
+														{t("units.months")}
+													</SelectItem>
 												</SelectContent>
 											</Select>
 										</div>
@@ -358,7 +400,7 @@ function ReminderFormInner({
 
 									{rule.type === "day_of_week" && (
 										<div className="space-y-1.5">
-											<Label>Day</Label>
+											<Label>{t("form.day")}</Label>
 											<Select
 												value={String(rule.day_of_week ?? 1)}
 												onValueChange={(v) =>
@@ -372,9 +414,9 @@ function ReminderFormInner({
 													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>
-													{DAY_NAMES.map((d, i) => (
+													{DAY_KEYS.map((d, i) => (
 														<SelectItem key={d} value={String(i)}>
-															{d}
+															{t(`days.${d}`)}
 														</SelectItem>
 													))}
 												</SelectContent>
@@ -384,7 +426,7 @@ function ReminderFormInner({
 
 									{rule.type === "relative_contact" && (
 										<div className="flex items-center gap-2">
-											<Label className="shrink-0">Every</Label>
+											<Label className="shrink-0">{t("form.every")}</Label>
 											<Input
 												type="number"
 												min={1}
@@ -398,7 +440,7 @@ function ReminderFormInner({
 												}
 											/>
 											<span className="text-sm text-sub">
-												days after last journal entry
+												{t("form.daysAfterEntry")}
 											</span>
 										</div>
 									)}
@@ -409,11 +451,7 @@ function ReminderFormInner({
 
 					<form.Field name="recurrence_end_date">
 						{(field) => (
-							<FormField
-								field={field}
-								label="End date (optional)"
-								type="date"
-							/>
+							<FormField field={field} label={t("form.endDate")} type="date" />
 						)}
 					</form.Field>
 				</div>
@@ -421,13 +459,14 @@ function ReminderFormInner({
 
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
-					<SubmitButton isPending={isSubmitting} pendingLabel="Saving…">
-						{submitLabel}
+					<SubmitButton
+						isPending={isSubmitting}
+						pendingLabel={t("form.saving")}
+					>
+						{submitLabel ?? t("form.save")}
 					</SubmitButton>
 				)}
 			</form.Subscribe>
 		</form>
 	);
 }
-
-export { recurrenceLabel };

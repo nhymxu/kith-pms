@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardMoment } from "./dashboard-data";
 import { EmptyState } from "./empty-state";
@@ -15,13 +16,14 @@ export function UpcomingMoments({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	const [expanded, setExpanded] = useState(false);
 	const visibleMoments = expanded ? moments : moments.slice(0, 5);
 
 	return (
 		<DashboardCard
-			title="Upcoming moments"
-			subtitle="Dates worth preparing for"
+			title={t("moments.title")}
+			subtitle={t("moments.subtitle")}
 			icon={CalendarDays}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -60,15 +62,17 @@ export function UpcomingMoments({
 							className="w-full py-2 text-[11px] text-sub hover:bg-chip border-t border-line -mx-4 px-4 mt-1 transition-colors"
 							onClick={() => setExpanded((v) => !v)}
 						>
-							{expanded ? "Show less" : `Show ${moments.length - 5} more`}
+							{expanded
+								? t("showLess")
+								: t("showMore", { count: moments.length - 5 })}
 						</button>
 					) : null}
 				</div>
 			) : (
 				<EmptyState
 					icon={CalendarDays}
-					title="No upcoming moments"
-					description="Birthdays and milestones in the next 30 days appear here."
+					title={t("moments.emptyTitle")}
+					description={t("moments.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>

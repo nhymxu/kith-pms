@@ -1,6 +1,7 @@
 // Journal timeline: groups entries by month/year; each entry has a 64px mono date gutter
 // (weekday/day/time) + rail dot + content column (title, preview, label/people chips)
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { LabelChip, PersonChip } from "#/features/journal/person-label-chip";
 import type { JournalActivity } from "#/schemas/journal";
 
@@ -37,10 +38,11 @@ function groupByMonth(
 }
 
 export function JournalTimeline({ data }: JournalTimelineProps) {
+	const { t } = useTranslation("journal");
 	if (!data.length) {
 		return (
 			<p className="text-sm text-foreground/50 py-8 text-center">
-				No journal entries yet.
+				{t("list.empty")}
 			</p>
 		);
 	}

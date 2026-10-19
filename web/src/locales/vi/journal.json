@@ -1,0 +1,70 @@
+{
+	"form": {
+		"loading": "Đang tải biểu mẫu…",
+		"save": "Lưu nhật ký",
+		"saving": "Đang lưu…",
+		"saveFailed": "Không thể lưu nhật ký",
+		"titleLabel": "Tiêu đề *",
+		"titlePlaceholder": "Chuyện gì đã xảy ra?",
+		"dateLabel": "Ngày *",
+		"timeLabel": "Giờ (tùy chọn)",
+		"people": "Người",
+		"addMe": "+ Tôi",
+		"searchPeoplePlaceholder": "Tìm người để thêm…",
+		"labels": "Nhãn",
+		"noLabels": "Chưa có nhãn nào. Tạo trong <settingsLink>Cài đặt → Nhãn nhật ký</settingsLink>",
+		"content": "Nội dung",
+		"contentPlaceholder": "Viết về cuộc tương tác…",
+		"create": "Tạo nhật ký",
+		"saveChanges": "Lưu thay đổi"
+	},
+	"list": {
+		"empty": "Chưa có nhật ký nào."
+	},
+	"table": {
+		"date": "Ngày",
+		"title": "Tiêu đề",
+		"people": "Người",
+		"preview": "Xem trước"
+	},
+	"pagination": {
+		"prev": "Trước",
+		"next": "Sau",
+		"jumpToPage": "Đến trang",
+		"go": "Đi"
+	},
+	"page": {
+		"title": "Nhật ký",
+		"newEntry": "Nhật ký mới",
+		"newTitle": "Nhật ký mới",
+		"editTitle": "Sửa nhật ký",
+		"loadFailed": "Không thể tải nhật ký.",
+		"notFound": "Không tìm thấy nhật ký."
+	},
+	"filter": {
+		"from": "Từ",
+		"to": "Đến",
+		"clearDates": "Xóa ngày",
+		"byPerson": "Lọc theo người",
+		"withJournalOnly": "Chỉ người có nhật ký",
+		"clear": "Bỏ lọc",
+		"byLabel": "Lọc theo nhãn"
+	},
+	"detail": {
+		"back": "← Nhật ký",
+		"edit": "Sửa",
+		"atTime": "lúc {{time}}",
+		"labels": "Nhãn",
+		"people": "Người",
+		"noPeople": "Chưa liên kết người nào.",
+		"notes": "Ghi chú",
+		"noNotes": "Không có ghi chú."
+	},
+	"delete": {
+		"title": "Xóa nhật ký?",
+		"description": "Nhật ký \"{{title}}\" sẽ bị xóa vĩnh viễn. Không thể hoàn tác.",
+		"cancel": "Hủy",
+		"confirm": "Xóa",
+		"deleting": "Đang xóa…"
+	}
+}

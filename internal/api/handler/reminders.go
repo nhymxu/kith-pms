@@ -100,7 +100,7 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 
 		list, err := h.Svc.GetUpcoming(c.Request().Context(), days)
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		return ok(c, list)
@@ -108,7 +108,7 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 	case "overdue":
 		list, err := h.Svc.GetOverdue(c.Request().Context())
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		return ok(c, list)
@@ -116,7 +116,7 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 	default:
 		list, err := h.Svc.List(c.Request().Context(), reminders.ListParams{})
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		return ok(c, list)
@@ -138,16 +138,16 @@ func (h *RemindersAPI) List(c *echo.Context) error {
 func (h *RemindersAPI) Get(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	r, err := h.Svc.GetByID(c.Request().Context(), id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	}
 
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, r)
@@ -169,18 +169,23 @@ func (h *RemindersAPI) Get(c *echo.Context) error {
 func (h *RemindersAPI) Create(c *echo.Context) error {
 	var req reminderRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	if strings.TrimSpace(req.Title) == "" &&
 		(req.RecurrenceRule == nil || req.RecurrenceRule.Type != reminders.RecurrenceBirthday) {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	// Birthday branch: due_date is computed server-side; skip parseDateOrDatetime.
 	if req.RecurrenceRule != nil && req.RecurrenceRule.Type == reminders.RecurrenceBirthday {
 		if req.PersonID == nil {
-			return apiErr(c, http.StatusUnprocessableEntity, "person_id is required for a birthday reminder")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"birthday_person_required",
+				"person_id is required for a birthday reminder",
+			)
 		}
 
 		daysBefore := 0
@@ -190,28 +195,38 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 
 		rem, err := h.Svc.BuildBirthdayReminder(c.Request().Context(), *req.PersonID, daysBefore, req.Title)
 		if errors.Is(err, reminders.ErrNoDOB) {
-			return apiErr(c, http.StatusUnprocessableEntity, "selected person has no date of birth")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"person_no_birth_date",
+				"selected person has no date of birth",
+			)
 		}
 
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		id, err := h.Svc.Create(c.Request().Context(), rem)
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		return created(c, map[string]any{"id": id})
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	dueDate, err := parseDateOrDatetime(req.DueDate)
 	if err != nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM")
+		return apiErr(
+			c,
+			http.StatusUnprocessableEntity,
+			"due_date_invalid",
+			"due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+		)
 	}
 
 	rem := &reminders.Reminder{
@@ -229,6 +244,7 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 			return apiErr(
 				c,
 				http.StatusUnprocessableEntity,
+				"recurrence_end_date_invalid",
 				"recurrence_end_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
 			)
 		}
@@ -238,7 +254,7 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 
 	id, err := h.Svc.Create(c.Request().Context(), rem)
 	if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return created(c, map[string]any{"id": id})
@@ -262,24 +278,29 @@ func (h *RemindersAPI) Create(c *echo.Context) error {
 func (h *RemindersAPI) Update(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if _, err := h.Svc.GetByID(c.Request().Context(), id); errors.Is(err, sql.ErrNoRows) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	} else if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	var req reminderRequest
 	if err := c.Bind(&req); err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid request body")
+		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
 	}
 
 	// Birthday branch: due_date computed server-side.
 	if req.RecurrenceRule != nil && req.RecurrenceRule.Type == reminders.RecurrenceBirthday {
 		if req.PersonID == nil {
-			return apiErr(c, http.StatusUnprocessableEntity, "person_id is required for a birthday reminder")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"birthday_person_required",
+				"person_id is required for a birthday reminder",
+			)
 		}
 
 		daysBefore := 0
@@ -289,28 +310,38 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 
 		rem, err := h.Svc.BuildBirthdayReminder(c.Request().Context(), *req.PersonID, daysBefore, req.Title)
 		if errors.Is(err, reminders.ErrNoDOB) {
-			return apiErr(c, http.StatusUnprocessableEntity, "selected person has no date of birth")
+			return apiErr(
+				c,
+				http.StatusUnprocessableEntity,
+				"person_no_birth_date",
+				"selected person has no date of birth",
+			)
 		}
 
 		if err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		rem.ID = id
 		if err := h.Svc.Update(c.Request().Context(), rem); err != nil {
-			return apiErr(c, http.StatusInternalServerError, "internal server error")
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 		}
 
 		return ok(c, map[string]any{"id": id})
 	}
 
 	if strings.TrimSpace(req.Title) == "" {
-		return apiErr(c, http.StatusUnprocessableEntity, "title is required")
+		return apiErr(c, http.StatusUnprocessableEntity, "title_required", "title is required")
 	}
 
 	dueDate, err := parseDateOrDatetime(req.DueDate)
 	if err != nil {
-		return apiErr(c, http.StatusUnprocessableEntity, "due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM")
+		return apiErr(
+			c,
+			http.StatusUnprocessableEntity,
+			"due_date_invalid",
+			"due_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
+		)
 	}
 
 	rem := &reminders.Reminder{
@@ -329,6 +360,7 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 			return apiErr(
 				c,
 				http.StatusUnprocessableEntity,
+				"recurrence_end_date_invalid",
 				"recurrence_end_date must be YYYY-MM-DD or YYYY-MM-DDTHH:MM",
 			)
 		}
@@ -337,7 +369,7 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 	}
 
 	if err := h.Svc.Update(c.Request().Context(), rem); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"id": id})
@@ -358,17 +390,17 @@ func (h *RemindersAPI) Update(c *echo.Context) error {
 func (h *RemindersAPI) Delete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if _, err := h.Svc.GetByID(c.Request().Context(), id); errors.Is(err, sql.ErrNoRows) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	} else if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if err := h.Svc.Delete(c.Request().Context(), id); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return noContent(c)
@@ -389,17 +421,17 @@ func (h *RemindersAPI) Delete(c *echo.Context) error {
 func (h *RemindersAPI) Complete(c *echo.Context) error {
 	id, err := parseID(c)
 	if err != nil {
-		return apiErr(c, http.StatusBadRequest, "invalid id")
+		return apiErr(c, http.StatusBadRequest, "invalid_id", "invalid id")
 	}
 
 	if _, err := h.Svc.GetByID(c.Request().Context(), id); errors.Is(err, sql.ErrNoRows) {
-		return apiErr(c, http.StatusNotFound, "not found")
+		return apiErr(c, http.StatusNotFound, "not_found", "not found")
 	} else if err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	if err := h.Svc.MarkComplete(c.Request().Context(), id); err != nil {
-		return apiErr(c, http.StatusInternalServerError, "internal server error")
+		return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
 	}
 
 	return ok(c, map[string]any{"id": id})

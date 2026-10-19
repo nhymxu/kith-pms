@@ -1,5 +1,6 @@
 import { Bell, Gift } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DashboardCard } from "./dashboard-card";
 import type { DashboardAction } from "./dashboard-data";
 import { DashboardFilterPill } from "./dashboard-filter-pill";
@@ -19,6 +20,7 @@ export function ActionQueue({
 	onRefresh: () => void;
 	isRefreshing: boolean;
 }) {
+	const { t } = useTranslation("dashboard");
 	const [filter, setFilter] = useState<ActionFilter>("all");
 	const [expanded, setExpanded] = useState(false);
 	const filteredActions = useMemo(
@@ -34,8 +36,8 @@ export function ActionQueue({
 
 	return (
 		<DashboardCard
-			title="Action queue"
-			subtitle="Follow-ups, reminders, and gift ideas"
+			title={t("actions.title")}
+			subtitle={t("actions.subtitle")}
 			icon={Bell}
 			onRefresh={onRefresh}
 			isRefreshing={isRefreshing}
@@ -44,7 +46,7 @@ export function ActionQueue({
 				{filters.map((item) => (
 					<DashboardFilterPill
 						key={item}
-						label={itemLabel(item)}
+						label={t(`actions.filters.${item}`)}
 						active={filter === item}
 						onClick={() => setFilter(item)}
 					/>
@@ -76,7 +78,7 @@ export function ActionQueue({
 								<span
 									className={`font-mono text-[10px] uppercase shrink-0 ${statusClass(action.type)}`}
 								>
-									{itemLabel(action.type)}
+									{t(`actions.filters.${action.type}`)}
 								</span>
 							</div>
 						</div>
@@ -88,24 +90,20 @@ export function ActionQueue({
 							onClick={() => setExpanded((v) => !v)}
 						>
 							{expanded
-								? "Show less"
-								: `Show ${filteredActions.length - 8} more`}
+								? t("showLess")
+								: t("showMore", { count: filteredActions.length - 8 })}
 						</button>
 					) : null}
 				</div>
 			) : (
 				<EmptyState
 					icon={filter === "gift" ? Gift : Bell}
-					title="Queue is clear"
-					description="No matching follow-ups need attention."
+					title={t("actions.emptyTitle")}
+					description={t("actions.emptyDescription")}
 				/>
 			)}
 		</DashboardCard>
 	);
-}
-
-function itemLabel(value: ActionFilter | DashboardAction["type"]): string {
-	return value === "all" ? "All" : value[0].toUpperCase() + value.slice(1);
 }
 
 function statusClass(type: DashboardAction["type"]): string {

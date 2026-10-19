@@ -61,25 +61,7 @@ func (s *Service) CreateType(ctx context.Context, name, reverseName string) (Rel
 		return RelationshipType{}, err
 	}
 
-	// Auto-create the inverse type when a reverse name is given and differs from the forward name.
-	if reverseName != "" && reverseName != name {
-		inverseID, err := s.Types.Create(ctx, reverseName, name)
-		if err != nil && isUniqueErr(err) {
-			// A type named reverseName already exists (e.g. "Child" was created standalone
-			// before "Parent"). Link to it instead of leaving this type unpaired, unless it's
-			// already paired with something else — that conflict needs manual resolution.
-			existing, getErr := s.Types.GetByName(ctx, reverseName)
-			if getErr == nil && existing != nil && existing.InverseTypeID == nil {
-				inverseID, err = existing.ID, nil
-			}
-		}
-
-		if err == nil {
-			// Link both types to each other.
-			_ = s.Types.SetInverseTypeID(ctx, id, &inverseID)
-			_ = s.Types.SetInverseTypeID(ctx, inverseID, &id)
-		}
-	}
+	s.linkInverseType(ctx, id, name, reverseName)
 
 	if s.Audit != nil {
 		s.Audit.Log(ctx, audit.EntityRelationshipType, id, name, audit.ActionCreate)
@@ -91,6 +73,28 @@ func (s *Service) CreateType(ctx context.Context, name, reverseName string) (Rel
 	}
 
 	return *rt, nil
+}
+
+// linkInverseType creates (or reuses an unpaired type named reverseName) and links both types.
+func (s *Service) linkInverseType(ctx context.Context, id int64, name, reverseName string) {
+	if reverseName == "" || reverseName == name {
+		return
+	}
+
+	inverseID, err := s.Types.Create(ctx, reverseName, name)
+	if err != nil && isUniqueErr(err) {
+		// Partner type already exists; link it unless it's paired with something else,
+		// which needs manual resolution.
+		existing, getErr := s.Types.GetByName(ctx, reverseName)
+		if getErr == nil && existing != nil && existing.InverseTypeID == nil {
+			inverseID, err = existing.ID, nil
+		}
+	}
+
+	if err == nil {
+		_ = s.Types.SetInverseTypeID(ctx, id, &inverseID)
+		_ = s.Types.SetInverseTypeID(ctx, inverseID, &id)
+	}
 }
 
 // UpdateType updates the name and reverse_name of an existing type.
@@ -105,6 +109,12 @@ func (s *Service) UpdateType(ctx context.Context, id int64, name, reverseName st
 
 	if err := s.Types.Update(ctx, id, name, reverseName); err != nil {
 		return err
+	}
+
+	// A type first saved without a reverse name has no inverse; pair it now so new
+	// relationships stop writing the same type on both sides.
+	if rt, err := s.Types.Get(ctx, id); err == nil && rt != nil && rt.InverseTypeID == nil {
+		s.linkInverseType(ctx, id, name, reverseName)
 	}
 
 	if s.Audit != nil {

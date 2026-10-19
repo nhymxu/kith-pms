@@ -419,3 +419,27 @@ func isErr(err, target error) bool {
 
 	return false
 }
+
+func TestUpdateType_AddReverseName_LinksInverse(t *testing.T) {
+	svc, _ := newSvc(t)
+	ctx := context.Background()
+
+	rt, err := svc.CreateType(ctx, "Elder sibling", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.UpdateType(ctx, rt.ID, "Elder sibling", "Younger sibling"); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := svc.GetType(ctx, rt.ID)
+	if err != nil || got == nil || got.InverseTypeID == nil {
+		t.Fatalf("inverse not linked: %+v err=%v", got, err)
+	}
+
+	inv, _ := svc.GetType(ctx, *got.InverseTypeID)
+	if inv == nil || inv.Name != "Younger sibling" || inv.InverseTypeID == nil || *inv.InverseTypeID != rt.ID {
+		t.Fatalf("bad inverse: %+v", inv)
+	}
+}

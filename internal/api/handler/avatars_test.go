@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -242,6 +243,31 @@ func TestAvatarsUpload_HappyPath(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestAvatarsUpload_StorageFailure_Returns500WithoutInternalText(t *testing.T) {
+	db := openTestDB(t)
+	peopleSvc := newPeopleService(db)
+	personID := insertTestPerson(t, db, "Alice")
+
+	fileSvc := &stubFileService{saveErr: errors.New("open /var/data/avatars/1: permission denied")}
+	peopleSvc.FileService = fileSvc
+
+	h := &handler.AvatarsAPI{PeopleSvc: peopleSvc, FileSvc: fileSvc, AvatarBasePath: t.TempDir()}
+
+	jpegContent := []byte{0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 'J', 'F', 'I', 'F', 0}
+	req := buildMultipartRequestWithMIME(t, "avatar", "photo.jpg", "image/jpeg", jpegContent)
+
+	rec := execHandler(newTestEcho(), req, map[string]string{"id": fmt.Sprintf("%d", personID)}, h.Upload)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d — body: %s", rec.Code, rec.Body.String())
+	}
+
+	got := decodeErrBody(t, rec.Body.Bytes())
+	if got.Code != "internal" || strings.Contains(rec.Body.String(), "/var/data") {
+		t.Errorf("want code internal and no internal text, got %s", rec.Body.String())
 	}
 }
 

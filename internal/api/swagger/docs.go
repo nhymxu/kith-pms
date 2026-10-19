@@ -4064,6 +4064,10 @@ const docTemplate = `{
                     "description": "NumberFormat controls the grouping/decimal separators for displayed\nnumbers, e.g. \"1,234.56\" or \"1.234,56\".",
                     "type": "string"
                 },
+                "relationship_display": {
+                    "description": "RelationshipDisplay picks how a person's relationship rows read:\n\"plain\", \"sentence\" or \"badge\".",
+                    "type": "string"
+                },
                 "search_scope": {
                     "type": "array",
                     "items": {

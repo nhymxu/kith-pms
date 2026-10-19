@@ -49,6 +49,7 @@ func validBase() settings.UserSettings {
 		Theme:                     "quiet-ink",
 		NavLayout:                 "top",
 		NumberFormat:              "1,234.56",
+		RelationshipDisplay:       "plain",
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}
 }
@@ -418,6 +419,54 @@ func TestSettings_Update_InvalidNumberFormat_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidNumberFormat) {
 		t.Errorf("want ErrInvalidNumberFormat, got %v", err)
+	}
+}
+
+func TestSettings_Defaults_RelationshipDisplay(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	got, err := svc.Get(context.Background())
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+
+	if got.RelationshipDisplay != "plain" {
+		t.Errorf("default relationship_display: want \"plain\", got %q", got.RelationshipDisplay)
+	}
+}
+
+func TestSettings_Update_RelationshipDisplay_Roundtrip(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	for _, style := range []string{"sentence", "badge", "plain"} {
+		in := validBase()
+		in.RelationshipDisplay = style
+
+		if _, err := svc.Update(ctx, in); err != nil {
+			t.Fatalf("update %q: %v", style, err)
+		}
+
+		got, err := svc.Get(ctx)
+		if err != nil {
+			t.Fatalf("get: %v", err)
+		}
+
+		if got.RelationshipDisplay != style {
+			t.Errorf("persisted relationship_display: want %q, got %q", style, got.RelationshipDisplay)
+		}
+	}
+}
+
+func TestSettings_Update_InvalidRelationshipDisplay_ReturnsError(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+
+	in := validBase()
+	in.RelationshipDisplay = "bogus"
+
+	_, err := svc.Update(context.Background(), in)
+	if !errors.Is(err, settings.ErrInvalidRelationshipDisplay) {
+		t.Errorf("want ErrInvalidRelationshipDisplay, got %v", err)
 	}
 }
 

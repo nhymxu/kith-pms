@@ -105,6 +105,7 @@ function AppearancePage() {
 				dashboard_last_contact_count: 5,
 				nav_layout: p.navLayout,
 				number_format: p.numberFormat,
+				relationship_display: p.relationshipDisplay,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,

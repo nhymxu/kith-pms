@@ -9,6 +9,7 @@ export type NetworkColorBy = "labels" | "type";
 export type NetworkOnlyMineDepth = "direct" | "alter";
 export type NavLayout = "top" | "side";
 export type NumberFormat = "1,234.56" | "1.234,56";
+export type RelationshipDisplay = "plain" | "sentence" | "badge";
 
 export interface UserPrefs {
 	dateFormat: DateFormat;
@@ -22,6 +23,7 @@ export interface UserPrefs {
 	networkOnlyMineDepth: NetworkOnlyMineDepth;
 	navLayout: NavLayout;
 	numberFormat: NumberFormat;
+	relationshipDisplay: RelationshipDisplay;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -38,6 +40,7 @@ const DEFAULTS: UserPrefs = {
 	networkOnlyMineDepth: "direct",
 	navLayout: "top",
 	numberFormat: "1,234.56",
+	relationshipDisplay: "plain",
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -95,6 +98,7 @@ export async function syncSettingsFromApi(): Promise<void> {
 			networkOnlyMineDepth: s.network_only_mine_depth as NetworkOnlyMineDepth,
 			navLayout: s.nav_layout as NavLayout,
 			numberFormat: s.number_format as NumberFormat,
+			relationshipDisplay: s.relationship_display as RelationshipDisplay,
 		});
 		// Reflect a cross-device theme change immediately on load.
 		applyTheme(getTheme());

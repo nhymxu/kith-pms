@@ -15,6 +15,7 @@ import { Textarea } from "#/components/ui/textarea";
 import { listPeople } from "#/endpoints/people";
 import { GiftImageUploader } from "#/features/gifts/gift-image-uploader";
 import { apiErrorMessage } from "#/lib/api-error-message";
+import { formatPersonName } from "#/lib/format-person-name";
 import { keys } from "#/query-keys";
 import {
 	type GiftRequest,
@@ -109,7 +110,9 @@ function GiftFormInner({
 	});
 
 	const filteredPeople = peopleList.items.filter((p) =>
-		p.name.toLowerCase().includes(personSearch.toLowerCase()),
+		formatPersonName(p.name, p.nickname)
+			.toLowerCase()
+			.includes(personSearch.toLowerCase()),
 	);
 
 	return (
@@ -142,7 +145,7 @@ function GiftFormInner({
 										personSearch !== ""
 											? personSearch
 											: selected
-												? selected.name
+												? formatPersonName(selected.name, selected.nickname)
 												: ""
 									}
 									onChange={(e) => setPersonSearch(e.target.value)}
@@ -165,7 +168,7 @@ function GiftFormInner({
 														setPersonSearch("");
 													}}
 												>
-													{p.name}
+													{formatPersonName(p.name, p.nickname)}
 												</button>
 											))
 										)}

@@ -55,6 +55,9 @@ export type AuditFilters = {
 };
 
 export const keys = {
+	calendar: {
+		feedToken: ["calendar", "feed-token"] as const,
+	},
 	people: {
 		all: ["people"] as const,
 		list: (filters: PeopleFilters = {}) => ["people", "list", filters] as const,

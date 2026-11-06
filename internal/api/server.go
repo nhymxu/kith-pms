@@ -75,11 +75,16 @@ func New() *echo.Echo {
 			LogHost:         true,
 			HandleError:     true,
 			LogValuesFunc: func(c *echo.Context, v middleware.RequestLoggerValues) error { // nolint:revive
+				uri := v.URI
+				if strings.HasPrefix(uri, "/calendar/") {
+					uri = "/calendar/[redacted]" // the path segment is the feed credential
+				}
+
 				attrs := []slog.Attr{
 					slog.String("remote_ip", v.RemoteIP),
 					slog.Duration("latency", v.Latency),
 					slog.String("host", v.Host),
-					slog.String("request", fmt.Sprintf("%s %s", v.Method, v.URI)),
+					slog.String("request", fmt.Sprintf("%s %s", v.Method, uri)),
 					slog.Int("status", v.Status),
 					slog.Int64("size", v.ResponseSize),
 					slog.String("user_agent", v.UserAgent),

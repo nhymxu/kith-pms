@@ -4,7 +4,15 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
-import { BookOpen, Link2, Palette, Settings, Shield, Tag } from "lucide-react";
+import {
+	BookOpen,
+	CalendarDays,
+	Link2,
+	Palette,
+	Settings,
+	Shield,
+	Tag,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authed/settings/_layout")({
@@ -32,6 +40,11 @@ const NAV_ITEMS = [
 		to: "/settings/relationship-types" as const,
 		icon: Link2,
 		labelKey: "nav.relationshipTypes",
+	},
+	{
+		to: "/settings/calendar" as const,
+		icon: CalendarDays,
+		labelKey: "nav.calendar",
 	},
 	{
 		to: "/settings/security" as const,

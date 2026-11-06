@@ -11,6 +11,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/api/spa"
 	"github.com/nhymxu/kith-pms/internal/audit"
 	"github.com/nhymxu/kith-pms/internal/auth"
+	"github.com/nhymxu/kith-pms/internal/calendar"
 	"github.com/nhymxu/kith-pms/internal/files"
 	"github.com/nhymxu/kith-pms/internal/gifts"
 	"github.com/nhymxu/kith-pms/internal/important_dates"
@@ -69,6 +70,9 @@ func Mount(e *echo.Echo, deps Deps) {
 		injectAPIActor(),
 	)
 
+	cal := newCalendarAPI(deps)
+	mountCalendarFeeds(e, cal)
+
 	// Cross-wire birthday services before mounting routes.
 	if deps.PeopleService != nil && deps.RemindersService != nil {
 		deps.RemindersService.PersonDOB = handler.NewPersonDOBLookup(deps.PeopleService)
@@ -95,6 +99,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountSettings(v1, deps)
 	mountAppInfo(v1)
 	mountSearch(v1, deps)
+	mountCalendarToken(v1, cal)
 
 	e.Use(sessionLoader, injectAuditActor())
 
@@ -313,4 +318,28 @@ func mountPeopleQuick(g *echo.Group, deps Deps) {
 	g.POST("/people/:id/last-contact", h.UpdateLastContact)
 	g.POST("/people/:id/favorite", h.SetFavorite)
 	g.DELETE("/people/:id/favorite", h.UnsetFavorite)
+}
+
+func newCalendarAPI(deps Deps) *handler.CalendarAPI {
+	return &handler.CalendarAPI{
+		Tokens:  &calendar.TokenStore{Repo: settings.NewRepo(deps.DB)},
+		Builder: &calendar.Builder{DB: deps.DB, Reminders: reminders.NewRepo(deps.DB)},
+	}
+}
+
+// mountCalendarFeeds registers the public ICS feeds on the root router: calendar
+// clients cannot send the session cookie or X-Requested-With, so the URL token is
+// the credential. Read-only GETs, so skipping the CSRF header is safe.
+func mountCalendarFeeds(e *echo.Echo, h *handler.CalendarAPI) {
+	e.GET(
+		"/calendar/:token/birthdays.ics",
+		h.Feed("kith birthdays", []calendar.Part{calendar.PartBirthdays, calendar.PartDates}, false),
+	)
+	e.GET("/calendar/:token/reminders.ics", h.Feed("kith reminders", []calendar.Part{calendar.PartReminders}, false))
+	e.GET("/calendar/:token/feed.ics", h.Feed("kith", calendar.AllParts, true))
+}
+
+func mountCalendarToken(g *echo.Group, h *handler.CalendarAPI) {
+	g.GET("/calendar/feed-token", h.GetToken)
+	g.POST("/calendar/feed-token/regenerate", h.RegenerateToken)
 }

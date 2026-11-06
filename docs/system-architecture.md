@@ -357,6 +357,7 @@ export function PersonForm() {
 
 ```
 /health                → GET (liveness probe, no auth)
+/calendar/:token/{birthdays,reminders,feed}.ics → GET (public, URL token is the credential, read-only; bypasses /v1 session + CSRF)
 /ready                 → GET (readiness probe: DB pingable + migrations applied, no auth)
 /metrics               → GET (Prometheus metrics, no auth)
 /swagger/*             → Swagger UI + OpenAPI spec (no auth)

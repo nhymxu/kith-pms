@@ -39,6 +39,7 @@ import { Route as AuthedJournalEntryIdEditRouteImport } from './routes/_authed/j
 import { Route as AuthedPeoplePersonIdEditRouteImport } from './routes/_authed/people/$personId.edit'
 import { Route as AuthedRemindersReminderIdEditRouteImport } from './routes/_authed/reminders/$reminderId.edit'
 import { Route as AuthedSettingsLayoutAppearanceRouteImport } from './routes/_authed/settings/_layout.appearance'
+import { Route as AuthedSettingsLayoutCalendarRouteImport } from './routes/_authed/settings/_layout.calendar'
 import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
 import { Route as AuthedSettingsLayoutJournalLabelsRouteImport } from './routes/_authed/settings/_layout.journal-labels'
 import { Route as AuthedSettingsLayoutLabelsRouteImport } from './routes/_authed/settings/_layout.labels'
@@ -203,6 +204,12 @@ const AuthedSettingsLayoutAppearanceRoute =
     path: '/appearance',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
+const AuthedSettingsLayoutCalendarRoute =
+  AuthedSettingsLayoutCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
 const AuthedSettingsLayoutGeneralRoute =
   AuthedSettingsLayoutGeneralRouteImport.update({
     id: '/general',
@@ -268,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/settings/appearance': typeof AuthedSettingsLayoutAppearanceRoute
+  '/settings/calendar': typeof AuthedSettingsLayoutCalendarRoute
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
@@ -302,6 +310,7 @@ export interface FileRoutesByTo {
   '/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/settings/appearance': typeof AuthedSettingsLayoutAppearanceRoute
+  '/settings/calendar': typeof AuthedSettingsLayoutCalendarRoute
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
@@ -341,6 +350,7 @@ export interface FileRoutesById {
   '/_authed/people/$personId/edit': typeof AuthedPeoplePersonIdEditRoute
   '/_authed/reminders/$reminderId/edit': typeof AuthedRemindersReminderIdEditRoute
   '/_authed/settings/_layout/appearance': typeof AuthedSettingsLayoutAppearanceRoute
+  '/_authed/settings/_layout/calendar': typeof AuthedSettingsLayoutCalendarRoute
   '/_authed/settings/_layout/general': typeof AuthedSettingsLayoutGeneralRoute
   '/_authed/settings/_layout/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/_authed/settings/_layout/labels': typeof AuthedSettingsLayoutLabelsRoute
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
     | '/settings/appearance'
+    | '/settings/calendar'
     | '/settings/general'
     | '/settings/journal-labels'
     | '/settings/labels'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/people/$personId/edit'
     | '/reminders/$reminderId/edit'
     | '/settings/appearance'
+    | '/settings/calendar'
     | '/settings/general'
     | '/settings/journal-labels'
     | '/settings/labels'
@@ -452,6 +464,7 @@ export interface FileRouteTypes {
     | '/_authed/people/$personId/edit'
     | '/_authed/reminders/$reminderId/edit'
     | '/_authed/settings/_layout/appearance'
+    | '/_authed/settings/_layout/calendar'
     | '/_authed/settings/_layout/general'
     | '/_authed/settings/_layout/journal-labels'
     | '/_authed/settings/_layout/labels'
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsLayoutAppearanceRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
+    '/_authed/settings/_layout/calendar': {
+      id: '/_authed/settings/_layout/calendar'
+      path: '/calendar'
+      fullPath: '/settings/calendar'
+      preLoaderRoute: typeof AuthedSettingsLayoutCalendarRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
+    }
     '/_authed/settings/_layout/general': {
       id: '/_authed/settings/_layout/general'
       path: '/general'
@@ -783,6 +803,7 @@ const AuthedRemindersReminderIdRouteWithChildren =
 
 interface AuthedSettingsLayoutRouteChildren {
   AuthedSettingsLayoutAppearanceRoute: typeof AuthedSettingsLayoutAppearanceRoute
+  AuthedSettingsLayoutCalendarRoute: typeof AuthedSettingsLayoutCalendarRoute
   AuthedSettingsLayoutGeneralRoute: typeof AuthedSettingsLayoutGeneralRoute
   AuthedSettingsLayoutJournalLabelsRoute: typeof AuthedSettingsLayoutJournalLabelsRoute
   AuthedSettingsLayoutLabelsRoute: typeof AuthedSettingsLayoutLabelsRoute
@@ -793,6 +814,7 @@ interface AuthedSettingsLayoutRouteChildren {
 
 const AuthedSettingsLayoutRouteChildren: AuthedSettingsLayoutRouteChildren = {
   AuthedSettingsLayoutAppearanceRoute: AuthedSettingsLayoutAppearanceRoute,
+  AuthedSettingsLayoutCalendarRoute: AuthedSettingsLayoutCalendarRoute,
   AuthedSettingsLayoutGeneralRoute: AuthedSettingsLayoutGeneralRoute,
   AuthedSettingsLayoutJournalLabelsRoute:
     AuthedSettingsLayoutJournalLabelsRoute,

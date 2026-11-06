@@ -31,7 +31,8 @@
 		"peopleLabels": "People Labels",
 		"journalLabels": "Journal Labels",
 		"relationshipTypes": "Relationship Types",
-		"security": "Security"
+		"security": "Security",
+		"calendar": "Calendar"
 	},
 	"common": {
 		"save": "Save",
@@ -258,6 +259,27 @@
 		"delete": {
 			"title": "Delete label?",
 			"description": "Permanently delete \"{{name}}\"? People with this label will be unaffected (label detached)."
+		}
+	},
+	"calendar": {
+		"title": "Calendar subscriptions",
+		"description": "Subscribe in Apple Calendar, Google Calendar, Outlook or Thunderbird. Anyone with a URL can read these events, so keep them private.",
+		"combined": "Combined link",
+		"birthdays": "Birthdays and important dates",
+		"reminders": "Reminders",
+		"copy": "Copy URL",
+		"copied": "Copied!",
+		"subscribe": "Subscribe (webcal)",
+		"regenerate": "Regenerate links",
+		"regenerateWarning": "Old URLs stop working immediately. You must re-subscribe in every calendar app.",
+		"regenerateConfirm": "Yes, regenerate",
+		"regenerating": "Regenerating…",
+		"loadFailed": "Failed to load calendar links.",
+		"regenerateFailed": "Failed to regenerate links.",
+		"parts": {
+			"birthdays": "Birthdays",
+			"dates": "Important dates",
+			"reminders": "Reminders"
 		}
 	}
 }

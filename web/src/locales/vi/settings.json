@@ -31,7 +31,8 @@
 		"peopleLabels": "Nhãn người",
 		"journalLabels": "Nhãn nhật ký",
 		"relationshipTypes": "Loại quan hệ",
-		"security": "Bảo mật"
+		"security": "Bảo mật",
+		"calendar": "Lịch"
 	},
 	"common": {
 		"save": "Lưu",
@@ -258,6 +259,27 @@
 		"delete": {
 			"title": "Xóa nhãn?",
 			"description": "Xóa vĩnh viễn \"{{name}}\"? Những người có nhãn này không bị ảnh hưởng (chỉ gỡ nhãn)."
+		}
+	},
+	"calendar": {
+		"title": "Đăng ký lịch",
+		"description": "Đăng ký trong Apple Calendar, Google Calendar, Outlook hoặc Thunderbird. Ai có URL đều đọc được các sự kiện này, hãy giữ kín.",
+		"combined": "Liên kết gộp",
+		"birthdays": "Sinh nhật và ngày quan trọng",
+		"reminders": "Nhắc nhở",
+		"copy": "Sao chép URL",
+		"copied": "Đã sao chép!",
+		"subscribe": "Đăng ký (webcal)",
+		"regenerate": "Tạo lại liên kết",
+		"regenerateWarning": "URL cũ ngừng hoạt động ngay. Bạn phải đăng ký lại trong mọi ứng dụng lịch.",
+		"regenerateConfirm": "Đồng ý, tạo lại",
+		"regenerating": "Đang tạo lại…",
+		"loadFailed": "Không tải được liên kết lịch.",
+		"regenerateFailed": "Không tạo lại được liên kết.",
+		"parts": {
+			"birthdays": "Sinh nhật",
+			"dates": "Ngày quan trọng",
+			"reminders": "Nhắc nhở"
 		}
 	}
 }

@@ -44,7 +44,8 @@
 		"delete": "Xóa",
 		"deleting": "Đang xóa…",
 		"saveChanges": "Lưu thay đổi",
-		"saveError": "Lưu thất bại"
+		"saveError": "Lưu thất bại",
+		"edit": "Sửa"
 	},
 	"general": {
 		"title": "Chung",
@@ -305,7 +306,8 @@
 			"testOk": "Đã gửi thông báo thử.",
 			"testFailed": "Gửi thử thất bại: {{reason}}",
 			"deleteConfirm": "Xóa",
-			"testFailedStatus": "Gửi thử thất bại: {{reason}} ({{status}})"
+			"testFailedStatus": "Gửi thử thất bại: {{reason}} ({{status}})",
+			"add": "Thêm kênh"
 		},
 		"testClass": {
 			"timeout": "quá thời gian chờ",
@@ -316,6 +318,57 @@
 			"rate_limited": "bị giới hạn tần suất",
 			"invalid_config": "cấu hình sai hoặc địa chỉ bị chặn",
 			"internal": "lỗi nội bộ"
+		},
+		"form": {
+			"addTitle": "Thêm kênh",
+			"editTitle": "Sửa kênh",
+			"name": "Tên",
+			"optional": "(không bắt buộc)",
+			"secretKept": "Để trống để giữ giá trị đã lưu"
+		},
+		"kinds": {
+			"ntfy": {
+				"label": "ntfy",
+				"description": "ntfy gửi thông báo đẩy tới điện thoại hoặc máy tính theo một topic. Dùng ntfy.sh hoặc máy chủ riêng. Trên máy chủ công khai, tên topic là cách bảo vệ duy nhất, nên hãy chọn một chuỗi dài ngẫu nhiên."
+			},
+			"telegram": {
+				"label": "Telegram",
+				"description": "Gửi qua bot Telegram. Tạo bot bằng @BotFather, nhắn cho bot (hoặc thêm vào nhóm), rồi nhập token và chat ID."
+			},
+			"discord": {
+				"label": "Discord",
+				"description": "Đăng vào kênh Discord qua incoming webhook. Tạo trong Cài đặt kênh, Tích hợp, Webhook, rồi dán URL. Ai có URL đều đăng được, nên hãy giữ kín."
+			}
+		},
+		"fields": {
+			"server_url": {
+				"label": "URL máy chủ",
+				"hint": "Để trống để dùng https://ntfy.sh. Đổi URL thì phải nhập lại topic và token."
+			},
+			"topic": {
+				"label": "Topic",
+				"hint": "Chỉ chữ cái, chữ số, - và _, tối đa 64 ký tự."
+			},
+			"token": {
+				"label": "Token truy cập",
+				"hint": "Chỉ cần với topic được bảo vệ."
+			},
+			"bot_token": {
+				"label": "Token bot",
+				"hint": "Dạng 123456:ABC-DEF. Được lưu mã hóa và không hiển thị lại."
+			},
+			"chat_id": {
+				"label": "Chat ID",
+				"hint": "ID dạng số (nhóm là số âm) hoặc @tenkenh. Đổi chat ID thì phải nhập lại token bot."
+			},
+			"api_url": {
+				"label": "URL Bot API",
+				"hint": "Để trống để dùng https://api.telegram.org. Chỉ đặt khi dùng máy chủ Bot API riêng."
+			},
+			"webhook_url": {
+				"label": "URL webhook",
+				"hint": "Được lưu mã hóa và không hiển thị lại."
+			}
 		}
 	}
 }

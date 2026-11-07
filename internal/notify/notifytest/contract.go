@@ -34,10 +34,12 @@ func CanaryForms(secret string) []string {
 	}
 }
 
-func AssertNoCanary(t *testing.T, where, text string) {
+func AssertNoCanary(t *testing.T, where, text string) { assertNoSecret(t, where, text, Canary) }
+
+func assertNoSecret(t *testing.T, where, text, secret string) {
 	t.Helper()
 
-	for _, f := range CanaryForms(Canary) {
+	for _, f := range CanaryForms(secret) {
 		if strings.Contains(text, f) {
 			t.Errorf("%s leaks canary form %q", where, f)
 		}
@@ -53,6 +55,13 @@ type Fixture func(baseURL, secret string) json.RawMessage
 // yields no canary in the sanitized error.
 func RunContract(t *testing.T, reg *notify.Registry, fixtures map[string]Fixture) {
 	t.Helper()
+	RunContractWith(t, reg, fixtures, Canary)
+}
+
+// RunContractWith is RunContract with a caller-chosen secret, for kinds whose
+// validators only accept a restricted alphabet (tokens, topics).
+func RunContractWith(t *testing.T, reg *notify.Registry, fixtures map[string]Fixture, secret string) {
+	t.Helper()
 
 	client := notify.NewHTTPClient()
 
@@ -66,18 +75,18 @@ func RunContract(t *testing.T, reg *notify.Registry, fixtures map[string]Fixture
 			}
 
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("X-Echo", Canary)
-				http.Error(w, strings.Join(CanaryForms(Canary), " "), http.StatusInternalServerError)
+				w.Header().Set("X-Echo", secret)
+				http.Error(w, strings.Join(CanaryForms(secret), " "), http.StatusInternalServerError)
 			}))
 			defer srv.Close()
 
-			cfg := fx(srv.URL, Canary)
+			cfg := fx(srv.URL, secret)
 			if err := ch.Validate(cfg); err != nil {
 				t.Fatalf("fixture invalid: %v", err)
 			}
 
 			view, _ := json.Marshal(notify.PublicView(ch, cfg))
-			AssertNoCanary(t, "PublicView", string(view))
+			assertNoSecret(t, "PublicView", string(view), secret)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -89,7 +98,7 @@ func RunContract(t *testing.T, reg *notify.Registry, fixtures map[string]Fixture
 
 			se := notify.SanitizeErr(err)
 			out, _ := json.Marshal(se)
-			AssertNoCanary(t, "SendError", se.Error()+string(out))
+			assertNoSecret(t, "SendError", se.Error()+string(out), secret)
 		})
 	}
 }

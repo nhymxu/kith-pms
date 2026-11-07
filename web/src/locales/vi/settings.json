@@ -299,7 +299,7 @@
 			"noKinds": "Chưa có loại kênh nào. Chúng sẽ xuất hiện ở đây khi được thêm.",
 			"loadFailed": "Không tải được danh sách kênh.",
 			"unreadable": "Không đọc được bí mật",
-			"unreadableHint": "Không giải mã được thông tin bí mật đã lưu, thường do khóa bí mật đã đổi. Hãy nhập lại để dùng lại kênh này.",
+			"unreadableHint": "Không giải mã được thông tin bí mật đã lưu, thường do khóa bí mật đã đổi. Hãy nhập lại chúng, cùng mọi URL tùy chỉnh, để dùng lại kênh này.",
 			"enabled": "Bật kênh",
 			"test": "Gửi thử",
 			"testing": "Đang gửi…",
@@ -324,6 +324,7 @@
 			"editTitle": "Sửa kênh",
 			"name": "Tên",
 			"optional": "(không bắt buộc)",
+			"removeSaved": "Xóa giá trị đã lưu",
 			"secretKept": "Để trống để giữ giá trị đã lưu"
 		},
 		"kinds": {

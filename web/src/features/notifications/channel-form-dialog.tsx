@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { SubmitButton } from "#/components/form/submit-button";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
@@ -46,6 +47,7 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 			Object.entries(channel?.config ?? {}).map(([k, v]) => [k, String(v)]),
 		),
 	);
+	const [cleared, setCleared] = useState<Record<string, boolean>>({});
 	const spec = kind ? CHANNEL_KINDS[kind] : undefined;
 	// An unreadable channel has nothing to keep, so every secret is re-entered.
 	const reenter = channel?.status === "secret_unreadable";
@@ -56,6 +58,7 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 			for (const f of spec?.fields ?? []) {
 				const v = (values[f.key] ?? "").trim();
 				if (v !== "") config[f.key] = v;
+				else if (cleared[f.key]) config[f.key] = "";
 			}
 			return channel
 				? updateNotificationChannelConfig(channel.id, config)
@@ -155,6 +158,17 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 						<p className="text-[11px] text-sub">
 							{t(`notifications.fields.${f.key}.hint`)}
 						</p>
+						{f.secret && f.optional && editing && !reenter && (
+							<Label className="flex items-center gap-2 text-[12px] font-normal">
+								<Checkbox
+									checked={cleared[f.key] === true}
+									onCheckedChange={(v) =>
+										setCleared((prev) => ({ ...prev, [f.key]: v === true }))
+									}
+								/>
+								{t("notifications.form.removeSaved")}
+							</Label>
+						)}
 					</div>
 				))}
 

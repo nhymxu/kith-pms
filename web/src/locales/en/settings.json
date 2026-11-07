@@ -299,7 +299,7 @@
 			"noKinds": "No channel types are available yet. They will show up here as they are added.",
 			"loadFailed": "Failed to load channels.",
 			"unreadable": "Secrets unreadable",
-			"unreadableHint": "The stored secrets can't be decrypted, usually because the secret key changed. Re-enter them to use this channel again.",
+			"unreadableHint": "The stored secrets can't be decrypted, usually because the secret key changed. Re-enter them, and any custom URL, to use this channel again.",
 			"enabled": "Channel enabled",
 			"test": "Send test",
 			"testing": "Sending…",
@@ -324,6 +324,7 @@
 			"editTitle": "Edit channel",
 			"name": "Name",
 			"optional": "(optional)",
+			"removeSaved": "Remove the saved value",
 			"secretKept": "Leave blank to keep the saved value"
 		},
 		"kinds": {

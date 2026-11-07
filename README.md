@@ -66,6 +66,7 @@ All configuration is via environment variables or a `.env` file in the working d
 | Variable                       | Default          | Required | Description                                                        |
 |--------------------------------|------------------|----------|---------------------------------------------------------------------|
 | `SESSION_SECRET`               | —                | **Yes**  | Cookie signing secret, min 32 bytes                                |
+| `NOTIFY_SECRET_KEY`            | derived          | No       | Base64 32-byte key encrypting notification channel secrets; default is derived from `SESSION_SECRET` (set it so `SESSION_SECRET` can rotate) |
 | `DEBUG`                        | `false`          | No       | `true` → text logs + debug level                                   |
 | `SENTRY.DSN`                   | —                | No       | Sentry DSN; omit to disable error reporting                        |
 | `DB_PATH`                      | `data/kith.db`   | No       | Path to the SQLite database file                                   |

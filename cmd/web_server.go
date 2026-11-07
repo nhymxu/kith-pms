@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v5"
@@ -22,6 +23,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/note"
+	"github.com/nhymxu/kith-pms/internal/notify"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -166,6 +168,18 @@ Can scale later.`,
 
 			settingsSvc := settings.NewService(db)
 
+			secretBox, err := notify.NewSecretBox(config.C.NotifySecretKey, config.C.SessionSecret)
+			if err != nil {
+				return fmt.Errorf("web-server: notify secret: %w", err)
+			}
+
+			notifyRegistry := notify.NewRegistry()
+			notifyChannels := notify.NewChannelRepo(db, secretBox)
+			notifyClient := notify.NewHTTPClient()
+			dispatcher := notify.NewDispatcher(
+				db, notifyRegistry, notifyChannels, notifyClient, notify.SettingsSchedule(settingsSvc),
+			)
+
 			apiToken := os.Getenv("API_TOKEN")
 
 			api.Mount(e, api.Deps{
@@ -183,6 +197,9 @@ Can scale later.`,
 				NoteService:          noteSvc,
 				RelationshipsService: relsSvc,
 				SettingsService:      settingsSvc,
+				NotifyChannels:       notifyChannels,
+				NotifyRegistry:       notifyRegistry,
+				NotifyClient:         notifyClient,
 				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
 				GiftStoragePath:      giftStoragePath,
@@ -191,11 +208,13 @@ Can scale later.`,
 				BehindTLS:            config.C.BehindTLS,
 			})
 
-			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
 			go api.RunSessionGC(ctx, authSvc.Sessions)
 			go api.RunPeoplePurgeGC(ctx, peopleSvc, config.C.PeopleDeleteRetentionDays)
+
+			notifyDone := dispatcher.Run(ctx)
 
 			sc := echo.StartConfig{
 				Address:         fmt.Sprintf("%s:%d", host, port),
@@ -208,6 +227,15 @@ Can scale later.`,
 
 			if err := sc.Start(ctx, e); err != nil {
 				slog.Error("shutting down the server", "error", err)
+			}
+
+			stop()
+
+			// In-flight sends must record their outcome before the deferred db.Close().
+			select {
+			case <-notifyDone:
+			case <-time.After(time.Duration(shutdownTime) * time.Second):
+				slog.Warn("notify dispatcher did not stop before the shutdown timeout")
 			}
 
 			return nil

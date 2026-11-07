@@ -35,6 +35,9 @@ type UserSettings struct {
 	// Language is the UI locale: "en" or "vi".
 	Language string `json:"language"`
 
+	// NotifyHour (0-23) is the local hour date-only reminders notify at.
+	NotifyHour int `json:"notify_hour"`
+
 	SearchScope []string `json:"search_scope"`
 }
 
@@ -67,6 +70,8 @@ var Defaults = UserSettings{
 
 	Language: "en",
 
+	NotifyHour: 9,
+
 	SearchScope: []string{"people", "journal", "gifts", "notes"},
 }
 
@@ -98,6 +103,8 @@ const (
 	KeyRelationshipDisplay = "relationship_display"
 
 	KeyLanguage = "language"
+
+	KeyNotifyHour = "notify_hour"
 
 	KeySearchScope = "search_scope"
 )

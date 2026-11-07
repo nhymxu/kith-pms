@@ -110,6 +110,7 @@ Result unmarshals to global `config.C` (Config struct). Load via `config.Load()`
 | `IMAGE_MAX_EDGE_PX`   | int      | `1600`           | Max pixel dimension for image crop output (longest edge scaled to this) |
 | `IMAGE_JPEG_QUALITY`  | int      | `85`             | JPEG quality 0-100 for cropped image output             |
 | `TOKEN_AUTH`          | string   | *(empty)*        | Static bearer token for API clients (optional)          |
+| `NOTIFY_SECRET_KEY`   | string   | *(derived)*      | Base64 32-byte key for notification channel secrets; default derived from `SESSION_SECRET` via HKDF |
 
 ### SQLite concurrency note
 
@@ -413,7 +414,14 @@ export function PersonForm() {
 
 **Audit** — GET audit log entries, `POST /audit/cleanup` (manual purge of entries older than retention period)
 
-**Settings** — `GET /settings`, `PUT /settings` (user preferences including date/time format, timezone, audit log retention, theme, nav_layout, search_scope array, dashboard widget counts)
+**Settings** — `GET /settings`, `PUT /settings` (user preferences including date/time format, timezone, audit log retention, theme, nav_layout, search_scope array, dashboard widget counts, notify_hour)
+
+**Notification channels** (`internal/notify`):
+- `GET /notifications/channels` — channels (public fields only, `status` ok | secret_unreadable) plus registered `kinds`
+- `POST /notifications/channels`, `PUT|PATCH|DELETE /notifications/channels/:id`, `POST /notifications/channels/:id/test`
+- Mutations and test-send need a cookie session; the `API_TOKEN` bearer gets 403 `session_required`. Test-send is limited to one request per 5s across all channels
+- `PUT` keeps omitted or masked secrets; changing any non-secret field requires every secret re-sent (`secret_required`). Channel configs are AES-256-GCM encrypted, bound to `kind|id`
+- A 30s scheduler fans each due reminder out to every enabled channel (`reminder_delivery` rows, retries 1m/5m/30m/2h, at-least-once). Date-only reminders fire at the `notify_hour` setting (0-23, default 9) in the user's timezone. Outbound requests go through one HTTP client that blocks link-local, multicast and unspecified addresses and never follows redirects
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.
 

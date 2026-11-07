@@ -70,6 +70,11 @@ var (
 	// web/src/features/settings/language-settings-card.tsx, and the catalog
 	// directories under web/src/locales/.
 	ErrInvalidLanguage = errors.New("settings: language must be one of en, vi")
+	// ErrInvalidNotifyHour is returned when notify_hour is outside 0-23. Keep the range
+	// in sync with the zod schema in web/src/schemas/settings.ts, the DEFAULTS in
+	// web/src/lib/format-datetime.ts, and the control in
+	// web/src/routes/_authed/settings/_layout.notifications.tsx.
+	ErrInvalidNotifyHour = errors.New("settings: notify_hour must be between 0 and 23")
 )
 
 var validDateFormats = map[string]bool{
@@ -242,6 +247,12 @@ func (s *Service) Get(ctx context.Context) (UserSettings, error) {
 		result.Language = v
 	}
 
+	if v, ok := rows[KeyNotifyHour]; ok {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 && n <= 23 {
+			result.NotifyHour = n
+		}
+	}
+
 	if v, ok := rows[KeySearchScope]; ok {
 		scope := make([]string, 0, len(Defaults.SearchScope))
 
@@ -321,6 +332,10 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		return UserSettings{}, ErrInvalidLanguage
 	}
 
+	if in.NotifyHour < 0 || in.NotifyHour > 23 {
+		return UserSettings{}, ErrInvalidNotifyHour
+	}
+
 	if len(in.SearchScope) == 0 {
 		return UserSettings{}, ErrInvalidSearchScope
 	}
@@ -364,6 +379,7 @@ func (s *Service) Update(ctx context.Context, in UserSettings) (UserSettings, er
 		KeyNumberFormat:              in.NumberFormat,
 		KeyRelationshipDisplay:       in.RelationshipDisplay,
 		KeyLanguage:                  in.Language,
+		KeyNotifyHour:                strconv.Itoa(in.NotifyHour),
 		KeySearchScope:               strings.Join(in.SearchScope, ","),
 	} {
 		if err := s.Repo.Set(ctx, key, val, now); err != nil {

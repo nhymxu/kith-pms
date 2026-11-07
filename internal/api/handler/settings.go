@@ -71,9 +71,28 @@ func (h *SettingsAPI) Get(c *echo.Context) error {
 // @Security     CSRFHeader
 // @Router       /settings [put]
 func (h *SettingsAPI) Update(c *echo.Context) error {
-	var req settings.UserSettings
-	if err := c.Bind(&req); err != nil {
+	// NotifyHour is a pointer so a client that predates the field (stale tab, script)
+	// keeps the stored value instead of silently resetting it to hour 0.
+	var body struct {
+		settings.UserSettings
+		NotifyHour *int `json:"notify_hour"`
+	}
+
+	if err := c.Bind(&body); err != nil {
 		return apiErr(c, http.StatusBadRequest, "invalid_request_body", "invalid request body")
+	}
+
+	req := body.UserSettings
+
+	if body.NotifyHour != nil {
+		req.NotifyHour = *body.NotifyHour
+	} else {
+		current, err := h.Svc.Get(c.Request().Context())
+		if err != nil {
+			return apiErr(c, http.StatusInternalServerError, "internal", "internal server error")
+		}
+
+		req.NotifyHour = current.NotifyHour
 	}
 
 	updated, err := h.Svc.Update(c.Request().Context(), req)
@@ -108,6 +127,7 @@ var settingsErrCodes = []struct {
 	{settings.ErrInvalidNumberFormat, "settings_number_format_invalid"},
 	{settings.ErrInvalidRelationshipDisplay, "settings_relationship_display_invalid"},
 	{settings.ErrInvalidLanguage, "settings_language_invalid"},
+	{settings.ErrInvalidNotifyHour, "settings_notify_hour_invalid"},
 	{settings.ErrInvalidSearchScope, "settings_search_scope_invalid"},
 }
 

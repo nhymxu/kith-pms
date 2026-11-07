@@ -421,6 +421,7 @@ export function PersonForm() {
 - `POST /notifications/channels`, `PUT|PATCH|DELETE /notifications/channels/:id`, `POST /notifications/channels/:id/test`
 - Mutations and test-send need a cookie session; the `API_TOKEN` bearer gets 403 `session_required`. Test-send is limited to one request per 5s across all channels
 - `PUT` keeps omitted or masked secrets; changing any non-secret field requires every secret re-sent (`secret_required`). Channel configs are AES-256-GCM encrypted, bound to `kind|id`
+- Registered kinds (`internal/notify/channels`): `ntfy` (`server_url`, `topic`*, `token`*), `telegram` (`api_url`, `bot_token`*, `chat_id`), `discord` (`webhook_url`*); * = write-only secret. Adapters send only through the shared HTTP client; the web form field specs live in `web/src/features/notifications/channel-kinds.ts` and must match
 - A 30s scheduler fans each due reminder out to every enabled channel (`reminder_delivery` rows, retries 1m/5m/30m/2h, at-least-once). Date-only reminders fire at the `notify_hour` setting (0-23, default 9) in the user's timezone. Outbound requests go through one HTTP client that blocks link-local, multicast and unspecified addresses and never follows redirects
 
 All state-changing calls (POST/PUT/PATCH/DELETE) require `X-Requested-With: kith-spa` header when authenticated by cookie.

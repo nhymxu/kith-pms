@@ -143,11 +143,26 @@ func (r *ChannelRepo) Rename(ctx context.Context, id int64, name string) error {
 
 // SetEnabled stamps enabled_at only on a disabled->enabled transition so nothing stale is enqueued later.
 func (r *ChannelRepo) SetEnabled(ctx context.Context, id int64, enabled bool) error {
+	if !enabled {
+		return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			if _, err := tx.NewRaw(`UPDATE reminder_delivery SET status = 'cancelled'
+WHERE channel_id = ? AND status = 'pending'`, id).Exec(ctx); err != nil {
+				return fmt.Errorf("notify: cancel pending deliveries: %w", err)
+			}
+
+			return r.execOn(ctx, tx, id, "enabled = 0")
+		})
+	}
+
 	return r.exec(ctx, id, "enabled_at = CASE WHEN ? AND NOT enabled THEN ? ELSE enabled_at END, enabled = ?",
 		enabled, r.now().UTC(), enabled)
 }
 
 func (r *ChannelRepo) Delete(ctx context.Context, id int64) error {
+	if _, err := r.db.NewRaw(`DELETE FROM reminder_delivery WHERE channel_id = ?`, id).Exec(ctx); err != nil {
+		return fmt.Errorf("notify: delete deliveries: %w", err)
+	}
+
 	res, err := r.db.NewDelete().Model((*Record)(nil)).Where("id = ?", id).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("notify: delete channel: %w", err)
@@ -161,7 +176,11 @@ func (r *ChannelRepo) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *ChannelRepo) exec(ctx context.Context, id int64, set string, args ...any) error {
-	res, err := r.db.NewUpdate().Model((*Record)(nil)).
+	return r.execOn(ctx, r.db, id, set, args...)
+}
+
+func (r *ChannelRepo) execOn(ctx context.Context, db bun.IDB, id int64, set string, args ...any) error {
+	res, err := db.NewUpdate().Model((*Record)(nil)).
 		Set(set, args...).Set("updated_at = ?", r.now().UTC()).
 		Where("id = ?", id).Exec(ctx)
 	if err != nil {

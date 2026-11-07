@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v5"
@@ -22,6 +23,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/note"
+	"github.com/nhymxu/kith-pms/internal/notify"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -191,11 +193,23 @@ Can scale later.`,
 				BehindTLS:            config.C.BehindTLS,
 			})
 
-			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+			secretBox, err := notify.NewSecretBox(config.C.NotifySecretKey, config.C.SessionSecret)
+			if err != nil {
+				return fmt.Errorf("web-server: notify secret: %w", err)
+			}
+
+			dispatcher := notify.NewDispatcher(
+				db, notify.NewRegistry(), notify.NewChannelRepo(db, secretBox),
+				notify.NewHTTPClient(), notify.SettingsSchedule(settingsSvc),
+			)
+
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
 			go api.RunSessionGC(ctx, authSvc.Sessions)
 			go api.RunPeoplePurgeGC(ctx, peopleSvc, config.C.PeopleDeleteRetentionDays)
+
+			notifyDone := dispatcher.Run(ctx)
 
 			sc := echo.StartConfig{
 				Address:         fmt.Sprintf("%s:%d", host, port),
@@ -208,6 +222,15 @@ Can scale later.`,
 
 			if err := sc.Start(ctx, e); err != nil {
 				slog.Error("shutting down the server", "error", err)
+			}
+
+			stop()
+
+			// In-flight sends must record their outcome before the deferred db.Close().
+			select {
+			case <-notifyDone:
+			case <-time.After(time.Duration(shutdownTime) * time.Second):
+				slog.Warn("notify dispatcher did not stop before the shutdown timeout")
 			}
 
 			return nil

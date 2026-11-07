@@ -111,6 +111,13 @@ Replaces the live database with a backup. **Stop the API server first.**
 
 The `--force` flag is required as a safety confirmation. The restore command also refuses to proceed if the database was modified in the last 30 seconds (heuristic for a running server).
 
+### Notification delivery notes
+
+- Delivery is at-least-once: a crash between a successful send and recording it can send one notification twice.
+- Reminders missed during more than 24h of downtime are dropped, not replayed.
+- Restoring a backup can re-send reminders from the last 24h.
+- A reminder due at exactly 00:00 UTC is treated as date-only and fires at 09:00 in the configured timezone.
+
 ## Docker
 
 ### Production

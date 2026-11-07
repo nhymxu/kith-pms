@@ -21,6 +21,8 @@ type Message struct {
 	Notes      string
 	PersonName string
 	DueAt      time.Time
+	// Location is the user's timezone; adapters format times with it, never in UTC.
+	Location *time.Location
 }
 
 // Channel is implemented once per kind. Send must return a *SendError (or nil);

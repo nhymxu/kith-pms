@@ -883,3 +883,42 @@ func TestList_LegacyFavoriteSortValue_FallsBackGracefully(t *testing.T) {
 		}
 	}
 }
+
+func TestPurgeExpired_DeletesPurgedPeoplesReminders(t *testing.T) {
+	db := openTestDB(t)
+	svc := people.NewService(db)
+	ctx := context.Background()
+
+	oldID := mustCreate(t, svc, "Old", nil, nil)
+	liveID := mustCreate(t, svc, "Live", nil, nil)
+
+	for _, pid := range []int64{oldID, liveID} {
+		if _, err := db.ExecContext(
+			ctx,
+			`INSERT INTO reminder (title, due_date, person_id) VALUES ('r', '2030-01-01', ?)`,
+			pid,
+		); err != nil {
+			t.Fatalf("insert reminder: %v", err)
+		}
+	}
+
+	if err := svc.Delete(ctx, oldID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	backdateDeletedAt(t, db, oldID, "-31 days")
+
+	if _, err := svc.PurgeExpired(ctx, 30); err != nil {
+		t.Fatalf("PurgeExpired: %v", err)
+	}
+
+	var total, orphaned int
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*), COALESCE(SUM(person_id IS NULL), 0) FROM reminder`).
+		Scan(&total, &orphaned); err != nil {
+		t.Fatalf("count: %v", err)
+	}
+
+	if total != 1 || orphaned != 0 {
+		t.Errorf("want only the live person's reminder left, got total=%d personless=%d", total, orphaned)
+	}
+}

@@ -394,7 +394,10 @@ func TestSetEnabledKeepsGateOnIdempotentEnable(t *testing.T) {
 	ctx := context.Background()
 	repo := notify.NewChannelRepo(testutil.NewDB(t), newBox(t))
 
-	rec, _ := repo.Create(ctx, "fake", "n", true, cfg("https://a/", "S"))
+	created, _ := repo.Create(ctx, "fake", "n", true, cfg("https://a/", "S"))
+
+	// Compare stored values: Linux clocks carry nanoseconds that the column drops.
+	rec, _ := repo.Get(ctx, created.ID)
 
 	time.Sleep(5 * time.Millisecond)
 

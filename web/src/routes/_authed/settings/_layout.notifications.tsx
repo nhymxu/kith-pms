@@ -22,6 +22,8 @@ import {
 	testNotificationChannel,
 } from "#/endpoints/notifications";
 import { getSettings, updateSettings } from "#/endpoints/settings";
+import { ChannelFormDialog } from "#/features/notifications/channel-form-dialog";
+import { isChannelKind } from "#/features/notifications/channel-kinds";
 import { apiErrorMessage } from "#/lib/api-error-message";
 import { saveUserPrefs } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
@@ -109,10 +111,17 @@ function NotifyHourCard() {
 	);
 }
 
-function ChannelRow({ channel }: { channel: NotificationChannel }) {
+function ChannelRow({
+	channel,
+	kinds,
+}: {
+	channel: NotificationChannel;
+	kinds: string[];
+}) {
 	const { t } = useTranslation("settings");
 	const qc = useQueryClient();
 	const [confirming, setConfirming] = useState(false);
+	const [editing, setEditing] = useState(false);
 	const [result, setResult] = useState<ChannelTestResult | null>(null);
 	const refresh = () =>
 		qc.invalidateQueries({ queryKey: keys.notifications.channels });
@@ -178,6 +187,11 @@ function ChannelRow({ channel }: { channel: NotificationChannel }) {
 						? t("notifications.channels.testing")
 						: t("notifications.channels.test")}
 				</Button>
+				{isChannelKind(channel.kind) && (
+					<Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+						{t("common.edit")}
+					</Button>
+				)}
 				{confirming ? (
 					<>
 						<Button
@@ -206,6 +220,14 @@ function ChannelRow({ channel }: { channel: NotificationChannel }) {
 					</Button>
 				)}
 			</div>
+			{editing && (
+				<ChannelFormDialog
+					open
+					kinds={kinds}
+					channel={channel}
+					onClose={() => setEditing(false)}
+				/>
+			)}
 			{unreadable && (
 				<p className="text-[12px] text-danger-fg">
 					{t("notifications.channels.unreadableHint")}
@@ -245,6 +267,9 @@ function NotificationsPage() {
 		queryKey: keys.notifications.channels,
 		queryFn: listNotificationChannels,
 	});
+	const [adding, setAdding] = useState(false);
+	const kinds = channels.data?.kinds ?? [];
+	const canAdd = kinds.some(isChannelKind);
 
 	return (
 		<div className="space-y-6 max-w-2xl">
@@ -256,12 +281,21 @@ function NotificationsPage() {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-[14px] font-medium">
-						{t("notifications.channels.title")}
-					</CardTitle>
-					<CardDescription className="text-[12px]">
-						{t("notifications.channels.description")}
-					</CardDescription>
+					<div className="flex items-start justify-between gap-3">
+						<div className="space-y-1.5">
+							<CardTitle className="text-[14px] font-medium">
+								{t("notifications.channels.title")}
+							</CardTitle>
+							<CardDescription className="text-[12px]">
+								{t("notifications.channels.description")}
+							</CardDescription>
+						</div>
+						{canAdd && (
+							<Button size="sm" onClick={() => setAdding(true)}>
+								{t("notifications.channels.add")}
+							</Button>
+						)}
+					</div>
 				</CardHeader>
 				<CardContent>
 					{channels.isError && (
@@ -284,12 +318,19 @@ function NotificationsPage() {
 					{channels.data && channels.data.channels.length > 0 && (
 						<ul className="divide-y divide-line">
 							{channels.data.channels.map((c) => (
-								<ChannelRow key={c.id} channel={c} />
+								<ChannelRow key={c.id} channel={c} kinds={kinds} />
 							))}
 						</ul>
 					)}
 				</CardContent>
 			</Card>
+			{adding && (
+				<ChannelFormDialog
+					open
+					kinds={kinds}
+					onClose={() => setAdding(false)}
+				/>
+			)}
 		</div>
 	);
 }

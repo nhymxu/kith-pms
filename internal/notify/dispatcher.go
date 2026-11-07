@@ -16,7 +16,6 @@ const (
 	channelWidth   = 2  // concurrent sends per channel; also the claim batch size
 	perChannelTick = 20 // rows one channel may consume per tick, so a flood cannot starve the loop
 	leaseSlack     = 20 * time.Second
-	defaultNotify  = 9
 )
 
 // Schedule supplies the user's timezone and notify hour for date-only reminders.
@@ -241,33 +240,32 @@ func (d *Dispatcher) deliver(ctx context.Context, rec *Record, row claimed) {
 	}
 }
 
-// send never returns raw adapter text and converts a panic into a permanent failure.
-func (d *Dispatcher) send(ctx context.Context, rec *Record, m Message) (se *SendError) {
-	defer func() {
-		if r := recover(); r != nil {
-			slog.Error("notify: channel panic", "channel_id", rec.ID, "kind", rec.Kind)
+func (d *Dispatcher) send(ctx context.Context, rec *Record, m Message) *SendError {
+	return SendNow(ctx, d.Registry, d.Client, rec, m)
+}
 
-			se = &SendError{Class: ClassInternal, Permanent: true}
-		}
-	}()
-
-	ch, ok := d.Registry.Get(rec.Kind)
+// SendNow is the single send path (dispatcher and test-send). It never returns raw
+// adapter text, converts a panic into a permanent failure, and abandons an adapter
+// that ignores ctx at the deadline so one stuck channel cannot stall the caller.
+func SendNow(ctx context.Context, reg *Registry, client *HTTPClient, rec *Record, m Message) *SendError {
+	ch, ok := reg.Get(rec.Kind)
 	if !ok || rec.Unreadable {
 		return &SendError{Class: ClassInvalidConfig, Permanent: true}
 	}
 
-	// An adapter that ignores ctx must not stall the whole loop: abandon it at the deadline.
-	// The buffered channel lets the stuck goroutine exit whenever it finally returns.
+	// The buffered channel lets an abandoned goroutine exit whenever it finally returns.
 	res := make(chan *SendError, 1)
 
 	go func() {
 		defer func() {
 			if recover() != nil {
+				slog.Error("notify: channel panic", "channel_id", rec.ID, "kind", rec.Kind)
+
 				res <- &SendError{Class: ClassInternal, Permanent: true}
 			}
 		}()
 
-		res <- SanitizeErr(ch.Send(ctx, d.Client, rec.Config, m))
+		res <- SanitizeErr(ch.Send(ctx, client, rec.Config, m))
 	}()
 
 	select {

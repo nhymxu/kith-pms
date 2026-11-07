@@ -32,6 +32,7 @@ export const userSettingsSchema = z.object({
 	number_format: z.enum(["1,234.56", "1.234,56"]).default("1,234.56"),
 	relationship_display: z.enum(["plain", "sentence", "badge"]).default("plain"),
 	language: z.enum(["en", "vi"]).default("en"),
+	notify_hour: z.number().int().min(0).max(23).default(9),
 	search_scope: z
 		.array(z.enum(["people", "journal", "gifts", "notes"]))
 		.min(1)

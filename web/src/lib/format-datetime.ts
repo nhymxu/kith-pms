@@ -26,6 +26,7 @@ export interface UserPrefs {
 	numberFormat: NumberFormat;
 	relationshipDisplay: RelationshipDisplay;
 	language: Language;
+	notifyHour: number;
 }
 
 const STORAGE_KEY = "kith_user_prefs";
@@ -44,6 +45,7 @@ const DEFAULTS: UserPrefs = {
 	numberFormat: "1,234.56",
 	relationshipDisplay: "plain",
 	language: "en",
+	notifyHour: 9,
 };
 
 export function getUserPrefs(): UserPrefs {
@@ -103,6 +105,7 @@ export async function syncSettingsFromApi(): Promise<void> {
 			numberFormat: s.number_format as NumberFormat,
 			relationshipDisplay: s.relationship_display as RelationshipDisplay,
 			language: s.language as Language,
+			notifyHour: s.notify_hour,
 		});
 		// Reflect a cross-device theme change immediately on load.
 		applyTheme(getTheme());

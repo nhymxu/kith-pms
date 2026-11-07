@@ -109,6 +109,23 @@ func MergeConfig(ch Channel, stored, incoming json.RawMessage) (json.RawMessage,
 	return merged, nil
 }
 
+// HasMaskedSecret reports whether any secret field in cfg still holds the mask
+// sentinel, which must never be stored as a real secret.
+func HasMaskedSecret(ch Channel, cfg json.RawMessage) bool {
+	var m map[string]any
+	if json.Unmarshal(cfg, &m) != nil {
+		return false
+	}
+
+	for _, k := range ch.SecretFields() {
+		if m[k] == MaskSentinel {
+			return true
+		}
+	}
+
+	return false
+}
+
 func unionKeys(a, b map[string]any) []string {
 	keys := make([]string, 0, len(a)+len(b))
 	for k := range a {

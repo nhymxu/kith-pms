@@ -43,6 +43,7 @@ import { Route as AuthedSettingsLayoutCalendarRouteImport } from './routes/_auth
 import { Route as AuthedSettingsLayoutGeneralRouteImport } from './routes/_authed/settings/_layout.general'
 import { Route as AuthedSettingsLayoutJournalLabelsRouteImport } from './routes/_authed/settings/_layout.journal-labels'
 import { Route as AuthedSettingsLayoutLabelsRouteImport } from './routes/_authed/settings/_layout.labels'
+import { Route as AuthedSettingsLayoutNotificationsRouteImport } from './routes/_authed/settings/_layout.notifications'
 import { Route as AuthedSettingsLayoutPeopleLabelsRouteImport } from './routes/_authed/settings/_layout.people-labels'
 import { Route as AuthedSettingsLayoutRelationshipTypesRouteImport } from './routes/_authed/settings/_layout.relationship-types'
 import { Route as AuthedSettingsLayoutSecurityRouteImport } from './routes/_authed/settings/_layout.security'
@@ -228,6 +229,12 @@ const AuthedSettingsLayoutLabelsRoute =
     path: '/labels',
     getParentRoute: () => AuthedSettingsLayoutRoute,
   } as any)
+const AuthedSettingsLayoutNotificationsRoute =
+  AuthedSettingsLayoutNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedSettingsLayoutRoute,
+  } as any)
 const AuthedSettingsLayoutPeopleLabelsRoute =
   AuthedSettingsLayoutPeopleLabelsRouteImport.update({
     id: '/people-labels',
@@ -279,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/settings/notifications': typeof AuthedSettingsLayoutNotificationsRoute
   '/settings/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsLayoutSecurityRoute
@@ -314,6 +322,7 @@ export interface FileRoutesByTo {
   '/settings/general': typeof AuthedSettingsLayoutGeneralRoute
   '/settings/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/settings/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/settings/notifications': typeof AuthedSettingsLayoutNotificationsRoute
   '/settings/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/settings/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/settings/security': typeof AuthedSettingsLayoutSecurityRoute
@@ -354,6 +363,7 @@ export interface FileRoutesById {
   '/_authed/settings/_layout/general': typeof AuthedSettingsLayoutGeneralRoute
   '/_authed/settings/_layout/journal-labels': typeof AuthedSettingsLayoutJournalLabelsRoute
   '/_authed/settings/_layout/labels': typeof AuthedSettingsLayoutLabelsRoute
+  '/_authed/settings/_layout/notifications': typeof AuthedSettingsLayoutNotificationsRoute
   '/_authed/settings/_layout/people-labels': typeof AuthedSettingsLayoutPeopleLabelsRoute
   '/_authed/settings/_layout/relationship-types': typeof AuthedSettingsLayoutRelationshipTypesRoute
   '/_authed/settings/_layout/security': typeof AuthedSettingsLayoutSecurityRoute
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/settings/general'
     | '/settings/journal-labels'
     | '/settings/labels'
+    | '/settings/notifications'
     | '/settings/people-labels'
     | '/settings/relationship-types'
     | '/settings/security'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/settings/general'
     | '/settings/journal-labels'
     | '/settings/labels'
+    | '/settings/notifications'
     | '/settings/people-labels'
     | '/settings/relationship-types'
     | '/settings/security'
@@ -468,6 +480,7 @@ export interface FileRouteTypes {
     | '/_authed/settings/_layout/general'
     | '/_authed/settings/_layout/journal-labels'
     | '/_authed/settings/_layout/labels'
+    | '/_authed/settings/_layout/notifications'
     | '/_authed/settings/_layout/people-labels'
     | '/_authed/settings/_layout/relationship-types'
     | '/_authed/settings/_layout/security'
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsLayoutLabelsRouteImport
       parentRoute: typeof AuthedSettingsLayoutRoute
     }
+    '/_authed/settings/_layout/notifications': {
+      id: '/_authed/settings/_layout/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthedSettingsLayoutNotificationsRouteImport
+      parentRoute: typeof AuthedSettingsLayoutRoute
+    }
     '/_authed/settings/_layout/people-labels': {
       id: '/_authed/settings/_layout/people-labels'
       path: '/people-labels'
@@ -807,6 +827,7 @@ interface AuthedSettingsLayoutRouteChildren {
   AuthedSettingsLayoutGeneralRoute: typeof AuthedSettingsLayoutGeneralRoute
   AuthedSettingsLayoutJournalLabelsRoute: typeof AuthedSettingsLayoutJournalLabelsRoute
   AuthedSettingsLayoutLabelsRoute: typeof AuthedSettingsLayoutLabelsRoute
+  AuthedSettingsLayoutNotificationsRoute: typeof AuthedSettingsLayoutNotificationsRoute
   AuthedSettingsLayoutPeopleLabelsRoute: typeof AuthedSettingsLayoutPeopleLabelsRoute
   AuthedSettingsLayoutRelationshipTypesRoute: typeof AuthedSettingsLayoutRelationshipTypesRoute
   AuthedSettingsLayoutSecurityRoute: typeof AuthedSettingsLayoutSecurityRoute
@@ -819,6 +840,8 @@ const AuthedSettingsLayoutRouteChildren: AuthedSettingsLayoutRouteChildren = {
   AuthedSettingsLayoutJournalLabelsRoute:
     AuthedSettingsLayoutJournalLabelsRoute,
   AuthedSettingsLayoutLabelsRoute: AuthedSettingsLayoutLabelsRoute,
+  AuthedSettingsLayoutNotificationsRoute:
+    AuthedSettingsLayoutNotificationsRoute,
   AuthedSettingsLayoutPeopleLabelsRoute: AuthedSettingsLayoutPeopleLabelsRoute,
   AuthedSettingsLayoutRelationshipTypesRoute:
     AuthedSettingsLayoutRelationshipTypesRoute,

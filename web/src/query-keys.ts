@@ -55,6 +55,9 @@ export type AuditFilters = {
 };
 
 export const keys = {
+	notifications: {
+		channels: ["notifications", "channels"] as const,
+	},
 	calendar: {
 		feedToken: ["calendar", "feed-token"] as const,
 	},

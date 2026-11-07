@@ -109,6 +109,7 @@ function AppearancePage() {
 				number_format: p.numberFormat,
 				relationship_display: p.relationshipDisplay,
 				language: p.language,
+				notify_hour: p.notifyHour,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,

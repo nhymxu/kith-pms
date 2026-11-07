@@ -168,6 +168,18 @@ Can scale later.`,
 
 			settingsSvc := settings.NewService(db)
 
+			secretBox, err := notify.NewSecretBox(config.C.NotifySecretKey, config.C.SessionSecret)
+			if err != nil {
+				return fmt.Errorf("web-server: notify secret: %w", err)
+			}
+
+			notifyRegistry := notify.NewRegistry()
+			notifyChannels := notify.NewChannelRepo(db, secretBox)
+			notifyClient := notify.NewHTTPClient()
+			dispatcher := notify.NewDispatcher(
+				db, notifyRegistry, notifyChannels, notifyClient, notify.SettingsSchedule(settingsSvc),
+			)
+
 			apiToken := os.Getenv("API_TOKEN")
 
 			api.Mount(e, api.Deps{
@@ -185,6 +197,9 @@ Can scale later.`,
 				NoteService:          noteSvc,
 				RelationshipsService: relsSvc,
 				SettingsService:      settingsSvc,
+				NotifyChannels:       notifyChannels,
+				NotifyRegistry:       notifyRegistry,
+				NotifyClient:         notifyClient,
 				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
 				GiftStoragePath:      giftStoragePath,
@@ -192,16 +207,6 @@ Can scale later.`,
 				SessionLifetime:      lifetime,
 				BehindTLS:            config.C.BehindTLS,
 			})
-
-			secretBox, err := notify.NewSecretBox(config.C.NotifySecretKey, config.C.SessionSecret)
-			if err != nil {
-				return fmt.Errorf("web-server: notify secret: %w", err)
-			}
-
-			dispatcher := notify.NewDispatcher(
-				db, notify.NewRegistry(), notify.NewChannelRepo(db, secretBox),
-				notify.NewHTTPClient(), notify.SettingsSchedule(settingsSvc),
-			)
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()

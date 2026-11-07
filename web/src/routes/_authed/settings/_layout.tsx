@@ -5,6 +5,7 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import {
+	Bell,
 	BookOpen,
 	CalendarDays,
 	Link2,
@@ -45,6 +46,11 @@ const NAV_ITEMS = [
 		to: "/settings/calendar" as const,
 		icon: CalendarDays,
 		labelKey: "nav.calendar",
+	},
+	{
+		to: "/settings/notifications" as const,
+		icon: Bell,
+		labelKey: "nav.notifications",
 	},
 	{
 		to: "/settings/security" as const,

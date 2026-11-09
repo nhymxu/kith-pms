@@ -32,7 +32,8 @@
 		"journalLabels": "Nhãn nhật ký",
 		"relationshipTypes": "Loại quan hệ",
 		"security": "Bảo mật",
-		"calendar": "Lịch"
+		"calendar": "Lịch",
+		"notifications": "Thông báo"
 	},
 	"common": {
 		"save": "Lưu",
@@ -280,6 +281,41 @@
 			"birthdays": "Sinh nhật",
 			"dates": "Ngày quan trọng",
 			"reminders": "Nhắc nhở"
+		}
+	},
+	"notifications": {
+		"title": "Thông báo",
+		"hour": {
+			"title": "Giờ thông báo",
+			"description": "Lời nhắc đặt cho cả ngày sẽ báo vào giờ này theo múi giờ của bạn ({{timezone}}). Lời nhắc có giờ cụ thể báo đúng giờ đó.",
+			"label": "Giờ (0-23)",
+			"invalid": "Nhập số nguyên từ 0 đến 23."
+		},
+		"channels": {
+			"title": "Kênh",
+			"description": "Nơi kith gửi thông báo nhắc việc. Mỗi kênh đang bật nhận từng lời nhắc một lần.",
+			"empty": "Chưa có kênh nào.",
+			"noKinds": "Chưa có loại kênh nào. Chúng sẽ xuất hiện ở đây khi được thêm.",
+			"loadFailed": "Không tải được danh sách kênh.",
+			"unreadable": "Không đọc được bí mật",
+			"unreadableHint": "Không giải mã được thông tin bí mật đã lưu, thường do khóa bí mật đã đổi. Hãy nhập lại để dùng lại kênh này.",
+			"enabled": "Bật kênh",
+			"test": "Gửi thử",
+			"testing": "Đang gửi…",
+			"testOk": "Đã gửi thông báo thử.",
+			"testFailed": "Gửi thử thất bại: {{reason}}",
+			"deleteConfirm": "Xóa",
+			"testFailedStatus": "Gửi thử thất bại: {{reason}} ({{status}})"
+		},
+		"testClass": {
+			"timeout": "quá thời gian chờ",
+			"dns": "không tìm thấy máy chủ",
+			"tls": "lỗi TLS",
+			"http_4xx": "dịch vụ từ chối",
+			"http_5xx": "lỗi từ dịch vụ",
+			"rate_limited": "bị giới hạn tần suất",
+			"invalid_config": "cấu hình sai hoặc địa chỉ bị chặn",
+			"internal": "lỗi nội bộ"
 		}
 	}
 }

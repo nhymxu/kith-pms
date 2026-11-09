@@ -18,6 +18,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/journal"
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/note"
+	"github.com/nhymxu/kith-pms/internal/notify"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -41,6 +42,9 @@ type Deps struct {
 	RelationshipsService *relationships.Service
 	SettingsService      *settings.Service
 	AuthService          *auth.Service
+	NotifyChannels       *notify.ChannelRepo
+	NotifyRegistry       *notify.Registry
+	NotifyClient         *notify.HTTPClient
 	FileSvc              files.FileService
 	APIToken             string
 	AvatarBasePath       string
@@ -97,6 +101,7 @@ func Mount(e *echo.Echo, deps Deps) {
 	mountPeopleAvatars(v1, deps)
 	mountPeopleQuick(v1, deps)
 	mountSettings(v1, deps)
+	mountNotifications(v1, deps)
 	mountAppInfo(v1)
 	mountSearch(v1, deps)
 	mountCalendarToken(v1, cal)
@@ -291,6 +296,20 @@ func mountSettings(g *echo.Group, deps Deps) {
 	h := &handler.SettingsAPI{Svc: deps.SettingsService}
 	g.GET("/settings", h.Get)
 	g.PUT("/settings", h.Update)
+}
+
+func mountNotifications(g *echo.Group, deps Deps) {
+	if deps.NotifyChannels == nil {
+		return
+	}
+
+	h := &handler.NotificationsAPI{Repo: deps.NotifyChannels, Registry: deps.NotifyRegistry, Client: deps.NotifyClient}
+	g.GET("/notifications/channels", h.List)
+	g.POST("/notifications/channels", h.Create)
+	g.PUT("/notifications/channels/:id", h.Update)
+	g.PATCH("/notifications/channels/:id", h.Patch)
+	g.DELETE("/notifications/channels/:id", h.Delete)
+	g.POST("/notifications/channels/:id/test", h.Test)
 }
 
 func mountAppInfo(g *echo.Group) {

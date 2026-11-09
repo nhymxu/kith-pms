@@ -370,16 +370,37 @@ func (r *sqlPersonRepo) Unarchive(ctx context.Context, id int64) error {
 
 // PurgeExpired hard-deletes people whose deleted_at is older than retentionDays. Returns count deleted.
 func (r *sqlPersonRepo) PurgeExpired(ctx context.Context, retentionDays int) (int64, error) {
-	res, err := r.db.NewDelete().
-		Model((*Person)(nil)).
-		Where("deleted_at IS NOT NULL").
-		Where("deleted_at < datetime('now', ?)", fmt.Sprintf("-%d days", retentionDays)).
-		Exec(ctx)
+	cutoff := fmt.Sprintf("-%d days", retentionDays)
+
+	var n int64
+
+	err := r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// reminder.person_id is ON DELETE SET NULL; without this the reminders would
+		// outlive the person as personless ones and start notifying.
+		if _, err := tx.NewRaw(`DELETE FROM reminder WHERE person_id IN (
+  SELECT id FROM person WHERE deleted_at IS NOT NULL AND deleted_at < datetime('now', ?))`, cutoff).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		res, err := tx.NewDelete().
+			Model((*Person)(nil)).
+			Where("deleted_at IS NOT NULL").
+			Where("deleted_at < datetime('now', ?)", cutoff).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		n, err = res.RowsAffected()
+
+		return err
+	})
 	if err != nil {
 		return 0, fmt.Errorf("people: purge expired: %w", err)
 	}
 
-	return res.RowsAffected()
+	return n, nil
 }
 
 func (r *sqlPersonRepo) SetSelf(ctx context.Context, db bun.IDB, personID int64) error {

@@ -34,6 +34,10 @@ type Config struct {
 	BehindTLS       bool          `koanf:"BEHIND_TLS"`
 	SessionLifetime time.Duration `koanf:"SESSION_LIFETIME"`
 
+	// Optional base64 32-byte key for notification channel secrets; falls back
+	// to a key derived from SESSION_SECRET.
+	NotifySecretKey string `koanf:"NOTIFY_SECRET_KEY" copier:"-"`
+
 	// People soft-delete retention (days); <=0 disables the purge job.
 	PeopleDeleteRetentionDays int `koanf:"PEOPLE_DELETE_RETENTION_DAYS"`
 }
@@ -121,6 +125,7 @@ var configDefaults = map[string]any{
 	"APP_PASSWORD_HASH": "",
 	"BEHIND_TLS":        false,
 	"SESSION_LIFETIME":  30 * 24 * time.Hour,
+	"NOTIFY_SECRET_KEY": "",
 
 	"PEOPLE_DELETE_RETENTION_DAYS": 30,
 }

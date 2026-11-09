@@ -18,6 +18,7 @@
 - **Global Search** — Cmd-K command palette for instant full-text search across people, journal entries, and gifts
 - **Dashboard** — at-a-glance counts, favorite and last-contacted people widgets, recent activity, and quick-action buttons
 - **Navigation Layout** — choose between horizontal topbar (default) or 212px side rail layout; configurable per user
+- **Notifications** — reminder delivery engine with per-channel retry and encrypted channel secrets; Settings > Notifications manages channels and the notify hour (channel types such as Web Push, webhooks and ntfy arrive as separate additions)
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
 - **Single binary** — no runtime dependencies; ships as a static binary (`CGO_ENABLED=0`)
@@ -66,6 +67,7 @@ All configuration is via environment variables or a `.env` file in the working d
 | Variable                       | Default          | Required | Description                                                        |
 |--------------------------------|------------------|----------|---------------------------------------------------------------------|
 | `SESSION_SECRET`               | —                | **Yes**  | Cookie signing secret, min 32 bytes                                |
+| `NOTIFY_SECRET_KEY`            | derived          | No       | Base64 32-byte key encrypting notification channel secrets; default is derived from `SESSION_SECRET` (set it so `SESSION_SECRET` can rotate) |
 | `DEBUG`                        | `false`          | No       | `true` → text logs + debug level                                   |
 | `SENTRY.DSN`                   | —                | No       | Sentry DSN; omit to disable error reporting                        |
 | `DB_PATH`                      | `data/kith.db`   | No       | Path to the SQLite database file                                   |
@@ -109,6 +111,13 @@ Replaces the live database with a backup. **Stop the API server first.**
 ```
 
 The `--force` flag is required as a safety confirmation. The restore command also refuses to proceed if the database was modified in the last 30 seconds (heuristic for a running server).
+
+### Notification delivery notes
+
+- Delivery is at-least-once: a crash between a successful send and recording it can send one notification twice.
+- Reminders missed during more than 24h of downtime are dropped, not replayed.
+- Restoring a backup can re-send reminders from the last 24h.
+- A reminder due at exactly 00:00 UTC is treated as date-only and fires at 09:00 in the configured timezone.
 
 ## Docker
 

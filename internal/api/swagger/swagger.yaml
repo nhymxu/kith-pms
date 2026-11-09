@@ -68,6 +68,10 @@ definitions:
         type: boolean
       network_show_unconnected:
         type: boolean
+      notify_hour:
+        description: NotifyHour (0-23) is the local hour date-only reminders notify
+          at.
+        type: integer
       number_format:
         description: |-
           NumberFormat controls the grouping/decimal separators for displayed
@@ -98,6 +102,19 @@ definitions:
       type:
         type: string
       value:
+        type: string
+    type: object
+  internal_api_handler.createChannelReq:
+    properties:
+      config:
+        items:
+          type: integer
+        type: array
+      enabled:
+        type: boolean
+      kind:
+        type: string
+      name:
         type: string
     type: object
   internal_api_handler.datesReplaceRequest:
@@ -195,6 +212,13 @@ definitions:
       content:
         type: string
       title:
+        type: string
+    type: object
+  internal_api_handler.patchChannelReq:
+    properties:
+      enabled:
+        type: boolean
+      name:
         type: string
     type: object
   internal_api_handler.personRequest:
@@ -527,6 +551,45 @@ paths:
       summary: Change password
       tags:
       - auth
+  /calendar/feed-token:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Get calendar feed token
+      tags:
+      - calendar
+  /calendar/feed-token/regenerate:
+    post:
+      description: Invalidates every existing subscription URL.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Regenerate calendar feed token
+      tags:
+      - calendar
   /gifts:
     get:
       parameters:
@@ -1177,6 +1240,196 @@ paths:
       summary: Update note
       tags:
       - notes
+  /notifications/channels:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: List notification channels
+      tags:
+      - notifications
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Channel
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.createChannelReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Create a notification channel
+      tags:
+      - notifications
+  /notifications/channels/{id}:
+    delete:
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Delete a channel
+      tags:
+      - notifications
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fields
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_api_handler.patchChannelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Rename or enable/disable a channel
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Omitted or masked secrets keep their stored value; a destination
+        change needs every secret re-sent.
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Config
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Replace a channel's config
+      tags:
+      - notifications
+  /notifications/channels/{id}/test:
+    post:
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_api_handler.envelope'
+      security:
+      - CookieAuth: []
+      - CSRFHeader: []
+      summary: Send a test notification through a channel
+      tags:
+      - notifications
   /people:
     get:
       parameters:

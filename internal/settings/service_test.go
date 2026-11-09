@@ -51,6 +51,7 @@ func validBase() settings.UserSettings {
 		NumberFormat:              "1,234.56",
 		RelationshipDisplay:       "plain",
 		Language:                  "en",
+		NotifyHour:                9,
 		SearchScope:               []string{"people", "journal", "gifts", "notes"},
 	}
 }
@@ -599,5 +600,36 @@ func TestSettings_Update_EmptySearchScope_ReturnsError(t *testing.T) {
 	_, err := svc.Update(context.Background(), in)
 	if !errors.Is(err, settings.ErrInvalidSearchScope) {
 		t.Errorf("want ErrInvalidSearchScope, got %v", err)
+	}
+}
+
+func TestSettings_NotifyHour(t *testing.T) {
+	svc := settings.NewService(openTestDB(t))
+	ctx := context.Background()
+
+	if got, _ := svc.Get(ctx); got.NotifyHour != 9 {
+		t.Errorf("default notify_hour: want 9, got %d", got.NotifyHour)
+	}
+
+	for _, h := range []int{0, 23, 7} {
+		in := validBase()
+		in.NotifyHour = h
+
+		if _, err := svc.Update(ctx, in); err != nil {
+			t.Fatalf("update %d: %v", h, err)
+		}
+
+		if got, _ := svc.Get(ctx); got.NotifyHour != h {
+			t.Errorf("persisted notify_hour: want %d, got %d", h, got.NotifyHour)
+		}
+	}
+
+	for _, h := range []int{-1, 24} {
+		in := validBase()
+		in.NotifyHour = h
+
+		if _, err := svc.Update(ctx, in); !errors.Is(err, settings.ErrInvalidNotifyHour) {
+			t.Errorf("notify_hour %d: want ErrInvalidNotifyHour, got %v", h, err)
+		}
 	}
 }

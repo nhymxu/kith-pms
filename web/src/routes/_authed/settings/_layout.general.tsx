@@ -149,6 +149,7 @@ function GeneralSettingsPage() {
 				number_format: p.numberFormat,
 				relationship_display: p.relationshipDisplay,
 				language: p.language,
+				notify_hour: p.notifyHour,
 				search_scope: ["people", "journal", "gifts", "notes"],
 				max_upload_size_mb: 32,
 				image_max_edge_px: 1600,
@@ -244,6 +245,7 @@ function GeneralSettingsPage() {
 		relationship_display:
 			apiSettings?.relationship_display ?? getUserPrefs().relationshipDisplay,
 		language: apiSettings?.language ?? getUserPrefs().language,
+		notify_hour: apiSettings?.notify_hour ?? getUserPrefs().notifyHour,
 		search_scope: apiSettings?.search_scope ?? [
 			"people",
 			"journal",

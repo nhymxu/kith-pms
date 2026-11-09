@@ -2,10 +2,14 @@ package channels_test
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -42,6 +46,9 @@ func TestContract(t *testing.T) {
 		},
 		"discord": func(base, s string) json.RawMessage {
 			return j(map[string]string{"webhook_url": base + "/api/webhooks/123456789/" + s})
+		},
+		"webhook": func(base, s string) json.RawMessage {
+			return j(map[string]string{"url": base + "/hook", "secret": s})
 		},
 	}, secret)
 }
@@ -81,6 +88,13 @@ func TestValidate(t *testing.T) {
 		{"discord", map[string]string{"webhook_url": "https://discord.com/api/webhooks/abc/" + secret}, false},
 		{"discord", map[string]string{"webhook_url": "https://discord.com/other"}, false},
 		{"discord", map[string]string{"webhook_url": ""}, false},
+		{"webhook", map[string]string{"url": "https://example.com/hook", "secret": secret}, true},
+		{"webhook", map[string]string{"url": "http://10.0.0.5:8080/", "secret": secret}, true},
+		{"webhook", map[string]string{"url": "ftp://example.com", "secret": secret}, false},
+		{"webhook", map[string]string{"url": "https://u:p@example.com", "secret": secret}, false},
+		{"webhook", map[string]string{"url": "https://example.com/h?token=x", "secret": secret}, false},
+		{"webhook", map[string]string{"url": "https://example.com/h", "secret": "short"}, false},
+		{"webhook", map[string]string{"url": "https://example.com/h", "secret": secret + " x"}, false},
 	}
 
 	reg := registry()
@@ -231,5 +245,52 @@ func TestTruncateLimits(t *testing.T) {
 
 	if n := len(utf16.Encode([]rune(got.body["text"].(string)))); n > 4096 {
 		t.Fatalf("telegram text %d UTF-16 units", n)
+	}
+}
+
+func TestWebhookSignature(t *testing.T) {
+	var (
+		raw []byte
+		hdr http.Header
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		raw, _ = io.ReadAll(r.Body)
+		hdr = r.Header.Clone()
+	}))
+	defer srv.Close()
+
+	ch, _ := registry().Get("webhook")
+	cfg := j(map[string]string{"url": srv.URL, "secret": secret})
+
+	before := time.Now().Unix()
+
+	if err := ch.Send(context.Background(), notify.NewHTTPClient(), cfg, msg); err != nil {
+		t.Fatalf("send: %v", err)
+	}
+
+	ts := hdr.Get("X-Kith-Timestamp")
+	n, err := strconv.ParseInt(ts, 10, 64)
+
+	if err != nil || n < before || n > time.Now().Unix() {
+		t.Fatalf("bad timestamp %q", ts)
+	}
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(ts + "."))
+	mac.Write(raw)
+
+	if want := "v1=" + hex.EncodeToString(mac.Sum(nil)); hdr.Get("X-Kith-Signature") != want {
+		t.Errorf("signature = %q, want %q", hdr.Get("X-Kith-Signature"), want)
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatal(err)
+	}
+
+	if body["title"] != "Call Anna" || body["person"] != "Anna" || body["due_at"] != "2026-11-07T14:30:00Z" ||
+		body["timezone"] != "UTC" {
+		t.Errorf("body = %v", body)
 	}
 }

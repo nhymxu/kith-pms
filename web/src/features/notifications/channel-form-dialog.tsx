@@ -22,7 +22,12 @@ import {
 import { apiErrorMessage } from "#/lib/api-error-message";
 import { keys } from "#/query-keys";
 import type { NotificationChannel } from "#/schemas/notification-channel";
-import { CHANNEL_KINDS, isChannelKind } from "./channel-kinds";
+import {
+	CHANNEL_KINDS,
+	type ChannelKind,
+	generateWebhookSecret,
+	isChannelKind,
+} from "./channel-kinds";
 
 type Props = {
 	open: boolean;
@@ -32,6 +37,14 @@ type Props = {
 	// Present when editing.
 	channel?: NotificationChannel;
 };
+
+function initialValues(kind: ChannelKind | undefined): Record<string, string> {
+	const out: Record<string, string> = {};
+	for (const f of kind ? CHANNEL_KINDS[kind].fields : []) {
+		if (f.generate) out[f.key] = generateWebhookSecret();
+	}
+	return out;
+}
 
 export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 	const { t } = useTranslation("settings");
@@ -43,9 +56,11 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 	);
 	const [name, setName] = useState(channel?.name ?? "");
 	const [values, setValues] = useState<Record<string, string>>(() =>
-		Object.fromEntries(
-			Object.entries(channel?.config ?? {}).map(([k, v]) => [k, String(v)]),
-		),
+		channel
+			? Object.fromEntries(
+					Object.entries(channel.config ?? {}).map(([k, v]) => [k, String(v)]),
+				)
+			: initialValues(kind),
 	);
 	const [cleared, setCleared] = useState<Record<string, boolean>>({});
 	const spec = kind ? CHANNEL_KINDS[kind] : undefined;
@@ -109,7 +124,7 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 								variant={k === kind ? "default" : "outline"}
 								onClick={() => {
 									setKind(k);
-									setValues({});
+									setValues(initialValues(k));
 								}}
 							>
 								{t(`notifications.kinds.${k}.label`)}
@@ -142,7 +157,13 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 						</Label>
 						<Input
 							id={`channel-${f.key}`}
-							type={f.secret ? "password" : f.type === "url" ? "url" : "text"}
+							type={
+								f.secret && !f.generate
+									? "password"
+									: f.type === "url"
+										? "url"
+										: "text"
+							}
 							autoComplete={f.secret ? "new-password" : "off"}
 							data-1p-ignore
 							placeholder={
@@ -158,6 +179,38 @@ export function ChannelFormDialog({ open, onClose, kinds, channel }: Props) {
 						<p className="text-[11px] text-sub">
 							{t(`notifications.fields.${f.key}.hint`)}
 						</p>
+						{f.generate && (
+							<div className="flex gap-2">
+								<Button
+									type="button"
+									size="sm"
+									variant="outline"
+									disabled={(values[f.key] ?? "") === ""}
+									onClick={() =>
+										navigator.clipboard.writeText(values[f.key] ?? "")
+									}
+								>
+									{t("notifications.form.copySecret")}
+								</Button>
+								<Button
+									type="button"
+									size="sm"
+									variant="outline"
+									onClick={() =>
+										setValues((prev) => ({
+											...prev,
+											[f.key]: generateWebhookSecret(),
+										}))
+									}
+								>
+									{t(
+										editing
+											? "notifications.form.rotateSecret"
+											: "notifications.form.regenerateSecret",
+									)}
+								</Button>
+							</div>
+						)}
 						{f.secret && f.optional && editing && !reenter && (
 							<Label className="flex items-center gap-2 text-[12px] font-normal">
 								<Checkbox

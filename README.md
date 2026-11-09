@@ -18,7 +18,7 @@
 - **Global Search** — Cmd-K command palette for instant full-text search across people, journal entries, and gifts
 - **Dashboard** — at-a-glance counts, favorite and last-contacted people widgets, recent activity, and quick-action buttons
 - **Navigation Layout** — choose between horizontal topbar (default) or 212px side rail layout; configurable per user
-- **Notifications** — reminder delivery engine with per-channel retry and encrypted channel secrets; Settings > Notifications manages channels and the notify hour with ntfy, Telegram and Discord channels (Web Push and signed webhooks arrive separately)
+- **Notifications** — reminder delivery engine with per-channel retry and encrypted channel secrets; Settings > Notifications manages channels and the notify hour with ntfy, Telegram, Discord and signed webhook channels (Web Push arrives separately)
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
 - **Single binary** — no runtime dependencies; ships as a static binary (`CGO_ENABLED=0`)

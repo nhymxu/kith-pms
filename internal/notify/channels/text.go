@@ -1,5 +1,5 @@
 // Package channels holds the concrete notification adapters (ntfy, Telegram,
-// Discord). Each implements notify.Channel and sends only through the injected
+// Discord, signed webhook). Each implements notify.Channel and sends only through the injected
 // notify.HTTPClient.
 package channels
 
@@ -25,6 +25,7 @@ func Register(reg *notify.Registry) {
 	reg.Register(NTFY{})
 	reg.Register(Telegram{})
 	reg.Register(Discord{})
+	reg.Register(Webhook{})
 }
 
 // body renders the reminder as plain text: person, due time, notes.

@@ -325,7 +325,10 @@
 			"name": "Tên",
 			"optional": "(không bắt buộc)",
 			"removeSaved": "Xóa giá trị đã lưu",
-			"secretKept": "Để trống để giữ giá trị đã lưu"
+			"secretKept": "Để trống để giữ giá trị đã lưu",
+			"copySecret": "Sao chép secret",
+			"regenerateSecret": "Tạo secret mới",
+			"rotateSecret": "Đổi secret"
 		},
 		"kinds": {
 			"ntfy": {
@@ -339,6 +342,10 @@
 			"discord": {
 				"label": "Discord",
 				"description": "Đăng vào kênh Discord qua incoming webhook. Tạo trong Cài đặt kênh, Tích hợp, Webhook, rồi dán URL. Ai có URL đều đăng được, nên hãy giữ kín."
+			},
+			"webhook": {
+				"label": "Webhook",
+				"description": "Gửi JSON POST có chữ ký tới endpoint của bạn. Mỗi request kèm X-Kith-Timestamp và X-Kith-Signature (v1=HMAC-SHA256 của timestamp, dấu chấm và body gốc); hãy từ chối request cũ hơn 5 phút."
 			}
 		},
 		"fields": {
@@ -369,6 +376,14 @@
 			"webhook_url": {
 				"label": "URL webhook",
 				"hint": "Được lưu mã hóa và không hiển thị lại."
+			},
+			"url": {
+				"label": "URL endpoint",
+				"hint": "http hoặc https, không có query string. Đổi URL yêu cầu lưu lại secret."
+			},
+			"secret": {
+				"label": "Secret ký",
+				"hint": "Hãy sao chép ngay: secret được lưu mã hóa và không hiển thị lại. Đổi secret sẽ làm secret cũ ở phía nhận mất hiệu lực."
 			}
 		}
 	}

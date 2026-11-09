@@ -325,7 +325,10 @@
 			"name": "Name",
 			"optional": "(optional)",
 			"removeSaved": "Remove the saved value",
-			"secretKept": "Leave blank to keep the saved value"
+			"secretKept": "Leave blank to keep the saved value",
+			"copySecret": "Copy secret",
+			"regenerateSecret": "Generate new secret",
+			"rotateSecret": "Rotate secret"
 		},
 		"kinds": {
 			"ntfy": {
@@ -339,6 +342,10 @@
 			"discord": {
 				"label": "Discord",
 				"description": "Posts to a Discord channel through an incoming webhook. Create one under Channel settings, Integrations, Webhooks, and paste its URL. Anyone with the URL can post, so keep it private."
+			},
+			"webhook": {
+				"label": "Webhook",
+				"description": "Sends a signed JSON POST to your own endpoint. Each request carries X-Kith-Timestamp and X-Kith-Signature (v1=HMAC-SHA256 of timestamp, a dot, and the raw body); reject requests older than 5 minutes."
 			}
 		},
 		"fields": {
@@ -369,6 +376,14 @@
 			"webhook_url": {
 				"label": "Webhook URL",
 				"hint": "Stored encrypted and never shown again."
+			},
+			"url": {
+				"label": "Endpoint URL",
+				"hint": "http or https, no query string. Changing it requires saving the secret again."
+			},
+			"secret": {
+				"label": "Signing secret",
+				"hint": "Copy it now: it is stored encrypted and never shown again. Rotating it invalidates the old one at your receiver."
 			}
 		}
 	}

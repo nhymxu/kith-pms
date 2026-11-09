@@ -39,3 +39,27 @@ export async function testNotificationChannel(
 	);
 	return channelTestResultSchema.parse(res.data);
 }
+
+export async function createNotificationChannel(input: {
+	kind: string;
+	name: string;
+	config: Record<string, string>;
+}): Promise<NotificationChannel> {
+	const res = await apiFetch<Envelope<unknown>>("/v1/notifications/channels", {
+		method: "POST",
+		body: JSON.stringify(input),
+	});
+	return notificationChannelSchema.parse(res.data);
+}
+
+// Secrets left out of config keep their stored value.
+export async function updateNotificationChannelConfig(
+	id: number,
+	config: Record<string, string>,
+): Promise<NotificationChannel> {
+	const res = await apiFetch<Envelope<unknown>>(
+		`/v1/notifications/channels/${id}`,
+		{ method: "PUT", body: JSON.stringify(config) },
+	);
+	return notificationChannelSchema.parse(res.data);
+}

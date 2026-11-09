@@ -44,7 +44,8 @@
 		"delete": "Delete",
 		"deleting": "Deleting…",
 		"saveChanges": "Save changes",
-		"saveError": "Save failed"
+		"saveError": "Save failed",
+		"edit": "Edit"
 	},
 	"general": {
 		"title": "General",
@@ -298,14 +299,15 @@
 			"noKinds": "No channel types are available yet. They will show up here as they are added.",
 			"loadFailed": "Failed to load channels.",
 			"unreadable": "Secrets unreadable",
-			"unreadableHint": "The stored secrets can't be decrypted, usually because the secret key changed. Re-enter them to use this channel again.",
+			"unreadableHint": "The stored secrets can't be decrypted, usually because the secret key changed. Re-enter them, and any custom URL, to use this channel again.",
 			"enabled": "Channel enabled",
 			"test": "Send test",
 			"testing": "Sending…",
 			"testOk": "Test notification sent.",
 			"testFailed": "Test failed: {{reason}}",
 			"deleteConfirm": "Yes, delete",
-			"testFailedStatus": "Test failed: {{reason}} ({{status}})"
+			"testFailedStatus": "Test failed: {{reason}} ({{status}})",
+			"add": "Add channel"
 		},
 		"testClass": {
 			"timeout": "timed out",
@@ -316,6 +318,58 @@
 			"rate_limited": "rate limited",
 			"invalid_config": "invalid settings or blocked address",
 			"internal": "internal error"
+		},
+		"form": {
+			"addTitle": "Add channel",
+			"editTitle": "Edit channel",
+			"name": "Name",
+			"optional": "(optional)",
+			"removeSaved": "Remove the saved value",
+			"secretKept": "Leave blank to keep the saved value"
+		},
+		"kinds": {
+			"ntfy": {
+				"label": "ntfy",
+				"description": "ntfy delivers push notifications to your phone or desktop from a topic. Use ntfy.sh or your own server. On a public server the topic name is the only access control, so pick a long random one."
+			},
+			"telegram": {
+				"label": "Telegram",
+				"description": "Sends through a Telegram bot. Create a bot with @BotFather, send it a message (or add it to a group), then enter its token and the chat ID."
+			},
+			"discord": {
+				"label": "Discord",
+				"description": "Posts to a Discord channel through an incoming webhook. Create one under Channel settings, Integrations, Webhooks, and paste its URL. Anyone with the URL can post, so keep it private."
+			}
+		},
+		"fields": {
+			"server_url": {
+				"label": "Server URL",
+				"hint": "Leave blank for https://ntfy.sh. Changing it requires re-entering the topic and token."
+			},
+			"topic": {
+				"label": "Topic",
+				"hint": "Letters, digits, - and _ only, up to 64 characters."
+			},
+			"token": {
+				"label": "Access token",
+				"hint": "Only needed for protected topics."
+			},
+			"bot_token": {
+				"label": "Bot token",
+				"hint": "Looks like 123456:ABC-DEF. Stored encrypted and never shown again."
+			},
+			"chat_id": {
+				"label": "Chat ID",
+				"hint": "A numeric ID (negative for groups) or @channelusername. Changing it requires re-entering the bot token."
+			},
+			"api_url": {
+				"label": "Bot API URL",
+				"hint": "Leave blank for https://api.telegram.org. Only set for a self-hosted Bot API server."
+			},
+			"webhook_url": {
+				"label": "Webhook URL",
+				"hint": "Stored encrypted and never shown again."
+			}
 		}
 	}
 }

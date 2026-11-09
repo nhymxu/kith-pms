@@ -24,6 +24,7 @@ import (
 	"github.com/nhymxu/kith-pms/internal/metrics"
 	"github.com/nhymxu/kith-pms/internal/note"
 	"github.com/nhymxu/kith-pms/internal/notify"
+	"github.com/nhymxu/kith-pms/internal/notify/channels"
 	"github.com/nhymxu/kith-pms/internal/people"
 	"github.com/nhymxu/kith-pms/internal/relationships"
 	"github.com/nhymxu/kith-pms/internal/reminders"
@@ -174,6 +175,8 @@ Can scale later.`,
 			}
 
 			notifyRegistry := notify.NewRegistry()
+			channels.Register(notifyRegistry)
+
 			notifyChannels := notify.NewChannelRepo(db, secretBox)
 			notifyClient := notify.NewHTTPClient()
 			dispatcher := notify.NewDispatcher(

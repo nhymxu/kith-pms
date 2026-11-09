@@ -307,7 +307,8 @@
 			"testFailed": "Gửi thử thất bại: {{reason}}",
 			"deleteConfirm": "Xóa",
 			"testFailedStatus": "Gửi thử thất bại: {{reason}} ({{status}})",
-			"add": "Thêm kênh"
+			"add": "Thêm kênh",
+			"rename": "Đổi tên"
 		},
 		"testClass": {
 			"timeout": "quá thời gian chờ",
@@ -317,7 +318,8 @@
 			"http_5xx": "lỗi từ dịch vụ",
 			"rate_limited": "bị giới hạn tần suất",
 			"invalid_config": "cấu hình sai hoặc địa chỉ bị chặn",
-			"internal": "lỗi nội bộ"
+			"internal": "lỗi nội bộ",
+			"gone": "đăng ký đã hết hạn"
 		},
 		"form": {
 			"addTitle": "Thêm kênh",
@@ -385,6 +387,18 @@
 				"label": "Secret ký",
 				"hint": "Hãy sao chép ngay: secret được lưu mã hóa và không hiển thị lại. Đổi secret sẽ làm secret cũ ở phía nhận mất hiệu lực."
 			}
+		},
+		"webpush": {
+			"title": "Thông báo trình duyệt",
+			"description": "Nhận lời nhắc dưới dạng thông báo của trình duyệt, không cần ứng dụng khác. Mỗi trình duyệt tự đăng ký và hiện trong danh sách kênh. Trên iPhone và iPad, thông báo đẩy chỉ hoạt động sau khi thêm kith vào Màn hình chính.",
+			"enable": "Bật trên trình duyệt này",
+			"disable": "Tắt trên trình duyệt này",
+			"unsupported": "Trình duyệt này không hỗ trợ thông báo đẩy. Trên iPhone hoặc iPad, hãy thêm kith vào Màn hình chính trước.",
+			"denied": "Thông báo đang bị chặn cho trang này. Hãy cho phép trong cài đặt trình duyệt rồi thử lại.",
+			"rotate": "Đổi khóa thông báo đẩy",
+			"rotateConfirm": "Đổi khóa",
+			"rotateWarning": "Đổi khóa sẽ xóa mọi đăng ký trình duyệt. Mỗi trình duyệt phải bật lại thông báo đẩy.",
+			"defaultName": "Trình duyệt này"
 		}
 	}
 }

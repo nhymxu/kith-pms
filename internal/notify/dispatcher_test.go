@@ -60,6 +60,8 @@ func (c *recChannel) Send(ctx context.Context, _ *notify.HTTPClient, cfg json.Ra
 		time.Sleep(time.Second) // ignores ctx on purpose
 	case "panic":
 		panic(notifytest.Canary)
+	case "gone":
+		return &notify.SendError{Class: notify.ClassGone, Status: 410, Permanent: true}
 	case "permanent":
 		return &notify.SendError{Class: notify.ClassHTTP4xx, Status: 400, Permanent: true}
 	case "flaky":
@@ -669,5 +671,65 @@ func TestDateOnlyCreatedAfterFireTimeNeverSends(t *testing.T) {
 
 	if e.ch.count("a") != 0 {
 		t.Fatal("reminder created after its fire time must not send")
+	}
+}
+
+func TestGoneChannelIsPruned(t *testing.T) {
+	e := newEnv(t)
+	gone := e.channel("g", "gone")
+	e.channel("ok", "ok")
+
+	id := e.reminder(e.clock.Add(-time.Hour))
+	e.tick()
+
+	if _, err := e.repo.Get(context.Background(), gone); !errors.Is(err, notify.ErrChannelNotFound) {
+		t.Fatalf("gone channel should be deleted, got %v", err)
+	}
+
+	if rows := e.rows(id); len(rows) != 1 || rows[0].Status != "sent" {
+		t.Fatalf("other channel unaffected, got %+v", rows)
+	}
+}
+
+func TestVAPIDStoreStableAndRotateDeletesWebPush(t *testing.T) {
+	db := testutil.NewDB(t)
+	box := newBox(t)
+	store := notify.NewVAPIDStore(db, box)
+	repo := notify.NewChannelRepo(db, box)
+	ctx := context.Background()
+
+	priv1, pub1, err := store.Keys(ctx)
+	if err != nil || priv1 == "" || pub1 == "" {
+		t.Fatalf("keys: %v", err)
+	}
+
+	if priv2, pub2, _ := store.Keys(ctx); priv2 != priv1 || pub2 != pub1 {
+		t.Fatal("keys must be stable across calls")
+	}
+
+	var stored string
+	if err := db.NewRaw(`SELECT CAST(private_enc AS TEXT) FROM webpush_vapid`).Scan(ctx, &stored); err != nil ||
+		strings.Contains(stored, priv1) {
+		t.Fatalf("private key must be sealed at rest (err %v)", err)
+	}
+
+	wp, _ := repo.Create(ctx, notify.KindWebPush, "b", true, json.RawMessage(`{}`))
+	other, _ := repo.Create(ctx, "fake", "o", true, json.RawMessage(`{}`))
+
+	pub3, err := store.Rotate(ctx)
+	if err != nil || pub3 == pub1 {
+		t.Fatalf("rotate: %v", err)
+	}
+
+	if _, err := repo.Get(ctx, wp.ID); !errors.Is(err, notify.ErrChannelNotFound) {
+		t.Fatal("webpush channel must be deleted on rotate")
+	}
+
+	if _, err := repo.Get(ctx, other.ID); err != nil {
+		t.Fatal("other kinds must survive rotate")
+	}
+
+	if _, pub4, _ := store.Keys(ctx); pub4 != pub3 {
+		t.Fatal("rotated key must persist")
 	}
 }

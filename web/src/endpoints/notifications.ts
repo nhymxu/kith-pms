@@ -6,6 +6,8 @@ import {
 	type NotificationChannelList,
 	notificationChannelListSchema,
 	notificationChannelSchema,
+	type WebPushKey,
+	webPushKeySchema,
 } from "#/schemas/notification-channel";
 
 type Envelope<T> = { data: T };
@@ -60,6 +62,32 @@ export async function updateNotificationChannelConfig(
 	const res = await apiFetch<Envelope<unknown>>(
 		`/v1/notifications/channels/${id}`,
 		{ method: "PUT", body: JSON.stringify(config) },
+	);
+	return notificationChannelSchema.parse(res.data);
+}
+
+export async function getWebPushKey(): Promise<WebPushKey> {
+	const res = await apiFetch<Envelope<unknown>>(
+		"/v1/notifications/webpush/key",
+	);
+	return webPushKeySchema.parse(res.data);
+}
+
+export async function rotateWebPushKeys(): Promise<WebPushKey> {
+	const res = await apiFetch<Envelope<unknown>>(
+		"/v1/notifications/webpush/rotate",
+		{ method: "POST" },
+	);
+	return webPushKeySchema.parse(res.data);
+}
+
+export async function renameNotificationChannel(
+	id: number,
+	name: string,
+): Promise<NotificationChannel> {
+	const res = await apiFetch<Envelope<unknown>>(
+		`/v1/notifications/channels/${id}`,
+		{ method: "PATCH", body: JSON.stringify({ name }) },
 	);
 	return notificationChannelSchema.parse(res.data);
 }

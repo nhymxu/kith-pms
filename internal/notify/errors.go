@@ -22,6 +22,8 @@ const (
 	ClassRateLimited   = "rate_limited"
 	ClassInvalidConfig = "invalid_config"
 	ClassInternal      = "internal"
+	// ClassGone means the destination no longer exists (push subscription expired); the channel is removed.
+	ClassGone = "gone"
 )
 
 const maxRetryAfter = time.Hour
@@ -29,6 +31,7 @@ const maxRetryAfter = time.Hour
 var knownClasses = map[string]bool{
 	ClassTimeout: true, ClassDNS: true, ClassTLS: true, ClassHTTP4xx: true,
 	ClassHTTP5xx: true, ClassRateLimited: true, ClassInvalidConfig: true, ClassInternal: true,
+	ClassGone: true,
 }
 
 // SendError is the only error shape a channel may return from Send.

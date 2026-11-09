@@ -36,3 +36,26 @@ func TestIndexCSPAllowsConnectSrcBlob(t *testing.T) {
 		}
 	}
 }
+
+// The catch-all answers with index.html, which would break service worker
+// registration (wrong MIME type), so sw.js needs its own no-cache route.
+func TestServiceWorkerRouteNotCaughtByFallback(t *testing.T) {
+	if _, err := publicFS.Open("public/sw.js"); err != nil {
+		t.Skip("SPA not built into the embed (run make web)")
+	}
+
+	e := echo.New()
+	Handler(e)
+
+	req := httptest.NewRequest(http.MethodGet, "/sw.js", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Cache-Control"); got != "no-cache" {
+		t.Fatalf("Cache-Control = %q, want no-cache", got)
+	}
+
+	if strings.Contains(rec.Body.String(), "<html") {
+		t.Fatal("sw.js served index.html")
+	}
+}

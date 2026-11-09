@@ -45,6 +45,7 @@ type Deps struct {
 	NotifyChannels       *notify.ChannelRepo
 	NotifyRegistry       *notify.Registry
 	NotifyClient         *notify.HTTPClient
+	NotifyVAPID          *notify.VAPIDStore
 	FileSvc              files.FileService
 	APIToken             string
 	AvatarBasePath       string
@@ -310,6 +311,12 @@ func mountNotifications(g *echo.Group, deps Deps) {
 	g.PATCH("/notifications/channels/:id", h.Patch)
 	g.DELETE("/notifications/channels/:id", h.Delete)
 	g.POST("/notifications/channels/:id/test", h.Test)
+
+	if deps.NotifyVAPID != nil {
+		wp := &handler.WebPushAPI{Store: deps.NotifyVAPID}
+		g.GET("/notifications/webpush/key", wp.Key)
+		g.POST("/notifications/webpush/rotate", wp.Rotate)
+	}
 }
 
 func mountAppInfo(g *echo.Group) {

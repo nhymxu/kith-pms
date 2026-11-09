@@ -85,7 +85,8 @@
 		"too_many_relationships": "Too many relationships in one request (max {{max}}).",
 		"type_in_use": "This type is in use and can't be deleted.",
 		"unauthorized": "You need to sign in.",
-		"unsupported_file_type": "Unsupported file type. Use JPEG, PNG, GIF, or WebP."
+		"unsupported_file_type": "Unsupported file type. Use JPEG, PNG, GIF, or WebP.",
+		"vapid_key_unreadable": "Push keys can't be decrypted, usually because the secret key changed. Use Rotate push keys, then enable push again."
 	},
 	"status": {
 		"400": "Bad request.",

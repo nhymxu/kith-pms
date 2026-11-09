@@ -238,6 +238,12 @@ func (d *Dispatcher) deliver(ctx context.Context, rec *Record, row claimed) {
 	if err := finish(bg, d.DB, row, status, se, next, now); err != nil {
 		slog.Error("notify: record result", "channel_id", rec.ID, "error", err)
 	}
+
+	if se != nil && se.Class == ClassGone {
+		if err := d.Channels.Delete(bg, rec.ID); err != nil && !errors.Is(err, ErrChannelNotFound) {
+			slog.Error("notify: prune gone channel", "channel_id", rec.ID, "error", err)
+		}
+	}
 }
 
 func (d *Dispatcher) send(ctx context.Context, rec *Record, m Message) *SendError {

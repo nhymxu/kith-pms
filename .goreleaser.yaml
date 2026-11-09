@@ -46,6 +46,8 @@ dockers_v2:
       - "ghcr.io/nhymxu/kith-pms"
     tags:
       - "{{ .Version }}"
+      - "{{ .Major }}.{{ .Minor }}"
+      - "{{ .Major }}"
       - "latest"
     platforms:
       - linux/amd64
@@ -64,6 +66,8 @@ dockers_v2:
       - "ghcr.io/nhymxu/kith-pms"
     tags:
       - "{{ .Version }}-distroless"
+      - "{{ .Major }}.{{ .Minor }}-distroless"
+      - "{{ .Major }}-distroless"
       - "latest-distroless"
     platforms:
       - linux/amd64

@@ -25,4 +25,7 @@ func (r *Registry) Get(kind string) (Channel, bool) {
 	return ch, ok
 }
 
-func (r *Registry) Kinds() []string { return slices.Sorted(maps.Keys(r.byKind)) }
+// Kinds is never nil so it serializes as [] rather than null.
+func (r *Registry) Kinds() []string {
+	return slices.AppendSeq([]string{}, slices.Values(slices.Sorted(maps.Keys(r.byKind))))
+}

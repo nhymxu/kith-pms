@@ -21,7 +21,8 @@ import (
 var errInvalidConfig = errors.New("channels: invalid config")
 
 // Register adds every adapter in this package to reg.
-func Register(reg *notify.Registry) {
+func Register(reg *notify.Registry, vapid VAPIDKeys) {
+	reg.Register(WebPush{Keys: vapid})
 	reg.Register(NTFY{})
 	reg.Register(Telegram{})
 	reg.Register(Discord{})
@@ -138,6 +139,8 @@ func postJSON(
 
 	return c.Do(ctx, req)
 }
+
+func asSendError(err error, target **notify.SendError) bool { return errors.As(err, target) }
 
 func decode[T any](cfg json.RawMessage) (T, error) {
 	var v T

@@ -175,7 +175,8 @@ Can scale later.`,
 			}
 
 			notifyRegistry := notify.NewRegistry()
-			channels.Register(notifyRegistry)
+			vapidStore := notify.NewVAPIDStore(db, secretBox)
+			channels.Register(notifyRegistry, vapidStore)
 
 			notifyChannels := notify.NewChannelRepo(db, secretBox)
 			notifyClient := notify.NewHTTPClient()
@@ -203,6 +204,7 @@ Can scale later.`,
 				NotifyChannels:       notifyChannels,
 				NotifyRegistry:       notifyRegistry,
 				NotifyClient:         notifyClient,
+				NotifyVAPID:          vapidStore,
 				FileSvc:              fileSvc,
 				AvatarBasePath:       avatarPath,
 				GiftStoragePath:      giftStoragePath,

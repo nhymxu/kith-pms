@@ -307,7 +307,8 @@
 			"testFailed": "Test failed: {{reason}}",
 			"deleteConfirm": "Yes, delete",
 			"testFailedStatus": "Test failed: {{reason}} ({{status}})",
-			"add": "Add channel"
+			"add": "Add channel",
+			"rename": "Rename"
 		},
 		"testClass": {
 			"timeout": "timed out",
@@ -317,7 +318,8 @@
 			"http_5xx": "service error",
 			"rate_limited": "rate limited",
 			"invalid_config": "invalid settings or blocked address",
-			"internal": "internal error"
+			"internal": "internal error",
+			"gone": "subscription expired"
 		},
 		"form": {
 			"addTitle": "Add channel",
@@ -385,6 +387,18 @@
 				"label": "Signing secret",
 				"hint": "Copy it now: it is stored encrypted and never shown again. Rotating it invalidates the old one at your receiver."
 			}
+		},
+		"webpush": {
+			"title": "Browser push",
+			"description": "Get reminders as browser notifications, no extra app needed. Each browser subscribes on its own and shows up in the channel list. On iPhone and iPad, push only works after you add kith to the Home Screen.",
+			"enable": "Enable on this browser",
+			"disable": "Disable on this browser",
+			"unsupported": "This browser does not support push notifications. On iPhone or iPad, add kith to the Home Screen first.",
+			"denied": "Notifications are blocked for this site. Allow them in your browser settings, then try again.",
+			"rotate": "Rotate push keys",
+			"rotateConfirm": "Yes, rotate",
+			"rotateWarning": "Rotating removes every browser subscription. Each browser has to enable push again.",
+			"defaultName": "This browser"
 		}
 	}
 }

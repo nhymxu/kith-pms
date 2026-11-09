@@ -28,3 +28,7 @@ export const channelTestResultSchema = z.object({
 });
 
 export type ChannelTestResult = z.infer<typeof channelTestResultSchema>;
+
+export const webPushKeySchema = z.object({ public_key: z.string() });
+
+export type WebPushKey = z.infer<typeof webPushKeySchema>;

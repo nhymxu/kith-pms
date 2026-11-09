@@ -18,12 +18,14 @@ import { Switch } from "#/components/ui/switch";
 import {
 	deleteNotificationChannel,
 	listNotificationChannels,
+	renameNotificationChannel,
 	setNotificationChannelEnabled,
 	testNotificationChannel,
 } from "#/endpoints/notifications";
 import { getSettings, updateSettings } from "#/endpoints/settings";
 import { ChannelFormDialog } from "#/features/notifications/channel-form-dialog";
 import { isChannelKind } from "#/features/notifications/channel-kinds";
+import { WebPushCard } from "#/features/notifications/web-push-card";
 import { apiErrorMessage } from "#/lib/api-error-message";
 import { saveUserPrefs } from "#/lib/format-datetime";
 import { keys } from "#/query-keys";
@@ -122,6 +124,7 @@ function ChannelRow({
 	const qc = useQueryClient();
 	const [confirming, setConfirming] = useState(false);
 	const [editing, setEditing] = useState(false);
+	const [newName, setNewName] = useState<string | null>(null);
 	const [result, setResult] = useState<ChannelTestResult | null>(null);
 	const refresh = () =>
 		qc.invalidateQueries({ queryKey: keys.notifications.channels });
@@ -149,6 +152,14 @@ function ChannelRow({
 		mutationFn: () => testNotificationChannel(channel.id),
 		onMutate: clearFeedback,
 		onSuccess: setResult,
+	});
+
+	const rename = useMutation({
+		mutationFn: (name: string) => renameNotificationChannel(channel.id, name),
+		onSuccess: () => {
+			setNewName(null);
+			return refresh();
+		},
 	});
 
 	const unreadable = channel.status === "secret_unreadable";
@@ -187,6 +198,15 @@ function ChannelRow({
 						? t("notifications.channels.testing")
 						: t("notifications.channels.test")}
 				</Button>
+				{channel.kind === "webpush" && (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => setNewName(channel.name)}
+					>
+						{t("notifications.channels.rename")}
+					</Button>
+				)}
 				{isChannelKind(channel.kind) && (
 					<Button variant="outline" size="sm" onClick={() => setEditing(true)}>
 						{t("common.edit")}
@@ -220,6 +240,38 @@ function ChannelRow({
 					</Button>
 				)}
 			</div>
+			{newName !== null && (
+				<form
+					className="flex items-center gap-2"
+					onSubmit={(e) => {
+						e.preventDefault();
+						rename.mutate(newName.trim());
+					}}
+				>
+					<Input
+						aria-label={t("notifications.form.name")}
+						value={newName}
+						maxLength={100}
+						onChange={(e) => setNewName(e.target.value)}
+					/>
+					<Button size="sm" type="submit" disabled={rename.isPending}>
+						{t("common.save")}
+					</Button>
+					<Button
+						size="sm"
+						variant="outline"
+						type="button"
+						onClick={() => setNewName(null)}
+					>
+						{t("common.cancel")}
+					</Button>
+				</form>
+			)}
+			{rename.error && (
+				<p className="text-[12px] text-danger-fg">
+					{apiErrorMessage(rename.error)}
+				</p>
+			)}
 			{editing && (
 				<ChannelFormDialog
 					open
@@ -278,6 +330,8 @@ function NotificationsPage() {
 			</h1>
 
 			<NotifyHourCard />
+
+			<WebPushCard />
 
 			<Card>
 				<CardHeader>

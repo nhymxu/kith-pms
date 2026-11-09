@@ -18,7 +18,7 @@
 - **Global Search** — Cmd-K command palette for instant full-text search across people, journal entries, and gifts
 - **Dashboard** — at-a-glance counts, favorite and last-contacted people widgets, recent activity, and quick-action buttons
 - **Navigation Layout** — choose between horizontal topbar (default) or 212px side rail layout; configurable per user
-- **Notifications** — reminder delivery engine with per-channel retry and encrypted channel secrets; Settings > Notifications manages channels and the notify hour with ntfy, Telegram, Discord and signed webhook channels (Web Push arrives separately)
+- **Notifications** — reminder delivery engine with per-channel retry and encrypted channel secrets; Settings > Notifications manages channels and the notify hour with ntfy, Telegram, Discord, signed webhook and browser Web Push channels
 - **Auth** — single-user, password-protected; session cookies with CSRF protection
 - **Backup / Restore** — safe online backup via SQLite `VACUUM INTO`; restore CLI with safety guard
 - **Single binary** — no runtime dependencies; ships as a static binary (`CGO_ENABLED=0`)
@@ -113,6 +113,8 @@ Replaces the live database with a backup. **Stop the API server first.**
 The `--force` flag is required as a safety confirmation. The restore command also refuses to proceed if the database was modified in the last 30 seconds (heuristic for a running server).
 
 ### Notification delivery notes
+
+- **Web Push:** each browser subscribes from Settings > Notifications and becomes one `webpush` channel. VAPID keys are generated on first start and stored encrypted; "Rotate push keys" replaces them and removes every subscription (browsers must re-enable). Expired subscriptions (push service 404/410) are deleted automatically. Browsers need HTTPS (or localhost). iOS and iPadOS only deliver push to kith added to the Home Screen.
 
 - Delivery is at-least-once: a crash between a successful send and recording it can send one notification twice.
 - Reminders missed during more than 24h of downtime are dropped, not replayed.

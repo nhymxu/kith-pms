@@ -45,6 +45,18 @@ func Handler(e *echo.Echo) {
 		return nil
 	})
 
+	// The service worker, manifest and its icons must be served as real files at the root:
+	// the catch-all would answer with index.html and break registration.
+	// sw.js is never cached so a new worker is picked up on the next load.
+	for _, name := range []string{"sw.js", "manifest.json", "logo192.png", "logo512.png"} {
+		e.GET("/"+name, func(c *echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache")
+			fileServer.ServeHTTP(c.Response(), c.Request())
+
+			return nil
+		})
+	}
+
 	// Catch-all: every non-API GET returns index.html so the React router handles
 	// the path on the client. Real 404s for unknown /assets/* paths are handled
 	// by the /assets/* route above (http.FileServer returns 404).

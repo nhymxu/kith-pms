@@ -85,7 +85,8 @@
 		"too_many_relationships": "Quá nhiều quan hệ trong một yêu cầu (tối đa {{max}}).",
 		"type_in_use": "Loại này đang được dùng nên không thể xóa.",
 		"unauthorized": "Bạn cần đăng nhập.",
-		"unsupported_file_type": "Định dạng tệp không được hỗ trợ. Dùng JPEG, PNG, GIF hoặc WebP."
+		"unsupported_file_type": "Định dạng tệp không được hỗ trợ. Dùng JPEG, PNG, GIF hoặc WebP.",
+		"vapid_key_unreadable": "Không giải mã được khóa thông báo đẩy, thường do khóa bí mật đã đổi. Hãy đổi khóa thông báo đẩy rồi bật lại."
 	},
 	"status": {
 		"400": "Yêu cầu không hợp lệ.",

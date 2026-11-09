@@ -2,11 +2,15 @@ package channels_test
 
 import (
 	"context"
+	"crypto/ecdh"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -14,6 +18,8 @@ import (
 	"testing"
 	"time"
 	"unicode/utf16"
+
+	webpush "github.com/SherClockHolmes/webpush-go"
 
 	"github.com/nhymxu/kith-pms/internal/notify"
 	"github.com/nhymxu/kith-pms/internal/notify/channels"
@@ -31,7 +37,7 @@ func j(v map[string]string) json.RawMessage {
 
 func registry() *notify.Registry {
 	reg := notify.NewRegistry()
-	channels.Register(reg)
+	channels.Register(reg, testVAPID{})
 
 	return reg
 }
@@ -46,6 +52,9 @@ func TestContract(t *testing.T) {
 		},
 		"discord": func(base, s string) json.RawMessage {
 			return j(map[string]string{"webhook_url": base + "/api/webhooks/123456789/" + s})
+		},
+		"webpush": func(base, s string) json.RawMessage {
+			return j(map[string]string{"endpoint": base + "/push/" + s, "p256dh": testP256dh(), "auth": testAuth})
 		},
 		"webhook": func(base, s string) json.RawMessage {
 			return j(map[string]string{"url": base + "/hook", "secret": s})
@@ -292,5 +301,96 @@ func TestWebhookSignature(t *testing.T) {
 	if body["title"] != "Call Anna" || body["person"] != "Anna" || body["due_at"] != "2026-11-07T14:30:00Z" ||
 		body["timezone"] != "UTC" {
 		t.Errorf("body = %v", body)
+	}
+}
+
+type testVAPID struct{}
+
+func (testVAPID) Keys(context.Context) (string, string, error) {
+	priv, pub, err := webpush.GenerateVAPIDKeys()
+
+	return priv, pub, err
+}
+
+const testAuth = "AAAAAAAAAAAAAAAAAAAAAA"
+
+func testP256dh() string {
+	k, _ := ecdh.P256().GenerateKey(rand.Reader)
+
+	return base64.RawURLEncoding.EncodeToString(k.PublicKey().Bytes())
+}
+
+func TestWebPushSend(t *testing.T) {
+	var got *http.Request
+
+	status := http.StatusCreated
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r
+
+		w.WriteHeader(status)
+	}))
+	defer srv.Close()
+
+	ch, _ := registry().Get("webpush")
+	cfg := j(map[string]string{"endpoint": srv.URL + "/push/x", "p256dh": testP256dh(), "auth": testAuth})
+	msg := notify.Message{ReminderID: 1, Title: "Call mom", DueAt: time.Now()}
+
+	if err := ch.Send(context.Background(), notify.NewHTTPClient(), cfg, msg); err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Header.Get("Content-Encoding") != "aes128gcm" ||
+		!strings.HasPrefix(got.Header.Get("Authorization"), "vapid ") {
+		t.Fatalf("missing push headers: %v", got.Header)
+	}
+
+	for st, wantClass := range map[int]string{
+		http.StatusGone: notify.ClassGone, http.StatusNotFound: notify.ClassGone,
+		http.StatusBadRequest: notify.ClassHTTP4xx, http.StatusServiceUnavailable: notify.ClassHTTP5xx,
+	} {
+		status = st
+		se := notify.SanitizeErr(ch.Send(context.Background(), notify.NewHTTPClient(), cfg, msg))
+
+		if se == nil || se.Class != wantClass {
+			t.Fatalf("status %d: want class %s, got %v", st, wantClass, se)
+		}
+	}
+}
+
+func TestWebPushValidate(t *testing.T) {
+	ch, _ := registry().Get("webpush")
+	good := map[string]string{"endpoint": "https://push.example.com/x?t=1", "p256dh": testP256dh(), "auth": testAuth}
+
+	if err := ch.Validate(j(good)); err != nil {
+		t.Fatalf("valid config rejected: %v", err)
+	}
+
+	for field, bad := range map[string]string{
+		"endpoint": "https://u:p@push.example.com/x", "p256dh": "AAAA", "auth": "AAAA",
+	} {
+		cfg := map[string]string{}
+		maps.Copy(cfg, good)
+		cfg[field] = bad
+
+		if ch.Validate(j(cfg)) == nil {
+			t.Errorf("%s=%q must be rejected", field, bad)
+		}
+	}
+}
+
+func TestWebPushPayloadFitsRecordLimit(t *testing.T) {
+	ch, _ := registry().Get("webpush")
+
+	srv := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusCreated) }),
+	)
+	defer srv.Close()
+
+	cfg := j(map[string]string{"endpoint": srv.URL, "p256dh": testP256dh(), "auth": testAuth})
+	msg := notify.Message{Title: "t", Notes: strings.Repeat(`<&">`, 600), DueAt: time.Now()}
+
+	if err := ch.Send(context.Background(), notify.NewHTTPClient(), cfg, msg); err != nil {
+		t.Fatalf("escape-heavy notes must still send: %v", err)
 	}
 }

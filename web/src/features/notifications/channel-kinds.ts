@@ -1,4 +1,4 @@
-export type ChannelKind = "ntfy" | "telegram" | "discord";
+export type ChannelKind = "ntfy" | "telegram" | "discord" | "webhook";
 
 export type ChannelFieldKey =
 	| "server_url"
@@ -7,13 +7,17 @@ export type ChannelFieldKey =
 	| "bot_token"
 	| "chat_id"
 	| "api_url"
-	| "webhook_url";
+	| "webhook_url"
+	| "url"
+	| "secret";
 
 export type ChannelField = {
 	key: ChannelFieldKey;
 	secret?: boolean;
 	optional?: boolean;
 	type?: "url";
+	// Secret the browser mints; shown once with copy and regenerate.
+	generate?: boolean;
 	placeholder?: string;
 };
 
@@ -54,7 +58,22 @@ export const CHANNEL_KINDS: Record<ChannelKind, { fields: ChannelField[] }> = {
 			},
 		],
 	},
+	webhook: {
+		fields: [
+			{
+				key: "url",
+				type: "url",
+				placeholder: "https://example.com/kith-webhook",
+			},
+			{ key: "secret", secret: true, generate: true },
+		],
+	},
 };
+
+export function generateWebhookSecret(): string {
+	const b = crypto.getRandomValues(new Uint8Array(32));
+	return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+}
 
 export function isChannelKind(k: string): k is ChannelKind {
 	return k in CHANNEL_KINDS;
